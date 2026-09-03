@@ -2,10 +2,12 @@
 
 ## Status
 
-v1 is on `main` (BUILD 05–15, CI green at `a653d37`). This document is the deploy runbook and the
-compliance evidence for the launch gate (issue #15). The bundled `docker-compose.prod.yml` path in §4
-was verified end-to-end locally: `/` 200, `/health` `db:up`, anonymous create → `/d/[token]` returns a
-21 KB native PDF.
+v1 is on `main` (BUILD 05–15). This document is the deploy runbook and the compliance evidence for the
+launch gate (issue #15). Two deploy paths are verified end-to-end locally (`/` 200, `/health` `db:up`,
+anonymous create → `/d/[token]` returns a ~20 KB native PDF):
+- **VPS + Docker:** `docker-compose.prod.yml` (§4) — self-contained, no Supabase.
+- **Hostinger Cloud Startup:** startup file `server.cjs` (see "Hostinger Cloud Startup" below) — the
+  standalone server is emitted as CommonJS so LiteSpeed's `require()` launcher works.
 
 ## Compliance matrix — evidence, not assertions
 
@@ -50,6 +52,7 @@ Every requirement is verified by an automated test, not a claim. Run `npm run te
 | Public token entropy | `tests/e2e/launch-gate.spec.ts` — ≥ 240-bit base64url, unique, non-enumerable | PASS |
 | Failure paths | malformed input → 422; bad beacon → 204 (never 5xx); unknown token → 404 | PASS |
 | Standalone build | `NEXT_STANDALONE=1 npm run build` (fonts traced) | PASS |
+| Standalone server is CommonJS | CI step — `node --check .next/standalone/server.js`, no `"type":"module"`, boots via `require('./server.cjs')` (Hostinger `lsnode.js` compat) | PASS |
 | `keel-verify` | `node scripts/keel-verify.mjs` | PASS |
 | Secret scan | pre-commit hook + CI `git grep` | PASS |
 | Debug logging off | `FVD_DEBUG` unset in the production image | VERIFY at deploy |
@@ -83,7 +86,7 @@ This is a Next.js **SSR** app with a **PostgreSQL** database and a server-side P
 | Host | Works? | Notes |
 |---|---|---|
 | Hostinger **VPS** (KVM) | ✅ recommended | Full control, Docker — the runbook below. |
-| Hostinger **Cloud Startup / Web hosting** | ⚠️ only via the hPanel **Node.js** tool, no Docker | One persistent Node app; set the startup file and env vars in hPanel (see below). Shared resources — the build and Playwright are heavy; build elsewhere and upload, or build in a VPS. |
+| Hostinger **Cloud Startup / Web hosting** | ✅ via the hPanel **Node.js** tool (LiteSpeed `lsnode.js`), no Docker | Startup file **`server.cjs`** (see §"Hostinger Cloud Startup" below). Shared resources — the build is heavy; build elsewhere and upload if the app root is small. |
 | Vercel / Netlify / Railway / Render / Fly.io | ✅ | Next-native; pair with Supabase/Neon Postgres. |
 | Static / PHP shared hosting | ❌ | No Node process → whole-site 503. |
 
@@ -94,21 +97,54 @@ connect to, so `/health` and every DB-backed route return 503. Two ways to get o
 - **Managed:** a **Supabase** or **Neon** project → real `DATABASE_URL`; run `prisma migrate deploy`
   against it. Supabase also gives the private Storage bucket if you want `FVD_STORAGE=supabase`.
 
-### If you must use Hostinger shared hosting (hPanel → Node.js)
-1. Create a **Supabase** (or Neon) project → real `DATABASE_URL`; a Supabase **private** bucket
-   `deca-pdfs` → set `FVD_STORAGE=supabase` + the Supabase URL/keys.
-2. hPanel → **Advanced → Node.js**: Node 20, application root = the repo, **startup file** =
-   `node_modules/next/dist/bin/next` with args `start`, or add a `server.js` wrapper.
-3. hPanel → **environment variables**: add every key from `.env.example` with real values
-   (`NEXT_PUBLIC_FVD_BASE_URL=https://<your-domain>`, `DATABASE_URL`, `FVD_HASH_SECRET` ≥ 16 chars,
-   `FVD_STORAGE`, Supabase keys, `FVD_DEBUG=0`).
-4. Run once over SSH (or a deploy hook): `npm ci && npx prisma generate && npx prisma migrate deploy && npm run build`.
-5. Restart the Node app. Check `https://<domain>/health` → must be `{"status":"ok","db":"up"}`.
+### Hostinger Cloud Startup (hPanel → Node.js, LiteSpeed `lsnode.js`)
 
-If `/health` still 503s: `db` will say `down` (bad `DATABASE_URL` / migrations not run) or the whole
-response fails (the Node app crashed — check the hPanel Node.js logs; a Prisma engine mismatch shows as
-`PrismaClientInitializationError` — `prisma generate` must run **on the server**, the schema now targets
-`debian-openssl-3.0.x` + `linux-musl-openssl-3.0.x` as well as native).
+Hostinger's LiteSpeed Node launcher starts the app with CommonJS **`require(startupFile)`**. A raw
+Next.js standalone `server.js` is ESM when the project's `package.json` has `"type": "module"`, and
+`require()` of an ES module throws `ERR_REQUIRE_ESM` — the site then 503s before the app starts. This
+repo is built to avoid that:
+
+- `package.json` has **no `"type": "module"`** → Next emits `.next/standalone/server.js` and
+  `.next/standalone/package.json` as **CommonJS** (verified in CI — see the
+  "Standalone server is CommonJS" step).
+- **`server.cjs`** (repo root) is the startup file. `.cjs` is *always* CommonJS regardless of any
+  `"type"` field, so `lsnode.js` can `require()` it. It copies `.next/static` + `public/` into
+  `.next/standalone/` if missing, sets `PORT`/`HOSTNAME`, and `require()`s the standalone server.
+- `npm run build` runs `scripts/standalone-postbuild.mjs`, which copies `.next/static`, `public/` and
+  `prisma/migrations/` into `.next/standalone/` (Next does not). It no-ops for a non-standalone build.
+
+**Steps:**
+1. **Database:** Supabase / Neon → real `DATABASE_URL` (Cloud Startup has no bundled Postgres). For
+   PDFs, either a Supabase private bucket `deca-pdfs` + `FVD_STORAGE=supabase`, or `FVD_STORAGE=local`
+   with a writable `.next/standalone/.storage` (persisted between deploys — confirm with Hostinger).
+2. hPanel → **Advanced → Node.js**:
+   - Node version **20+**
+   - Application root = the repository root
+   - **Application startup file = `server.cjs`**
+3. hPanel → **environment variables** (from `.env.example`): `NEXT_PUBLIC_FVD_BASE_URL=https://<domain>`
+   (must match — it drives every DeCA public URL, R-5/R-6), `DATABASE_URL`, `FVD_HASH_SECRET` (≥ 16
+   chars), `FVD_STORAGE`, Supabase keys if used, `FVD_DEBUG=0`.
+4. Build (SSH or deploy hook, in the app root):
+   ```
+   npm ci
+   npx prisma generate
+   npx prisma migrate deploy
+   NEXT_STANDALONE=1 npm run build
+   ```
+5. Restart the Node app in hPanel. `https://<domain>/health` must return `{"status":"ok","db":"up"}`.
+
+**`hbuilds/` note:** Hostinger regenerates its own build/cache directory on every deploy — never hand-edit
+files there. All the compatibility handling lives in the repo (`package.json`, `server.cjs`,
+`scripts/standalone-postbuild.mjs`), so a redeploy keeps working.
+
+**If it still 503s:**
+- `ERR_REQUIRE_ESM` again → the startup file is not `server.cjs`, or someone re-added `"type": "module"`
+  to `package.json` (CI's "Standalone server is CommonJS" step guards this).
+- `/health` says `db: "down"` → bad `DATABASE_URL` or migrations not run.
+- `PrismaClientInitializationError` → `npx prisma generate` must run **on the server**; the schema
+  targets `debian-openssl-3.0.x` + `linux-musl-openssl-3.0.x` as well as native.
+- 404s for CSS/JS → `.next/static` did not reach `.next/standalone/.next/static`; re-run
+  `npm run build` (or let `server.cjs` copy it on next start).
 
 ## Deployment runbook — Hostinger VPS + Supabase
 

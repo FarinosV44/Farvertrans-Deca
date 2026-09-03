@@ -48,6 +48,24 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run test:compliance
+      - name: Standalone server is CommonJS (Hostinger lsnode.js require() compat)
+        run: |
+          NEXT_STANDALONE=1 npm run build
+          test -f .next/standalone/server.js || { echo "no standalone server.js"; exit 1; }
+          # Hostinger's LiteSpeed launcher does require(startupFile); an ESM
+          # server.js would throw ERR_REQUIRE_ESM. node --check parses it as
+          # CommonJS and fails on ESM `import` / `import.meta`.
+          node --check .next/standalone/server.js
+          if grep -qE '"type"[[:space:]]*:[[:space:]]*"module"' .next/standalone/package.json; then
+            echo "FAIL: .next/standalone/package.json has \"type\": \"module\" — breaks Hostinger preload + require()"
+            exit 1
+          fi
+          # boot it exactly as Hostinger does — require() via server.cjs — and hit a route
+          PORT=3000 node -e "require('./server.cjs')" &
+          SRV=$!
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 1; done
+          curl -fsS -o /dev/null -w 'standalone via server.cjs: GET / -> %{http_code}\n' http://localhost:3000/
+          kill $SRV
       - name: Secret scan
         run: |
           if git grep -nE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----|sk_live_[A-Za-z0-9]{20,}|re_[A-Za-z0-9]{24,}' \

@@ -170,3 +170,26 @@
   locally with the compose stack: `/` 200, `/health` `db:up`, anonymous create → `/d/[token]` returns
   a 21 KB native 1-page PDF. Managed-Postgres path kept as a documented alternative.
 - CI green on `main` at `a653d37` after the middleware change.
+
+## D-025 — Project is CommonJS-typed so Next standalone `server.js` loads under Hostinger LiteSpeed
+- Date / phase: 2026-09-03 / post-BUILD-15 hotfix
+- Decision: removed `"type": "module"` from `package.json`. Next.js then emits
+  `.next/standalone/server.js` and `.next/standalone/package.json` as **CommonJS** instead of ESM.
+  Added `server.cjs` (repo root) as the Hostinger Cloud Startup entry point — `.cjs` is always CJS
+  regardless of any `"type"` field, so LiteSpeed's `lsnode.js` (`require(startupFile)`) can load it;
+  it fixes up the standalone asset layout (`.next/static`, `public/`) and `require()`s the server.
+  Added `scripts/standalone-postbuild.mjs` (wired as npm `postbuild`) to copy `.next/static`,
+  `public/` and `prisma/migrations/` into `.next/standalone/` — no-ops for a non-standalone build.
+- Why: Hostinger Cloud Startup's LiteSpeed Node launcher starts the app with CommonJS
+  `require(startupFile)`. The ESM standalone `server.js` threw `ERR_REQUIRE_ESM`, and the ESM
+  standalone `package.json` (`"type": "module"`) broke Hostinger's injected `preload-timestamp.js`.
+  The site 503'd before the app started. Not a Prisma/DB/build problem.
+- All repo config that needs ESM is already `.mjs` (`eslint.config.mjs`, `postcss.config.mjs`,
+  `scripts/*.mjs`) or `.ts` (handled by Next/vitest/tsx) — dropping the type field changed nothing
+  locally or in CI. Verified: 47 unit + 57 e2e + 6 compliance + typecheck + lint + format + keel-verify;
+  standalone booted via `require('./server.cjs')` serving `/` 200, `/health` `db:up`, anonymous DeCA
+  create → `/d/[token]` 20 KB native PDF; `docker-compose.prod.yml` stack still boots.
+- CI guard: new "Standalone server is CommonJS" step — `node --check` on `server.js`, asserts no
+  `"type":"module"` in the standalone package.json, boots it via `require('./server.cjs')`.
+- Hostinger config after this fix: **Application startup file = `server.cjs`**, app root = repo root,
+  Node 20+. Build: `npm ci && npx prisma generate && npx prisma migrate deploy && NEXT_STANDALONE=1 npm run build`.
