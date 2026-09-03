@@ -45,6 +45,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
     });
   }
 
+  // Integrity (R-10 / FIX #18): the stored bytes must match the hash recorded at
+  // generation. A mismatch means the repository of record is corrupted — log it,
+  // but still serve the document (an inspector must always get something).
+  if (version.pdfSha256) {
+    try {
+      const { pdfSha256 } = await import("@/lib/storage");
+      if (pdfSha256(body) !== version.pdfSha256) {
+        console.error(`[deca] PDF integrity mismatch for version ${version.id}`);
+      }
+    } catch {
+      /* hashing must never block an inspection */
+    }
+  }
+
   // Minimal access log (R-11): hashed IP + timestamp + version id only.
   try {
     await prisma.decaAccessLog.create({

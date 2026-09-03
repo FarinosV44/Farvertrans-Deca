@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { publicEnv } from "@/lib/env";
 import { newClaimToken, newPublicToken } from "./token";
 import { renderDecaPdf } from "@/lib/pdf/render";
-import { getPdfStore, pdfKey } from "@/lib/storage";
+import { getPdfStore, pdfKey, pdfSha256 } from "@/lib/storage";
 import type { ValidatedDeca } from "./validate";
 
 const CLAIM_TTL_DAYS = 30;
@@ -12,6 +12,7 @@ export type CreatedDeca = {
   decaId: string;
   versionId: string;
   token: string;
+  pdfSha256: string;
   claimToken: string;
   claimExpiresAt: Date;
 };
@@ -47,6 +48,7 @@ export async function createDeca(
         decaId: existing.id,
         versionId: existing.versions[0].id,
         token: existing.versions[0].token,
+        pdfSha256: existing.versions[0].pdfSha256 ?? "",
         claimToken: existing.claimTokens[0]?.token ?? "",
         claimExpiresAt: existing.claimTokens[0]?.expiresAt ?? new Date(),
       };
@@ -70,6 +72,7 @@ export async function createDeca(
     versionNo: 1,
     createdAt,
   });
+  const sha256 = pdfSha256(pdf);
   await getPdfStore().put(key, pdf);
 
   // 3. Persist atomically.
@@ -88,7 +91,9 @@ export async function createDeca(
         versionNo: 1,
         token,
         pdfPath: key,
+        pdfSha256: sha256,
         dataJson: validated.data as unknown as object,
+        createdByUserId: opts.createdByUserId,
         createdAt,
       },
     });
@@ -106,6 +111,7 @@ export async function createDeca(
   return {
     ...result,
     token,
+    pdfSha256: sha256,
     claimToken: opts.createdByUserId ? "" : claimToken,
     claimExpiresAt,
   };
@@ -142,7 +148,14 @@ export async function correctDeca(
   companyId: string,
   validated: ValidatedDeca,
   changeReason: string,
-): Promise<{ decaId: string; versionId: string; versionNo: number; token: string }> {
+  userId?: string,
+): Promise<{
+  decaId: string;
+  versionId: string;
+  versionNo: number;
+  token: string;
+  pdfSha256: string;
+}> {
   const reason = changeReason.trim();
   if (reason.length < 3)
     throw new DecaCorrectionError("reason_required", "Indica el motivo de la corrección.");
@@ -167,6 +180,7 @@ export async function correctDeca(
     createdAt: deca.createdAt,
     modifiedAt,
   });
+  const sha256 = pdfSha256(pdf);
   await getPdfStore().put(key, pdf);
 
   const version = await prisma.$transaction(async (tx) => {
@@ -176,8 +190,10 @@ export async function correctDeca(
         versionNo,
         token,
         pdfPath: key,
+        pdfSha256: sha256,
         dataJson: validated.data as unknown as object,
         changeReason: reason,
+        createdByUserId: userId,
         createdAt: modifiedAt,
       },
     });
@@ -191,5 +207,5 @@ export async function correctDeca(
     return v;
   });
 
-  return { decaId, versionId: version.id, versionNo, token };
+  return { decaId, versionId: version.id, versionNo, token, pdfSha256: sha256 };
 }

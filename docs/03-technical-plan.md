@@ -57,7 +57,7 @@ State markers: `[E]` exists · `[A]` assistant to create in named slice/phase ·
 | Path | State | Purpose (one line) |
 |---|---|---|
 | `package.json` / `tsconfig.json` / `next.config.ts` | [A] P5 scaffold | project config, Next standalone output |
-| `.env.example` | [A] P5 scaffold | documented env vars (Supabase URL/keys, DB URL, mailer, base URL) |
+| `.env.example` | [A] P5 scaffold | documented env vars (Supabase URL/keys, DB URL, mailer, base URL, `FVD_STORAGE`/`FVD_STORAGE_DIR` persistent PDF path — FIX #18) |
 | `prisma/schema.prisma` | [A] P5 s1 | application tables (see Data model) |
 | `prisma/migrations/` | [G] P5 | generated, versioned, idempotent |
 | `app/(site)/page.tsx` | [A] P5 landing slice | the landing (EPIC 01) |

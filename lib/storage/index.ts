@@ -3,6 +3,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
+export { pdfSha256 } from "./hash";
+
 export class StorageError extends Error {
   constructor(message: string) {
     super(message);
@@ -15,9 +17,18 @@ export interface PdfStore {
   get(key: string): Promise<Buffer>;
 }
 
-/** Local filesystem store for dev / tests when no Supabase project is configured. */
+/**
+ * Local filesystem store. In production on a managed host, point `FVD_STORAGE_DIR`
+ * at a path that PERSISTS across deploys and is OUTSIDE the deploy/build tree —
+ * otherwise a redeploy can wipe generated DeCA PDFs, and the store must be the
+ * repository of record for ≥ 1 year (R-10 / FIX #18). Defaults to `.storage/` for
+ * dev and tests.
+ */
 class LocalFsStore implements PdfStore {
-  private root = path.join(process.cwd(), ".storage", "deca-pdfs");
+  private root =
+    process.env.FVD_STORAGE_DIR && process.env.FVD_STORAGE_DIR.trim()
+      ? path.resolve(process.env.FVD_STORAGE_DIR.trim(), "deca-pdfs")
+      : path.join(process.cwd(), ".storage", "deca-pdfs");
   async put(key: string, body: Buffer) {
     const file = path.join(this.root, key);
     await mkdir(path.dirname(file), { recursive: true });

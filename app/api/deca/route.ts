@@ -70,6 +70,7 @@ export async function POST(req: Request) {
       {
         decaId: created.decaId,
         token: created.token,
+        pdfSha256: created.pdfSha256,
         claimToken: created.claimToken || undefined,
         claimExpiresAt: created.claimToken ? created.claimExpiresAt.toISOString() : undefined,
         warnings: validated.warnings,

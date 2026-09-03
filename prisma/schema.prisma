@@ -115,14 +115,16 @@ model Deca {
 
 /// An append-only version of a DeCA. Never updated after creation (except pdfPath on first write).
 model DecaVersion {
-  id           String   @id @default(cuid())
-  decaId       String   @map("deca_id")
-  versionNo    Int      @map("version_no")
-  token        String   @unique
-  pdfPath      String?  @map("pdf_path")
-  dataJson     Json     @map("data_json")
-  changeReason String?  @map("change_reason")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  decaId          String   @map("deca_id")
+  versionNo       Int      @map("version_no")
+  token           String   @unique
+  pdfPath         String?  @map("pdf_path")
+  pdfSha256       String?  @map("pdf_sha256")
+  dataJson        Json     @map("data_json")
+  changeReason    String?  @map("change_reason")
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   deca      Deca            @relation("DecaVersions", fields: [decaId], references: [id], onDelete: Cascade)
   currentOf Deca?           @relation("CurrentVersion")

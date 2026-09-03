@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   try {
-    const r = await correctDeca(id, user.companyId, validated, parsed.data.changeReason);
+    const r = await correctDeca(id, user.companyId, validated, parsed.data.changeReason, user.id);
     return NextResponse.json({ ...r, warnings: validated.warnings }, { status: 201 });
   } catch (e) {
     if (e instanceof DecaCorrectionError) {

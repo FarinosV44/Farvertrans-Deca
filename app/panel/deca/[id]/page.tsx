@@ -65,6 +65,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
                   <p className="text-xs text-[var(--color-text-muted)]">
                     {v.createdAt.toISOString().replace("T", " ").slice(0, 16)} UTC
                     {v.changeReason ? ` · ${v.changeReason}` : ""}
+                    {v.author ? ` · por ${v.author}` : ""}
                   </p>
                 </div>
                 <a
