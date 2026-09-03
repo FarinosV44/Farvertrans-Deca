@@ -6,10 +6,10 @@ export const HERO = {
   h1: "DeCA GRATIS",
   subhead: `${BRAND.tagline}`,
   proof:
-    "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite al menos hasta el 31/12/2026",
+    "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite hasta el 31/12/2026",
   cta: "CREAR DECA GRATIS",
   ctaSecondary: "ENTRAR",
-  trust: "Sin tarjeta · Sin límite · Gratis al menos hasta el 31/12/2026",
+  trust: "Sin tarjeta · Sin límite · Gratis hasta el 31/12/2026",
 };
 
 /** Compact trust row under the hero. */
@@ -132,7 +132,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: `¿Es gratis ${BRAND.name}?`,
-    a: "Sí. Puedes crear y descargar documentos sin tarjeta y sin límite, al menos hasta el 31 de diciembre de 2026.",
+    a: "Sí. Puedes crear y descargar documentos sin tarjeta y sin límite hasta el 31 de diciembre de 2026.",
   },
   {
     q: "¿Puedo generar todos los documentos que quiera?",

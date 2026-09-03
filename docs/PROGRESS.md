@@ -136,4 +136,4 @@
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V2 (#21–#28) merged to main. develop == main. Remaining: the user's deploy + production smoke checklist, then close issues #5–#28.
+Last updated: 2026-09-04 — Product V2 (#21–#28) on main; + D-028 (CTA text visibility fix, SKIP_BUILD_CHECKS, copy). develop == main.

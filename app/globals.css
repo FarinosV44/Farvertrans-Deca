@@ -25,6 +25,12 @@
   --breakpoint-lg: 1280px;
 }
 
+/*
+ * Base element styles MUST live in `@layer base` so Tailwind's utilities
+ * (`@layer utilities`) win the cascade. Unlayered rules beat every layer in
+ * Tailwind v4 — an unlayered `a { color: … }` was overriding `text-[…]` on the
+ * CTA links, painting the button text the same blue as its background.
+ */
 :root {
   color-scheme: light;
 }
@@ -33,37 +39,50 @@
   box-sizing: border-box;
 }
 
-html,
-body {
-  padding: 0;
-  margin: 0;
+@layer base {
+  html,
+  body {
+    padding: 0;
+    margin: 0;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.2;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  a.no-underline,
+  nav a,
+  header a.brand {
+    text-decoration: none;
+  }
 }
 
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
+/*
+ * Belt-and-braces: any link/button carrying a primary/inverse background always
+ * gets a legible label, even if a future base rule regresses the cascade.
+ */
+.btn-primary {
+  color: var(--color-primary-contrast);
 }
-
-h1,
-h2,
-h3 {
-  line-height: 1.2;
-  font-weight: 700;
-  margin: 0;
-}
-
-a {
+.btn-inverse {
   color: var(--color-primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-a.no-underline,
-nav a,
-header a.brand {
-  text-decoration: none;
 }
 
 :focus-visible {

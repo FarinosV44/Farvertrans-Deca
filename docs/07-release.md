@@ -128,20 +128,33 @@ repo is built to avoid that:
    PDFs, either a Supabase private bucket `deca-pdfs` + `FVD_STORAGE=supabase`, or `FVD_STORAGE=local`
    with a writable `.next/standalone/.storage` (persisted between deploys — confirm with Hostinger).
 2. hPanel → **Advanced → Node.js**:
-   - Node version **20+**
+   - Node version **22** (Node 20 on Hostinger is often 20.18.x; several devDeps want ≥ 20.19 —
+     harmless warnings on 20.18, but 22 is cleaner).
    - Application root = the repository root
    - **Application startup file = `server.cjs`**
 3. hPanel → **environment variables** (from `.env.example`): `NEXT_PUBLIC_FVD_BASE_URL=https://<domain>`
    (must match — it drives every DeCA public URL, R-5/R-6), `DATABASE_URL`, `FVD_HASH_SECRET` (≥ 16
-   chars), `FVD_STORAGE`, Supabase keys if used, `FVD_DEBUG=0`.
+   chars), `FVD_STORAGE`, `FVD_STORAGE_DIR`, Supabase keys if used, `FVD_DEBUG=0`, and
+   **`SKIP_BUILD_CHECKS=1`** (lint + typecheck are enforced in CI on every push to `main`; skipping
+   them here drops `eslint` / `unrs-resolver` / `typescript` from the build's critical path on a
+   resource-constrained host).
 4. Build (SSH or deploy hook, in the app root):
    ```
-   npm ci
+   npm install --omit=optional --foreground-scripts   # or `npm ci` on Node 22
    npx prisma generate
    npx prisma migrate deploy
-   NEXT_STANDALONE=1 npm run build
+   NEXT_STANDALONE=1 SKIP_BUILD_CHECKS=1 npm run build
    ```
 5. Restart the Node app in hPanel. `https://<domain>/health` must return `{"status":"ok","db":"up"}`.
+
+**If `npm install` hangs** (no output after the `warn`/`deprecated` lines): it is stuck in a
+dependency install-script. Almost always Prisma downloading engine binaries.
+- `npm install --foreground-scripts --loglevel verbose` shows which script is stuck.
+- `PRISMA_SKIP_POSTINSTALL_GENERATE=true npm install`, then run `npx prisma generate` separately
+  (visible and retryable). Make sure the host can reach `binaries.prisma.sh`.
+- `npm install --omit=optional` skips the `@img/sharp-*` platform packages (the app has ~no images).
+- `export NODE_OPTIONS=--max-old-space-size=2048` if the host is memory-limited.
+- Last resort: build on another machine and upload `.next/standalone` + `node_modules` + `prisma/`.
 
 **`hbuilds/` note:** Hostinger regenerates its own build/cache directory on every deploy — never hand-edit
 files there. All the compatibility handling lives in the repo (`package.json`, `server.cjs`,

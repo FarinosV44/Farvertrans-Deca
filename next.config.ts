@@ -1,5 +1,14 @@
 import type { NextConfig } from "next";
 
+/**
+ * `SKIP_BUILD_CHECKS=1` skips ESLint + type-checking during `next build`. Set it
+ * ONLY on a resource-constrained deploy host (e.g. Hostinger Cloud Startup):
+ * lint and typecheck are already enforced on every push to `main` in CI, and
+ * skipping them here drops `eslint` / `unrs-resolver` / `typescript` from the
+ * build's critical path. Never set it in CI.
+ */
+const skipChecks = process.env.SKIP_BUILD_CHECKS === "1";
+
 const nextConfig: NextConfig = {
   // Standalone output is for the production Docker image (Hostinger); local dev,
   // `next start` and the test webServer use the default output.
@@ -13,8 +22,12 @@ const nextConfig: NextConfig = {
     "/api/deca/[id]/version": ["./lib/pdf/fonts/**"],
   },
   eslint: {
-    // lint is run explicitly in CI / test scripts; do not fail the build on it here
-    ignoreDuringBuilds: false,
+    // lint runs in CI on every push to main; optionally skip it on a slow deploy host.
+    ignoreDuringBuilds: skipChecks,
+  },
+  typescript: {
+    // tsc runs in CI on every push to main; optionally skip it on a slow deploy host.
+    ignoreBuildErrors: skipChecks,
   },
   async headers() {
     return [

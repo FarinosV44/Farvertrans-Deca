@@ -27,8 +27,8 @@ export function CtaButton({
     "inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] px-6 font-medium no-underline transition-colors";
   const styles =
     variant === "inverse"
-      ? "bg-white text-[var(--color-primary)] hover:bg-[var(--color-surface)]"
-      : "bg-[var(--color-primary)] text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)]";
+      ? "btn-inverse bg-white text-[var(--color-primary)] hover:bg-[var(--color-surface)]"
+      : "btn-primary bg-[var(--color-primary)] text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)]";
   return (
     <Link
       href={href}

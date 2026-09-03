@@ -77,7 +77,7 @@ test.describe("BUILD 06 — production landing", () => {
     await expect(page.locator("h1")).toHaveText("DeCA GRATIS");
     await expect(
       page.getByText(
-        "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite al menos hasta el 31/12/2026",
+        "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite hasta el 31/12/2026",
       ),
     ).toBeVisible();
     await expect(page.getByTestId("cta-hero")).toBeInViewport();
@@ -96,6 +96,28 @@ test.describe("BUILD 06 — production landing", () => {
     const final = page.getByTestId("cta-final");
     await final.scrollIntoViewIfNeeded();
     await expect(final).toBeVisible();
+  });
+
+  test("CTA buttons are legible — primary link text is not the same colour as its background", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    for (const tid of ["cta-hero", "cta-final"]) {
+      const { color, bg } = await page.getByTestId(tid).evaluate((el) => {
+        const c = getComputedStyle(el);
+        return { color: c.color, bg: c.backgroundColor };
+      });
+      expect(color, `${tid} text colour must differ from its background`).not.toBe(bg);
+    }
+    // the persistent mobile CTA too
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("/");
+    const mobile = page.locator("div.md\\:hidden [data-testid='cta-crear']");
+    const m = await mobile.evaluate((el) => {
+      const c = getComputedStyle(el);
+      return { color: c.color, bg: c.backgroundColor };
+    });
+    expect(m.color).not.toBe(m.bg);
   });
 
   test("#22: FAQ content is in the SSR HTML (indexable) even before any interaction", async ({

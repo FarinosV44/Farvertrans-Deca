@@ -17,7 +17,7 @@ export const es = {
   landing: {
     h1: "DeCA GRATIS",
     subhead: `${BRAND.tagline} PDF nativo, QR válido para inspección y conservación online.`,
-    trust: "Sin tarjeta · Sin límite · Gratis al menos hasta el 31/12/2026",
+    trust: "Sin tarjeta · Sin límite · Gratis hasta el 31/12/2026",
   },
   errors: {
     generic: "Algo no ha ido bien. Vuelve a intentarlo en unos segundos.",

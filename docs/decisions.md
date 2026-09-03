@@ -257,3 +257,21 @@
   `_120000_prospect_acquisition`.
 - Verified: 57 unit + 85 e2e (incl. 8 new specs) + 8 compliance + typecheck + lint + format +
   keel-verify. Two pre-existing timing flakes (operadores attribution race, wizard) pass on retry.
+
+## D-028 — CTA text was invisible (Tailwind v4 layer bug); deploy-build hardening; drop "al menos" copy
+- Date / phase: 2026-09-04 / post-#28 fixes
+- **CTA text invisible in production** ("un gran bloque azul sin texto"). Root cause: `app/globals.css`
+  had unlayered base rules — `a { color: var(--color-primary) }`. In Tailwind **v4**, unlayered CSS
+  beats every `@layer`, so it overrode `text-[var(--color-primary-contrast)]` (in `@layer utilities`)
+  on every `<a>`/`<Link>` CTA → blue text on a blue background. Verified: computed colour was
+  `rgb(11,92,255)` on `rgb(11,92,255)` before, `rgb(255,255,255)` after.
+  - Fix: wrap all base element styles in `@layer base` in `globals.css`. Added `.btn-primary` /
+    `.btn-inverse` helper classes to `CtaButton` as belt-and-braces. Regression test in
+    `landing.spec.ts` — primary CTA text colour must differ from its background.
+- **`SKIP_BUILD_CHECKS=1`** env (`next.config.ts`) — skips ESLint + `tsc` during `next build`. Both
+  run in CI on every push to `main`; the flag lets a resource-constrained deploy host (Hostinger
+  Cloud Startup) drop `eslint` / `unrs-resolver` / `typescript` from the build's critical path.
+  Never set in CI. Documented in `docs/07-release.md` + `.env.prod.example`, alongside the npm-install
+  hang workaround (Prisma engine download) and the Node 22 recommendation.
+- **Copy:** dropped the hedge "al menos" from the free/unlimited marketing lines — now
+  "Sin límite / Gratis **hasta el 31/12/2026**". Legal "conservar **al menos** un año" (R-10) kept.
