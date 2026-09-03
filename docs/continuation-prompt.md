@@ -4,76 +4,85 @@ Repo: FarinosV44/Farvertrans-Deca
 Branch: develop
 Generated: 2026-09-03
 Keel: v5.19.2
-Commit: fa5f08f  Tree: 717afb0
-Position: Phase 5 (execution mode D-019). Sprint 1 closed — BUILD 05–09 done. Next = **BUILD 10**.
+Commit: 3a52c54
+Position: Phase 5 (execution mode D-019). Sprint 2. BUILD 05–12 done. Next = **BUILD 13**.
 
 User direction (still in force):
 
-> Execution, not documentation. Work the GitHub BUILD issues in order. Each issue ends with real,
-> browser-verifiable functionality + tests. Don't stop between issues for minor decisions resolvable
-> from the spec. No ERP/TMS/invoicing/Stripe/pricing/checkout/sales forms/fleet tracking. Signup is
-> never required before the first DeCA — value first, account after.
+> Execution, not documentation. Work the GitHub BUILD issues in order. Each ends browser-verifiable +
+> tested. Don't stop between issues for minor decisions resolvable from the spec. No ERP/TMS/invoicing/
+> Stripe/pricing/checkout/sales forms/fleet tracking. Signup is never required before the first DeCA.
 
-Read CLAUDE.md and the full Keel skill first, then `docs/PROGRESS.md`, `docs/decisions.md`
-(D-001…D-021 — never re-litigate), `docs/lessons-learned.md`, `docs/02-functional-spec.md`,
-`docs/03-technical-plan.md`, `docs/05-test-points.md`, `docs/issues.md`.
+Read CLAUDE.md + the full Keel skill, then `docs/PROGRESS.md`, `docs/decisions.md` (D-001…D-021 — never
+re-litigate), `docs/lessons-learned.md`, `docs/02-functional-spec.md`, `docs/03-technical-plan.md`,
+`docs/05-test-points.md`, `docs/issues.md`, `docs/sprints/sprint-2.md`.
 
 `Autonomy: automatic` — commit + push to `develop` after each green slice; never merge to `main`/tag/
-release. `Chaining: off`. `Notify: PushNotification`. After each BUILD issue, comment on it (beat 1,
-"landed, awaiting deploy") and never close it.
+release. `Chaining: off`. `Notify: PushNotification`. After each BUILD issue: comment beat 1 ("landed,
+awaiting deploy"), never close it.
 
-## DONE — BUILD 05–09 (all on develop, all green: 31 unit + 32 e2e + standalone build + keel-verify)
+## DONE — BUILD 05–12 (all on develop, all green: 43 unit + 43 e2e + standalone build + keel-verify)
 The full flow works and is test-verified: `/` landing → **CREAR DECA GRATIS** → 3-step `/crear`
-(no signup) → **GENERAR DECA** → real compliant native-text PDF + QR at `/crear/[id]` → Ver/descargar
-PDF (`/d/[token]`, direct download, no auth) / Compartir (WhatsApp/email/copy) → "Guardar este DeCA
-creando una cuenta" → `/registro` → `/app` with the document owned.
+(no signup) → **GENERAR DECA** → real compliant native-text PDF + QR at `/crear/[id]` → download
+(`/d/[token]`, direct, no auth) / share → **"Guardar este DeCA creando una cuenta"** → `/registro`
+→ `/app` with the document owned + reusable saved data. Attribution + operator dashboard also live.
 
-- **05** scaffold — Next 15 + TS + Tailwind 4 + Prisma + `lib/supabase` + full schema + migrations +
-  seed + `/health` + docker playground + `scripts/keel-verify.mjs` / `keel-doctor.mjs`.
-- **06** landing — full EPIC 01 structure, SSR, one h1, no forms/pricing, JSON-LD, robots+sitemap,
-  `landing_view`/`click_crear_deca` → `POST /api/events` (`lib/analytics`).
-- **07** `/crear` — `components/deca/wizard.tsx`, `lib/deca/{schema,validate,plate,nif,token}`,
-  `POST /api/deca`, Idempotency-Key, `deca_started`, `/crear/[id]` result.
-- **08** compliant PDF — `lib/pdf/{deca-document,render,qr,fonts}` (@react-pdf native text, embedded
-  Inter OFL, QR EC-H), `lib/storage` (pluggable Supabase / local-FS), `GET /d/[token]` (direct PDF,
-  noindex, no auth/cookie/interstitial, 404 unknown, R-9 `isPubliclyAvailable`), hashed-IP access log,
-  fail-closed (render+store BEFORE DB write), `npm run test:compliance` = 6 R-1…R-13 checks (RELEASE GATE).
-- **09** signup+claim — `lib/auth/{password,session,index}` (own email+password, scrypt, HMAC cookie —
-  D-021, Supabase Auth deferred), `lib/deca/claim.ts`, `POST /api/auth/{register,login}`, `/registro`,
-  minimal `/app`. Auth failure never orphans the DeCA.
+- **05** scaffold (Next 15 + TS + Tailwind 4 + Prisma + `lib/supabase` + schema + migrations + seed +
+  `/health` + docker playground + `scripts/keel-verify.mjs`/`keel-doctor.mjs`).
+- **06** landing (full EPIC 01, SSR, JSON-LD, robots+sitemap, `lib/analytics` + `POST /api/events`).
+- **07** `/crear` (`components/deca/wizard.tsx`, `lib/deca/{schema,validate,plate,nif,token}`,
+  `POST /api/deca`, Idempotency-Key, result `/crear/[id]`).
+- **08** compliant PDF (`lib/pdf/{deca-document,render,qr,fonts}`, `lib/storage` pluggable,
+  `GET /d/[token]` direct download, `isPubliclyAvailable` R-9, fail-closed, `npm run test:compliance`
+  = 6 R-1…R-13 checks — RELEASE GATE).
+- **09** signup+claim (`lib/auth/{password,session,index}` own email+password D-021, `lib/deca/claim.ts`,
+  `POST /api/auth/{register,login}`, `/registro`, `/app`).
+- **10** workspace (`/app` actions-first, `/app/historico` search+date range, `/app/datos` saved-data
+  CRUD, wizard autofill, duplicate `/crear?from=<id>`, authed `POST /api/deca` owns the DeCA).
+- **11** attribution (`lib/attribution/*` — `?ref=`+5 UTMs, first/last touch, `<AttributionCapture>` in
+  root layout, `acquisition` row at signup, `first_deca_at`).
+- **12** `/operadores` internal dashboard + `GET /api/operadores/stats` (404 for non-internal); seed
+  `admin@farvertrans.local` / `admin-dev-only`.
 
-## NEXT — BUILD 10, then 11 → 15 in order
-- **#10 Registered workspace (F7, F8):** `/app` history + search (date, origin→destination, carrier,
-  plate, status; view/duplicate/share/download); saved companies/vehicles/addresses CRUD (tables exist,
-  scope to `user.id`) with autofill in the `/crear` wizard for authed users; "Duplicar" / "Repetir
-  último DeCA" pre-fills the wizard (new id/token on generate); deleting a saved entity never alters an
-  already-generated DeCA. Tests + axe per new screen.
-- **#11 Attribution (EPIC 02):** `lib/attribution/*` — parse `ref` + 5 UTMs, first-touch never
-  overwritten + last-touch, first-party cookie + localStorage, write the `acquisition` row at signup,
-  set `first_deca_at` on the first DeCA. AC-18…AC-23. Wire into `/registro` + landing.
-- **#12 `/operadores`** internal acquisition dashboard (`role: internal`), per-operator visits/signups/
-  companies/first-DeCA/total/active + conversions; non-internal → 404.
-- **#13** driver share `POST /api/share` + WhatsApp deep link + printable A4; corrections → new
-  `deca_version` (new token/QR/PDF, prior kept — R-13, AC-14/15/16); abuse controls `lib/abuse`
-  (sliding window per hashed IP+fingerprint, challenge above soft threshold, never on `/d/`, fail-open —
-  F16/AC-34…36).
-- **#14** SEO base + 10 core pages `content/seo/*.mdx` (one template; BOE citations; last-reviewed date;
-  internal links; CTA) + "¿Estoy obligado?" page (F17).
-- **#15** launch gate: Lighthouse CI perf budgets (AC-28), CSP + security headers (T-5), full
-  `npm run test:compliance` re-run, deploy runbook (Hostinger VPS + Docker + Supabase + DNS + Resend +
-  hCaptcha).
+## NEXT — BUILD 13, then 14, 15
+- **#13 Sharing, corrections/versioning, abuse controls:**
+  - Driver share: `POST /api/share` (rate-limited, templated envelope, no user free-text) + WhatsApp
+    deep link + printable A4 view with a prominent QR (F9, R-12, AC-24). The result screen's
+    `components/deca/result-actions.tsx` already has the WhatsApp/email/copy UI — wire the email send.
+  - Corrections → new version (R-13, AC-14/15/16): authed owner edits a DeCA → create `deca_version`
+    n+1 with a NEW token/URL/QR/PDF, keep version n intact, record `changeReason` + timestamp, set
+    `deca.currentVersionId`. New route `POST /api/deca/[id]/version`. A `/app/deca/[id]` detail page
+    with the version list (currently the result page `/crear/[id]` is the only detail view). `deca_corrected` event.
+  - Abuse controls (F16, AC-34…36): `lib/abuse` — sliding-window limiter keyed on hashed IP +
+    hashed browser fingerprint (`abuse_counter` table exists); a soft threshold on anonymous
+    `POST /api/deca` + `/api/share` + auth attempts triggers a challenge (hCaptcha, or a proof-of-work
+    fallback when `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` is unset); NEVER challenge or block `GET /d/[token]`
+    (fail open); per-IP 404 rate-limit already partially there on `/d/`. `lib/hash.ts` has the IP hash.
+- **#14 SEO base + 10 core pages** (`content/seo/*.mdx` — one template; each: one intent, BOE citation,
+  last-reviewed date, internal links to landing/requisitos/FAQ/generador, ends in CREAR DECA GRATIS) +
+  "¿Estoy obligado?" guided page (F17). Sitemap already exists — extend `PUBLIC_PATHS`.
+- **#15 Launch gate:** Lighthouse CI perf budgets (AC-28: LCP<2.0s, INP<200ms, CLS<0.1 mobile),
+  CSP + HSTS + security headers (T-5/T-8 — extend `next.config.ts headers()`), full
+  `npm run test:compliance` re-run, deploy runbook (Hostinger VPS + Docker + Supabase project + RLS +
+  DNS + Resend + hCaptcha + GitHub secrets).
 
 ## Gaps to close before Phase 7 release
-- `.githooks/pre-commit` confidential gate + `.github/workflows/ci.yml` (D-010 full assistant-config,
-  deferred at scaffold — materialise from `references/assistant-config.md`).
+- `.githooks/pre-commit` confidential gate + `.github/workflows/ci.yml` (D-010 full assistant-config —
+  materialise from `references/assistant-config.md`).
 - `docs/.keel/plan.json`, `scripts/keel-close` / `keel-handoff-verify` not generated (execution shortcut).
-- Password reset (email). `npm audit`: 0 critical, 1 high (`postcss` via Next's toolchain — accepted D-020).
-- CREDENTIAL (user provides, pre-launch): real Supabase project, Hostinger VPS, domain, Resend, hCaptcha —
-  then deploy, then beat-3 comments on #5–#15, then the user closes them. RGPD review of anonymous-doc
-  retention (D-016). Legal check that a generated DeCA passes inspection.
+- Password reset (email) flow. Login route: wire `signup_started`/`login` events if wanted.
+- Duplicated line in `docs/05-test-points.md` (harmless).
+- `npm audit`: 0 critical, 1 high (`postcss` via Next's toolchain — accepted D-020, revisit with Next 16).
+- CREDENTIAL (user provides, pre-launch): real Supabase project, Hostinger VPS, domain, Resend, hCaptcha →
+  deploy → beat-3 comments on #5–#15 → the user closes them. RGPD review of anonymous-doc retention
+  (D-016). Legal check that a generated DeCA passes inspection.
 
 ## Local run
 `npm install` · `npm run db:up` · `npm run db:migrate` · `npm run seed` · `npm run dev` → localhost:3000.
 Full check: `npm run typecheck && npm run lint && npm run test:unit && npm run test:e2e && npm run test:compliance && node scripts/keel-verify.mjs`.
 This env's npm blocks install scripts — approve new ones with `npm approve-scripts <pkg>`.
-Kill a stale port-3000 server before `test:e2e`.
+Kill a stale port-3000 server before `test:e2e` (Windows: `taskkill //F //PID <pid>`).
+Interactive `prisma migrate dev` is BLOCKED here — hand-write `prisma/migrations/<ts>_name/migration.sql`
+then `npx prisma migrate deploy && npx prisma generate`.
+`server-only` throws in Vitest — keep pure logic in files without that import (see `lib/data/saved-schema.ts`,
+`lib/attribution/parse.ts`).
