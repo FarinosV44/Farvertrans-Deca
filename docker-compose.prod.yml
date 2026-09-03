@@ -1,0 +1,65 @@
+# Production stack — self-contained: app + Postgres + persistent PDF storage.
+# No Supabase required (FVD_STORAGE=local writes PDFs to the mounted volume).
+#
+#   cp .env.prod.example .env.prod   # then fill in real values
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# All three services read .env.prod. Migrations run automatically via the
+# one-shot `migrate` service before the app starts. Put a TLS-terminating
+# reverse proxy (Hostinger's, or Caddy/Nginx) in front of :3000.
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: fvd-prod-db
+    restart: unless-stopped
+    env_file: .env.prod # provides POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
+    volumes:
+      - fvd-prod-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # no published port — only the app/migrate containers reach it over the compose network
+
+  migrate:
+    build: .
+    image: fvd-app
+    env_file: .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    # the standalone image has no node_modules/.bin, so call the Prisma CLI directly
+    command: ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
+
+  app:
+    build: .
+    image: fvd-app
+    container_name: fvd-prod-app
+    restart: unless-stopped
+    env_file: .env.prod
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    volumes:
+      - fvd-prod-storage:/app/.storage
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/health',r=>process.exit(0)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 25s
+      retries: 3
+
+volumes:
+  fvd-prod-db:
+  fvd-prod-storage:

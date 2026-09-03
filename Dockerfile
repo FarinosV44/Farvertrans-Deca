@@ -33,6 +33,10 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Writable dir for FVD_STORAGE=local (a named volume is mounted here in
+# docker-compose.prod.yml; the fresh volume inherits this ownership).
+RUN mkdir -p /app/.storage && chown -R nextjs:nodejs /app/.storage
+
 USER nextjs
 EXPOSE 3000
 # Healthcheck: healthy as long as the Node server RESPONDS at all (any HTTP

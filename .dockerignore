@@ -15,5 +15,6 @@ playwright-report
 .env
 .env.*
 !.env.example
+!.env.prod.example
 *.log
 .keel-update-check

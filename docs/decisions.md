@@ -154,3 +154,19 @@
   healthcheck only requires the server to respond (a DB outage is then visible at `/health` instead of
   taking the whole site down); `docs/07-release.md` gains a "Hosting choice" section.
 - The user deploys to Hostinger with Docker (confirmed — other projects run the same way).
+
+## D-024 — Self-contained production deploy (docker-compose.prod.yml); attribution captured in middleware
+- Date / phase: 2026-09-03 / post-BUILD-15
+- Decision: ship `docker-compose.prod.yml` + `.env.prod.example` as the primary deploy path — app +
+  bundled Postgres + a named volume at `/app/.storage` (`FVD_STORAGE=local`), so a VPS with Docker
+  needs no Supabase or external DB account. A one-shot `migrate` service runs
+  `node node_modules/prisma/build/index.js migrate deploy` (the standalone image has no
+  `node_modules/.bin`, so `npx prisma` cannot be used). `Dockerfile` pre-creates `/app/.storage`
+  owned by `nextjs` so the fresh volume inherits writable ownership.
+- Also: acquisition attribution (`?ref=`, UTMs, referrer) is now merged and written to the `fvd_attr`
+  cookie in `middleware.ts`, synchronously with the request. The client `<AttributionCapture>` stays
+  for SPA navigations. Removed a post-hydration race that failed two e2e tests intermittently in CI.
+- Why: the user runs Docker on Hostinger and did not want to stand up Supabase. Verified end-to-end
+  locally with the compose stack: `/` 200, `/health` `db:up`, anonymous create → `/d/[token]` returns
+  a 21 KB native 1-page PDF. Managed-Postgres path kept as a documented alternative.
+- CI green on `main` at `a653d37` after the middleware change.

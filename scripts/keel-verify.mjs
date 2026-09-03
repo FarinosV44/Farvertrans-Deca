@@ -24,7 +24,8 @@ try {
     f.startsWith("docs/") ||
     f.startsWith(".github/") ||
     f.startsWith(".githooks/") ||
-    f === ".env.example";
+    f === ".env.example" ||
+    f === ".env.prod.example";
   let hits = 0;
   for (const f of tracked) {
     if (skip(f)) continue;

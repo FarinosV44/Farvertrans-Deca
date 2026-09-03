@@ -2,8 +2,10 @@
 
 ## Status
 
-`develop` is ready for `main` (BUILD 05–15 complete). This document is the deploy runbook and the
-compliance evidence for the launch gate (issue #15).
+v1 is on `main` (BUILD 05–15, CI green at `a653d37`). This document is the deploy runbook and the
+compliance evidence for the launch gate (issue #15). The bundled `docker-compose.prod.yml` path in §4
+was verified end-to-end locally: `/` 200, `/health` `db:up`, anonymous create → `/d/[token]` returns a
+21 KB native PDF.
 
 ## Compliance matrix — evidence, not assertions
 
@@ -86,9 +88,11 @@ This is a Next.js **SSR** app with a **PostgreSQL** database and a server-side P
 | Static / PHP shared hosting | ❌ | No Node process → whole-site 503. |
 
 **The database is not optional.** With only the `.env.example` placeholders there is no Postgres to
-connect to, so `/health` and every DB-backed route return 503. Create a free Postgres first:
-**Supabase** (also gives you the private Storage bucket) or **Neon**. Put the real connection string in
-`DATABASE_URL` and run `npx prisma migrate deploy` against it.
+connect to, so `/health` and every DB-backed route return 503. Two ways to get one:
+- **Bundled (recommended for a VPS with Docker):** `docker-compose.prod.yml` runs Postgres + the app +
+  a persistent PDF volume together — no Supabase, no external account. See §4 below.
+- **Managed:** a **Supabase** or **Neon** project → real `DATABASE_URL`; run `prisma migrate deploy`
+  against it. Supabase also gives the private Storage bucket if you want `FVD_STORAGE=supabase`.
 
 ### If you must use Hostinger shared hosting (hPanel → Node.js)
 1. Create a **Supabase** (or Neon) project → real `DATABASE_URL`; a Supabase **private** bucket
@@ -126,31 +130,47 @@ response fails (the Node app crashed — check the hPanel Node.js logs; a Prisma
   `https://<domain>` — this is the single configurable public base URL used for canonicals, the
   sitemap, OG tags and every DeCA public URL.
 
-### 4. VPS (Hostinger, Ubuntu LTS, ≥ 2 GB RAM)
+### 4. VPS (Hostinger, Ubuntu LTS, ≥ 2 GB RAM) — bundled stack, one command
+
 ```bash
 # Docker Engine
 curl -fsSL https://get.docker.com | sh
 
-# App
 git clone https://github.com/FarinosV44/Farvertrans-Deca.git && cd Farvertrans-Deca
 git checkout main
-cp .env.example .env    # fill every value with the real Supabase / Resend / domain values
-docker build --build-arg NEXT_STANDALONE=1 -t fvd .   # see Dockerfile (BUILD 15 scaffold)
-npx prisma migrate deploy   # against the Supabase DATABASE_URL
-docker run -d --name fvd --env-file .env -p 3000:3000 --restart unless-stopped fvd
+cp .env.prod.example .env.prod
+#   edit .env.prod:
+#   - POSTGRES_PASSWORD           → a long random string
+#   - DATABASE_URL                → same password, host stays `db` (the compose service)
+#   - NEXT_PUBLIC_FVD_BASE_URL    → https://<your real domain>
+#   - FVD_HASH_SECRET             → a long random string
+docker compose -f docker-compose.prod.yml up -d --build
 ```
-- Put Caddy or nginx in front for TLS (Let's Encrypt) and set `Strict-Transport-Security` at the proxy
-  too. TLS 1.2 minimum (R-6).
-- `FVD_DEBUG` must be unset/`0` in `.env`.
+
+This starts three containers: `fvd-prod-db` (Postgres, private, on a named volume),
+a one-shot `migrate` (`prisma migrate deploy`), then `fvd-prod-app` on `:3000` with a named volume
+at `/app/.storage` holding the generated PDFs (`FVD_STORAGE=local`). `docker compose ... logs -f app`
+to follow it; `docker compose -f docker-compose.prod.yml up -d --build` again to redeploy after a
+`git pull` (migrations re-run automatically, data volumes persist).
+
+- Put Caddy or nginx in front for TLS (Let's Encrypt), proxying to `127.0.0.1:3000`, and set
+  `Strict-Transport-Security` at the proxy too. TLS 1.2 minimum (R-6).
+- `FVD_DEBUG` must be `0` in `.env.prod`.
+- Back up both volumes (`fvd-prod-db`, `fvd-prod-storage`) — see §6.
+
+**Alternative — managed Postgres instead of the bundled `db`:** delete the `db` and `migrate` service
+deps you don't want, point `DATABASE_URL` at Supabase/Neon, run `prisma migrate deploy` against it
+once, and `docker run -d --name fvd --env-file .env.prod -p 3000:3000 --restart unless-stopped -v fvd-storage:/app/.storage fvd-app`.
 
 ### 5. Health & logs
 - `GET /health` → `{ "status": "ok", "version": "...", "db": "up" }`. Wire it to Hostinger/uptime monitoring.
 - App logs go to stdout (`docker logs fvd`). No personal data or tokens are logged.
 
 ### 6. Backups
-- Supabase provides automated Postgres backups on paid tiers; enable point-in-time recovery.
-- Storage (the PDFs): Supabase Storage is durable; for extra safety, a periodic `supabase storage`
-  export or a bucket replication rule.
+- **Bundled stack:** `docker exec fvd-prod-db pg_dump -U <user> <db> | gzip > deca-$(date +%F).sql.gz`
+  on a cron, off the box; and archive the `fvd-prod-storage` volume
+  (`docker run --rm -v fvd-prod-storage:/s -v $PWD:/out alpine tar czf /out/storage-$(date +%F).tgz -C /s .`).
+- **Managed Postgres:** Supabase/Neon provide automated backups; enable point-in-time recovery.
 - Test a restore before relying on it.
 
 ## Merge to `main`

@@ -33,6 +33,7 @@ prisma/generated/
 .env
 .env.*
 !.env.example
+!.env.prod.example
 
 # logs
 *.log
