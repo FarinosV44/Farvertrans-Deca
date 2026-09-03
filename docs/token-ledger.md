@@ -5,6 +5,7 @@
 
 | Date | Session / phase | Model | Tokens (approx) | Notes |
 |---|---|---|---|---|
-| 2026-09-03 | Phase 1 Discovery — setup, competitive scan, state files | claude-sonnet-5 | ~1.5M (in-context, running total) | new project scaffolding + web scan + Phase 1 artifacts |
+| 2026-09-03 | Phase 1 Discovery — setup, competitive scan, state files, scope | claude-sonnet-5 | ~0.3M | new project scaffolding + web scan + Phase 1 artifacts + skill embed |
+| 2026-09-03 | Phase 2 Functional spec — spec, technical plan, threat model, flows, firm estimate, assistant config | claude-sonnet-5 | ~0.3M | F1–F18 + AC + T-1…T-15 + 7 flows + rules/agents |
 
 AI cost mode: subscription (Claude Code) — marginal cost ≈ €0.
