@@ -1,0 +1,220 @@
+// Farvertrans DeCA — data model (docs/02-functional-spec.md §Data model).
+// Supabase Auth owns auth.* ; this schema owns every application table.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A Farvertrans operator/commercial whose ref_code appears in acquisition links.
+model Operator {
+  id        String   @id @default(cuid())
+  name      String
+  refCode   String   @unique @map("ref_code")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("operator")
+}
+
+/// The account's own transport company.
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  nif       String?
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users       User[]
+  decas       Deca[]
+  acquisition Acquisition?
+
+  @@map("company")
+}
+
+/// A registered user, linked 1:1 to a Supabase auth user by authUserId.
+model User {
+  id         String   @id @default(cuid())
+  authUserId String   @unique @map("auth_user_id")
+  email      String
+  companyId  String?  @map("company_id")
+  role       Role     @default(user)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  company        Company?        @relation(fields: [companyId], references: [id])
+  createdDecas   Deca[]          @relation("DecaCreatedBy")
+  acquisition    Acquisition?
+  savedCompanies SavedCompany[]
+  savedVehicles  SavedVehicle[]
+  savedAddresses SavedAddress[]
+
+  @@map("user")
+}
+
+enum Role {
+  user
+  internal
+}
+
+/// First-touch / last-touch acquisition attribution, one row per user or company.
+model Acquisition {
+  id               String    @id @default(cuid())
+  userId           String?   @unique @map("user_id")
+  companyId        String?   @unique @map("company_id")
+  firstRefCode     String?   @map("first_ref_code")
+  lastRefCode      String?   @map("last_ref_code")
+  firstLandingUrl  String?   @map("first_landing_url")
+  firstUtmSource   String?   @map("first_utm_source")
+  firstUtmMedium   String?   @map("first_utm_medium")
+  firstUtmCampaign String?   @map("first_utm_campaign")
+  firstUtmContent  String?   @map("first_utm_content")
+  firstUtmTerm     String?   @map("first_utm_term")
+  lastUtmSource    String?   @map("last_utm_source")
+  lastUtmMedium    String?   @map("last_utm_medium")
+  lastUtmCampaign  String?   @map("last_utm_campaign")
+  lastUtmContent   String?   @map("last_utm_content")
+  lastUtmTerm      String?   @map("last_utm_term")
+  firstSeenAt      DateTime? @map("first_seen_at")
+  signupAt         DateTime? @map("signup_at")
+  firstDecaAt      DateTime? @map("first_deca_at")
+
+  user    User?    @relation(fields: [userId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@map("acquisition")
+}
+
+/// A DeCA document. The current legally-valid version is currentVersionId.
+model Deca {
+  id               String    @id @default(cuid())
+  companyId        String?   @map("company_id")
+  createdByUserId  String?   @map("created_by_user_id")
+  currentVersionId String?   @unique @map("current_version_id")
+  serviceStart     DateTime? @map("service_start")
+  serviceEnd       DateTime? @map("service_end")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  company        Company?      @relation(fields: [companyId], references: [id])
+  createdByUser  User?         @relation("DecaCreatedBy", fields: [createdByUserId], references: [id])
+  currentVersion DecaVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions       DecaVersion[] @relation("DecaVersions")
+  claimTokens    ClaimToken[]
+
+  @@map("deca")
+}
+
+/// An append-only version of a DeCA. Never updated after creation (except pdfPath on first write).
+model DecaVersion {
+  id           String   @id @default(cuid())
+  decaId       String   @map("deca_id")
+  versionNo    Int      @map("version_no")
+  token        String   @unique
+  pdfPath      String?  @map("pdf_path")
+  dataJson     Json     @map("data_json")
+  changeReason String?  @map("change_reason")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  deca      Deca            @relation("DecaVersions", fields: [decaId], references: [id], onDelete: Cascade)
+  currentOf Deca?           @relation("CurrentVersion")
+  accessLog DecaAccessLog[]
+
+  @@unique([decaId, versionNo])
+  @@index([decaId])
+  @@map("deca_version")
+}
+
+/// One-time token to attach an anonymous DeCA to an account (30-day TTL, D-016).
+model ClaimToken {
+  token     String    @id
+  decaId    String    @map("deca_id")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  deca Deca @relation(fields: [decaId], references: [id], onDelete: Cascade)
+
+  @@index([decaId])
+  @@map("claim_token")
+}
+
+model SavedCompany {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  name      String
+  nif       String?
+  address   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_company")
+}
+
+model SavedVehicle {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  tractorPlate String   @map("tractor_plate")
+  trailerPlate String?  @map("trailer_plate")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_vehicle")
+}
+
+model SavedAddress {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  label     String
+  address   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_address")
+}
+
+/// First-party analytics event. Never carries PII.
+model Event {
+  id             String   @id @default(cuid())
+  name           String
+  ts             DateTime @default(now())
+  sessionId      String   @map("session_id")
+  path           String
+  refSnapshot    Json?    @map("ref_snapshot")
+  appVersion     String?  @map("app_version")
+
+  @@index([name, ts])
+  @@map("event")
+}
+
+/// Minimal public-download audit trail (R-11). Stores only a hashed IP.
+model DecaAccessLog {
+  id            String   @id @default(cuid())
+  decaVersionId String   @map("deca_version_id")
+  ipHash        String   @map("ip_hash")
+  ts            DateTime @default(now())
+
+  decaVersion DecaVersion @relation(fields: [decaVersionId], references: [id], onDelete: Cascade)
+
+  @@index([decaVersionId])
+  @@map("deca_access_log")
+}
+
+/// Sliding-window abuse counter keyed on hashed IP/fingerprint + window.
+model AbuseCounter {
+  keyHash     String   @map("key_hash")
+  windowStart DateTime @map("window_start")
+  count       Int      @default(0)
+
+  @@id([keyHash, windowStart])
+  @@map("abuse_counter")
+}

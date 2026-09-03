@@ -1,0 +1,11 @@
+node_modules
+.next
+playwright-report
+test-results
+prisma/generated
+docs
+.claude
+.agents
+pnpm-lock.yaml
+package-lock.json
+*.md

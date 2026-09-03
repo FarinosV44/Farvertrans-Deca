@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; current work branch: none yet
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. Nothing awaits `main`.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -35,18 +35,18 @@
 ## Phase status
 | Phase | Status | Key artifacts |
 |-------|--------|---------------|
-| 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓ |
-| 2 Functional spec | done | docs/02-functional-spec.md ✓, docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ |
-| 3 Design handoff | compressed / sufficient to build | docs/design/IMPLEMENTATION-BRIEF.md ✓ |
-| 4 Faithful build | starting through executable issue queue | implementation issues #5 onward |
-| 5 Development | starting through vertical slices | scaffold, app, tests, QA |
+| 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓, docs/estimate.md (v1) ✓, docs/token-ledger.md ✓, docs/keel-conformance.md ✓, docs/issues.md ✓ |
+| 2 Functional spec | done | docs/02-functional-spec.md ✓ (F1–F18, AC-01…AC-37), docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ (7 flows), docs/estimate.md v2 firm ✓, .claude/rules/ + .claude/agents/ ✓ |
+| 3+4 Design (folded — D-019) | done | docs/design/IMPLEMENTATION-BRIEF.md ✓ (screen list + journey + concrete tokens; no external design-tool round-trip) |
+| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/05-test-points.md ✓ · BUILD 05 done · BUILD 06–15 pending |
 | 6 Documentation | pending | docs/architecture.md, docs/api/, docs/usage/ |
 | 7 Release | pending | docs/07-release.md |
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
-- Phase: 4/5 — implementation-first build authorised by user (D-019).
-- Next action: execute GitHub issues #5 onward in order. Do not expand discovery. Start with runnable scaffold and a browser-verifiable landing/creation flow; each issue ends in working code + tests.
+- Phase: 5 — Development (execution mode, D-019). Sprint 1.
+- Done: BUILD 05 (scaffold) — Next 15 + TS + Tailwind 4 + Prisma + Supabase helpers + full schema + init migration + seed + health + error/404 + test/lint/build + keel-verify/keel-doctor scripts + docker playground. All checks green (build, typecheck, lint, 3 unit, 2 e2e, prisma validate/migrate/seed).
+- Next action: BUILD 06 — production landing at `/` (full EPIC 01 structure: hero with real UI preview, 3 steps, 3 benefits, legal/trust with BOE link, SEO FAQ, final CTA, persistent mobile CTA; SSR, one h1, title/meta/canonical/OG, schema.org, `landing_view` + `click_crear_deca` events; works without JS; 360/768/1280). Then BUILD 07 (3-step creator), BUILD 08 (compliant PDF+QR+public URL), BUILD 09 (signup+claim). Continue in issue order 06→15.
 
 ## Open items
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
@@ -57,4 +57,4 @@
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — implementation-first build queue authorised and prepared.
+Last updated: 2026-09-03 — BUILD 05 done, starting BUILD 06

@@ -102,8 +102,18 @@
 - Decision: `.claude/rules/` (code-style, security, docs-discipline — path-scoped to `app/**`, `lib/**`, `prisma/**`, `content/**`) and `.claude/agents/` (code-reviewer, security-auditor, docs-verifier, design-fidelity-auditor, playground-qa, a11y-auditor, test-driver, launch-verifier) generated. `guide-qa` deferred to Phase 6 (guide decision not yet made). Permission allow-list (`.claude/settings.json`), `.githooks/pre-commit` gate, and CI workflow deferred to the Phase 5 scaffold (their sources — verified tooling commands — do not exist yet).
 - Why: Sources (§Conventions, threat model, code map globs) are fixed at Phase 2 close per `references/assistant-config.md`.
 
-## D-019 — Implementation-first acceleration after Phase 2
-- Date / phase: 2026-09-03 / Phase 3
-- Decision: The user explicitly prioritised a working product over further speculative documentation. Phase 3 is compressed to an implementation-first brief sufficient to build faithfully; subsequent work proceeds in vertical executable slices. Each execution issue must end in working/testable behaviour. Discovery is not expanded unless implementation evidence reveals a genuine gap.
-- Why: Discovery, confrontation, functional spec, technical plan and threat model already exist. The acquisition window before 2026-10-05 rewards shipping. The user specifically asked to start building the functional landing, document creation and company registration now.
-- Guardrail: Existing D-001…D-018, regulatory R-1…R-13 and EPICs #1–#4 remain binding. This is an execution-sequencing change, not permission to bypass compliance or quality gates.
+## D-019 — Implementation-first acceleration after Phase 2 (execution mode)
+- Date / phase: 2026-09-03 / entering build
+- Decision: The user explicitly prioritised a working product over further speculative documentation ("I want execution, not more discovery or speculative documentation"). The formal Keel Phase 3 (design-tool handoff) and Phase 4 (faithful-build audit) are folded into a single lean `docs/design/IMPLEMENTATION-BRIEF.md` — screen list + primary journey + concrete design tokens, type scale and component conventions the build follows directly. No external design-tool round-trip for v1. Work proceeds in vertical executable slices on the BUILD backlog (#5→#15) on `develop`; each issue ends with browser-verifiable functionality + tests. Discovery is not expanded unless implementation evidence reveals a genuine gap.
+- Why: Discovery, confrontation, functional spec, technical plan and threat model already exist; the acquisition window before 2026-10-05 rewards shipping.
+- Guardrail: D-001…D-018, regulatory R-1…R-13 and EPICs #1–#4 remain binding — an execution-sequencing change, not permission to bypass compliance or quality gates.
+- Scope guard (user-stated): NO ERP, TMS, invoicing, fleet tracking, Stripe, pricing, checkout, sales/lead forms, or unrelated logistics features. Signup is never required before the first DeCA (D-016 reinforced).
+- Alternatives rejected: full Phase 3 design-tool handoff (too slow for the deadline; the user vetoed it).
+
+## D-020 — Pinned stack versions at BUILD 05; postcss advisory accepted (tracked)
+- Date / phase: 2026-09-03 / BUILD 05
+- Decision: Next 15.5.25, React 19.0.0, Tailwind 4.3.3 (`@tailwindcss/postcss` aligned to 4.3.3 — 4.0.0 threw "Missing field `negated` on ScannerOptions.sources"), Prisma 6.1.0, @react-pdf/renderer 4.1.6, @supabase/ssr 0.5.2, Playwright 1.55.1, Vitest 3.2.7 (bumped from 2.1.8 to clear a critical RCE advisory in the vitest/vite/esbuild dev chain), zod 3.24.1.
+- `npm audit` residual after this work: 0 critical, 1 high (`postcss <=8.5.22`, reached only through Next's own bundled build toolchain — a build-time source-map path-traversal class, not a runtime exposure of the deployed app). Fix requires Next 16 (semver-major). **Accepted as a tracked risk** for now; revisit with a deliberate Next 16 upgrade after launch. 3 moderate + 4 low are all dev-only toolchain.
+- This environment's npm blocks package install scripts by default (`allowScripts`); prisma/@prisma/*, esbuild, sharp, unrs-resolver are explicitly approved in `package.json` `allowScripts`.
+- Why: get a green, runnable scaffold under the 2026-10-05 deadline without a major-version upgrade mid-build.
+- Not checked: whether a later dependency (e.g. `@react-pdf` fonts, hCaptcha SDK) forces a version change — treated as normal maintenance.

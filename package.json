@@ -1,0 +1,70 @@
+{
+  "name": "farvertrans-deca",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test": "npm run typecheck && npm run lint && npm run test:unit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "seed": "tsx prisma/seed.ts",
+    "keel:verify": "node scripts/keel-verify.mjs",
+    "keel:doctor": "node scripts/keel-doctor.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "6.1.0",
+    "@react-pdf/renderer": "4.1.6",
+    "@supabase/ssr": "0.5.2",
+    "@supabase/supabase-js": "2.47.10",
+    "next": "15.5.25",
+    "qrcode": "1.5.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "server-only": "0.0.1",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.2.0",
+    "@playwright/test": "1.55.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.10.5",
+    "@types/qrcode": "1.5.5",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "eslint": "9.17.0",
+    "eslint-config-next": "15.5.25",
+    "prettier": "3.4.2",
+    "prisma": "6.1.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "3.2.7"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "allowScripts": {
+    "@prisma/client@6.1.0": true,
+    "@prisma/engines@6.1.0": true,
+    "esbuild@0.23.1": true,
+    "prisma@6.1.0": true,
+    "sharp@0.33.5": true,
+    "unrs-resolver@1.12.2": true,
+    "esbuild@0.28.2": true
+  }
+}
