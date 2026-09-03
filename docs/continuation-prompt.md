@@ -4,12 +4,15 @@ Repo: FarinosV44/Farvertrans-Deca
 Branch: develop (v1 also on main)
 Generated: 2026-09-03
 Keel: v5.19.2
-Position: **v1 complete — BUILD 05–15 done, on `main` (e088f51), CI green.** Phase 5 closed.
-Post-release: 3 hotfixes on `main` — Prisma Linux engines (`ff731dd`); the deployed **503** =
-`/app` route segment collided with `/` in the standalone build, fixed by `/app`→`/panel` rename
-(`fbc19ca`, D-023); server-side attribution capture in `middleware.ts` removing a CI race (`a653d37`);
-self-contained `docker-compose.prod.yml` deploy path — app + bundled Postgres + PDF volume, no
-Supabase needed (`e088f51`, D-024), verified end-to-end locally.
+Position: **v1 complete — BUILD 05–15 done, on `main` (d200158), CI green.** Phase 5 closed.
+Post-release hotfixes on `main`: Prisma Linux engines (`ff731dd`); **503 #1** = `/app` route segment
+collided with `/` in the standalone build → `/app`→`/panel` rename (`fbc19ca`, D-023); attribution
+captured in `middleware.ts`, race + cookie double-encoding fixed (`a653d37` + `7a0b175`);
+self-contained `docker-compose.prod.yml` (`e088f51`, D-024); **503 #2 (Hostinger Cloud Startup)** =
+LiteSpeed `lsnode.js` does `require(startupFile)` and the ESM standalone `server.js` threw
+`ERR_REQUIRE_ESM` → removed `"type":"module"` (Next emits CJS `server.js`) + `server.cjs` startup file
++ `scripts/standalone-postbuild.mjs` + CI guard (`d200158`, D-025). All verified end-to-end locally.
+Two deploy paths documented in `docs/07-release.md`: VPS+Docker (`server.js`) / Cloud Startup (`server.cjs`).
 
 ## What happened
 
@@ -32,7 +35,7 @@ Key code map: `lib/deca/*` (validate R-2, PDF, tokens, versioning, deactivation)
 (@react-pdf), `lib/storage` (Supabase/local), `lib/auth/*` (own email+password — D-021),
 `lib/attribution/*`, `lib/abuse/*`, `lib/data/*` (history+saved), `content/seo/pages.ts`,
 `middleware.ts` (headers), `Dockerfile`, `.github/workflows/ci.yml`. Full reference: `docs/api/INDEX.md`.
-Decisions: `docs/decisions.md` D-001…D-024. Release evidence + runbook: `docs/07-release.md`.
+Decisions: `docs/decisions.md` D-001…D-025. Release evidence + runbook: `docs/07-release.md`.
 
 ## Before public launch — the USER's tasks (not code)
 
@@ -40,11 +43,14 @@ Decisions: `docs/decisions.md` D-001…D-024. Release evidence + runbook: `docs/
    1-year retention obligation (D-016). Document the legal basis + an erasure procedure.
 2. **Legal / inspection check** of a real generated DeCA (generate a sample — instructions in
    `docs/07-release.md`).
-3. Deploy: Hostinger VPS with Docker → `cp .env.prod.example .env.prod`, fill 4 values
-   (`POSTGRES_PASSWORD`, `DATABASE_URL`, `NEXT_PUBLIC_FVD_BASE_URL`, `FVD_HASH_SECRET`),
-   `docker compose -f docker-compose.prod.yml up -d --build`, put a TLS proxy in front (R-6).
-   Supabase/Resend/hCaptcha are all optional (see `docs/07-release.md` §4). The real domain still needs
-   deciding (placeholder `deca.farvertrans.es`, D-011).
+3. Deploy — pick one (both in `docs/07-release.md`):
+   - **Hostinger Cloud Startup** (what the user is on): hPanel → Node.js, startup file = `server.cjs`,
+     app root = repo, Node 20+; managed Postgres (`DATABASE_URL`); env from `.env.example`; build
+     `npm ci && npx prisma generate && npx prisma migrate deploy && NEXT_STANDALONE=1 npm run build`.
+   - **VPS + Docker:** `cp .env.prod.example .env.prod`, fill 4 values, `docker compose -f
+     docker-compose.prod.yml up -d --build`, TLS proxy in front.
+   Supabase/Resend/hCaptcha optional. Real domain still to decide (placeholder `deca.farvertrans.es`,
+   D-011); `NEXT_PUBLIC_FVD_BASE_URL` must equal the live HTTPS URL (R-5/R-6).
 4. Then: beat-3 comments on #1–#15 ("testable now on <url>") and the user closes the issues.
 
 ## If work continues (next session)
