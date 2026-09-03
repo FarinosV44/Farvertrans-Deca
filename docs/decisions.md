@@ -117,3 +117,11 @@
 - This environment's npm blocks package install scripts by default (`allowScripts`); prisma/@prisma/*, esbuild, sharp, unrs-resolver are explicitly approved in `package.json` `allowScripts`.
 - Why: get a green, runnable scaffold under the 2026-10-05 deadline without a major-version upgrade mid-build.
 - Not checked: whether a later dependency (e.g. `@react-pdf` fonts, hCaptcha SDK) forces a version change — treated as normal maintenance.
+
+## D-021 — v1 auth: own email+password + HMAC session cookie (Supabase Auth deferred)
+- Date / phase: 2026-09-03 / BUILD 09
+- Decision: v1 authentication is implemented in-app: email + password (scrypt, `node:crypto`, no native dep) with an HMAC-SHA256-signed httpOnly `fvd_session` cookie (`lib/auth/*`). The `user.auth_user_id` column is kept (`local:<uuid>` for now) so switching to Supabase Auth later is additive, not a migration. Signup collects only email, password, company name + NIF + address — no lead-qualification fields.
+- Why: D-013 named Supabase Auth, but there is no Supabase project yet (CREDENTIAL, pre-launch) and the deadline is hard. Own-auth keeps the whole flow runnable and testable in dev/CI today with the same pattern already used for storage (`lib/storage` — Supabase in prod, local in dev). Reversible.
+- Alternatives rejected: running Supabase locally via the CLI (heavy, another moving part); blocking BUILD 09 on the Supabase project (breaks "value before signup" for the deadline).
+- Not checked: whether Supabase Auth's email deliverability / OTP UX is materially better for this audience — to weigh when the Supabase project exists; email OTP can be added alongside password without schema change.
+- Pre-launch: decide password reset (email) and consider migrating to Supabase Auth or adding OTP.

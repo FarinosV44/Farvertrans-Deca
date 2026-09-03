@@ -33,4 +33,11 @@
 | 2026-09-03 | BUILD 08 PDF/QR/URL | R-8 unknown token → generic 404 text/plain | driven | n/a | test:compliance | PASS | next commit |
 | 2026-09-03 | BUILD 08 PDF/QR/URL | R-11 PDF metadata records CreationDate + Creator="Farvertrans DeCA v..." | driven (pdfjs getMetadata) | n/a | test:compliance | PASS | next commit |
 | 2026-09-03 | BUILD 08 PDF/QR/URL | R-13 fails closed — invalid payload → 422, no document | driven | n/a | test:compliance | PASS | next commit |
-| 2026-09-03 | BUILD 08 PDF/QR/URL | standalone build traces lib/pdf/fonts into .next/standalone (Hostinger Docker) | driven | n/a | `NEXT_STANDALONE=1 npm run build` + ls | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | standalone build traces lib/pdf/fonts into .next/standalone (Hostinger Docker) | driven | n/a | `NEXT_STANDALONE=1 npm run build` + ls | PASS | 206d734 |
+| 2026-09-03 | BUILD 09 signup+claim | password scrypt hash/verify (correct/wrong/malformed); min length | driven (Vitest) | pure logic | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | session token HMAC sign/verify; tamper + junk rejected | driven (Vitest) | pure logic | `npm run test:unit` | PASS (31 unit total) | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | AC-17 generate first → register second → DeCA claimed, appears in /app | driven (Playwright) | n/a | e2e registro.spec | PASS | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | auth failure (422) never orphans/deletes the DeCA; claim token still usable after | driven | n/a | e2e registro.spec | PASS | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | a claim token cannot be reused by a second account (reports already-used) | driven | n/a | e2e registro.spec | PASS | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | signup form carries no lead-qual fields (flota/facturación/empleados/teléfono/demo/cargo) | driven | n/a | e2e registro.spec | PASS | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | /registro axe-clean (no serious/critical) | driven (@axe-core) | n/a | e2e a11y.spec | PASS | next commit |

@@ -35,10 +35,13 @@ slices:
       BUILD 07/11; AC-17 claim + AC-24 driver share land in BUILD 09/13.
   - id: S-09
     title: BUILD 09 — Company signup + claim anonymous DeCA
-    status: not-started
+    status: done
     hours: 12
     depends_on: [S-08]
-    criteria: [AC-17, AC-19, AC-20]
+    criteria: [AC-17]
+    notes: >
+      AC-19/AC-20 (first/last-touch attribution captured at signup) land in
+      BUILD 11 (S-11). v1 auth is own email+password (D-021), Supabase Auth deferred.
 ---
 
 # Sprint 1 — Runnable product to the core anonymous flow

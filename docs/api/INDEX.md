@@ -13,6 +13,12 @@
 | ensureFonts() | function | lib/pdf/fonts.ts | docs/reference/lib.md | Register bundled Inter (OFL) as data URIs for @react-pdf |
 | getPdfStore() / pdfKey() / PdfStore / StorageError | fn/type | lib/storage/index.ts | docs/reference/lib.md | Pluggable PDF store: Supabase Storage (prod) or local FS (dev/tests) |
 | isPubliclyAvailable() | function | lib/deca/deactivation.ts | docs/reference/lib.md | R-9 7-day post-service availability window |
+| POST /api/auth/register | route | app/api/auth/register/route.ts | docs/reference/endpoints.md | Create company + user, set session, claim the anonymous DeCA (never orphans it) |
+| POST /api/auth/login | route | app/api/auth/login/route.ts | docs/reference/endpoints.md | Email + password login; optional claim on the way in |
+| signup() / login() / getCurrentUser() / AuthError | fn/class | lib/auth/index.ts | docs/reference/lib.md | v1 own auth (D-021); minimal signup, SSR session |
+| hashPassword() / verifyPassword() / isStrongEnough() | function | lib/auth/password.ts | docs/reference/lib.md | scrypt password hashing (constant-time verify) |
+| signSession() / verifySession() / SESSION_COOKIE | fn/const | lib/auth/session.ts | docs/reference/lib.md | HMAC-signed 30-day session token + cookie options |
+| claimDeca() / ClaimError | fn/class | lib/deca/claim.ts | docs/reference/lib.md | Attach an anonymous DeCA to a company via its one-time claim token (D-016) |
 | hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
 | decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |

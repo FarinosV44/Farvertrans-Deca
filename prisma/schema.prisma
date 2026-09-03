@@ -39,12 +39,13 @@ model Company {
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.
 model User {
-  id         String   @id @default(cuid())
-  authUserId String   @unique @map("auth_user_id")
-  email      String
-  companyId  String?  @map("company_id")
-  role       Role     @default(user)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  authUserId   String   @unique @map("auth_user_id")
+  email        String
+  passwordHash String?  @map("password_hash")
+  companyId    String?  @map("company_id")
+  role         Role     @default(user)
+  createdAt    DateTime @default(now()) @map("created_at")
 
   company        Company?        @relation(fields: [companyId], references: [id])
   createdDecas   Deca[]          @relation("DecaCreatedBy")
