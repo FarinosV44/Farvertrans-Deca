@@ -216,6 +216,18 @@ model DecaAccessLog {
   @@map("deca_access_log")
 }
 
+/// A reusable DeCA template — recurring non-date data for a lane (UX #25).
+model DecaTemplate {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  dataJson  Json     @map("data_json")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@map("deca_template")
+}
+
 /// One-time password-reset token (ACCOUNT #23). Short TTL, single use.
 model PasswordResetToken {
   tokenHash String    @id @map("token_hash")

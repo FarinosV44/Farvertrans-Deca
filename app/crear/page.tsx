@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
-import { CrearWizard, type SavedData, type WizardInitial } from "@/components/deca/wizard";
+import {
+  CrearWizard,
+  type SavedData,
+  type WizardInitial,
+  type WizardTemplate,
+} from "@/components/deca/wizard";
 import { getCurrentUser } from "@/lib/auth";
 import { getDecaForDuplicate } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
+import { listTemplates } from "@/lib/data/templates";
 
 export const metadata: Metadata = {
   title: "Crear DeCA gratis",
@@ -25,13 +31,16 @@ export default async function CrearPage({
 
   let initial: WizardInitial | undefined;
   let saved: SavedData | undefined;
+  let templates: WizardTemplate[] | undefined;
 
   if (user?.companyId) {
-    const [s, source] = await Promise.all([
+    const [s, t, source] = await Promise.all([
       listSaved(user.id),
+      listTemplates(user.companyId),
       from ? getDecaForDuplicate(user.companyId, from) : Promise.resolve(null),
     ]);
     saved = s;
+    templates = t;
     if (source) {
       initial = {
         shipperName: source.shipper?.name ?? "",
@@ -56,7 +65,16 @@ export default async function CrearPage({
     <>
       <SiteHeader authed={!!user?.companyId} companyName={user?.company?.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-10 md:px-6">
-        <CrearWizard initial={initial} saved={saved} />
+        <CrearWizard
+          initial={initial}
+          saved={saved}
+          templates={templates}
+          company={
+            user?.company
+              ? { name: user.company.name, nif: user.company.nif, address: user.company.address }
+              : undefined
+          }
+        />
       </main>
       <SiteFooter />
     </>

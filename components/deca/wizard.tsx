@@ -59,6 +59,21 @@ export type SavedData = {
   addresses: { id: string; label: string; address: string }[];
 };
 
+export type WizardTemplate = {
+  id: string;
+  name: string;
+  shipper?: { name?: string; nif?: string; address?: string };
+  carrier?: { name?: string; nif?: string; address?: string };
+  origin?: string;
+  destination?: string;
+  goods?: string;
+  weight?: string;
+  tractorPlate?: string;
+  trailerPlate?: string;
+};
+
+export type WizardCompany = { name: string; nif: string | null; address: string | null };
+
 /** Pre-fill for the duplicate flow (a source DeCA's payload, date left blank). */
 export type WizardInitial = Partial<FormState>;
 
@@ -125,10 +140,15 @@ function ReviewSummary({ form }: { form: FormState }) {
 export function CrearWizard({
   initial,
   saved,
+  templates,
+  company,
   correctDecaId,
 }: {
   initial?: WizardInitial;
   saved?: SavedData;
+  templates?: WizardTemplate[];
+  /** The logged-in company, for "usar mi empresa" (UX #25). */
+  company?: WizardCompany;
   /** When set, the wizard corrects an existing DeCA → a new version (R-13). */
   correctDecaId?: string;
 } = {}) {
@@ -381,6 +401,80 @@ export function CrearWizard({
       >
         {step === 0 && (
           <>
+            {!isCorrection && templates && templates.length > 0 && (
+              <label className="mt-4 block text-sm">
+                <span className="font-medium">Empezar desde una plantilla</span>
+                <select
+                  data-testid="template-picker"
+                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const t = templates.find((x) => x.id === e.target.value);
+                    if (t)
+                      setForm((f) => ({
+                        ...f,
+                        shipperName: t.shipper?.name || f.shipperName,
+                        shipperNif: t.shipper?.nif || f.shipperNif,
+                        shipperAddress: t.shipper?.address || f.shipperAddress,
+                        carrierName: t.carrier?.name || f.carrierName,
+                        carrierNif: t.carrier?.nif || f.carrierNif,
+                        carrierAddress: t.carrier?.address || f.carrierAddress,
+                        origin: t.origin || f.origin,
+                        destination: t.destination || f.destination,
+                        goods: t.goods || f.goods,
+                        weight: t.weight || f.weight,
+                        tractorPlate: t.tractorPlate || f.tractorPlate,
+                        trailerPlate: t.trailerPlate || f.trailerPlate,
+                      }));
+                    e.currentTarget.value = "";
+                  }}
+                >
+                  <option value="">Elige una plantilla…</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                  Aún tendrás que revisar los datos y poner la fecha antes de generar.
+                </span>
+              </label>
+            )}
+            {!isCorrection && company && (
+              <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                <button
+                  type="button"
+                  data-testid="use-my-company-shipper"
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      shipperName: company.name,
+                      shipperNif: company.nif ?? "",
+                      shipperAddress: company.address ?? "",
+                    }))
+                  }
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                >
+                  Mi empresa es el cargador
+                </button>
+                <button
+                  type="button"
+                  data-testid="use-my-company-carrier"
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      carrierName: company.name,
+                      carrierNif: company.nif ?? "",
+                      carrierAddress: company.address ?? "",
+                    }))
+                  }
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                >
+                  Mi empresa es el transportista
+                </button>
+              </div>
+            )}
             {saved && saved.companies.length > 0 && (
               <label className="mt-4 block text-sm">
                 <span className="font-medium">Usar una empresa guardada</span>

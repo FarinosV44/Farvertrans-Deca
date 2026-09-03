@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export function AppNav({ current }: { current: "home" | "historico" | "datos" }) {
+export function AppNav({
+  current,
+}: {
+  current: "home" | "historico" | "datos" | "plantillas" | "equipo";
+}) {
   const item = (href: string, label: string, key: string) => (
     <Link
       href={href}
@@ -21,7 +25,9 @@ export function AppNav({ current }: { current: "home" | "historico" | "datos" })
     >
       {item("/panel", "Mis DeCA", "home")}
       {item("/panel/historico", "Historial", "historico")}
+      {item("/panel/plantillas", "Plantillas", "plantillas")}
       {item("/panel/datos", "Datos habituales", "datos")}
+      {item("/panel/equipo", "Equipo", "equipo")}
     </nav>
   );
 }

@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { ResultActions } from "@/components/deca/result-actions";
+import { SaveTemplate } from "@/components/deca/save-template";
 import { getCurrentUser } from "@/lib/auth";
 import { getDecaDetail } from "@/lib/data/history";
 import { publicEnv } from "@/lib/env";
@@ -38,7 +39,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
 
         <ResultActions publicUrl={publicUrl} />
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
             href={`/panel/deca/${deca.id}/corregir`}
             data-testid="deca-corregir"
@@ -46,6 +47,13 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
           >
             Corregir
           </Link>
+          <Link
+            href={`/crear?from=${deca.id}`}
+            className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 text-sm font-medium no-underline"
+          >
+            Duplicar
+          </Link>
+          <SaveTemplate data={d} />
         </div>
 
         <section className="mt-8" aria-labelledby="versiones">
