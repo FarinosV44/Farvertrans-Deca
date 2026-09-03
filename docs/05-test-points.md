@@ -41,3 +41,11 @@
 | 2026-09-03 | BUILD 09 signup+claim | a claim token cannot be reused by a second account (reports already-used) | driven | n/a | e2e registro.spec | PASS | next commit |
 | 2026-09-03 | BUILD 09 signup+claim | signup form carries no lead-qual fields (flota/facturación/empleados/teléfono/demo/cargo) | driven | n/a | e2e registro.spec | PASS | next commit |
 | 2026-09-03 | BUILD 09 signup+claim | /registro axe-clean (no serious/critical) | driven (@axe-core) | n/a | e2e a11y.spec | PASS | next commit |
+| 2026-09-03 | BUILD 09 signup+claim | /registro axe-clean (no serious/critical) | driven (@axe-core) | n/a | e2e a11y.spec | PASS | fc5609a |
+| 2026-09-03 | BUILD 10 workspace | history filter predicate (free text across ref/place/carrier/plate/shipper; date range) | driven (Vitest) | pure logic | `npm run test:unit` | PASS (36 unit) | next commit |
+| 2026-09-03 | BUILD 10 workspace | saved-entity schemas (plate normalisation, NIF required) | driven (Vitest) | pure logic | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 10 workspace | authed DeCA is owned by the company + appears in /app + /app/historico | driven (Playwright) | n/a | e2e workspace.spec | PASS | next commit |
+| 2026-09-03 | BUILD 10 workspace | history search filters (q match / no-match, date range) | driven | n/a | e2e workspace.spec | PASS | next commit |
+| 2026-09-03 | BUILD 10 workspace | "Repetir último DeCA" / duplicate prefills, date reset, NEW id/token on generate | driven | n/a | e2e workspace.spec | PASS | next commit |
+| 2026-09-03 | BUILD 10 workspace | saved data add → autofill in wizard (company + vehicle) → delete; a generated DeCA is untouched | driven | n/a | e2e workspace.spec | PASS | next commit |
+| 2026-09-03 | BUILD 10 workspace | /app, /app/historico, /app/datos axe-clean | driven (@axe-core) | n/a | e2e workspace.spec | PASS | next commit |

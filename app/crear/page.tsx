@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
-import { CrearWizard } from "@/components/deca/wizard";
+import { CrearWizard, type SavedData, type WizardInitial } from "@/components/deca/wizard";
+import { getCurrentUser } from "@/lib/auth";
+import { getDecaForDuplicate } from "@/lib/data/history";
+import { listSaved } from "@/lib/data/saved";
 
 export const metadata: Metadata = {
   title: "Crear DeCA gratis",
@@ -10,12 +13,49 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function CrearPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CrearPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const { from } = await searchParams;
+  const user = await getCurrentUser();
+
+  let initial: WizardInitial | undefined;
+  let saved: SavedData | undefined;
+
+  if (user?.companyId) {
+    const [s, source] = await Promise.all([
+      listSaved(user.id),
+      from ? getDecaForDuplicate(user.companyId, from) : Promise.resolve(null),
+    ]);
+    saved = s;
+    if (source) {
+      initial = {
+        shipperName: source.shipper?.name ?? "",
+        shipperNif: source.shipper?.nif ?? "",
+        shipperAddress: source.shipper?.address ?? "",
+        carrierName: source.carrier?.name ?? "",
+        carrierNif: source.carrier?.nif ?? "",
+        origin: source.origin ?? "",
+        destination: source.destination ?? "",
+        transportDate: "", // reset — the operator sets the new date
+        goods: source.goods ?? "",
+        weight: source.weight ?? "",
+        tractorPlate: source.tractorPlate ?? "",
+        trailerPlate: source.trailerPlate ?? "",
+        reference: "",
+      };
+    }
+  }
+
   return (
     <>
       <SiteHeader />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-10 md:px-6">
-        <CrearWizard />
+        <CrearWizard initial={initial} saved={saved} />
       </main>
       <SiteFooter />
     </>

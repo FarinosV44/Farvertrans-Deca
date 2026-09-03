@@ -40,6 +40,15 @@ const EMPTY: FormState = {
 
 const STORAGE_KEY = "fvd_crear_draft";
 
+export type SavedData = {
+  companies: { id: string; name: string; nif: string | null; address: string | null }[];
+  vehicles: { id: string; tractorPlate: string; trailerPlate: string | null }[];
+  addresses: { id: string; label: string; address: string }[];
+};
+
+/** Pre-fill for the duplicate flow (a source DeCA's payload, date left blank). */
+export type WizardInitial = Partial<FormState>;
+
 function toPayload(f: FormState) {
   return {
     shipper: { name: f.shipperName, nif: f.shipperNif, address: f.shipperAddress },
@@ -55,10 +64,16 @@ function toPayload(f: FormState) {
   };
 }
 
-export function CrearWizard() {
+export function CrearWizard({
+  initial,
+  saved,
+}: {
+  initial?: WizardInitial;
+  saved?: SavedData;
+} = {}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const [form, setForm] = useState<FormState>(initial ? { ...EMPTY, ...initial } : EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -70,11 +85,20 @@ export function CrearWizard() {
   const summaryRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
 
-  // Restore a draft on mount; fire deca_started once.
+  // Restore a draft on mount; fire deca_started once. A duplicate (`initial`)
+  // always wins over a stale draft.
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
       track("deca_started");
+      if (initial) {
+        try {
+          sessionStorage.removeItem(STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
       try {
         const raw = sessionStorage.getItem(STORAGE_KEY);
         if (raw) setForm({ ...EMPTY, ...(JSON.parse(raw) as Partial<FormState>) });
@@ -82,7 +106,7 @@ export function CrearWizard() {
         /* ignore */
       }
     }
-  }, []);
+  }, [initial]);
 
   // Persist the draft as the user types (survives refresh).
   useEffect(() => {
@@ -212,9 +236,11 @@ export function CrearWizard() {
       <h1 ref={headingRef} tabIndex={-1} className="mt-3 text-2xl font-bold outline-none md:text-3xl">
         {["Cargador y transportista", "Origen, destino y fecha", "Mercancía y vehículo"][step]}
       </h1>
-      <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-        No necesitas registrarte para crear tu primer DeCA.
-      </p>
+      {!saved && (
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+          No necesitas registrarte para crear tu primer DeCA.
+        </p>
+      )}
 
       {errorList.length > 0 && (
         <div
@@ -243,6 +269,34 @@ export function CrearWizard() {
       >
         {step === 0 && (
           <>
+            {saved && saved.companies.length > 0 && (
+              <label className="mt-4 block text-sm">
+                <span className="font-medium">Usar una empresa guardada</span>
+                <select
+                  data-testid="autofill-company"
+                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const c = saved.companies.find((x) => x.id === e.target.value);
+                    if (c)
+                      setForm((f) => ({
+                        ...f,
+                        carrierName: c.name,
+                        carrierNif: c.nif ?? "",
+                      }));
+                    e.currentTarget.value = "";
+                  }}
+                >
+                  <option value="">Rellenar transportista con…</option>
+                  {saved.companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.nif ? ` — ${c.nif}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
               <legend className="px-1 text-sm font-bold">Cargador contractual</legend>
               <Field id="shipperName" label="Nombre o razón social" value={form.shipperName} onChange={set("shipperName")} error={errors.shipperName} autoComplete="organization" />
@@ -269,6 +323,34 @@ export function CrearWizard() {
         {step === 2 && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
             <legend className="px-1 text-sm font-bold">Mercancía y vehículo</legend>
+            {saved && saved.vehicles.length > 0 && (
+              <label className="block text-sm">
+                <span className="font-medium">Usar un vehículo guardado</span>
+                <select
+                  data-testid="autofill-vehicle"
+                  className="mt-1 mb-2 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const v = saved.vehicles.find((x) => x.id === e.target.value);
+                    if (v)
+                      setForm((f) => ({
+                        ...f,
+                        tractorPlate: v.tractorPlate,
+                        trailerPlate: v.trailerPlate ?? "",
+                      }));
+                    e.currentTarget.value = "";
+                  }}
+                >
+                  <option value="">Rellenar matrículas con…</option>
+                  {saved.vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.tractorPlate}
+                      {v.trailerPlate ? ` + ${v.trailerPlate}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <Field id="goods" label="Naturaleza de la mercancía" value={form.goods} onChange={set("goods")} error={errors.goods} />
             <Field id="weight" label="Peso (o medida alternativa)" value={form.weight} onChange={set("weight")} error={errors.weight} hint="Ej.: 12000 kg, o «una plataforma completa» si el peso exacto no es determinable." />
             <Field id="tractorPlate" label="Matrícula de la tractora" value={form.tractorPlate} onChange={set("tractorPlate")} error={errors.tractorPlate} hint={plateHint} />

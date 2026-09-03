@@ -40,9 +40,19 @@ export async function POST(req: Request) {
 
   const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
 
+  // An authenticated caller owns the DeCA directly (no claim token needed).
+  let owner: { createdByUserId: string; companyId: string } | undefined;
+  try {
+    const { getCurrentUser } = await import("@/lib/auth");
+    const user = await getCurrentUser();
+    if (user?.companyId) owner = { createdByUserId: user.id, companyId: user.companyId };
+  } catch {
+    // not authed — anonymous path
+  }
+
   try {
     const { createDeca } = await import("@/lib/deca/persist");
-    const created = await createDeca(validated, { idempotencyKey });
+    const created = await createDeca(validated, { idempotencyKey, ...owner });
     return NextResponse.json(
       {
         decaId: created.decaId,

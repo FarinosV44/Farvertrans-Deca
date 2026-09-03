@@ -10,3 +10,4 @@
 | 2026-09-03 | Phase 5 — BUILD 05-09 (scaffold, landing, creator, PDF/QR/URL, signup+claim) | claude-sonnet-5 | ~1.3M | full landing→create→PDF→share→register flow; 31 unit + 32 e2e |
 
 AI cost mode: subscription (Claude Code) — marginal cost ≈ €0.
+| 2026-09-03 | Phase 5 — BUILD 10 (registered workspace: history, saved data, duplicate, autofill) | claude-sonnet-5 | ~0.4M | 36 unit + 37 e2e |
