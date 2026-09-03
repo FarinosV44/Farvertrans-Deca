@@ -90,6 +90,13 @@
 - **v1 released:** `develop` merged to `main` (946ac88, BUILD 05–15). CI green on main (typecheck, lint,
   format, 47 unit, 57 e2e, 6 compliance, keel-verify, secret scan). No version tag (not
   requested).
+- **Post-release hotfixes on `main` (CI green at a653d37):**
+  - `ff731dd` — Prisma Linux binaryTargets + node:20-slim Dockerfile + lenient `/health` healthcheck.
+  - `fbc19ca` — **the 503**: route segment literally named `app` (`app/app/`) collided with `/` in the
+    Next standalone build, so `GET /` 307-redirected to `/registro`. Fixed by `git mv app/app app/panel`
+    and updating every link/redirect/robots/test. Verified in Docker: `/` → 200, `/panel` → 307.
+  - `a653d37` — acquisition attribution captured server-side in `middleware.ts` (removed a
+    client-hydration race that made two e2e tests flaky in CI).
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision the real Supabase project +
   Hostinger VPS + domain + Resend + hCaptcha, deploy per `docs/07-release.md`, then close issues #5–#15.
@@ -109,4 +116,4 @@
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — BUILD 05-15 done; v1 merged to main
+Last updated: 2026-09-03 — v1 on main; 503 hotfix (/app→/panel) + attribution race fix, CI green at a653d37
