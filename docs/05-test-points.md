@@ -65,3 +65,8 @@
 | 2026-09-03 | BUILD 13 versioning | AC-14/15 correction → new `deca_version` (new token/QR/PDF), reason + "Versión actual: 2"; v1 PDF still retrievable with original destination; distinct tokens per version | driven (Playwright + pdfjs) | n/a | e2e build13.spec | PASS | next commit |
 | 2026-09-03 | BUILD 13 versioning | AC-16 non-owner cannot correct (401 from an unauthenticated context) | driven | n/a | e2e build13.spec | PASS | next commit |
 | 2026-09-03 | BUILD 13 sharing | AC-24 share panel: WhatsApp deep link contains the `/d/` URL; email via `POST /api/share` (rate-limited, templated, mailto fallback when unconfigured); `deca_shared` event | driven | n/a | e2e build13.spec | PASS | next commit |
+| 2026-09-03 | BUILD 14 SEO | 10 core pages: SSR (JS disabled), exactly one h1, unique <title>, canonical, meta description, FAQPage JSON-LD, CTA→/crear, internal cluster links, last-reviewed date | driven (Playwright, jsEnabled:false) | n/a | e2e seo.spec | PASS | next commit |
+| 2026-09-03 | BUILD 14 SEO | an unknown slug 404s (dynamicParams=false) | driven | n/a | e2e seo.spec | PASS | next commit |
+| 2026-09-03 | BUILD 14 SEO | sitemap lists all 10 + /soy-obligado, no /app /api /d/; robots disallows private areas | driven | n/a | e2e seo.spec | PASS | next commit |
+| 2026-09-03 | BUILD 14 SEO | "¿Estoy obligado?" returns a conclusion with JavaScript disabled (SSR query-param form) | driven | n/a | e2e seo.spec | PASS | next commit |
+| 2026-09-03 | BUILD 14 SEO | representative SEO page axe-clean (no serious/critical) | driven (@axe-core) | n/a | e2e seo.spec | PASS | next commit |

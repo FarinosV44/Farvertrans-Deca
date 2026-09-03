@@ -30,7 +30,7 @@ slices:
     criteria: [AC-14, AC-15, AC-16, AC-24, AC-34, AC-35, AC-36]
   - id: S-14
     title: BUILD 14 — SEO base + 10 core pages + "am I obligated?"
-    status: not-started
+    status: done
     hours: 16
     depends_on: [S-06]
     criteria: [AC-37]

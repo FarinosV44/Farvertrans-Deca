@@ -38,15 +38,15 @@
 | 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓, docs/estimate.md (v1) ✓, docs/token-ledger.md ✓, docs/keel-conformance.md ✓, docs/issues.md ✓ |
 | 2 Functional spec | done | docs/02-functional-spec.md ✓ (F1–F18, AC-01…AC-37), docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ (7 flows), docs/estimate.md v2 firm ✓, .claude/rules/ + .claude/agents/ ✓ |
 | 3+4 Design (folded — D-019) | done | docs/design/IMPLEMENTATION-BRIEF.md ✓ (screen list + journey + concrete tokens; no external design-tool round-trip) |
-| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–13 done · BUILD 14–15 pending |
+| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–14 done · BUILD 15 pending |
 | 6 Documentation | pending | docs/architecture.md, docs/api/, docs/usage/ |
 | 7 Release | pending | docs/07-release.md |
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2.
-- **Done: BUILD 05–13.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
-  tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13). All green: 47 unit + 48 e2e
+- **Done: BUILD 05–14.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
+  tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13) + SEO cluster (14). All green: 47 unit + 53 e2e
   (6 compliance R-1…R-13 + axe on every public screen) + typecheck + lint + standalone build + keel-verify.
   - 05 scaffold · 06 landing · 07 `/crear` 3-step creator · 08 compliant PDF+QR+`/d/[token]` +
     `npm run test:compliance` gate · 09 signup+claim (own auth D-021) ·
@@ -74,11 +74,17 @@
     `POST /api/deca` + `POST /api/share`. Fingerprinted requests get the tight limit, un-fingerprinted
     a loose IP-only one. `GET /d/[token]` NEVER calls it (inspectors never challenged). Wizard solves
     the PoW invisibly and retries. First-time user is never challenged.
-- Next action: **BUILD 14** — SEO technical base + 10 core content pages + "¿Estoy obligado?" (F15/F18,
-  AC-37). `content/seo/*.mdx` one template; each page: one intent, BOE citation, last-reviewed date,
-  internal links → landing/requisitos/FAQ/generador, ends in CREAR DECA GRATIS. Extend `sitemap.ts`.
-  Then **BUILD 15** — launch gate (Lighthouse perf budgets AC-28, CSP + HSTS + security headers T-5/T-8,
-  full compliance re-run, cross-tenant authz tests, deploy runbook) → then merge `develop` → `main`.
+- **BUILD 14 done** — SEO cluster: `content/seo/pages.ts` (10 pages, real Spanish content, BOE/Ministerio/
+  CETM citations, last-reviewed date) rendered by one template `app/(seo)/[slug]/page.tsx`
+  (`dynamicParams=false` → unknown slug 404s; static generation; FAQPage JSON-LD; canonical; internal
+  cluster links; CTA to `/crear`). `/soy-obligado` guided obligation check (SSR query-param form, works
+  without JS). `sitemap.ts` extended. SEO technical base (robots/meta/OG) was already done in BUILD 06.
+- Next action: **BUILD 15** — launch gate: (a) `.githooks/pre-commit` confidential gate + CI workflow
+  (D-010); (b) CSP + HSTS + security headers (`next.config.ts headers()`); (c) cross-tenant authz e2e
+  (company A cannot read company B's `/app/deca/[id]`, history, saved data); (d) error/failure-path
+  tests (DB/storage/email down); (e) full `npm run test:compliance` re-run + a sample DeCA for legal
+  review; (f) `docs/07-release.md` deploy runbook (Hostinger VPS + Docker + Supabase project/RLS/Storage
+  + DNS + Resend + hCaptcha + backups + health). Then merge `develop` → `main` (user authorised it).
 - Gaps before Phase 7 release: `.githooks/pre-commit` gate + `.github/workflows/ci.yml` (D-010, deferred
   at scaffold); `docs/.keel/plan.json` + `scripts/keel-close`/`keel-handoff-verify` (execution shortcut);
   password reset; real Supabase project + domain + email + hCaptcha (CREDENTIAL, pre-launch);
@@ -93,4 +99,4 @@
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — BUILD 05-13 done, starting BUILD 14
+Last updated: 2026-09-03 — BUILD 05-14 done, starting BUILD 15

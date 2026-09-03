@@ -1,15 +1,17 @@
 import type { MetadataRoute } from "next";
 import { publicEnv } from "@/lib/env";
+import { SEO_PAGES } from "@/content/seo/pages";
 
 /** Public, indexable pages only — never /app, /api, /d/ or generated PDFs. */
-const PUBLIC_PATHS = ["/", "/crear"];
-
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  return PUBLIC_PATHS.map((p) => ({
-    url: `${publicEnv.baseUrl}${p}`,
+  const core = ["/", "/crear", "/soy-obligado"];
+  const seo = SEO_PAGES.map((p) => `/${p.slug}`);
+
+  return [...core, ...seo].map((path) => ({
+    url: `${publicEnv.baseUrl}${path}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
-    priority: p === "/" ? 1 : 0.8,
+    priority: path === "/" ? 1 : path === "/crear" || path === "/generador-deca" ? 0.9 : 0.7,
   }));
 }

@@ -43,6 +43,9 @@
 | abuseResponse() | function | lib/abuse/response.ts | docs/reference/lib.md | 429 challenge / block HTTP response builder |
 | clientFingerprint() / solveChallenge() | function | lib/abuse/client.ts | docs/reference/lib.md | Client: cheap abuse signal + PoW solver (Web Crypto) |
 | sendMail() | function | lib/mailer.ts | docs/reference/lib.md | Resend transactional email; `{sent:false, reason:"unconfigured"}` fallback |
+| /[slug] (SEO cluster) | route | app/(seo)/[slug]/page.tsx | docs/reference/endpoints.md | 10 static SEO pages (dynamicParams=false); FAQPage JSON-LD, canonical, CTA |
+| /soy-obligado | route | app/(seo)/soy-obligado/page.tsx | docs/reference/endpoints.md | "¿Estoy obligado?" guided page — SSR query-param form, works without JS (F17) |
+| SEO_PAGES / getSeoPage() | const/fn | content/seo/pages.ts | docs/reference/lib.md | The 10 SEO pages' content (intent, sections, faq, sources, related) |
 | hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
 | decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |
