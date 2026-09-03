@@ -101,3 +101,9 @@
 - Date / phase: 2026-09-03 / Phase 2 close
 - Decision: `.claude/rules/` (code-style, security, docs-discipline — path-scoped to `app/**`, `lib/**`, `prisma/**`, `content/**`) and `.claude/agents/` (code-reviewer, security-auditor, docs-verifier, design-fidelity-auditor, playground-qa, a11y-auditor, test-driver, launch-verifier) generated. `guide-qa` deferred to Phase 6 (guide decision not yet made). Permission allow-list (`.claude/settings.json`), `.githooks/pre-commit` gate, and CI workflow deferred to the Phase 5 scaffold (their sources — verified tooling commands — do not exist yet).
 - Why: Sources (§Conventions, threat model, code map globs) are fixed at Phase 2 close per `references/assistant-config.md`.
+
+## D-019 — Implementation-first acceleration after Phase 2
+- Date / phase: 2026-09-03 / Phase 3
+- Decision: The user explicitly prioritised a working product over further speculative documentation. Phase 3 is compressed to an implementation-first brief sufficient to build faithfully; subsequent work proceeds in vertical executable slices. Each execution issue must end in working/testable behaviour. Discovery is not expanded unless implementation evidence reveals a genuine gap.
+- Why: Discovery, confrontation, functional spec, technical plan and threat model already exist. The acquisition window before 2026-10-05 rewards shipping. The user specifically asked to start building the functional landing, document creation and company registration now.
+- Guardrail: Existing D-001…D-018, regulatory R-1…R-13 and EPICs #1–#4 remain binding. This is an execution-sequencing change, not permission to bypass compliance or quality gates.
