@@ -225,3 +225,35 @@
 - Why: the forge issues #17–#20 asked for a legally complete data model, a durable
   inspection path and a proven end-to-end launch flow. No prior decision reopened.
 - Verified: 52 unit + 63 e2e + 8 compliance + typecheck + lint + format + keel-verify.
+
+## D-027 — Product V2: brand, landing, accounts, workspace, creator, delivery, teams, acquisition (#21–#28)
+- Date / phase: 2026-09-04 / post-launch product iteration
+- One coherent batch delivered issue-by-issue (each its own commit + tests). No prior decision reopened.
+  - **#21 BRAND** — `lib/brand.ts` is the single source for the product name ("DeCA Fácil"),
+    tagline, legal/company attribution ("Un servicio de Farvertrans S.L."), support email, colour.
+    Threaded through i18n, header, footer, PDF metadata, share text, SEO. "Farvertrans" survives only
+    as company attribution. `components/brand/wordmark.tsx`.
+  - **#22 DESIGN** — landing V2 (`app/page.tsx`): premium hero + proof line + secondary ENTRAR,
+    trust row, 3 steps, product proof, personas, daily-use, `<FaqAccordion>` (SSR `<details>`),
+    final CTA. Placement events (hero_cta/header_cta/login_click/…). Landing is `force-dynamic` for
+    the auth-aware header; SEO cluster stays static.
+  - **#23 ACCOUNT** — `PasswordResetToken` + `/recuperar` flow (no enumeration, 1h TTL, single-use);
+    `/api/auth/logout` + account menu; `/entrar`; growth events. Test seam `FVD_EXPOSE_RESET_TOKEN`
+    (playwright webServer only).
+  - **#24 WORKSPACE** — history `carrier` + `plate` filters; rows link to Detalle/Corregir; mobile
+    cards; version shown; editing saved data never mutates history.
+  - **#25 UX** — `DecaTemplate` + `/api/templates` + wizard template picker + "usar mi empresa" +
+    `/panel/plantillas`; a template holds no date/token; draft autosave survives reload / failed gen.
+  - **#26 OPS** — ResultActions reordered; native Web Share; Imprimir; "Comprobar QR" (exact URL +
+    version + SHA-256); corrected-doc re-share reminder targeting the current version; delivery events.
+  - **#27 TEAM** — `CompanyRole` (owner/member) + `CompanyInvite` (hashed token, 14-day TTL);
+    signup joins an invited company (no duplicate company); `/panel/equipo` + `<TeamManager>`;
+    removing a member detaches immediately; last owner protected.
+  - **#28 GROWTH** — `Prospect` funnel (prospect→invited→registered→activated→active); operator
+    issues an opaque `/registro?invite=` onboarding link that creates a company AND forces the
+    operator ref-code attribution through to the first DeCA (= activation); `/operadores/captacion`
+    funnel + prospect table + lightweight paste-import (CSV file upload deferred, allowed by the issue).
+- Migrations: `20260904090000_password_reset_token`, `_100000_deca_template`, `_110000_company_team`,
+  `_120000_prospect_acquisition`.
+- Verified: 57 unit + 85 e2e (incl. 8 new specs) + 8 compliance + typecheck + lint + format +
+  keel-verify. Two pre-existing timing flakes (operadores attribution race, wizard) pass on retry.

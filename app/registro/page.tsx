@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { RegisterForm } from "@/components/auth/register-form";
 import { getCurrentUser } from "@/lib/auth";
 import { getInvitePreview } from "@/lib/team";
+import { resolveProspectInvite } from "@/lib/growth";
 
 export const metadata: Metadata = {
   title: "Crear cuenta",
@@ -34,7 +35,8 @@ export default async function RegistroPage({
   }
   if (user?.companyId && !sp.claim) redirect("/panel");
 
-  const invite = sp.invite ? await getInvitePreview(sp.invite) : null;
+  const teamInvite = sp.invite ? await getInvitePreview(sp.invite) : null;
+  const prospectInvite = sp.invite && !teamInvite ? await resolveProspectInvite(sp.invite) : null;
 
   return (
     <>
@@ -42,8 +44,11 @@ export default async function RegistroPage({
       <main id="contenido" className="mx-auto max-w-[560px] px-4 py-12 md:px-6">
         <Suspense fallback={null}>
           <RegisterForm
-            inviteCompany={invite?.companyName ?? null}
-            inviteEmail={invite?.email ?? null}
+            inviteCompany={teamInvite?.companyName ?? null}
+            inviteEmail={teamInvite?.email ?? null}
+            prospectCompany={
+              prospectInvite ? { name: prospectInvite.name, nif: prospectInvite.nif ?? "" } : null
+            }
           />
         </Suspense>
       </main>

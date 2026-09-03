@@ -2,13 +2,16 @@
 
 Repo: FarinosV44/Farvertrans-Deca
 Branch: develop (v1 also on main)
-Generated: 2026-09-03
+Generated: 2026-09-04
 Keel: v5.19.2
-Position: **Everything is on `main` at `0272c33`, CI green — v1 (BUILD 05–15) + all 503 fixes + FIX
-#16–#19 + LAUNCH #20. `develop` == `main`. Nothing pending in code.** Phase 5 closed.
-Next action is the USER's: deploy and run `docs/production-smoke-checklist.md`, then close #16–#20.
-Local dev: `npm run db:up && npx prisma migrate deploy && npm run seed` (migration `20260903230000`
-adds `deca_version.pdf_sha256` + `.created_by_user_id`). Gate: 52 unit + 63 e2e + 8 compliance.
+Position: **Everything through issue #28 is on `main`, CI green. `develop` == `main`. Nothing pending
+in code.** Phase 5 closed. v1 (BUILD 05–15) + 503 fixes + FIX #16–#19 + LAUNCH #20 + Product V2
+(#21–#28, D-027: brand, landing V2, accounts/recovery, workspace filters, DeCA templates, driver
+delivery, multi-user teams, operator acquisition engine).
+Next action is the USER's: deploy and run `docs/production-smoke-checklist.md`, then close #5–#28.
+Local dev: `npm run db:up && npx prisma migrate deploy && npm run seed`. Gate: 57 unit + 85 e2e + 8
+compliance + typecheck + lint + format + keel-verify. Two pre-existing timing flakes (operadores
+attribution race, wizard) pass on retry — CI has retries:1.
 Post-release hotfixes on `main`: Prisma Linux engines (`ff731dd`); **503 #1** = `/app` route segment
 collided with `/` in the standalone build → `/app`→`/panel` rename (`fbc19ca`, D-023); attribution
 captured in `middleware.ts`, race + cookie double-encoding fixed (`a653d37` + `7a0b175`);
@@ -24,8 +27,21 @@ verbatim, wizard review step (`review-summary`), `docs/legal-data-model.md`. #18
 (returned by `POST /api/deca`, re-checked on every `/d/[token]`), `FVD_STORAGE_DIR` persistent path.
 #19 = `deca_version.created_by_user_id` + owner audit view + `docs/retention-policy.md` (claim never
 resets retention / regenerates). #20 = `tests/e2e/launch-happy-path.spec.ts` + `docs/production-smoke-checklist.md`.
-**All merged to `main` at `0272c33`, CI green.** Remaining: deploy + `docs/production-smoke-checklist.md`
-(incl. the external QR scan), then beat 3 + the user closes #16–#20.
+**All merged to `main`, CI green.** Remaining: deploy + `docs/production-smoke-checklist.md`
+(incl. the external QR scan, team invite, prospect onboarding), then beat 3 + the user closes #5–#28.
+
+## Product V2 (#21–#28, D-027) — new since last handoff
+
+`lib/brand.ts` (product name "DeCA Fácil"); landing V2 (`app/page.tsx` + `lib/content/landing.ts`,
+`components/site/faq-accordion.tsx`); auth recovery (`lib/auth` reset fns, `/recuperar`,
+`/api/auth/password/*`, `/api/auth/logout`, `components/auth/account-menu.tsx`); workspace filters
+(`lib/data/history-filter.ts` carrier+plate); templates (`lib/data/templates.ts`, `/api/templates`,
+`/panel/plantillas`, wizard picker); driver delivery (`components/deca/result-actions.tsx` — native
+share / print / Comprobar QR / re-share reminder); teams (`lib/team.ts`, `CompanyRole`/`CompanyInvite`,
+`/panel/equipo`); acquisition (`lib/growth.ts`, `Prospect` model, `/operadores/captacion`,
+`/api/operadores/prospects`). Migrations `20260904090000`…`20260904120000`. Test seam:
+`FVD_EXPOSE_RESET_TOKEN` (playwright webServer only). New specs: account, creator-v2, driver-delivery,
+team, growth, plus landing/workspace/compliance additions.
 
 ## What happened
 

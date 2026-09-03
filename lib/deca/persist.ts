@@ -127,11 +127,18 @@ export async function createDeca(
 }
 
 async function maybeMarkFirstDeca(companyId?: string) {
-  // First-DeCA milestone for the operator dashboard (F12) — best-effort.
+  // First-DeCA milestone for the operator dashboard (F12) + the acquisition
+  // funnel (GROWTH #28) — best-effort, never blocks generation.
   if (!companyId) return;
   try {
     const { markFirstDeca } = await import("@/lib/attribution/persist");
     await markFirstDeca(companyId);
+  } catch {
+    /* non-critical */
+  }
+  try {
+    const { touchProspectActivity } = await import("@/lib/growth");
+    await touchProspectActivity(companyId);
   } catch {
     /* non-critical */
   }

@@ -29,6 +29,9 @@
 | GET/POST /api/templates, DELETE /api/templates/[id] | route | app/api/templates/ | docs/reference/endpoints.md | Company-scoped template CRUD; authed owner only (401 otherwise) |
 | lib/team.ts (createInvite / acceptInvite / consumeInviteToken / listMembers / removeMember / getInvitePreview / TeamError) | module | lib/team.ts | docs/reference/lib.md | Company workspaces + invitations (TEAM #27); owner=admin / member=operator; invite tokens stored hashed, 14-day TTL, one-time |
 | POST /api/team/invites, DELETE /api/team/invites/[id], DELETE /api/team/members/[id] | route | app/api/team/ | docs/reference/endpoints.md | Admin-only workspace management; 403 for non-admins |
+| lib/growth.ts (createProspect / issueProspectInvite / resolveProspectInvite / attachCompanyToProspect / touchProspectActivity / acquisitionFunnel / importProspects) | module | lib/growth.ts | docs/reference/lib.md | Company acquisition funnel (GROWTH #28) — prospects, operator-attributed onboarding links, activation = first DeCA |
+| POST /api/operadores/prospects (create/invite/import) | route | app/api/operadores/prospects/ | docs/reference/endpoints.md | Internal-only (404 for others); seed prospects, issue onboarding links, bulk import |
+| POST /api/auth/password/request, POST /api/auth/password/reset, POST /api/auth/logout | route | app/api/auth/ | docs/reference/endpoints.md | Password recovery (no enumeration; test-seam FVD_EXPOSE_RESET_TOKEN) + logout (ACCOUNT #23) |
 | rowMatches() | function | lib/data/history-filter.ts | docs/reference/lib.md | Pure history filter predicate: free text + date range + exact carrier + plate contains (WORKSPACE #24) |
 | SavedDataManager / AppNav | component | components/app/* | docs/reference/lib.md | Workspace nav + saved-data CRUD UI |
 | GET /api/operadores/stats | route | app/api/operadores/stats/route.ts | docs/reference/endpoints.md | Per-operator acquisition stats; internal role only (404 otherwise) |

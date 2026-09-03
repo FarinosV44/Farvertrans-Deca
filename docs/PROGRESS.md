@@ -109,10 +109,17 @@
   `docs/retention-policy.md` (claim never resets retention / regenerates). #20 =
   `tests/e2e/launch-happy-path.spec.ts` + `docs/production-smoke-checklist.md`. Migration
   `20260903230000`.
+- **Product V2 — #21–#28 (D-027):** brand config ("DeCA Fácil"), premium landing V2, password
+  recovery + logout + auth states, workspace filters/mobile, DeCA templates + "usar mi empresa",
+  driver-delivery (native share / print / Comprobar QR / re-share reminder), multi-user company
+  workspaces + invitations (`/panel/equipo`), and the operator acquisition engine
+  (`/operadores/captacion` — prospects, onboarding links, activation funnel). 8 commits on `develop`,
+  8 new e2e specs, 4 migrations (`20260904090000`…`_120000`). Merged to `main` — CI status below.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
-  (D-016); legal/inspection check of a real generated DeCA; provision the real Supabase project +
-  Hostinger VPS + domain + Resend + hCaptcha, deploy per `docs/07-release.md`, then close issues #5–#15.
-- **Post-launch code items (tracked in `docs/07-release.md`):** nonce-based CSP; password-reset flow;
+  (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
+  Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close
+  issues #5–#28.
+- **Post-launch code items (tracked in `docs/07-release.md`):** nonce-based CSP;
   `docs/.keel/plan.json` + `scripts/keel-close`/`keel-handoff-verify` (skipped under execution mode
   D-019); local + long-tail SEO pages (`docs/sprints/deferred.md`).
 - If work continues: **Phase 6 (Documentation)** — `docs/architecture.md`, `docs/api/` full reference,
@@ -123,10 +130,10 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: nothing pending — v1 (BUILD 05-15) + all hotfixes + FIX #16–#19 + LAUNCH #20 all
-  on `main` (`0272c33`), CI green. `develop` == `main`.
+- Ready for `main`: nothing pending — everything through #28 merged. `develop` == `main`.
 
 ### Deferred items
-- Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
+- Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
+  for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-03 — v1 + 503 fixes + FIX #16–#19 + LAUNCH #20 all on main (0272c33), CI green. develop == main. Remaining: the user's deploy + production smoke checklist, then close #16–#20.
+Last updated: 2026-09-04 — Product V2 (#21–#28) merged to main. develop == main. Remaining: the user's deploy + production smoke checklist, then close issues #5–#28.

@@ -32,9 +32,13 @@ export type SignupInput = {
   inviteToken?: string;
 };
 
-export async function signup(
-  input: SignupInput,
-): Promise<{ userId: string; companyId: string; joinedTeam: boolean }> {
+export async function signup(input: SignupInput): Promise<{
+  userId: string;
+  companyId: string;
+  joinedTeam: boolean;
+  prospectId?: string;
+  prospectRefCode?: string;
+}> {
   const email = normEmail(input.email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
     throw new AuthError("bad_input", "Email no válido.");
@@ -44,22 +48,53 @@ export async function signup(
   const existing = await prisma.user.findFirst({ where: { email } });
   if (existing) throw new AuthError("email_taken", "Ya existe una cuenta con este email.");
 
-  // Invite path — join an existing workspace, create no company.
+  // Team invite path — join an existing workspace, create no company.
   if (input.inviteToken) {
     const { consumeInviteToken, markInviteAccepted } = await import("@/lib/team");
     const inv = await consumeInviteToken(input.inviteToken);
-    if (!inv) throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
-    const user = await prisma.user.create({
-      data: {
-        authUserId: `local:${crypto.randomUUID()}`,
-        email,
-        companyId: inv.companyId,
-        companyRole: inv.role,
-        passwordHash: hashPassword(input.password),
-      },
+    if (inv) {
+      const user = await prisma.user.create({
+        data: {
+          authUserId: `local:${crypto.randomUUID()}`,
+          email,
+          companyId: inv.companyId,
+          companyRole: inv.role,
+          passwordHash: hashPassword(input.password),
+        },
+      });
+      await markInviteAccepted(inv.id);
+      return { userId: user.id, companyId: inv.companyId, joinedTeam: true };
+    }
+
+    // Not a team invite — try a prospect onboarding link (GROWTH #28).
+    const { resolveProspectInvite } = await import("@/lib/growth");
+    const prospect = await resolveProspectInvite(input.inviteToken);
+    if (!prospect) throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
+
+    const name = input.company.name.trim() || prospect.name;
+    const nif = input.company.nif.trim() || prospect.nif || "";
+    if (!name || !nif) throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
+    const r = await prisma.$transaction(async (tx) => {
+      const company = await tx.company.create({
+        data: { name, nif, address: input.company.address.trim() || null },
+      });
+      const user = await tx.user.create({
+        data: {
+          authUserId: `local:${crypto.randomUUID()}`,
+          email,
+          companyId: company.id,
+          companyRole: "owner",
+          passwordHash: hashPassword(input.password),
+        },
+      });
+      return { userId: user.id, companyId: company.id };
     });
-    await markInviteAccepted(inv.id);
-    return { userId: user.id, companyId: inv.companyId, joinedTeam: true };
+    return {
+      ...r,
+      joinedTeam: false,
+      prospectId: prospect.prospectId,
+      prospectRefCode: prospect.refCode,
+    };
   }
 
   if (!input.company.name.trim() || !input.company.nif.trim())

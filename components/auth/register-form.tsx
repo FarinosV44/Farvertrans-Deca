@@ -10,23 +10,27 @@ export function RegisterForm({
   initialMode = "register",
   inviteCompany = null,
   inviteEmail = null,
+  prospectCompany = null,
 }: {
   initialMode?: "register" | "login";
   inviteCompany?: string | null;
   inviteEmail?: string | null;
+  prospectCompany?: { name: string; nif: string } | null;
 }) {
   const router = useRouter();
   const params = useSearchParams();
   const claim = params.get("claim") ?? undefined;
   const invite = params.get("invite") ?? undefined;
   const nextPath = params.get("next") ?? "/panel";
-  const joiningTeam = !!invite;
+  // A team invite joins an existing workspace (no company fields); a prospect
+  // onboarding link still creates a company (fields shown, prefilled — GROWTH #28).
+  const joiningTeam = !!invite && !prospectCompany;
 
   const [f, setF] = useState({
     email: inviteEmail ?? "",
     password: "",
-    companyName: "",
-    companyNif: "",
+    companyName: prospectCompany?.name ?? "",
+    companyNif: prospectCompany?.nif ?? "",
     companyAddress: "",
   });
   const [mode, setMode] = useState<"register" | "login">(initialMode);

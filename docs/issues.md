@@ -2,9 +2,9 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-04 — issues #1–#20 open; no third-party comments. #1–#20 all merged to
-> `main`, CI green; every issue commented (beat 1). All awaiting the user's deploy + verification, then
-> beat 3, then the user closes them.
+> Last inbound sweep: 2026-09-04 — issues #1–#28 open; no third-party comments. #1–#28 all merged to
+> `main`; every issue commented (beat 1). All awaiting the user's deploy + verification, then beat 3,
+> then the user closes them.
 
 ## Inventory
 | # | Title | Type | Priority | Status | Entry |
@@ -29,6 +29,23 @@
 | 18 | FIX 18 — Production PDF/QR path + persistent storage + metadata | fix | high | on `main`, awaiting deploy | E-011 |
 | 19 | FIX 19 — Legal versioning, correction workflow, 1-year preservation | fix | high | on `main`, awaiting deploy | E-011 |
 | 20 | LAUNCH 20 — Public-ready DeCA happy path | launch | high | automated part on `main`; blocked on deploy + manual QR | E-011 |
+| 21 | BRAND 21 — standalone marketable brand | brand | medium | on `main` | E-012 |
+| 22 | DESIGN 22 — Landing V2 | design | high | on `main` | E-012 |
+| 23 | ACCOUNT 23 — frictionless registration + recovery | fix | high | on `main` | E-012 |
+| 24 | WORKSPACE 24 — daily-use company panel | fix | medium | on `main` | E-012 |
+| 25 | UX 25 — fast creator V2 (autocomplete, templates) | fix | high | on `main` | E-012 |
+| 26 | OPS 26 — driver delivery + QR verification | fix | high | on `main` | E-012 |
+| 27 | TEAM 27 — multi-user company workspaces | feat | medium | on `main` | E-012 |
+| 28 | GROWTH 28 — company acquisition engine | feat | high | on `main` | E-012 |
+
+### E-012 — Product V2 (#21–#28): brand, landing, accounts, workspace, creator, delivery, teams, acquisition
+- Status: **all 8 merged to `main`** (D-027). 8 commits, 8 new e2e specs, 4 migrations. Beat-1
+  commented on #21–#28. Local gate: 57 unit + 85 e2e + 8 compliance + typecheck + lint + format +
+  keel-verify (2 pre-existing timing flakes pass on retry).
+- Commits (develop→main): #21 brand · #22 landing V2 · #23 auth/recovery · #24 workspace filters ·
+  #25 templates · #26 driver delivery · #27 team workspaces · #28 acquisition engine.
+- Pending: the user deploys, runs `docs/production-smoke-checklist.md` (esp. team invite + prospect
+  onboarding on the live URL), then beat-3 + closes #21–#28.
 
 ### E-011 — FIX #16–#19 + LAUNCH #20 (Hostinger CJS, legal data model, PDF hash/persistence, retention, happy-path)
 - Status: **all merged to `main` at `0272c33`, CI green** (52 unit + 63 e2e + 8 compliance + typecheck

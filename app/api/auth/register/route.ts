@@ -53,6 +53,24 @@ export async function POST(req: Request) {
     // attribution is best-effort — never block signup
   }
 
+  // Prospect onboarding link (GROWTH #28): link the company back to the prospect
+  // and force the operator ref-code attribution so it survives to the first DeCA.
+  if (created.prospectId && created.prospectRefCode) {
+    try {
+      const [{ attachCompanyToProspect }, { prisma }] = await Promise.all([
+        import("@/lib/growth"),
+        import("@/lib/prisma"),
+      ]);
+      await attachCompanyToProspect(created.prospectId, created.companyId);
+      await prisma.acquisition.update({
+        where: { companyId: created.companyId },
+        data: { firstRefCode: created.prospectRefCode, lastRefCode: created.prospectRefCode },
+      });
+    } catch {
+      // best-effort
+    }
+  }
+
   // Attach the anonymous DeCA — an auth failure must never lose it.
   let claimedDecaId: string | undefined;
   if (b.claim) {

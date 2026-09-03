@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { getCurrentUser } from "@/lib/auth";
@@ -24,7 +25,7 @@ export default async function OperadoresPage() {
         <h1 className="text-2xl font-bold">Captación por operador</h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           Métricas de uso real: visitas de eventos y DeCA generados por las empresas captadas. Solo
-          lectura.
+          lectura. <Link href="/operadores/captacion">Gestionar captación →</Link>
         </p>
 
         <div className="mt-6 overflow-x-auto">

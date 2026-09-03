@@ -243,6 +243,40 @@ model DecaAccessLog {
   @@map("deca_access_log")
 }
 
+/// Company acquisition funnel (GROWTH #28) — a prospect Farvertrans is onboarding,
+/// separate from the authenticated workspace until it activates.
+model Prospect {
+  id             String         @id @default(cuid())
+  name           String
+  nif            String?
+  contactName    String?        @map("contact_name")
+  email          String?
+  phone          String?
+  refCode        String         @map("ref_code") // assigned Farvertrans operator
+  source         String? // campaign / channel note
+  status         ProspectStatus @default(prospect)
+  companyId      String?        @unique @map("company_id") // set once registered
+  inviteTokenHash String?       @unique @map("invite_token_hash")
+  inviteExpiresAt DateTime?     @map("invite_expires_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  invitedAt      DateTime?      @map("invited_at")
+  registeredAt   DateTime?      @map("registered_at")
+  firstDecaAt    DateTime?      @map("first_deca_at")
+  lastDecaAt     DateTime?      @map("last_deca_at")
+
+  @@index([refCode])
+  @@index([status])
+  @@map("prospect")
+}
+
+enum ProspectStatus {
+  prospect
+  invited
+  registered
+  activated
+  active
+}
+
 /// A reusable DeCA template — recurring non-date data for a lane (UX #25).
 model DecaTemplate {
   id        String   @id @default(cuid())
