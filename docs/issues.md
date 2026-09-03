@@ -2,7 +2,7 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-03 11:00 — 4 open issues (#1–#4), no comments on any.
+> Last inbound sweep: 2026-09-03 15:30 — issues #1–#15 open; user created BUILD backlog #5–#15; no third-party comments.
 
 ## Inventory
 | # | Title | Type | Priority | Status | Entry |
@@ -11,6 +11,28 @@
 | 2 | EPIC 02 — Tracking de captación por operador, enlace y campaña | epic | high | in progress | E-002 |
 | 3 | EPIC 03 — SEO programático y arquitectura de contenidos DeCA | epic | medium | in progress | E-003 |
 | 4 | EPIC 04 — Cumplimiento técnico real del DeCA | epic | high | in progress | E-004 |
+| 5 | BUILD 05 — Scaffold runnable Next.js + Supabase/Prisma | build | high | awaiting deploy | E-005 |
+| 6 | BUILD 06 — Production landing | build | high | awaiting deploy | E-006 |
+| 7 | BUILD 07 — Anonymous 3-step DeCA creator | build | high | awaiting deploy | E-007 |
+| 8 | BUILD 08 — Real compliant PDF + QR + public URL | build | high | awaiting deploy | E-008 |
+| 9 | BUILD 09 — Company signup + claim anonymous DeCA | build | high | awaiting deploy | E-009 |
+| 10 | BUILD 10 — Registered workspace: history, saved entities, duplicate | build | high | open | — |
+| 11 | BUILD 11 — Referral + UTM attribution | build | high | open | — |
+| 12 | BUILD 12 — Internal operator acquisition dashboard | build | medium | open | — |
+| 13 | BUILD 13 — Sharing, corrections/versioning, abuse controls | build | high | open | — |
+| 14 | BUILD 14 — Launch SEO base + core DeCA search pages | build | medium | open | — |
+| 15 | BUILD 15 — Launch gate: compliance, mobile, security, perf, deploy | build | high | open | — |
+
+## BUILD entries (sprint 1 — landed on develop, awaiting deploy)
+
+### E-005..E-009 — BUILD 05–09 (the core anonymous flow)
+- Status: **awaiting deploy** — all landed on `develop`, all verified green locally (31 unit + 32 e2e incl. 6-check R-1…R-13 compliance suite + 4 axe). Commented on each issue (beat 1). Not closed — the user confirms.
+- E-005 #5 scaffold → commit 93f1868. E-006 #6 landing → 7262ca1. E-007 #7 creator → 7641709. E-008 #8 PDF/QR/URL → 206d734. E-009 #9 signup+claim → fc5609a.
+- Diagnosis: n/a (feature work).
+- Verification: `npm test` + `npm run test:e2e` + `npm run test:compliance`, all green; standalone build traces fonts.
+- Deploy: **needed before the reporter can test** — the Supabase project + Hostinger VPS + domain + email provider are not set up (CREDENTIAL). Notified the user 2026-09-03 via PushNotification.
+- Replies: beat 1 posted on #5–#9 (2026-09-03). Beat 2 = deploy notification sent. Beat 3 pending deploy.
+- Lesson: none. Pending: BUILD 10–15; then deploy; then beat 3 + user closes.
 
 ## Entries
 
