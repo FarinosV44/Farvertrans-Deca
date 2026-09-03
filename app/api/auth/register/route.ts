@@ -8,10 +8,11 @@ export const runtime = "nodejs";
 const schema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(200),
-  companyName: z.string().trim().min(2).max(200),
-  companyNif: z.string().trim().min(3).max(20),
+  companyName: z.string().trim().max(200).optional().default(""),
+  companyNif: z.string().trim().max(20).optional().default(""),
   companyAddress: z.string().trim().max(300).optional().default(""),
   claim: z.string().trim().max(200).optional(),
+  invite: z.string().trim().max(200).optional(),
 });
 
 export async function POST(req: Request) {
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
       email: b.email,
       password: b.password,
       company: { name: b.companyName, nif: b.companyNif, address: b.companyAddress },
+      inviteToken: b.invite,
     });
   } catch (e) {
     if (e instanceof AuthError) {
@@ -64,5 +66,8 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, claimedDecaId }, { status: 201 });
+  return NextResponse.json(
+    { ok: true, claimedDecaId, joinedTeam: created.joinedTeam },
+    { status: 201 },
+  );
 }

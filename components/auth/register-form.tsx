@@ -6,14 +6,24 @@ import { Field } from "@/components/deca/field";
 import { track } from "@/lib/analytics/client";
 import { lockAttribution } from "@/lib/attribution/client";
 
-export function RegisterForm({ initialMode = "register" }: { initialMode?: "register" | "login" }) {
+export function RegisterForm({
+  initialMode = "register",
+  inviteCompany = null,
+  inviteEmail = null,
+}: {
+  initialMode?: "register" | "login";
+  inviteCompany?: string | null;
+  inviteEmail?: string | null;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const claim = params.get("claim") ?? undefined;
+  const invite = params.get("invite") ?? undefined;
   const nextPath = params.get("next") ?? "/panel";
+  const joiningTeam = !!invite;
 
   const [f, setF] = useState({
-    email: "",
+    email: inviteEmail ?? "",
     password: "",
     companyName: "",
     companyNif: "",
@@ -32,7 +42,9 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
     if (mode === "register") track("signup_started");
     const url = mode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
-      mode === "register" ? { ...f, claim } : { email: f.email, password: f.password, claim };
+      mode === "register"
+        ? { ...f, claim, invite }
+        : { email: f.email, password: f.password, claim, invite };
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -47,7 +59,7 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
       }
       if (mode === "register") {
         track("signup_completed");
-        track("company_created");
+        if (!data?.joinedTeam) track("company_created");
         lockAttribution(); // first-touch is now permanent
         if (data?.claimedDecaId) track("anonymous_deca_claimed");
       } else {
@@ -64,12 +76,20 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
   return (
     <div>
       <h1 className="text-2xl font-bold md:text-3xl">
-        {claim ? "Guarda este DeCA" : mode === "register" ? "Crea tu cuenta" : "Inicia sesión"}
+        {joiningTeam
+          ? "Únete al equipo"
+          : claim
+            ? "Guarda este DeCA"
+            : mode === "register"
+              ? "Crea tu cuenta"
+              : "Inicia sesión"}
       </h1>
-      <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-        {claim
-          ? "Crea una cuenta gratuita para guardar este documento y reutilizar tus datos. No es un formulario comercial."
-          : "Guarda tus DeCA y reutiliza tus datos habituales."}
+      <p className="mt-2 text-sm text-[var(--color-text-muted)]" data-testid="register-subhead">
+        {joiningTeam
+          ? `${inviteCompany ? `${inviteCompany} te ha invitado. ` : ""}Crea tu acceso y compartirás sus DeCA y datos habituales. No hace falta dar de alta otra empresa.`
+          : claim
+            ? "Crea una cuenta gratuita para guardar este documento y reutilizar tus datos. No es un formulario comercial."
+            : "Guarda tus DeCA y reutiliza tus datos habituales."}
       </p>
 
       {error && (
@@ -96,7 +116,7 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
           onChange={set("password")}
           hint={mode === "register" ? "Al menos 8 caracteres." : undefined}
         />
-        {mode === "register" && (
+        {mode === "register" && !joiningTeam && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
             <legend className="px-1 text-sm font-bold">Tu empresa</legend>
             <Field

@@ -36,19 +36,21 @@ model Company {
   users       User[]
   decas       Deca[]
   acquisition Acquisition?
+  invites     CompanyInvite[]
 
   @@map("company")
 }
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.
 model User {
-  id           String   @id @default(cuid())
-  authUserId   String   @unique @map("auth_user_id")
+  id           String      @id @default(cuid())
+  authUserId   String      @unique @map("auth_user_id")
   email        String
-  passwordHash String?  @map("password_hash")
-  companyId    String?  @map("company_id")
-  role         Role     @default(user)
-  createdAt    DateTime @default(now()) @map("created_at")
+  passwordHash String?     @map("password_hash")
+  companyId    String?     @map("company_id")
+  role         Role        @default(user)
+  companyRole  CompanyRole @default(owner) @map("company_role")
+  createdAt    DateTime    @default(now()) @map("created_at")
 
   company        Company?        @relation(fields: [companyId], references: [id])
   createdDecas   Deca[]          @relation("DecaCreatedBy")
@@ -63,6 +65,31 @@ model User {
 enum Role {
   user
   internal
+}
+
+/// Role WITHIN a company workspace (TEAM #27). `owner` = admin.
+enum CompanyRole {
+  owner
+  member
+}
+
+/// A pending invitation to join a company workspace (TEAM #27). One-time, expiring.
+model CompanyInvite {
+  id              String      @id @default(cuid())
+  companyId       String      @map("company_id")
+  email           String
+  tokenHash       String      @unique @map("token_hash")
+  role            CompanyRole @default(member)
+  invitedByUserId String      @map("invited_by_user_id")
+  expiresAt       DateTime    @map("expires_at")
+  acceptedAt      DateTime?   @map("accepted_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([email])
+  @@map("company_invite")
 }
 
 /// First-touch / last-touch acquisition attribution, one row per user or company.

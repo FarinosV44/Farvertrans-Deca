@@ -9,6 +9,7 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(1).max(200),
   claim: z.string().trim().max(200).optional(),
+  invite: z.string().trim().max(200).optional(),
 });
 
 export async function POST(req: Request) {
@@ -36,6 +37,17 @@ export async function POST(req: Request) {
 
   await setSessionCookie(user.userId);
 
+  let joinedTeam = false;
+  if (b.invite) {
+    try {
+      const { acceptInvite } = await import("@/lib/team");
+      await acceptInvite(b.invite, user.userId);
+      joinedTeam = true;
+    } catch {
+      // an invalid invite must not block a valid login
+    }
+  }
+
   if (b.claim) {
     try {
       const { getCurrentUser } = await import("@/lib/auth");
@@ -48,5 +60,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true }, { status: 200 });
+  return NextResponse.json({ ok: true, joinedTeam }, { status: 200 });
 }

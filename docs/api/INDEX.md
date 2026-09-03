@@ -27,6 +27,8 @@
 | listHistory() / listHistoryCarriers() / getDecaForDuplicate() | function | lib/data/history.ts | docs/reference/lib.md | Company-scoped DeCA history (rows carry shipper/carrier/plates/versionNo) + distinct carriers for the filter + the duplicate-flow source payload |
 | listTemplates() / createTemplate() / deleteTemplate() / templatePayloadSchema | fn/schema | lib/data/templates.ts | docs/reference/lib.md | Reusable DeCA templates — recurring non-date data per lane (UX #25); never carries a token or a transport date |
 | GET/POST /api/templates, DELETE /api/templates/[id] | route | app/api/templates/ | docs/reference/endpoints.md | Company-scoped template CRUD; authed owner only (401 otherwise) |
+| lib/team.ts (createInvite / acceptInvite / consumeInviteToken / listMembers / removeMember / getInvitePreview / TeamError) | module | lib/team.ts | docs/reference/lib.md | Company workspaces + invitations (TEAM #27); owner=admin / member=operator; invite tokens stored hashed, 14-day TTL, one-time |
+| POST /api/team/invites, DELETE /api/team/invites/[id], DELETE /api/team/members/[id] | route | app/api/team/ | docs/reference/endpoints.md | Admin-only workspace management; 403 for non-admins |
 | rowMatches() | function | lib/data/history-filter.ts | docs/reference/lib.md | Pure history filter predicate: free text + date range + exact carrier + plate contains (WORKSPACE #24) |
 | SavedDataManager / AppNav | component | components/app/* | docs/reference/lib.md | Workspace nav + saved-data CRUD UI |
 | GET /api/operadores/stats | route | app/api/operadores/stats/route.ts | docs/reference/endpoints.md | Per-operator acquisition stats; internal role only (404 otherwise) |

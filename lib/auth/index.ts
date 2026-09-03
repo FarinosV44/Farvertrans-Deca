@@ -28,19 +28,42 @@ export type SignupInput = {
   email: string;
   password: string;
   company: { name: string; nif: string; address: string };
+  /** When set, the user JOINS the invited company instead of creating one (TEAM #27). */
+  inviteToken?: string;
 };
 
-export async function signup(input: SignupInput): Promise<{ userId: string; companyId: string }> {
+export async function signup(
+  input: SignupInput,
+): Promise<{ userId: string; companyId: string; joinedTeam: boolean }> {
   const email = normEmail(input.email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
     throw new AuthError("bad_input", "Email no válido.");
   if (!isStrongEnough(input.password))
     throw new AuthError("weak_password", "La contraseña debe tener al menos 8 caracteres.");
-  if (!input.company.name.trim() || !input.company.nif.trim())
-    throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
 
   const existing = await prisma.user.findFirst({ where: { email } });
   if (existing) throw new AuthError("email_taken", "Ya existe una cuenta con este email.");
+
+  // Invite path — join an existing workspace, create no company.
+  if (input.inviteToken) {
+    const { consumeInviteToken, markInviteAccepted } = await import("@/lib/team");
+    const inv = await consumeInviteToken(input.inviteToken);
+    if (!inv) throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
+    const user = await prisma.user.create({
+      data: {
+        authUserId: `local:${crypto.randomUUID()}`,
+        email,
+        companyId: inv.companyId,
+        companyRole: inv.role,
+        passwordHash: hashPassword(input.password),
+      },
+    });
+    await markInviteAccepted(inv.id);
+    return { userId: user.id, companyId: inv.companyId, joinedTeam: true };
+  }
+
+  if (!input.company.name.trim() || !input.company.nif.trim())
+    throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
 
   const result = await prisma.$transaction(async (tx) => {
     const company = await tx.company.create({
@@ -55,10 +78,11 @@ export async function signup(input: SignupInput): Promise<{ userId: string; comp
         authUserId: `local:${crypto.randomUUID()}`,
         email,
         companyId: company.id,
+        companyRole: "owner",
         passwordHash: hashPassword(input.password),
       },
     });
-    return { userId: user.id, companyId: company.id };
+    return { userId: user.id, companyId: company.id, joinedTeam: false };
   });
   return result;
 }
