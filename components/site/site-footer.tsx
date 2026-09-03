@@ -1,0 +1,22 @@
+import Link from "next/link";
+import { APP_VERSION } from "@/lib/version";
+import { LEGAL_SOURCE } from "@/lib/content/landing";
+
+export function SiteFooter() {
+  return (
+    <footer className="mt-16 border-t border-[var(--color-border)]">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 text-sm text-[var(--color-text-muted)] md:px-6">
+        <p>
+          Farvertrans DeCA — generador gratuito del Documento Electrónico de Control. Fuente normativa:{" "}
+          <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
+            {LEGAL_SOURCE.label}
+          </a>
+          .
+        </p>
+        <p className="mt-2">
+          <Link href="/crear">Crear DeCA</Link> · v{APP_VERSION}
+        </p>
+      </div>
+    </footer>
+  );
+}
