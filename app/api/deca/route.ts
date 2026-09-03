@@ -50,6 +50,19 @@ export async function POST(req: Request) {
     // not authed — anonymous path
   }
 
+  // Abuse controls apply to ANONYMOUS creation only — a signed-in company is
+  // already accountable. A first-time user never crosses the soft threshold.
+  if (!owner) {
+    const { checkAbuse } = await import("@/lib/abuse");
+    const { abuseResponse } = await import("@/lib/abuse/response");
+    const decision = await checkAbuse("anon_create", req.headers, {
+      fingerprint: req.headers.get("x-fvd-fp"),
+      challengeToken: req.headers.get("x-fvd-challenge"),
+    });
+    const blocked = abuseResponse(decision);
+    if (blocked) return blocked;
+  }
+
   try {
     const { createDeca } = await import("@/lib/deca/persist");
     const created = await createDeca(validated, { idempotencyKey, ...owner });

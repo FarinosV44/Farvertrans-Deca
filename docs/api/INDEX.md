@@ -33,6 +33,16 @@
 | captureAttribution() / lockAttribution() | function | lib/attribution/client.ts | docs/reference/lib.md | Client cookie+localStorage capture; lock at signup |
 | writeAcquisitionAtSignup() / markFirstDeca() / operatorStats() | function | lib/attribution/persist.ts | docs/reference/lib.md | Server: write the acquisition row at signup, first_deca_at, per-operator report |
 | AttributionCapture | component | components/analytics/attribution-capture.tsx | docs/reference/lib.md | Root-layout invisible touch recorder |
+| POST /api/deca/[id]/version | route | app/api/deca/[id]/version/route.ts | docs/reference/endpoints.md | Correct a DeCA → new version (R-13); authed owner only; 404/403/422 |
+| POST /api/share | route | app/api/share/route.ts | docs/reference/endpoints.md | Email the DeCA link to the driver (rate-limited, templated); mailto fallback when Resend unconfigured |
+| correctDeca() / DecaCorrectionError | fn/class | lib/deca/persist.ts | docs/reference/lib.md | Append a new DeCA version, keep priors, record reason + timestamp |
+| getDecaDetail() | function | lib/data/history.ts | docs/reference/lib.md | Company-scoped DeCA detail + version history |
+| decide() / POLICIES / windowStart() | fn/const | lib/abuse/limiter.ts | docs/reference/lib.md | Pure sliding-window rate decision (allow/challenge/block) |
+| checkAbuse() / abuseKey() | function | lib/abuse/index.ts | docs/reference/lib.md | Server rate check; records the attempt; never called by /d/ |
+| challengePrefix() / verifyPow() / verifyHcaptcha() | function | lib/abuse/challenge.ts | docs/reference/lib.md | Signed PoW challenge (plain SHA-256, client needs no secret) + hCaptcha verify |
+| abuseResponse() | function | lib/abuse/response.ts | docs/reference/lib.md | 429 challenge / block HTTP response builder |
+| clientFingerprint() / solveChallenge() | function | lib/abuse/client.ts | docs/reference/lib.md | Client: cheap abuse signal + PoW solver (Web Crypto) |
+| sendMail() | function | lib/mailer.ts | docs/reference/lib.md | Resend transactional email; `{sent:false, reason:"unconfigured"}` fallback |
 | hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
 | decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |

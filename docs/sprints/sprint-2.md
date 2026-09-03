@@ -24,7 +24,7 @@ slices:
     criteria: [AC-30]
   - id: S-13
     title: BUILD 13 — Sharing, corrections/versioning, abuse controls
-    status: not-started
+    status: done
     hours: 14
     depends_on: [S-08]
     criteria: [AC-14, AC-15, AC-16, AC-24, AC-34, AC-35, AC-36]

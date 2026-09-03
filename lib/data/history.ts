@@ -91,3 +91,29 @@ export async function getDecaForDuplicate(companyId: string, decaId: string) {
   if (!deca?.currentVersion) return null;
   return deca.currentVersion.dataJson as Data;
 }
+
+/** Full company-scoped DeCA detail with its version history (F5). */
+export async function getDecaDetail(companyId: string, decaId: string) {
+  const deca = await prisma.deca.findFirst({
+    where: { id: decaId, companyId },
+    include: { versions: { orderBy: { versionNo: "desc" } }, currentVersion: true },
+  });
+  if (!deca?.currentVersion) return null;
+  const currentData = deca.currentVersion.dataJson as Data;
+  return {
+    id: deca.id,
+    createdAt: deca.createdAt,
+    current: {
+      versionNo: deca.currentVersion.versionNo,
+      token: deca.currentVersion.token,
+      data: currentData,
+    },
+    versions: deca.versions.map((v) => ({
+      versionNo: v.versionNo,
+      token: v.token,
+      createdAt: v.createdAt,
+      changeReason: v.changeReason,
+      isCurrent: v.id === deca.currentVersionId,
+    })),
+  };
+}

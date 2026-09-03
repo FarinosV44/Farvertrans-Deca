@@ -101,15 +101,7 @@ export async function createDeca(
     return { decaId: deca.id, versionId: version.id };
   });
 
-  // First-DeCA milestone for the operator dashboard (F12) — best-effort.
-  if (opts.companyId) {
-    try {
-      const { markFirstDeca } = await import("@/lib/attribution/persist");
-      await markFirstDeca(opts.companyId);
-    } catch {
-      /* non-critical */
-    }
-  }
+  await maybeMarkFirstDeca(opts.companyId);
 
   return {
     ...result,
@@ -117,4 +109,86 @@ export async function createDeca(
     claimToken: opts.createdByUserId ? "" : claimToken,
     claimExpiresAt,
   };
+}
+
+async function maybeMarkFirstDeca(companyId?: string) {
+  // First-DeCA milestone for the operator dashboard (F12) — best-effort.
+  if (!companyId) return;
+  try {
+    const { markFirstDeca } = await import("@/lib/attribution/persist");
+    await markFirstDeca(companyId);
+  } catch {
+    /* non-critical */
+  }
+}
+
+export class DecaCorrectionError extends Error {
+  constructor(
+    public code: "not_found" | "forbidden" | "reason_required",
+    message: string,
+  ) {
+    super(message);
+    this.name = "DecaCorrectionError";
+  }
+}
+
+/**
+ * Correct a DeCA (F5 / R-13): append a NEW version with a new token/URL/QR/PDF,
+ * keep every prior version intact, record the change reason + timestamp, and make
+ * the new version current. Never overwrites.
+ */
+export async function correctDeca(
+  decaId: string,
+  companyId: string,
+  validated: ValidatedDeca,
+  changeReason: string,
+): Promise<{ decaId: string; versionId: string; versionNo: number; token: string }> {
+  const reason = changeReason.trim();
+  if (reason.length < 3) throw new DecaCorrectionError("reason_required", "Indica el motivo de la corrección.");
+
+  const deca = await prisma.deca.findFirst({
+    where: { id: decaId, companyId },
+    include: { versions: { orderBy: { versionNo: "desc" }, take: 1 } },
+  });
+  if (!deca) throw new DecaCorrectionError("not_found", "Documento no encontrado.");
+
+  const versionNo = (deca.versions[0]?.versionNo ?? 0) + 1;
+  const token = newPublicToken();
+  const modifiedAt = new Date();
+  const key = pdfKey(token);
+  const reference = `DECA-${token.slice(0, 8).toUpperCase()}`;
+
+  const pdf = await renderDecaPdf({
+    data: validated.data,
+    publicUrl: publicUrlFor(token),
+    reference,
+    versionNo,
+    createdAt: deca.createdAt,
+    modifiedAt,
+  });
+  await getPdfStore().put(key, pdf);
+
+  const version = await prisma.$transaction(async (tx) => {
+    const v = await tx.decaVersion.create({
+      data: {
+        decaId,
+        versionNo,
+        token,
+        pdfPath: key,
+        dataJson: validated.data as unknown as object,
+        changeReason: reason,
+        createdAt: modifiedAt,
+      },
+    });
+    await tx.deca.update({
+      where: { id: decaId },
+      data: {
+        currentVersionId: v.id,
+        serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
+      },
+    });
+    return v;
+  });
+
+  return { decaId, versionId: version.id, versionNo, token };
 }

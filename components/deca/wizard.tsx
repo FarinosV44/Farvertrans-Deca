@@ -5,6 +5,7 @@ import { Field } from "./field";
 import { step1Schema, step2Schema, step3Schema } from "@/lib/deca/schema";
 import { track, getSessionId } from "@/lib/analytics/client";
 import { looksLikeSpanishPlate } from "@/lib/deca/plate";
+import { clientFingerprint, solveChallenge } from "@/lib/abuse/client";
 
 type FormState = {
   shipperName: string;
@@ -67,13 +68,18 @@ function toPayload(f: FormState) {
 export function CrearWizard({
   initial,
   saved,
+  correctDecaId,
 }: {
   initial?: WizardInitial;
   saved?: SavedData;
+  /** When set, the wizard corrects an existing DeCA → a new version (R-13). */
+  correctDecaId?: string;
 } = {}) {
   const router = useRouter();
+  const isCorrection = !!correctDecaId;
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initial ? { ...EMPTY, ...initial } : EMPTY);
+  const [reason, setReason] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -90,7 +96,7 @@ export function CrearWizard({
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
-      track("deca_started");
+      if (!isCorrection) track("deca_started");
       if (initial) {
         try {
           sessionStorage.removeItem(STORAGE_KEY);
@@ -106,7 +112,7 @@ export function CrearWizard({
         /* ignore */
       }
     }
-  }, [initial]);
+  }, [initial, isCorrection]);
 
   // Persist the draft as the user types (survives refresh).
   useEffect(() => {
@@ -173,21 +179,65 @@ export function CrearWizard({
     setStep((s) => Math.max(0, s - 1));
   }
 
+  async function postDeca(challenge?: string) {
+    return fetch("/api/deca", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "idempotency-key": idempotencyKey,
+        "x-fvd-session": getSessionId(),
+        "x-fvd-fp": clientFingerprint(),
+        ...(challenge ? { "x-fvd-challenge": challenge } : {}),
+      },
+      body: JSON.stringify(toPayload(form)),
+    });
+  }
+
   async function submit() {
     if (!validateStep() || submitting) return;
+    if (isCorrection && reason.trim().length < 3) {
+      setErrors({ reason: "Indica el motivo de la corrección." });
+      requestAnimationFrame(() => summaryRef.current?.focus());
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch("/api/deca", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "idempotency-key": idempotencyKey,
-          "x-fvd-session": getSessionId(),
-        },
-        body: JSON.stringify(toPayload(form)),
-      });
-      const data = await res.json().catch(() => ({}));
+      if (isCorrection) {
+        const res = await fetch(`/api/deca/${correctDecaId}/version`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ changeReason: reason.trim(), payload: toPayload(form) }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setSubmitError(data?.error?.message ?? "No se pudo guardar la corrección.");
+          setSubmitting(false);
+          return;
+        }
+        track("deca_corrected");
+        router.push(`/app/deca/${correctDecaId}`);
+        return;
+      }
+
+      let res = await postDeca();
+      let data = await res.json().catch(() => ({}));
+
+      // Abuse challenge: solve it invisibly and retry once.
+      if (res.status === 429 && data?.error?.code === "challenge") {
+        setSubmitError("Comprobando… un momento.");
+        const answer = await solveChallenge({
+          type: data.error.challenge?.type ?? "pow",
+          prefix: data.error.challenge?.prefix,
+          difficulty: data.error.challenge?.difficulty,
+        });
+        if (answer) {
+          setSubmitError(null);
+          res = await postDeca(answer);
+          data = await res.json().catch(() => ({}));
+        }
+      }
+
       if (!res.ok) {
         if (res.status === 422 && data?.error?.fields) {
           const flat: Record<string, string> = {};
@@ -236,10 +286,17 @@ export function CrearWizard({
       <h1 ref={headingRef} tabIndex={-1} className="mt-3 text-2xl font-bold outline-none md:text-3xl">
         {["Cargador y transportista", "Origen, destino y fecha", "Mercancía y vehículo"][step]}
       </h1>
-      {!saved && (
+      {isCorrection ? (
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          No necesitas registrarte para crear tu primer DeCA.
+          Corrigiendo el DeCA. Se generará una nueva versión con un QR y una URL nuevos; la versión
+          anterior se conserva.
         </p>
+      ) : (
+        !saved && (
+          <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+            No necesitas registrarte para crear tu primer DeCA.
+          </p>
+        )
       )}
 
       {errorList.length > 0 && (
@@ -356,6 +413,29 @@ export function CrearWizard({
             <Field id="tractorPlate" label="Matrícula de la tractora" value={form.tractorPlate} onChange={set("tractorPlate")} error={errors.tractorPlate} hint={plateHint} />
             <Field id="trailerPlate" label="Matrícula del remolque / semirremolque" value={form.trailerPlate} onChange={set("trailerPlate")} error={errors.trailerPlate} required={false} hint="Solo si es un conjunto articulado." />
             <Field id="reference" label="Referencia o notas (opcional)" value={form.reference} onChange={set("reference")} error={errors.reference} required={false} />
+            {isCorrection && (
+              <div className="mt-3">
+                <label htmlFor="reason" className="block text-sm font-medium">
+                  Motivo de la corrección *
+                </label>
+                <textarea
+                  id="reason"
+                  data-testid="correction-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  aria-invalid={errors.reason ? true : undefined}
+                  aria-describedby={errors.reason ? "reason-error" : undefined}
+                  className={`mt-1 block min-h-20 w-full rounded-[var(--radius-sm)] border px-3 py-2 text-base ${
+                    errors.reason ? "border-[var(--color-danger)]" : "border-[var(--color-border)]"
+                  }`}
+                />
+                {errors.reason && (
+                  <p id="reason-error" className="mt-1 text-sm text-[var(--color-danger)]">
+                    {errors.reason}
+                  </p>
+                )}
+              </div>
+            )}
           </fieldset>
         )}
 
@@ -381,7 +461,13 @@ export function CrearWizard({
             data-testid={step < 2 ? "wizard-next" : "wizard-generate"}
             className="min-h-12 flex-1 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)] disabled:opacity-55"
           >
-            {step < 2 ? "Siguiente" : submitting ? "Generando…" : "GENERAR DECA"}
+            {step < 2
+              ? "Siguiente"
+              : submitting
+                ? "Generando…"
+                : isCorrection
+                  ? "GUARDAR CORRECCIÓN"
+                  : "GENERAR DECA"}
           </button>
         </div>
       </form>

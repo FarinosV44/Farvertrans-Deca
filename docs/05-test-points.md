@@ -58,3 +58,10 @@
 | 2026-09-03 | BUILD 11 attribution | first_deca_at set when an attributed company generates its first DeCA (authed create + claim) | driven | n/a | e2e attribution.spec | PASS | next commit |
 | 2026-09-03 | BUILD 12 dashboard | non-internal user cannot discover /operadores (404) nor /api/operadores/stats (404) — anon + regular user | driven (Playwright) | n/a | e2e operadores.spec | PASS | next commit |
 | 2026-09-03 | BUILD 12 dashboard | internal user sees the operator table; per-operator companies/first-DeCA/total-DeCA reconcile with the API | driven | n/a | e2e operadores.spec | PASS | next commit |
+| 2026-09-03 | BUILD 13 abuse | decide(): first-time user allowed (no challenge); soft threshold → challenge; hard → block+retry-after | driven (Vitest) | pure logic — F16 | `npm run test:unit` | PASS (47 unit) | next commit |
+| 2026-09-03 | BUILD 13 abuse | PoW challenge: valid nonce (plain SHA-256) verified; wrong/forged-prefix/wrong-scope/oversize rejected | driven (Vitest) | pure logic | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 13 abuse | AC-34/35 anonymous: first 3 creates never challenged; 4th → 429 challenge; solved PoW retry → 201 | driven (Playwright API) | n/a | e2e build13.spec | PASS | next commit |
+| 2026-09-03 | BUILD 13 abuse | AC-36 `GET /d/[token]` never returns 429 (15 rapid fetches all 200) | driven | n/a | e2e build13.spec | PASS | next commit |
+| 2026-09-03 | BUILD 13 versioning | AC-14/15 correction → new `deca_version` (new token/QR/PDF), reason + "Versión actual: 2"; v1 PDF still retrievable with original destination; distinct tokens per version | driven (Playwright + pdfjs) | n/a | e2e build13.spec | PASS | next commit |
+| 2026-09-03 | BUILD 13 versioning | AC-16 non-owner cannot correct (401 from an unauthenticated context) | driven | n/a | e2e build13.spec | PASS | next commit |
+| 2026-09-03 | BUILD 13 sharing | AC-24 share panel: WhatsApp deep link contains the `/d/` URL; email via `POST /api/share` (rate-limited, templated, mailto fallback when unconfigured); `deca_shared` event | driven | n/a | e2e build13.spec | PASS | next commit |

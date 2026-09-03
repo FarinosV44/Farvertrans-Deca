@@ -38,16 +38,16 @@
 | 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓, docs/estimate.md (v1) ✓, docs/token-ledger.md ✓, docs/keel-conformance.md ✓, docs/issues.md ✓ |
 | 2 Functional spec | done | docs/02-functional-spec.md ✓ (F1–F18, AC-01…AC-37), docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ (7 flows), docs/estimate.md v2 firm ✓, .claude/rules/ + .claude/agents/ ✓ |
 | 3+4 Design (folded — D-019) | done | docs/design/IMPLEMENTATION-BRIEF.md ✓ (screen list + journey + concrete tokens; no external design-tool round-trip) |
-| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–12 done · BUILD 13–15 pending |
+| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–13 done · BUILD 14–15 pending |
 | 6 Documentation | pending | docs/architecture.md, docs/api/, docs/usage/ |
 | 7 Release | pending | docs/07-release.md |
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2.
-- **Done: BUILD 05–12.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
-  tracking (11) + operator dashboard (12). All green: 43 unit + 43 e2e (6 compliance R-1…R-13 + axe on
-  every public screen) + typecheck + lint + standalone build + keel-verify.
+- **Done: BUILD 05–13.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
+  tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13). All green: 47 unit + 48 e2e
+  (6 compliance R-1…R-13 + axe on every public screen) + typecheck + lint + standalone build + keel-verify.
   - 05 scaffold · 06 landing · 07 `/crear` 3-step creator · 08 compliant PDF+QR+`/d/[token]` +
     `npm run test:compliance` gate · 09 signup+claim (own auth D-021) ·
     10 `/app` + `/app/historico` (search + date range) + `/app/datos` (saved data CRUD) + wizard
@@ -62,12 +62,23 @@
 - **The full flow works and is test-verified:** `/` → CREAR DECA GRATIS → 3 steps (no signup) →
   GENERAR DECA → real compliant PDF+QR at `/crear/[id]` → download (`/d/[token]`) / share →
   "Guardar este DeCA" → `/registro` → `/app` with the document owned + reusable data.
-- Next action: **BUILD 13** — driver share (`POST /api/share` + WhatsApp deep link + printable A4;
-  AC-24), corrections/versioning (→ new `deca_version` with new token/QR/PDF, prior kept — R-13,
-  AC-14/15/16), abuse controls (`lib/abuse` — sliding window per hashed IP+fingerprint, challenge above
-  a soft threshold, NEVER on `/d/`, fail-open — F16/AC-34…36). Then #14 SEO base + 10 core pages +
-  "¿Estoy obligado?", #15 launch gate (perf/Lighthouse AC-28, CSP + security headers, full compliance
-  re-run, deploy runbook).
+- **BUILD 13 done** — sharing + corrections/versioning + abuse controls:
+  - Sharing: result panel WhatsApp deep link + copy + email via `POST /api/share` (rate-limited,
+    templated envelope, mailto fallback when Resend unconfigured), `deca_shared` event.
+  - Corrections (R-13): `/app/deca/[id]` detail + version history; `/app/deca/[id]/corregir` reuses
+    the wizard in correction mode (required "motivo"); `POST /api/deca/[id]/version` → new
+    `deca_version` with a NEW token/URL/QR/PDF, prior versions untouched and still retrievable,
+    `deca.currentVersionId` updated, `deca_corrected` event. Non-owner → 401/404.
+  - Abuse (F16): `lib/abuse/*` — pure sliding-window `decide()`, signed proof-of-work challenge (plain
+    SHA-256, no client secret; hCaptcha when configured), server `checkAbuse()` on anonymous
+    `POST /api/deca` + `POST /api/share`. Fingerprinted requests get the tight limit, un-fingerprinted
+    a loose IP-only one. `GET /d/[token]` NEVER calls it (inspectors never challenged). Wizard solves
+    the PoW invisibly and retries. First-time user is never challenged.
+- Next action: **BUILD 14** — SEO technical base + 10 core content pages + "¿Estoy obligado?" (F15/F18,
+  AC-37). `content/seo/*.mdx` one template; each page: one intent, BOE citation, last-reviewed date,
+  internal links → landing/requisitos/FAQ/generador, ends in CREAR DECA GRATIS. Extend `sitemap.ts`.
+  Then **BUILD 15** — launch gate (Lighthouse perf budgets AC-28, CSP + HSTS + security headers T-5/T-8,
+  full compliance re-run, cross-tenant authz tests, deploy runbook) → then merge `develop` → `main`.
 - Gaps before Phase 7 release: `.githooks/pre-commit` gate + `.github/workflows/ci.yml` (D-010, deferred
   at scaffold); `docs/.keel/plan.json` + `scripts/keel-close`/`keel-handoff-verify` (execution shortcut);
   password reset; real Supabase project + domain + email + hCaptcha (CREDENTIAL, pre-launch);
@@ -82,4 +93,4 @@
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — BUILD 05-12 done, starting BUILD 13
+Last updated: 2026-09-03 — BUILD 05-13 done, starting BUILD 14
