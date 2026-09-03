@@ -102,6 +102,12 @@
     standalone `server.js` threw `ERR_REQUIRE_ESM`. Removed `"type":"module"` from package.json (Next
     now emits CJS `server.js`) + added `server.cjs` startup file + `scripts/standalone-postbuild.mjs`
     + a CI guard. D-025. Hostinger startup file = `server.cjs`.
+- **FIX #16–#19 + LAUNCH #20 (D-026):** #16 = the Cloud Startup 503 above (code-complete, awaiting the
+  user's deploy test). #17 = carrier domicilio now required + weight kept verbatim + wizard review
+  step + `docs/legal-data-model.md`. #18 = per-version `pdf_sha256` (checked on every download) +
+  `FVD_STORAGE_DIR` persistent path. #19 = version author + `docs/retention-policy.md` (claim never
+  resets retention / regenerates). #20 = `tests/e2e/launch-happy-path.spec.ts` +
+  `docs/production-smoke-checklist.md`. Migration `20260903230000`. Not yet merged to `main`.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision the real Supabase project +
   Hostinger VPS + domain + Resend + hCaptcha, deploy per `docs/07-release.md`, then close issues #5–#15.
@@ -116,9 +122,10 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: DONE — v1 (BUILD 05-15) merged to main 2026-09-03.
+- Ready for `main`: v1 (BUILD 05-15) + hotfixes on main. **FIX #16–#19 + LAUNCH #20 are on `develop`,
+  green, awaiting the user's word to merge to `main`.**
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — v1 on main; both 503s fixed (/app→/panel; Cloud Startup ESM→CJS + server.cjs), CI green at d200158
+Last updated: 2026-09-03 — v1 + 503 fixes on main; FIX #16–#19 + LAUNCH #20 done on develop (legal data model, PDF hash, persistence, retention, happy-path spec), awaiting merge to main

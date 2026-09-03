@@ -16,7 +16,7 @@ Every requirement is verified by an automated test, not a claim. Run `npm run te
 | Req | What it requires | Verified by | Result |
 |---|---|---|---|
 | R-1 | Mandatory from 2026-10-05, interior transport | product scope; generator works today | n/a (dated obligation) |
-| R-2 | Art. 6 FOM/2861/2012 data fields | `lib/deca/validate` + `tests/unit/deca-validate.test.ts` + compliance suite | PASS |
+| R-2 | Art. 6 FOM/2861/2012 data fields | `lib/deca/validate` + `tests/unit/deca-validate.test.ts` + compliance suite; full requirement→field→PDF→test map in `docs/legal-data-model.md` (FIX #17 added the carrier domicilio + a review step) | PASS |
 | R-3 | PDF native digital (not a scan) | `test:compliance` — pdfjs extracts every field as text; not a single image | PASS |
 | R-4 | ≤ 5 MB | `test:compliance` — asserted (~20 KB typical) | PASS |
 | R-5 | QR with the document URL | `tests/unit/deca-pdf-logic.test.ts` — jsQR decodes the QR back to the exact URL; compliance suite finds the URL as text | PASS |
@@ -24,10 +24,10 @@ Every requirement is verified by an automated test, not a claim. Run `npm run te
 | R-7 | URL needs no credentials/auth | `test:compliance` — `/d/[token]` returns the PDF, no `Set-Cookie`, no auth | PASS |
 | R-8 | Direct download, no button/interstitial; non-enumerable | `test:compliance` — body is `%PDF-`, not HTML; `tests/e2e/launch-gate.spec.ts` — 256-bit tokens, adjacent guess → 404 | PASS |
 | R-9 | Available during service; deactivable 7 natural days after | `lib/deca/deactivation` + unit test + `/d/[token]` 410 branch | PASS |
-| R-10 | Kept ≥ 1 year (shipper + carrier) | documents + versions + PDFs are never deleted; retention job only flips public access | PASS (design) |
-| R-11 | Record creation + modification date/time | `test:compliance` — PDF metadata `CreationDate` + `Creator`; `deca_version` rows; `/d/` access log | PASS |
-| R-12 | Driver copy before the service (electronic or printed, with QR) | result screen + `/api/share` (link/WhatsApp/email) + the PDF is the printable copy | PASS |
-| R-13 | Corrections keep prior versions + traceability | `POST /api/deca/[id]/version` + `tests/e2e/build13.spec.ts` — v1 stays retrievable with original data, v2 has the change, distinct tokens | PASS |
+| R-10 | Kept ≥ 1 year (shipper + carrier) | documents + versions + PDFs never deleted; per-version `pdf_sha256` integrity anchor; `FVD_STORAGE_DIR` persistent path; full rules in `docs/retention-policy.md`; `registro.spec.ts` — claim preserves the public URL byte-for-byte | PASS |
+| R-11 | Record creation + modification date/time | `test:compliance` — PDF metadata `CreationDate` + `Creator`; `deca_version` rows (`created_at`, `created_by_user_id`); `/d/` access log | PASS |
+| R-12 | Driver copy before the service (electronic or printed, with QR) | result screen + `/api/share` (link/WhatsApp/email) + the PDF is the printable copy; `launch-happy-path.spec.ts` | PASS |
+| R-13 | Corrections keep prior versions + traceability | `POST /api/deca/[id]/version` + `tests/e2e/build13.spec.ts` — v1 stays retrievable with original data **and its PDF hash unchanged**, v2 has the change, distinct tokens; author recorded | PASS |
 
 **Before public launch (not automatable):**
 - **RGPD review** of retaining anonymous documents that contain third-party personal data vs the
@@ -96,6 +96,16 @@ connect to, so `/health` and every DB-backed route return 503. Two ways to get o
   a persistent PDF volume together — no Supabase, no external account. See §4 below.
 - **Managed:** a **Supabase** or **Neon** project → real `DATABASE_URL`; run `prisma migrate deploy`
   against it. Supabase also gives the private Storage bucket if you want `FVD_STORAGE=supabase`.
+
+**PDF persistence is a legal requirement (R-10 / FIX #18).** The PDF store is the repository of record
+for ≥ 1 year. It must not be wiped on redeploy:
+- `FVD_STORAGE=supabase` → a private bucket (durable) — set the Supabase URL + service key.
+- `FVD_STORAGE=local` → set **`FVD_STORAGE_DIR`** to an absolute path that (a) persists across deploys
+  and (b) is **outside** the build/deploy tree. Docker: the `fvd-prod-storage` volume at `/app/.storage`.
+  Hostinger Cloud Startup: a directory under your account's persistent home, e.g.
+  `FVD_STORAGE_DIR=/home/<user>/farvertrans-storage` — **never** a path inside `.next/standalone`.
+Each version's `pdf_sha256` is recorded at generation and re-checked on every public download; a
+mismatch is logged as repository corruption.
 
 ### Hostinger Cloud Startup (hPanel → Node.js, LiteSpeed `lsnode.js`)
 

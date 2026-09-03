@@ -193,3 +193,35 @@
   `"type":"module"` in the standalone package.json, boots it via `require('./server.cjs')`.
 - Hostinger config after this fix: **Application startup file = `server.cjs`**, app root = repo root,
   Node 20+. Build: `npm ci && npx prisma generate && npx prisma migrate deploy && NEXT_STANDALONE=1 npm run build`.
+
+## D-026 — Legal data-model hardening + production readiness (FIX #17–#19, LAUNCH #20)
+- Date / phase: 2026-09-03 / post-BUILD-15
+- Decision (supersedes the F1/F2 field list where they conflict):
+  - **Carrier domicilio is now a required DeCA field** (`carrier.address`). Art. 6.1.a)
+    Orden FOM/2861/2012 requires the domicilio of BOTH parties; v1 only captured the
+    shipper's. Added to `lib/deca/schema.ts`, the wizard step 1, the PDF, and the legal
+    mapping (`docs/legal-data-model.md`). Correcting a pre-#17 DeCA now prompts for it.
+  - **Weight is kept VERBATIM** — never silently reformatted. A regex rejects only
+    meaningless values (`0`, `0 kg`, `-`, `n/a`, `sin especificar`).
+  - **Review step**: the wizard's last step renders `<ReviewSummary>`
+    (`data-testid="review-summary"`) with every assembled value before GENERAR DECA.
+  - **Per-version PDF SHA-256** (`deca_version.pdf_sha256`) written at generation,
+    re-checked on every `/d/[token]` download (mismatch → logged, still served).
+    Returned in the `POST /api/deca` response.
+  - **`FVD_STORAGE_DIR`** env — for `FVD_STORAGE=local`, an absolute persistent path
+    OUTSIDE the deploy tree, so a redeploy never wipes the repository of record (R-10).
+    Docker compose sets it to the `fvd-prod-storage` volume; documented for Hostinger.
+  - **Version author** (`deca_version.created_by_user_id`) recorded on corrections and
+    shown in the owner-only audit view (`/panel/deca/[id]`).
+  - Retention rules written down in `docs/retention-policy.md`: append-only, old PDF
+    bytes never overwritten, no cleanup job deletes retained PDFs, **a claim never
+    resets the retention clock or regenerates the inspection document** (verified:
+    `claimDeca()` only sets `company_id`/`created_by_user_id`).
+  - **LAUNCH #20**: `tests/e2e/launch-happy-path.spec.ts` (anonymous → PDF →
+    QR-equivalent → save account → claim → duplicate, mobile viewport, byte-identical
+    across claim) + `docs/production-smoke-checklist.md` (manual QR / second-device steps
+    + launch blockers).
+- Migration: `20260903230000_deca_version_pdf_hash_author` (two nullable columns).
+- Why: the forge issues #17–#20 asked for a legally complete data model, a durable
+  inspection path and a proven end-to-end launch flow. No prior decision reopened.
+- Verified: 52 unit + 63 e2e + 8 compliance + typecheck + lint + format + keel-verify.
