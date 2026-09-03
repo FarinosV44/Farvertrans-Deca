@@ -2,8 +2,11 @@
 // Supabase Auth owns auth.* ; this schema owns every application table.
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "./generated/client"
+  provider      = "prisma-client-js"
+  output        = "./generated/client"
+  // Ship engines for the build host AND common Linux targets, so a client
+  // generated on Windows still runs on a Linux server (and CI / Docker).
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

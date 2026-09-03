@@ -73,6 +73,39 @@ npm run seed
 node -e "fetch('http://localhost:3000/api/deca',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({shipper:{name:'Cargas del Turia SL',nif:'B96789011',address:'Av. del Puerto 120, Valencia'},carrier:{name:'Transportes Pérez SL',nif:'B12345674'},origin:'Valencia',destination:'Madrid',transportDate:'2026-10-06',goods:'Palés de cerámica',weight:'12000 kg',tractorPlate:'1234 BCD'})}).then(r=>r.json()).then(d=>console.log('http://localhost:3000/d/'+d.token))"
 ```
 
+## Hosting choice — read this first
+
+This is a Next.js **SSR** app with a **PostgreSQL** database and a server-side PDF pipeline. It needs a
+**long-running Node process** and a **real Postgres**. It will 503 without both.
+
+| Host | Works? | Notes |
+|---|---|---|
+| Hostinger **VPS** (KVM) | ✅ recommended | Full control, Docker — the runbook below. |
+| Hostinger **Cloud Startup / Web hosting** | ⚠️ only via the hPanel **Node.js** tool, no Docker | One persistent Node app; set the startup file and env vars in hPanel (see below). Shared resources — the build and Playwright are heavy; build elsewhere and upload, or build in a VPS. |
+| Vercel / Netlify / Railway / Render / Fly.io | ✅ | Next-native; pair with Supabase/Neon Postgres. |
+| Static / PHP shared hosting | ❌ | No Node process → whole-site 503. |
+
+**The database is not optional.** With only the `.env.example` placeholders there is no Postgres to
+connect to, so `/health` and every DB-backed route return 503. Create a free Postgres first:
+**Supabase** (also gives you the private Storage bucket) or **Neon**. Put the real connection string in
+`DATABASE_URL` and run `npx prisma migrate deploy` against it.
+
+### If you must use Hostinger shared hosting (hPanel → Node.js)
+1. Create a **Supabase** (or Neon) project → real `DATABASE_URL`; a Supabase **private** bucket
+   `deca-pdfs` → set `FVD_STORAGE=supabase` + the Supabase URL/keys.
+2. hPanel → **Advanced → Node.js**: Node 20, application root = the repo, **startup file** =
+   `node_modules/next/dist/bin/next` with args `start`, or add a `server.js` wrapper.
+3. hPanel → **environment variables**: add every key from `.env.example` with real values
+   (`NEXT_PUBLIC_FVD_BASE_URL=https://<your-domain>`, `DATABASE_URL`, `FVD_HASH_SECRET` ≥ 16 chars,
+   `FVD_STORAGE`, Supabase keys, `FVD_DEBUG=0`).
+4. Run once over SSH (or a deploy hook): `npm ci && npx prisma generate && npx prisma migrate deploy && npm run build`.
+5. Restart the Node app. Check `https://<domain>/health` → must be `{"status":"ok","db":"up"}`.
+
+If `/health` still 503s: `db` will say `down` (bad `DATABASE_URL` / migrations not run) or the whole
+response fails (the Node app crashed — check the hPanel Node.js logs; a Prisma engine mismatch shows as
+`PrismaClientInitializationError` — `prisma generate` must run **on the server**, the schema now targets
+`debian-openssl-3.0.x` + `linux-musl-openssl-3.0.x` as well as native).
+
 ## Deployment runbook — Hostinger VPS + Supabase
 
 ### 1. Supabase (one-time)
