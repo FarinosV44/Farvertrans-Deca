@@ -12,13 +12,13 @@ slices:
     criteria: [AC-07-workspace]
   - id: S-11
     title: BUILD 11 — Referral + UTM attribution per operator
-    status: not-started
+    status: done
     hours: 10
     depends_on: [S-09]
     criteria: [AC-18, AC-19, AC-20, AC-21, AC-22, AC-23]
   - id: S-12
     title: BUILD 12 — Internal operator acquisition dashboard
-    status: not-started
+    status: done
     hours: 8
     depends_on: [S-11]
     criteria: [AC-30]

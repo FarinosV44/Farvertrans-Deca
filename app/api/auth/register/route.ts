@@ -43,6 +43,14 @@ export async function POST(req: Request) {
 
   await setSessionCookie(created.userId);
 
+  // Write acquisition attribution (first + last touch) from the first-party cookie.
+  try {
+    const { writeAcquisitionAtSignup } = await import("@/lib/attribution/persist");
+    await writeAcquisitionAtSignup(created.userId, created.companyId);
+  } catch {
+    // attribution is best-effort — never block signup
+  }
+
   // Attach the anonymous DeCA — an auth failure must never lose it.
   let claimedDecaId: string | undefined;
   if (b.claim) {

@@ -38,28 +38,36 @@
 | 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓, docs/estimate.md (v1) ✓, docs/token-ledger.md ✓, docs/keel-conformance.md ✓, docs/issues.md ✓ |
 | 2 Functional spec | done | docs/02-functional-spec.md ✓ (F1–F18, AC-01…AC-37), docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ (7 flows), docs/estimate.md v2 firm ✓, .claude/rules/ + .claude/agents/ ✓ |
 | 3+4 Design (folded — D-019) | done | docs/design/IMPLEMENTATION-BRIEF.md ✓ (screen list + journey + concrete tokens; no external design-tool round-trip) |
-| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–10 done · BUILD 11–15 pending |
+| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–12 done · BUILD 13–15 pending |
 | 6 Documentation | pending | docs/architecture.md, docs/api/, docs/usage/ |
 | 7 Release | pending | docs/07-release.md |
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2.
-- **Done: BUILD 05–10.** The core anonymous flow (05–09) + the registered workspace (10). All green:
-  36 unit + 37 e2e (6 compliance R-1…R-13 + axe on every screen) + typecheck + lint + standalone build + keel-verify.
+- **Done: BUILD 05–12.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
+  tracking (11) + operator dashboard (12). All green: 43 unit + 43 e2e (6 compliance R-1…R-13 + axe on
+  every public screen) + typecheck + lint + standalone build + keel-verify.
   - 05 scaffold · 06 landing · 07 `/crear` 3-step creator · 08 compliant PDF+QR+`/d/[token]` +
     `npm run test:compliance` gate · 09 signup+claim (own auth D-021) ·
-    10 `/app` (actions-first) + `/app/historico` (search + date range) + `/app/datos` (saved
-    companies/vehicles/addresses CRUD) + wizard autofill for authed users + duplicate `/crear?from=<id>`
-    (date reset, new id/token) + authed `POST /api/deca` owns the DeCA by company.
+    10 `/app` + `/app/historico` (search + date range) + `/app/datos` (saved data CRUD) + wizard
+    autofill + duplicate `/crear?from=<id>` + authed `POST /api/deca` owns the DeCA ·
+    11 `lib/attribution/*` — `?ref=` + 5 UTMs, first-touch-never-overwritten + last-touch, first-party
+    cookie+localStorage `AttributionCapture` in the root layout, `acquisition` row written at signup,
+    `first_deca_at` on first DeCA (authed create + claim), user never sees an operator name ·
+    12 `/operadores` internal-only dashboard (404 for everyone else) + `GET /api/operadores/stats`:
+    per-operator visits/companies/first-DeCA/total-DeCA/active-7d/30d + conversion rates, from real
+    events + real usage; unknown ref codes + organic grouped. Seed adds `admin@farvertrans.local` /
+    `admin-dev-only` (internal role, local only).
 - **The full flow works and is test-verified:** `/` → CREAR DECA GRATIS → 3 steps (no signup) →
   GENERAR DECA → real compliant PDF+QR at `/crear/[id]` → download (`/d/[token]`) / share →
   "Guardar este DeCA" → `/registro` → `/app` with the document owned + reusable data.
-- Next action: **BUILD 11** — referral + UTM attribution (EPIC 02, AC-18…AC-23): `lib/attribution/*`
-  parse `ref` + 5 UTMs, first-touch never overwritten + last-touch, first-party cookie + localStorage,
-  write the `acquisition` row at signup, set `first_deca_at` on the first DeCA. Wire into landing +
-  `/registro`. Then #12 dashboard, #13 share/corrections(R-13)/abuse(F16), #14 SEO base + 10 pages,
-  #15 launch gate (perf/Lighthouse AC-28, CSP + security headers, full compliance re-run, deploy runbook).
+- Next action: **BUILD 13** — driver share (`POST /api/share` + WhatsApp deep link + printable A4;
+  AC-24), corrections/versioning (→ new `deca_version` with new token/QR/PDF, prior kept — R-13,
+  AC-14/15/16), abuse controls (`lib/abuse` — sliding window per hashed IP+fingerprint, challenge above
+  a soft threshold, NEVER on `/d/`, fail-open — F16/AC-34…36). Then #14 SEO base + 10 core pages +
+  "¿Estoy obligado?", #15 launch gate (perf/Lighthouse AC-28, CSP + security headers, full compliance
+  re-run, deploy runbook).
 - Gaps before Phase 7 release: `.githooks/pre-commit` gate + `.github/workflows/ci.yml` (D-010, deferred
   at scaffold); `docs/.keel/plan.json` + `scripts/keel-close`/`keel-handoff-verify` (execution shortcut);
   password reset; real Supabase project + domain + email + hCaptcha (CREDENTIAL, pre-launch);
@@ -74,4 +82,4 @@
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — BUILD 05-10 done, starting BUILD 11
+Last updated: 2026-09-03 — BUILD 05-12 done, starting BUILD 13

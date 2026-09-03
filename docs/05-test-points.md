@@ -49,3 +49,12 @@
 | 2026-09-03 | BUILD 10 workspace | "Repetir último DeCA" / duplicate prefills, date reset, NEW id/token on generate | driven | n/a | e2e workspace.spec | PASS | next commit |
 | 2026-09-03 | BUILD 10 workspace | saved data add → autofill in wizard (company + vehicle) → delete; a generated DeCA is untouched | driven | n/a | e2e workspace.spec | PASS | next commit |
 | 2026-09-03 | BUILD 10 workspace | /app, /app/historico, /app/datos axe-clean | driven (@axe-core) | n/a | e2e workspace.spec | PASS | next commit |
+| 2026-09-03 | BUILD 11 attribution | parseTouch: referral/campaign/organic/direct classification + all 5 UTMs captured | driven (Vitest) | pure logic — written from F12/EPIC 02 | `npm run test:unit` | PASS (43 unit) | next commit |
+| 2026-09-03 | BUILD 11 attribution | merge rules: first-touch captured once + NEVER overwritten after lock; last-touch updates on qualifying touch only; no-op once locked; acquisition-row flatten | driven (Vitest, 5 tests) | pure logic | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 11 attribution | AC-18/19 ?ref=adrian → browse → anonymous flow → signup attributed to adrian; user never sees operator name | driven (Playwright) | n/a | e2e attribution.spec | PASS | next commit |
+| 2026-09-03 | BUILD 11 attribution | AC-20 return via ?ref=maria before signup → last-touch maria, first stays adrian | driven | n/a | e2e attribution.spec | PASS | next commit |
+| 2026-09-03 | BUILD 11 attribution | AC-21/22 no ref + no UTM → organic/direct, still recorded | driven | n/a | e2e attribution.spec | PASS | next commit |
+| 2026-09-03 | BUILD 11 attribution | AC-23 per-operator companies/first-DeCA/total-DeCA queryable via /api/operadores/stats (internal only) | driven | n/a | e2e attribution.spec | PASS | next commit |
+| 2026-09-03 | BUILD 11 attribution | first_deca_at set when an attributed company generates its first DeCA (authed create + claim) | driven | n/a | e2e attribution.spec | PASS | next commit |
+| 2026-09-03 | BUILD 12 dashboard | non-internal user cannot discover /operadores (404) nor /api/operadores/stats (404) — anon + regular user | driven (Playwright) | n/a | e2e operadores.spec | PASS | next commit |
+| 2026-09-03 | BUILD 12 dashboard | internal user sees the operator table; per-operator companies/first-DeCA/total-DeCA reconcile with the API | driven | n/a | e2e operadores.spec | PASS | next commit |

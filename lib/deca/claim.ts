@@ -31,5 +31,12 @@ export async function claimDeca(token: string, companyId: string, userId: string
     });
     await tx.claimToken.update({ where: { token }, data: { usedAt: new Date() } });
   });
+
+  try {
+    const { markFirstDeca } = await import("@/lib/attribution/persist");
+    await markFirstDeca(companyId);
+  } catch {
+    /* non-critical */
+  }
   return { decaId: claim.decaId };
 }

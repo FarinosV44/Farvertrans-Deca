@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { es } from "@/lib/i18n/es";
 import { publicEnv } from "@/lib/env";
+import { AttributionCapture } from "@/components/analytics/attribution-capture";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,6 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#contenido" className="skip-link">
           {es.common.skipToContent}
         </a>
+        <Suspense fallback={null}>
+          <AttributionCapture />
+        </Suspense>
         {children}
       </body>
     </html>

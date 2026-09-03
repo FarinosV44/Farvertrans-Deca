@@ -101,6 +101,16 @@ export async function createDeca(
     return { decaId: deca.id, versionId: version.id };
   });
 
+  // First-DeCA milestone for the operator dashboard (F12) — best-effort.
+  if (opts.companyId) {
+    try {
+      const { markFirstDeca } = await import("@/lib/attribution/persist");
+      await markFirstDeca(opts.companyId);
+    } catch {
+      /* non-critical */
+    }
+  }
+
   return {
     ...result,
     token,

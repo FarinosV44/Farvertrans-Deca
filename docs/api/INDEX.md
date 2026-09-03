@@ -27,6 +27,12 @@
 | listHistory() / getDecaForDuplicate() | function | lib/data/history.ts | docs/reference/lib.md | Company-scoped DeCA history + the duplicate-flow source payload |
 | rowMatches() | function | lib/data/history-filter.ts | docs/reference/lib.md | Pure history filter predicate (free text + date range) |
 | SavedDataManager / AppNav | component | components/app/* | docs/reference/lib.md | Workspace nav + saved-data CRUD UI |
+| GET /api/operadores/stats | route | app/api/operadores/stats/route.ts | docs/reference/endpoints.md | Per-operator acquisition stats; internal role only (404 otherwise) |
+| parseTouch() / touchIsQualifying() / UTM_KEYS | fn/const | lib/attribution/parse.ts | docs/reference/lib.md | Pure: extract an acquisition touch (ref + 5 UTMs) + classify channel |
+| mergeTouch() / mergeFromUrl() / lock() / toAcquisitionRow() | function | lib/attribution/merge.ts | docs/reference/lib.md | Pure: first-touch-never-overwritten + last-touch merge rules (F12) |
+| captureAttribution() / lockAttribution() | function | lib/attribution/client.ts | docs/reference/lib.md | Client cookie+localStorage capture; lock at signup |
+| writeAcquisitionAtSignup() / markFirstDeca() / operatorStats() | function | lib/attribution/persist.ts | docs/reference/lib.md | Server: write the acquisition row at signup, first_deca_at, per-operator report |
+| AttributionCapture | component | components/analytics/attribution-capture.tsx | docs/reference/lib.md | Root-layout invisible touch recorder |
 | hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
 | decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |

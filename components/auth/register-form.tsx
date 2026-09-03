@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Field } from "@/components/deca/field";
 import { track } from "@/lib/analytics/client";
+import { lockAttribution } from "@/lib/attribution/client";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -45,7 +46,10 @@ export function RegisterForm() {
         setBusy(false);
         return;
       }
-      if (mode === "register") track("signup_completed");
+      if (mode === "register") {
+        track("signup_completed");
+        lockAttribution(); // first-touch is now permanent
+      }
       if (claim) track("claim_completed");
       router.push("/app");
     } catch {
