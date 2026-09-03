@@ -4,7 +4,12 @@ Repo: FarinosV44/Farvertrans-Deca
 Branch: develop (v1 also on main)
 Generated: 2026-09-03
 Keel: v5.19.2
-Position: **v1 complete — BUILD 05–15 done, on `main` (946ac88), CI green.** Phase 5 closed.
+Position: **v1 complete — BUILD 05–15 done, on `main` (e088f51), CI green.** Phase 5 closed.
+Post-release: 3 hotfixes on `main` — Prisma Linux engines (`ff731dd`); the deployed **503** =
+`/app` route segment collided with `/` in the standalone build, fixed by `/app`→`/panel` rename
+(`fbc19ca`, D-023); server-side attribution capture in `middleware.ts` removing a CI race (`a653d37`);
+self-contained `docker-compose.prod.yml` deploy path — app + bundled Postgres + PDF volume, no
+Supabase needed (`e088f51`, D-024), verified end-to-end locally.
 
 ## What happened
 
@@ -27,7 +32,7 @@ Key code map: `lib/deca/*` (validate R-2, PDF, tokens, versioning, deactivation)
 (@react-pdf), `lib/storage` (Supabase/local), `lib/auth/*` (own email+password — D-021),
 `lib/attribution/*`, `lib/abuse/*`, `lib/data/*` (history+saved), `content/seo/pages.ts`,
 `middleware.ts` (headers), `Dockerfile`, `.github/workflows/ci.yml`. Full reference: `docs/api/INDEX.md`.
-Decisions: `docs/decisions.md` D-001…D-021. Release evidence + runbook: `docs/07-release.md`.
+Decisions: `docs/decisions.md` D-001…D-024. Release evidence + runbook: `docs/07-release.md`.
 
 ## Before public launch — the USER's tasks (not code)
 
@@ -35,8 +40,11 @@ Decisions: `docs/decisions.md` D-001…D-021. Release evidence + runbook: `docs/
    1-year retention obligation (D-016). Document the legal basis + an erasure procedure.
 2. **Legal / inspection check** of a real generated DeCA (generate a sample — instructions in
    `docs/07-release.md`).
-3. Provision: a Supabase project (+ private `deca-pdfs` bucket), a Hostinger VPS, the real domain, a
-   Resend key, hCaptcha keys. Deploy per `docs/07-release.md`. Confirm HTTPS/TLS 1.2+ (R-6).
+3. Deploy: Hostinger VPS with Docker → `cp .env.prod.example .env.prod`, fill 4 values
+   (`POSTGRES_PASSWORD`, `DATABASE_URL`, `NEXT_PUBLIC_FVD_BASE_URL`, `FVD_HASH_SECRET`),
+   `docker compose -f docker-compose.prod.yml up -d --build`, put a TLS proxy in front (R-6).
+   Supabase/Resend/hCaptcha are all optional (see `docs/07-release.md` §4). The real domain still needs
+   deciding (placeholder `deca.farvertrans.es`, D-011).
 4. Then: beat-3 comments on #1–#15 ("testable now on <url>") and the user closes the issues.
 
 ## If work continues (next session)
