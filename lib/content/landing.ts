@@ -1,4 +1,5 @@
 import { publicEnv } from "@/lib/env";
+import { BRAND } from "@/lib/brand";
 
 export const HERO = {
   eyebrow: "Documento Electrónico de Control",
@@ -91,7 +92,7 @@ export const FAQ: { q: string; a: string }[] = [
     a: "Antes del inicio del servicio, en copia electrónica visible en el móvil o en copia impresa, siempre con el QR disponible.",
   },
   {
-    q: "¿Es gratis Farvertrans DeCA?",
+    q: `¿Es gratis ${BRAND.name}?`,
     a: "Sí. Puedes crear y descargar documentos sin tarjeta y sin límite, al menos hasta el 31 de diciembre de 2026.",
   },
   {
@@ -107,7 +108,7 @@ export function landingJsonLd() {
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
-      name: "Farvertrans DeCA",
+      name: BRAND.name,
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       url: base,

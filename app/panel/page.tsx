@@ -21,7 +21,7 @@ export default async function AppHome() {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader authed />
       <main id="contenido" className="mx-auto max-w-[900px] px-4 py-8 md:px-6">
         <h1 className="text-2xl font-bold">{user.company?.name ?? "Mi empresa"}</h1>
         <AppNav current="home" />

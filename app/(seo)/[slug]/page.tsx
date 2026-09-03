@@ -8,6 +8,7 @@ import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
 import { publicEnv } from "@/lib/env";
 import { HERO } from "@/lib/content/landing";
+import { BRAND } from "@/lib/brand";
 import { SEO_PAGES, getSeoPage } from "@/content/seo/pages";
 
 export const dynamicParams = false; // only the 10 known slugs render; anything else 404s
@@ -33,7 +34,7 @@ export async function generateMetadata({
       url,
       title: p.title,
       description: p.description,
-      siteName: "Farvertrans DeCA",
+      siteName: BRAND.name,
     },
   };
 }

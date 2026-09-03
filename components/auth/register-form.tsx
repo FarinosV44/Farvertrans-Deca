@@ -6,10 +6,11 @@ import { Field } from "@/components/deca/field";
 import { track } from "@/lib/analytics/client";
 import { lockAttribution } from "@/lib/attribution/client";
 
-export function RegisterForm() {
+export function RegisterForm({ initialMode = "register" }: { initialMode?: "register" | "login" }) {
   const router = useRouter();
   const params = useSearchParams();
   const claim = params.get("claim") ?? undefined;
+  const nextPath = params.get("next") ?? "/panel";
 
   const [f, setF] = useState({
     email: "",
@@ -18,7 +19,7 @@ export function RegisterForm() {
     companyNif: "",
     companyAddress: "",
   });
-  const [mode, setMode] = useState<"register" | "login">("register");
+  const [mode, setMode] = useState<"register" | "login">(initialMode);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
@@ -49,7 +50,7 @@ export function RegisterForm() {
         lockAttribution(); // first-touch is now permanent
       }
       if (claim) track("claim_completed");
-      router.push("/panel");
+      router.push(nextPath.startsWith("/") ? nextPath : "/panel");
     } catch {
       setError("Sin conexión. Inténtalo de nuevo.");
       setBusy(false);

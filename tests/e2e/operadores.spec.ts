@@ -79,8 +79,7 @@ test.describe("BUILD 12 — internal operator dashboard", () => {
     const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
     const adminCtx = await page.context().browser()!.newContext({ baseURL });
     const admin = await adminCtx.newPage();
-    await admin.goto("/registro");
-    await admin.getByRole("button", { name: "Ya tengo cuenta" }).click();
+    await admin.goto("/entrar");
     await admin.fill("#email", "admin@farvertrans.local");
     await admin.fill("#password", "admin-dev-only");
     await Promise.all([

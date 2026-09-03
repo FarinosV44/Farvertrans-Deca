@@ -1,6 +1,7 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { createHash } from "node:crypto";
+import { BRAND } from "../../lib/brand";
 
 /**
  * BUILD 08 — R-1…R-13 compliance suite. This is a Phase 7 release gate.
@@ -125,7 +126,7 @@ test.describe("R-1…R-13 compliance", () => {
     const meta = await doc.getMetadata();
     const info = meta.info as { CreationDate?: string; Creator?: string };
     expect(info.CreationDate).toBeTruthy();
-    expect(info.Creator ?? "").toContain("Farvertrans DeCA");
+    expect(info.Creator ?? "").toContain(BRAND.name);
   });
 
   test("R-13: fails closed — an invalid payload produces no document", async ({ request }) => {

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { publicEnv } from "@/lib/env";
+import { BRAND } from "@/lib/brand";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { MobileCta } from "@/components/site/mobile-cta";
 import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
 import { DecaPreview } from "@/components/site/deca-preview";
+import { getCurrentUser } from "@/lib/auth";
 import {
   HERO,
   STEPS,
@@ -27,11 +29,15 @@ export const metadata: Metadata = {
     title: "DeCA Gratis | Genera el Documento de Control Online",
     description:
       "Crea tu Documento Electrónico de Control en segundos. PDF nativo, QR y conservación online. Sin tarjeta, sin límite.",
-    siteName: "Farvertrans DeCA",
+    siteName: BRAND.name,
   },
 };
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const user = await getCurrentUser().catch(() => null);
+
   return (
     <>
       <TrackView event="landing_view" />
@@ -40,7 +46,7 @@ export default function HomePage() {
         // Static, no user data — safe.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd()) }}
       />
-      <SiteHeader />
+      <SiteHeader nav authed={!!user?.companyId} />
 
       <main id="contenido" className="pb-24 md:pb-0">
         {/* Hero */}
@@ -85,7 +91,7 @@ export default function HomePage() {
         {/* 3 benefits */}
         <section className="mx-auto max-w-[1120px] px-4 py-12 md:px-6" aria-labelledby="beneficios">
           <h2 id="beneficios" className="text-2xl font-bold md:text-3xl">
-            Por qué Farvertrans DeCA
+            Por qué {BRAND.name}
           </h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {BENEFITS.map((b) => (

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { BRAND } from "../../lib/brand";
 
 const FORBIDDEN = [
   "solicitar información",
@@ -51,6 +52,21 @@ test.describe("BUILD 06 — production landing", () => {
     });
     expect(types).toContain("SoftwareApplication");
     expect(types).toContain("FAQPage");
+  });
+
+  test("#21: the product brand is centralised — header/footer show the brand, not 'Farvertrans DeCA'", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator("header")).toContainText(BRAND.name);
+    const footer = page.locator("footer");
+    await expect(footer).toContainText(BRAND.name);
+    await expect(footer).toContainText(BRAND.attribution); // "Un servicio de Farvertrans S.L."
+    // no bare internal product name anywhere in the visible page
+    const body = (await page.locator("body").innerText()).toLowerCase();
+    expect(body).not.toContain("farvertrans deca");
+    // returning-user entry point
+    await expect(page.getByTestId("header-login")).toHaveAttribute("href", "/entrar");
   });
 
   test("AC-26: no pricing / contact / demo / sales gating on the landing", async ({ page }) => {

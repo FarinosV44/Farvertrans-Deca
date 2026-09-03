@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import type { DecaPayload } from "@/lib/deca/schema";
+import { BRAND } from "@/lib/brand";
 
 const s = StyleSheet.create({
   page: { padding: 40, fontSize: 10, fontFamily: "Inter", color: "#0f1720" },
@@ -49,10 +50,10 @@ export function DecaDocument(p: DecaDocProps) {
   return (
     <Document
       title={`DeCA ${p.reference}`}
-      author="Farvertrans DeCA"
+      author={BRAND.name}
       subject="Documento Electrónico de Control Administrativo"
-      creator={`Farvertrans DeCA v${p.appVersion}`}
-      producer={`Farvertrans DeCA v${p.appVersion}`}
+      creator={`${BRAND.name} v${p.appVersion}`}
+      producer={`${BRAND.name} v${p.appVersion}`}
       creationDate={p.createdAt}
       modificationDate={p.modifiedAt ?? p.createdAt}
     >
@@ -85,7 +86,9 @@ export function DecaDocument(p: DecaDocProps) {
           <View>
             <Text style={s.label}>URL DE VERIFICACIÓN (descarga directa)</Text>
             <Text style={s.url}>{p.publicUrl}</Text>
-            <Text style={s.meta}>Generado por Farvertrans DeCA v{p.appVersion}</Text>
+            <Text style={s.meta}>
+              Generado por {BRAND.name} · {BRAND.attribution} · v{p.appVersion}
+            </Text>
           </View>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image style={s.qr} src={p.qrDataUri} />
