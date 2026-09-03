@@ -1,16 +1,39 @@
 import { z } from "zod";
 
-/** The closed set of first-party analytics events (F14 / EPIC 01–02). */
+/** The closed set of first-party analytics events (F14 / EPIC 01–02, DESIGN #22, ACCOUNT #23, OPS #26). */
 export const EVENT_NAMES = [
+  // funnel
   "landing_view",
   "click_crear_deca",
-  "signup_started",
-  "signup_completed",
   "deca_started",
   "deca_generated",
   "deca_shared",
   "deca_corrected",
   "claim_completed",
+  // landing conversion (#22)
+  "hero_cta",
+  "header_cta",
+  "login_click",
+  "persona_section_cta",
+  "product_demo_cta",
+  "faq_open",
+  "final_cta",
+  // account (#23)
+  "signup_started",
+  "signup_completed",
+  "company_created",
+  "anonymous_deca_claimed",
+  "login_completed",
+  "first_authenticated_deca",
+  // driver delivery / verification (#26)
+  "pdf_opened",
+  "pdf_downloaded",
+  "share_opened",
+  "share_whatsapp",
+  "share_native",
+  "public_link_copied",
+  "print_clicked",
+  "qr_verify_opened",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

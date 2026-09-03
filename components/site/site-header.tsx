@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CtaButton } from "./cta-button";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import { Wordmark } from "@/components/brand/wordmark";
 import { es } from "@/lib/i18n/es";
 
@@ -47,15 +48,18 @@ export function SiteHeader({ nav = false, authed = false }: { nav?: boolean; aut
               {es.common.panelCta}
             </Link>
           ) : (
-            <Link
+            <TrackedLink
               href="/entrar"
+              event="login_click"
               data-testid="header-login"
               className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] px-3 text-sm font-medium no-underline hover:text-[var(--color-primary)]"
             >
               {es.common.loginCta}
-            </Link>
+            </TrackedLink>
           )}
-          <CtaButton className="!min-h-10 !px-4 text-sm">Crear DeCA</CtaButton>
+          <CtaButton event="header_cta" className="!min-h-10 !px-4 text-sm">
+            Crear DeCA
+          </CtaButton>
         </div>
       </div>
     </header>

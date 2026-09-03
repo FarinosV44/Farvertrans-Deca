@@ -69,6 +69,76 @@ test.describe("BUILD 06 — production landing", () => {
     await expect(page.getByTestId("header-login")).toHaveAttribute("href", "/entrar");
   });
 
+  test("#22: premium landing V2 — hero, trust row, personas, daily-use, product proof, final CTA", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    // hero: headline + proof + primary CTA above the fold
+    await expect(page.locator("h1")).toHaveText("DeCA GRATIS");
+    await expect(
+      page.getByText(
+        "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite al menos hasta el 31/12/2026",
+      ),
+    ).toBeVisible();
+    await expect(page.getByTestId("cta-hero")).toBeInViewport();
+    // returning-user entry point in the hero
+    await expect(page.getByTestId("hero-login")).toHaveAttribute("href", "/entrar");
+    // conversion sections present
+    for (const id of ["pasos", "producto", "para-quien", "cada-dia", "normativa", "faq"]) {
+      await expect(page.locator(`#${id}`)).toHaveCount(1);
+    }
+    await expect(
+      page.getByRole("heading", { name: "Hecho para quien mueve mercancía" }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Por qué usarlo cada día" })).toBeVisible();
+    // multiple CTAs down the page (hero + section + persona) + a final one
+    expect(await page.getByTestId("cta-crear").count()).toBeGreaterThanOrEqual(2);
+    const final = page.getByTestId("cta-final");
+    await final.scrollIntoViewIfNeeded();
+    await expect(final).toBeVisible();
+  });
+
+  test("#22: FAQ content is in the SSR HTML (indexable) even before any interaction", async ({
+    browser,
+  }) => {
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    // every answer is present in the markup with JS disabled
+    await expect(
+      page.getByText(/El Documento Electrónico de Control Administrativo es la versión digital/),
+    ).toBeAttached();
+    await ctx.close();
+  });
+
+  test("#22: hero CTA and header login fire distinct placement analytics events", async ({
+    page,
+  }) => {
+    const events: string[] = [];
+    await page.route("**/api/events", async (route) => {
+      try {
+        events.push(JSON.parse(route.request().postData() || "{}").name);
+      } catch {
+        /* ignore */
+      }
+      await route.fulfill({ status: 204, body: "" });
+    });
+
+    await page.goto("/");
+    await page.getByTestId("cta-hero").click(); // -> /crear, fires hero_cta + click_crear_deca
+    await expect(page).toHaveURL(/\/crear$/);
+    await page.waitForTimeout(200);
+    expect(events).toContain("hero_cta");
+    expect(events).toContain("click_crear_deca");
+
+    events.length = 0;
+    await page.goto("/");
+    await page.getByTestId("header-login").click(); // -> /entrar, fires login_click
+    await expect(page).toHaveURL(/\/entrar$/);
+    await page.waitForTimeout(200);
+    expect(events).toContain("login_click");
+  });
+
   test("AC-26: no pricing / contact / demo / sales gating on the landing", async ({ page }) => {
     await page.goto("/");
     const text = (await page.locator("body").innerText()).toLowerCase();

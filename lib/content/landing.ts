@@ -4,11 +4,50 @@ import { BRAND } from "@/lib/brand";
 export const HERO = {
   eyebrow: "Documento Electrónico de Control",
   h1: "DeCA GRATIS",
-  subhead:
-    "Crea tu Documento Electrónico de Control en segundos. PDF nativo, QR y conservación online.",
+  subhead: `${BRAND.tagline}`,
+  proof:
+    "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite al menos hasta el 31/12/2026",
   cta: "CREAR DECA GRATIS",
+  ctaSecondary: "ENTRAR",
   trust: "Sin tarjeta · Sin límite · Gratis al menos hasta el 31/12/2026",
 };
+
+/** Compact trust row under the hero. */
+export const TRUST_ROW = [
+  "Sin registro para el primero",
+  "PDF + QR",
+  "Listo para inspección",
+  "Conservación online",
+];
+
+/** Who it's for (persona section — #22). */
+export const PERSONAS = [
+  {
+    title: "Agencias de transporte",
+    body: "Emite el DeCA como cargador contractual en cada contratación y consérvalo con toda tu operativa en un mismo sitio.",
+  },
+  {
+    title: "Transportistas",
+    body: "Genera el documento del servicio en el móvil antes de salir y compártelo con el conductor en un toque.",
+  },
+  {
+    title: "Autónomos",
+    body: "Sin software que instalar ni cuota mensual. Entras, rellenas y descargas. Guarda tus datos para la próxima.",
+  },
+  {
+    title: "Cargadores",
+    body: "Cumple la obligación de generación y conservación sin montar un proceso nuevo en tu ERP.",
+  },
+];
+
+/** Why companies come back every day (#22 section 5). */
+export const DAILY_USE = [
+  "Empresas y transportistas guardados: se autocompletan en el siguiente DeCA.",
+  "Direcciones habituales de carga y descarga listas para elegir.",
+  "Vehículos guardados: tractora y remolque en un clic.",
+  "Duplicar un DeCA anterior y cambiar solo lo que toca.",
+  "Historial completo con búsqueda por fecha, ruta, matrícula o referencia.",
+];
 
 export const STEPS = [
   {

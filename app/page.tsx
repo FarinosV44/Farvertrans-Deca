@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
 import { SiteHeader } from "@/components/site/site-header";
@@ -7,10 +8,14 @@ import { MobileCta } from "@/components/site/mobile-cta";
 import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
 import { DecaPreview } from "@/components/site/deca-preview";
+import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import {
   HERO,
+  TRUST_ROW,
   STEPS,
+  PERSONAS,
+  DAILY_USE,
   BENEFITS,
   LEGAL_POINTS,
   LEGAL_SOURCE,
@@ -35,79 +40,169 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
+const wrap = "mx-auto max-w-[1120px] px-4 md:px-6";
+
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
+  const authed = !!user?.companyId;
 
   return (
     <>
       <TrackView event="landing_view" />
       <script
         type="application/ld+json"
-        // Static, no user data — safe.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd()) }}
       />
-      <SiteHeader nav authed={!!user?.companyId} />
+      <SiteHeader nav authed={authed} />
 
       <main id="contenido" className="pb-24 md:pb-0">
         {/* Hero */}
-        <section className="mx-auto max-w-[1120px] px-4 pt-10 pb-6 md:px-6 md:pt-16">
-          <div className="grid items-center gap-10 md:grid-cols-2">
+        <section className={`${wrap} pt-12 pb-10 md:pt-20`}>
+          <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-14">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+              <p className="text-sm font-semibold tracking-wide text-[var(--color-primary)]">
                 {HERO.eyebrow}
               </p>
-              <h1 className="mt-2 text-[2.75rem] leading-none font-bold md:text-6xl">{HERO.h1}</h1>
-              <p className="mt-4 max-w-xl text-lg text-[var(--color-text-muted)]">{HERO.subhead}</p>
-              <div className="mt-7">
-                <CtaButton className="text-base">{HERO.cta}</CtaButton>
+              <h1 className="mt-3 text-[2.5rem] leading-[1.05] font-extrabold tracking-tight sm:text-[3rem] md:text-[4.25rem]">
+                {HERO.h1}
+              </h1>
+              <p className="mt-5 max-w-xl text-lg text-[var(--color-text-muted)] md:text-xl">
+                {HERO.subhead}
+              </p>
+              <p className="mt-3 max-w-xl text-sm text-[var(--color-text-muted)]">{HERO.proof}</p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <CtaButton
+                  event="hero_cta"
+                  testId="cta-hero"
+                  className="text-base shadow-[0_8px_24px_rgba(11,92,255,0.28)]"
+                >
+                  {HERO.cta}
+                </CtaButton>
+                {!authed && (
+                  <Link
+                    href="/entrar"
+                    data-testid="hero-login"
+                    className="inline-flex min-h-12 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium no-underline hover:border-[var(--color-primary)]"
+                  >
+                    {HERO.ctaSecondary}
+                  </Link>
+                )}
               </div>
-              <p className="mt-3 text-sm text-[var(--color-text-muted)]">{HERO.trust}</p>
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-muted)]">
+                {TRUST_ROW.map((t) => (
+                  <li key={t} className="flex items-center gap-1.5">
+                    <span aria-hidden className="text-[var(--color-success)]">
+                      ✓
+                    </span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
             </div>
             <DecaPreview />
           </div>
         </section>
 
-        {/* 3 steps */}
-        <section className="mx-auto max-w-[1120px] px-4 py-12 md:px-6" aria-labelledby="pasos">
+        {/* 3 steps — with the real UI as the visual */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="pasos"
+        >
           <h2 id="pasos" className="text-2xl font-bold md:text-3xl">
-            Hazlo en 3 pasos
+            Crea tu DeCA en 3 pasos
           </h2>
-          <ol className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
             {STEPS.map((s) => (
-              <li
-                key={s.n}
-                className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
-              >
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
+              <div key={s.n} className="relative">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
                   {s.n}
                 </span>
                 <h3 className="mt-3 text-lg font-bold">{s.title}</h3>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">{s.body}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* 3 benefits */}
-        <section className="mx-auto max-w-[1120px] px-4 py-12 md:px-6" aria-labelledby="beneficios">
-          <h2 id="beneficios" className="text-2xl font-bold md:text-3xl">
-            Por qué {BRAND.name}
-          </h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {BENEFITS.map((b) => (
-              <div
-                key={b.title}
-                className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6"
-              >
-                <h3 className="text-lg font-bold">{b.title}</h3>
-                <p className="mt-1 text-sm text-[var(--color-text-muted)]">{b.body}</p>
               </div>
             ))}
           </div>
         </section>
 
+        {/* Product proof */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="producto"
+        >
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <div>
+              <h2 id="producto" className="text-2xl font-bold md:text-3xl">
+                Del formulario al PDF con QR, sin pasos de más
+              </h2>
+              <ul className="mt-5 space-y-3 text-sm">
+                {BENEFITS.map((b) => (
+                  <li key={b.title}>
+                    <span className="font-bold">{b.title}. </span>
+                    <span className="text-[var(--color-text-muted)]">{b.body}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-7">
+                <CtaButton event="product_demo_cta">{HERO.cta}</CtaButton>
+              </div>
+            </div>
+            <DecaPreview />
+          </div>
+        </section>
+
+        {/* Personas */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="para-quien"
+        >
+          <h2 id="para-quien" className="text-2xl font-bold md:text-3xl">
+            Hecho para quien mueve mercancía
+          </h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            {PERSONAS.map((p) => (
+              <div
+                key={p.title}
+                className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
+              >
+                <h3 className="text-lg font-bold">{p.title}</h3>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">{p.body}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8">
+            <CtaButton event="persona_section_cta">{HERO.cta}</CtaButton>
+          </div>
+        </section>
+
+        {/* Daily use */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="cada-dia"
+        >
+          <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
+            Por qué usarlo cada día
+          </h2>
+          <ul className="mt-6 grid gap-3 md:grid-cols-2">
+            {DAILY_USE.map((d) => (
+              <li key={d} className="flex gap-2 text-sm">
+                <span aria-hidden className="text-[var(--color-primary)]">
+                  ✓
+                </span>
+                <span>{d}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-5 text-sm text-[var(--color-text-muted)]">
+            La primera vez no necesitas cuenta. Después, <Link href="/entrar">tu empresa</Link>{" "}
+            guarda todo esto para que el siguiente DeCA sea cuestión de segundos.
+          </p>
+        </section>
+
         {/* Legal / trust */}
-        <section className="mx-auto max-w-[1120px] px-4 py-12 md:px-6" aria-labelledby="normativa">
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="normativa"
+        >
           <h2 id="normativa" className="text-2xl font-bold md:text-3xl">
             Qué exige la normativa
           </h2>
@@ -130,27 +225,28 @@ export default async function HomePage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-[1120px] px-4 py-12 md:px-6" aria-labelledby="faq">
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="faq"
+        >
           <h2 id="faq" className="text-2xl font-bold md:text-3xl">
             Preguntas frecuentes
           </h2>
-          <dl className="mt-6 divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
-            {FAQ.map((f) => (
-              <div key={f.q} className="py-4">
-                <dt className="font-bold">{f.q}</dt>
-                <dd className="mt-1 text-sm text-[var(--color-text-muted)]">{f.a}</dd>
-              </div>
-            ))}
-          </dl>
+          <FaqAccordion items={FAQ} />
         </section>
 
         {/* Final CTA */}
         <section className="bg-[var(--color-primary)]">
-          <div className="mx-auto max-w-[1120px] px-4 py-14 text-center md:px-6">
+          <div className={`${wrap} py-16 text-center`}>
             <h2 className="text-2xl font-bold text-white md:text-3xl">Haz tu primer DeCA gratis</h2>
-            <p className="mt-2 text-white">Sin demo. Sin comercial. Sin tarjeta.</p>
-            <div className="mt-6">
-              <CtaButton variant="inverse" className="text-base">
+            <p className="mt-2 text-white/90">Sin demo. Sin comercial. Sin tarjeta.</p>
+            <div className="mt-7">
+              <CtaButton
+                event="final_cta"
+                testId="cta-final"
+                variant="inverse"
+                className="text-base"
+              >
                 {HERO.cta}
               </CtaButton>
             </div>
