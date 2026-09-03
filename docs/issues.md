@@ -2,26 +2,36 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-03 15:30 — issues #1–#15 open; user created BUILD backlog #5–#15; no third-party comments.
+> Last inbound sweep: 2026-09-03 18:00 — issues #1–#15 open; no third-party comments. All BUILD issues
+> landed on `develop` and v1 merged to `main`; every issue commented (beat 1), awaiting deploy.
 
 ## Inventory
 | # | Title | Type | Priority | Status | Entry |
 |---|-------|------|----------|--------|-------|
-| 1 | EPIC 01 — Landing DeCA GRATIS | epic | high | in progress | E-001 |
-| 2 | EPIC 02 — Tracking de captación por operador, enlace y campaña | epic | high | in progress | E-002 |
-| 3 | EPIC 03 — SEO programático y arquitectura de contenidos DeCA | epic | medium | in progress | E-003 |
-| 4 | EPIC 04 — Cumplimiento técnico real del DeCA | epic | high | in progress | E-004 |
+| 1 | EPIC 01 — Landing DeCA GRATIS | epic | high | awaiting deploy | E-001 |
+| 2 | EPIC 02 — Tracking de captación por operador, enlace y campaña | epic | high | awaiting deploy | E-002 |
+| 3 | EPIC 03 — SEO programático y arquitectura de contenidos DeCA | epic | medium | awaiting deploy | E-003 |
+| 4 | EPIC 04 — Cumplimiento técnico real del DeCA | epic | high | awaiting deploy | E-004 |
 | 5 | BUILD 05 — Scaffold runnable Next.js + Supabase/Prisma | build | high | awaiting deploy | E-005 |
 | 6 | BUILD 06 — Production landing | build | high | awaiting deploy | E-006 |
 | 7 | BUILD 07 — Anonymous 3-step DeCA creator | build | high | awaiting deploy | E-007 |
 | 8 | BUILD 08 — Real compliant PDF + QR + public URL | build | high | awaiting deploy | E-008 |
 | 9 | BUILD 09 — Company signup + claim anonymous DeCA | build | high | awaiting deploy | E-009 |
-| 10 | BUILD 10 — Registered workspace: history, saved entities, duplicate | build | high | open | — |
-| 11 | BUILD 11 — Referral + UTM attribution | build | high | open | — |
-| 12 | BUILD 12 — Internal operator acquisition dashboard | build | medium | open | — |
-| 13 | BUILD 13 — Sharing, corrections/versioning, abuse controls | build | high | open | — |
-| 14 | BUILD 14 — Launch SEO base + core DeCA search pages | build | medium | open | — |
-| 15 | BUILD 15 — Launch gate: compliance, mobile, security, perf, deploy | build | high | open | — |
+| 10 | BUILD 10 — Registered workspace: history, saved entities, duplicate | build | high | awaiting deploy | E-010 |
+| 11 | BUILD 11 — Referral + UTM attribution | build | high | awaiting deploy | E-010 |
+| 12 | BUILD 12 — Internal operator acquisition dashboard | build | medium | awaiting deploy | E-010 |
+| 13 | BUILD 13 — Sharing, corrections/versioning, abuse controls | build | high | awaiting deploy | E-010 |
+| 14 | BUILD 14 — Launch SEO base + core DeCA search pages | build | medium | awaiting deploy | E-010 |
+| 15 | BUILD 15 — Launch gate: compliance, mobile, security, perf, deploy | build | high | awaiting deploy | E-010 |
+
+### E-010 — BUILD 10–15 (workspace, attribution, dashboard, sharing/versioning/abuse, SEO, launch gate)
+- Status: **awaiting deploy** — all landed on `develop`; **v1 merged to `main`** (commit 75419dc,
+  authorised by the user). 47 unit + 57 e2e + 6-check compliance suite + standalone build + keel-verify,
+  all green. Commented beat 1 on #10–#15.
+- Commits: 10 → 596418e · 11+12 → 3a52c54 · 13 → bc654ec · 14 → 90942db · 15 → 75419dc.
+- Deploy: still needed (CREDENTIAL — Supabase project, Hostinger VPS, domain, Resend, hCaptcha).
+  Runbook: `docs/07-release.md`.
+- Pending: the user's RGPD + legal-inspection reviews; deploy; then beat 3 on #1–#15; then the user closes them.
 
 ## BUILD entries (sprint 1 — landed on develop, awaiting deploy)
 
