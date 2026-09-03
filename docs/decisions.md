@@ -137,3 +137,20 @@
   a lock drift between this machine's hardened npm and GitHub's npm. All fixed; CI is green.
 - v1 = BUILD 05–15, on `main` at 946ac88, CI passing (typecheck, lint, format, 47 unit, 57 e2e,
   6 compliance, keel-verify, secret scan).
+
+## D-023 — Workspace route renamed `/app` → `/panel` (fixes a standalone-build 503)
+- Date / phase: 2026-09-03 / post-BUILD-15 hotfix
+- Decision: The authenticated workspace routes move from `/app*` to `/panel*` (`/panel`, `/panel/historico`,
+  `/panel/datos`, `/panel/deca/[id]`, `/panel/deca/[id]/corregir`). All links, `robots.ts`, `register-form`
+  redirect, the correction redirect, and every e2e test updated. `components/app/` (a components folder, not
+  a route) keeps its name.
+- Why: a route segment literally named `app` (dir `app/app/`) collided with `/` in the Next.js
+  **standalone** production build — `GET /` and `GET /app` both 307-redirected to `/registro` (the
+  workspace's own not-logged-in redirect), so the deployed site returned a redirect/503 for the landing
+  page while `next start` locally served it fine. Verified fixed by building and running the Docker image:
+  `/` → 200 "DeCA GRATIS", `/panel` → 307 /registro (correct).
+- Also in this hotfix: `prisma` `binaryTargets` add `debian-openssl-3.0.x` + `linux-musl-openssl-3.0.x`
+  (cross-OS deploys); `Dockerfile` switched to `node:20-slim`, `HOSTNAME=0.0.0.0`, a `public/` dir added,
+  healthcheck only requires the server to respond (a DB outage is then visible at `/health` instead of
+  taking the whole site down); `docs/07-release.md` gains a "Hosting choice" section.
+- The user deploys to Hostinger with Docker (confirmed — other projects run the same way).

@@ -42,7 +42,7 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("register-submit").click();
 
-    await expect(page).toHaveURL(/\/app$/);
+    await expect(page).toHaveURL(/\/panel$/);
     await expect(page.getByText("Valencia → Madrid")).toBeVisible();
   });
 

@@ -49,7 +49,7 @@ export function RegisterForm() {
         lockAttribution(); // first-touch is now permanent
       }
       if (claim) track("claim_completed");
-      router.push("/app");
+      router.push("/panel");
     } catch {
       setError("Sin conexión. Inténtalo de nuevo.");
       setBusy(false);

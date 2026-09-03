@@ -41,7 +41,7 @@ Every requirement is verified by an automated test, not a claim. Run `npm run te
 | Unit tests | `npm run test:unit` | PASS (47) |
 | E2E (browser) | `npm run test:e2e` | PASS (57 across chromium) |
 | Compliance suite | `npm run test:compliance` | PASS (6) |
-| Accessibility (axe) | inside e2e — landing, /crear, /registro, /app, /app/historico, /app/datos, a SEO page | PASS (0 serious/critical) |
+| Accessibility (axe) | inside e2e — landing, /crear, /registro, /panel, /panel/historico, /panel/datos, a SEO page | PASS (0 serious/critical) |
 | Responsive | e2e at 360 / 768 / 1280 | PASS |
 | Cross-tenant authz | `tests/e2e/launch-gate.spec.ts` — company B cannot read company A's DeCA / history / correct it | PASS |
 | Security headers | `tests/e2e/launch-gate.spec.ts` — CSP, HSTS (prod), nosniff, DENY, Referrer-Policy, Permissions-Policy | PASS |

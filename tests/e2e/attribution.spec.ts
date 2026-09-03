@@ -21,7 +21,7 @@ async function registerWith(page: Page, companyNif: string) {
   await page.fill("#companyName", "Attrib Test SL");
   await page.fill("#companyNif", companyNif);
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/panel$/);
 }
 
 test.describe("BUILD 11 — referral + UTM attribution", () => {

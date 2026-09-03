@@ -67,7 +67,7 @@ test.describe("BUILD 14 — SEO cluster", () => {
     expect(sitemap).not.toMatch(/\/app<|\/api<|\/d\//);
 
     const robots = await (await request.get("/robots.txt")).text();
-    expect(robots).toMatch(/Disallow: \/app/);
+    expect(robots).toMatch(/Disallow: \/panel/);
     expect(robots).toMatch(/Disallow: \/api/);
     expect(robots).toMatch(/Disallow: \/d\//);
   });

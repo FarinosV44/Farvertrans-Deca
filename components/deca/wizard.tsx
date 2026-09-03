@@ -216,7 +216,7 @@ export function CrearWizard({
           return;
         }
         track("deca_corrected");
-        router.push(`/app/deca/${correctDecaId}`);
+        router.push(`/panel/deca/${correctDecaId}`);
         return;
       }
 

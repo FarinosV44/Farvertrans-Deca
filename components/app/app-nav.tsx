@@ -19,9 +19,9 @@ export function AppNav({ current }: { current: "home" | "historico" | "datos" })
       aria-label="Secciones de la cuenta"
       className="mt-4 flex gap-1 border-b border-[var(--color-border)] pb-2"
     >
-      {item("/app", "Mis DeCA", "home")}
-      {item("/app/historico", "Historial", "historico")}
-      {item("/app/datos", "Datos habituales", "datos")}
+      {item("/panel", "Mis DeCA", "home")}
+      {item("/panel/historico", "Historial", "historico")}
+      {item("/panel/datos", "Datos habituales", "datos")}
     </nav>
   );
 }

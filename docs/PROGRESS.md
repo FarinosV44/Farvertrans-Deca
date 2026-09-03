@@ -51,7 +51,7 @@
   cross-tenant + security headers) + typecheck + lint + format + standalone build + keel-verify.
   - 05 scaffold · 06 landing · 07 `/crear` 3-step creator · 08 compliant PDF+QR+`/d/[token]` +
     `npm run test:compliance` gate · 09 signup+claim (own auth D-021) ·
-    10 `/app` + `/app/historico` (search + date range) + `/app/datos` (saved data CRUD) + wizard
+    10 `/panel` + `/panel/historico` (search + date range) + `/panel/datos` (saved data CRUD) + wizard
     autofill + duplicate `/crear?from=<id>` + authed `POST /api/deca` owns the DeCA ·
     11 `lib/attribution/*` — `?ref=` + 5 UTMs, first-touch-never-overwritten + last-touch, first-party
     cookie+localStorage `AttributionCapture` in the root layout, `acquisition` row written at signup,
@@ -62,7 +62,7 @@
     `admin-dev-only` (internal role, local only).
 - **The full flow works and is test-verified:** `/` → CREAR DECA GRATIS → 3 steps (no signup) →
   GENERAR DECA → real compliant PDF+QR at `/crear/[id]` → download (`/d/[token]`) / share →
-  "Guardar este DeCA" → `/registro` → `/app` with the document owned + reusable data.
+  "Guardar este DeCA" → `/registro` → `/panel` with the document owned + reusable data.
 - **BUILD 13 done** — sharing + corrections/versioning + abuse controls:
   - Sharing: result panel WhatsApp deep link + copy + email via `POST /api/share` (rate-limited,
     templated envelope, mailto fallback when Resend unconfigured), `deca_shared` event.

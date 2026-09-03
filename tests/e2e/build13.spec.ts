@@ -28,7 +28,7 @@ async function registerAndCreate(page: Page): Promise<string> {
   await page.fill("#companyName", "Correcciones SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/panel$/);
 
   await page.goto("/crear");
   await page.fill("#shipperName", V.shipper.name);
@@ -56,7 +56,7 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
   }) => {
     const decaId = await registerAndCreate(page);
 
-    await page.goto(`/app/deca/${decaId}`);
+    await page.goto(`/panel/deca/${decaId}`);
     await expect(page.getByText("Versión 1")).toBeVisible();
     const v1Pdf = page.locator("a", { hasText: "Ver PDF" }).first();
     const v1Href = await v1Pdf.getAttribute("href");
@@ -71,7 +71,7 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
     await page.getByTestId("correction-reason").fill("Cambio de destino por incidencia en ruta");
     await page.getByTestId("wizard-generate").click();
 
-    await expect(page).toHaveURL(new RegExp(`/app/deca/${decaId}$`));
+    await expect(page).toHaveURL(new RegExp(`/panel/deca/${decaId}$`));
     await expect(page.getByText("Versión 2")).toBeVisible();
     await expect(page.getByText("Cambio de destino por incidencia en ruta")).toBeVisible();
     await expect(page.getByText("Versión actual: 2")).toBeVisible();

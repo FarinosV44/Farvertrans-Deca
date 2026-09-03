@@ -19,7 +19,7 @@ npm run build` + `node scripts/keel-verify.mjs`.
 
 The full product works end to end: `/` landing → CREAR DECA GRATIS → 3-step `/crear` (no signup) →
 GENERAR DECA → real compliant native-text PDF + QR at `/crear/[id]` → download (`/d/[token]`) / share
-(WhatsApp/email/copy) → "Guardar este DeCA" → `/registro` → `/app` (history, saved data, duplicate,
+(WhatsApp/email/copy) → "Guardar este DeCA" → `/registro` → `/panel` (history, saved data, duplicate,
 corrections/versioning). Plus operator attribution + `/operadores` internal dashboard + 10 SEO pages +
 "¿Estoy obligado?" + abuse controls + CSP/security headers.
 

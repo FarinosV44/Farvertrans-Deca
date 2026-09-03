@@ -19,7 +19,7 @@ function email() {
   return `w${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
 }
 
-/** Register a fresh company and return the logged-in page on /app. */
+/** Register a fresh company and return the logged-in page on /panel. */
 async function registerCompany(page: Page) {
   await page.goto("/registro");
   await page.fill("#email", email());
@@ -27,7 +27,7 @@ async function registerCompany(page: Page) {
   await page.fill("#companyName", "Mi Transporte SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/panel$/);
 }
 
 async function createDecaAuthed(page: Page) {
@@ -54,11 +54,11 @@ test.describe("BUILD 10 — registered workspace", () => {
     await registerCompany(page);
     await createDecaAuthed(page);
 
-    await page.goto("/app");
+    await page.goto("/panel");
     await expect(page.getByRole("heading", { name: "Últimos documentos" })).toBeVisible();
     await expect(page.getByText("Valencia → Madrid").first()).toBeVisible();
 
-    await page.goto("/app/historico");
+    await page.goto("/panel/historico");
     await expect(page.getByText("1 documento")).toBeVisible();
     // search filters
     await page.fill("#q", "madrid");
@@ -76,7 +76,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await createDecaAuthed(page);
     const firstUrl = page.url();
 
-    await page.goto("/app");
+    await page.goto("/panel");
     await page.getByTestId("app-repetir").click();
     await expect(page).toHaveURL(/\/crear\?from=/);
     await expect(page.locator("#shipperName")).toHaveValue(DECA.shipper.name);
@@ -90,7 +90,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
     expect(page.url()).not.toBe(firstUrl); // brand-new document
 
-    await page.goto("/app/historico");
+    await page.goto("/panel/historico");
     await expect(page.getByText("2 documentos")).toBeVisible();
   });
 
@@ -100,7 +100,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await registerCompany(page);
     await createDecaAuthed(page);
 
-    await page.goto("/app/datos");
+    await page.goto("/panel/datos");
     // add a saved company
     await page.getByText("Empresas / transportistas").scrollIntoViewIfNeeded();
     await page
@@ -142,22 +142,22 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.locator("#tractorPlate")).toHaveValue("5555XYZ");
 
     // delete the saved company — the earlier generated DeCA still shows its original carrier
-    await page.goto("/app/datos");
+    await page.goto("/panel/datos");
     await page
       .locator("li", { hasText: "Habitual Cargas SL" })
       .getByRole("button", { name: "Borrar" })
       .click();
     await expect(page.getByText("Habitual Cargas SL")).toHaveCount(0);
-    await page.goto("/app/historico");
+    await page.goto("/panel/historico");
     await expect(page.getByText("Transportes Pérez SL").first()).toBeVisible();
   });
 
-  test("a11y: /app, /app/historico and /app/datos have no serious/critical violations", async ({
+  test("a11y: /app, /panel/historico and /panel/datos have no serious/critical violations", async ({
     page,
   }) => {
     const AxeBuilder = (await import("@axe-core/playwright")).default;
     await registerCompany(page);
-    for (const path of ["/app", "/app/historico", "/app/datos"]) {
+    for (const path of ["/app", "/panel/historico", "/panel/datos"]) {
       await page.goto(path);
       const r = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag22aa"])

@@ -72,7 +72,7 @@ export default async function HistoricoPage({
             Filtrar
           </button>
           {(sp.q || sp.from || sp.to) && (
-            <Link href="/app/historico" className="text-sm">
+            <Link href="/panel/historico" className="text-sm">
               Limpiar
             </Link>
           )}

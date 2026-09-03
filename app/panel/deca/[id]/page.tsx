@@ -40,7 +40,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
 
         <div className="mt-6">
           <Link
-            href={`/app/deca/${deca.id}/corregir`}
+            href={`/panel/deca/${deca.id}/corregir`}
             data-testid="deca-corregir"
             className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 font-medium text-[var(--color-primary)] no-underline"
           >

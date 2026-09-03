@@ -11,7 +11,7 @@ async function registerCompany(page: Page, name: string) {
   await page.fill("#companyName", name);
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/panel$/);
 }
 
 async function createDeca(page: Page): Promise<string> {
@@ -52,16 +52,16 @@ test.describe("BUILD 15 — launch gate", () => {
     await registerCompany(b, "Empresa B SL");
 
     // detail page → notFound for B
-    expect((await b.goto(`/app/deca/${decaId}`))?.status()).toBe(404);
+    expect((await b.goto(`/panel/deca/${decaId}`))?.status()).toBe(404);
     // correction page → notFound for B
-    expect((await b.goto(`/app/deca/${decaId}/corregir`))?.status()).toBe(404);
+    expect((await b.goto(`/panel/deca/${decaId}/corregir`))?.status()).toBe(404);
     // correction API → 404 (company-scoped lookup fails)
     const corr = await b.request.post(`/api/deca/${decaId}/version`, {
       data: { changeReason: "intento cross-tenant", payload: buildPayload() },
     });
     expect([403, 404]).toContain(corr.status());
     // B's history does not contain A's document
-    await b.goto("/app/historico");
+    await b.goto("/panel/historico");
     await expect(b.getByText("0 documentos")).toBeVisible();
     await ctxB.close();
   });

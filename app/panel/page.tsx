@@ -51,7 +51,7 @@ export default async function AppHome() {
               Últimos documentos
             </h2>
             {rows.length > 5 && (
-              <Link href="/app/historico" className="text-sm">
+              <Link href="/panel/historico" className="text-sm">
                 Ver todo el historial
               </Link>
             )}
@@ -94,12 +94,12 @@ export default async function AppHome() {
           <SummaryCard
             title="Empresas / transportistas habituales"
             count={saved.companies.length}
-            href="/app/datos"
+            href="/panel/datos"
           />
           <SummaryCard
             title="Vehículos habituales"
             count={saved.vehicles.length}
-            href="/app/datos"
+            href="/panel/datos"
           />
         </section>
       </main>

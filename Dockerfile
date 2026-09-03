@@ -1,13 +1,13 @@
-# Production image — Next.js standalone (Hostinger VPS).
-FROM node:20-alpine AS deps
+# Production image — Next.js standalone. Debian slim (reliable Prisma engines).
+FROM node:20-slim AS deps
 WORKDIR /app
-RUN apk add --no-cache libc6-compat openssl
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
-RUN apk add --no-cache openssl
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
@@ -15,24 +15,29 @@ ENV NEXT_STANDALONE=1
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
-RUN apk add --no-cache openssl
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+ENV HOSTNAME=0.0.0.0
+RUN groupadd -r nodejs && useradd -r -g nodejs nextjs
 
-# Standalone server + static assets + the traced font files
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-# Prisma migration engine + schema for `prisma migrate deploy` on the host (or run separately)
+# Prisma schema + migrations + generated client (so `prisma migrate deploy` can run from here)
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 USER nextjs
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+# Healthcheck: healthy as long as the Node server RESPONDS at all (any HTTP
+# status). A DB outage then shows as `/health` -> 503 `{"db":"down"}` in the
+# body — visible to you — instead of the whole site 503-ing behind the proxy.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||3000)+'/health',r=>process.exit(0)).on('error',()=>process.exit(1))"
 CMD ["node", "server.js"]
