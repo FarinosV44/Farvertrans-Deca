@@ -53,7 +53,8 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
-  } catch {
+  } catch (e) {
+    console.error("[deca] generation failed", e);
     return NextResponse.json(
       { error: { code: "internal", message: "No se pudo generar el DeCA. Inténtalo de nuevo." } },
       { status: 500 },

@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   output: process.env.NEXT_STANDALONE === "1" ? "standalone" : undefined,
   reactStrictMode: true,
   poweredByHeader: false,
+  // The DeCA PDF renderer reads bundled font files at runtime; make sure the
+  // standalone trace ships them.
+  outputFileTracingIncludes: {
+    "/api/deca": ["./lib/pdf/fonts/**"],
+    "/api/deca/[id]/version": ["./lib/pdf/fonts/**"],
+  },
   eslint: {
     // lint is run explicitly in CI / test scripts; do not fail the build on it here
     ignoreDuringBuilds: false,

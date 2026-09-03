@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { publicEnv } from "@/lib/env";
 import { ResultActions } from "@/components/deca/result-actions";
+import { TrackView } from "@/components/analytics/track-view";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function ResultPage({
 
   return (
     <>
+      <TrackView event="deca_generated" />
       <SiteHeader />
       <main id="contenido" className="mx-auto max-w-[640px] px-4 py-12 md:px-6">
         <div className="flex items-center gap-3">

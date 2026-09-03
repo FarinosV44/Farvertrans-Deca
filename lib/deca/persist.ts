@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { publicEnv } from "@/lib/env";
 import { newClaimToken, newPublicToken } from "./token";
+import { renderDecaPdf } from "@/lib/pdf/render";
+import { getPdfStore, pdfKey } from "@/lib/storage";
 import type { ValidatedDeca } from "./validate";
 
 const CLAIM_TTL_DAYS = 30;
@@ -13,13 +16,19 @@ export type CreatedDeca = {
   claimExpiresAt: Date;
 };
 
+function publicUrlFor(token: string): string {
+  return `${publicEnv.baseUrl.replace(/\/$/, "")}/d/${token}`;
+}
+
+/** Human-friendly reference derived from the DeCA id (first 8 chars, upper). */
+export function decaReference(id: string): string {
+  return `DECA-${id.slice(0, 8).toUpperCase()}`;
+}
+
 /**
- * Persist a brand-new DeCA and its first version atomically (R-11 / R-13).
- * `data` is the already-validated payload. Ownership is optional: an anonymous
- * DeCA has no company/user and gets a 30-day claim token (D-016).
- *
- * PDF rendering + storage is layered on top by BUILD 08; this function owns the
- * database write only.
+ * Full DeCA generation (F1–F3): render the compliant PDF, store it, then persist
+ * the document + its first version atomically (R-11/R-13). Fails closed — if the
+ * render or the store fails, nothing usable is persisted.
  */
 export async function createDeca(
   validated: ValidatedDeca,
@@ -28,9 +37,12 @@ export async function createDeca(
   if (opts.idempotencyKey) {
     const existing = await prisma.deca.findUnique({
       where: { idempotencyKey: opts.idempotencyKey },
-      include: { versions: { orderBy: { versionNo: "asc" }, take: 1 }, claimTokens: { take: 1 } },
+      include: {
+        versions: { orderBy: { versionNo: "asc" }, take: 1 },
+        claimTokens: { take: 1 },
+      },
     });
-    if (existing && existing.versions[0]) {
+    if (existing?.versions[0]) {
       return {
         decaId: existing.id,
         versionId: existing.versions[0].id,
@@ -44,7 +56,23 @@ export async function createDeca(
   const token = newPublicToken();
   const claimToken = newClaimToken();
   const claimExpiresAt = new Date(Date.now() + CLAIM_TTL_DAYS * 24 * 60 * 60 * 1000);
+  const createdAt = new Date();
+  const key = pdfKey(token);
 
+  // We need an id for the reference before the transaction; use a stable slice of the token.
+  const reference = `DECA-${token.slice(0, 8).toUpperCase()}`;
+
+  // 1. Render (fail closed) and 2. store BEFORE any DB write.
+  const pdf = await renderDecaPdf({
+    data: validated.data,
+    publicUrl: publicUrlFor(token),
+    reference,
+    versionNo: 1,
+    createdAt,
+  });
+  await getPdfStore().put(key, pdf);
+
+  // 3. Persist atomically.
   const result = await prisma.$transaction(async (tx) => {
     const deca = await tx.deca.create({
       data: {
@@ -59,13 +87,12 @@ export async function createDeca(
         decaId: deca.id,
         versionNo: 1,
         token,
+        pdfPath: key,
         dataJson: validated.data as unknown as object,
+        createdAt,
       },
     });
-    await tx.deca.update({
-      where: { id: deca.id },
-      data: { currentVersionId: version.id },
-    });
+    await tx.deca.update({ where: { id: deca.id }, data: { currentVersionId: version.id } });
     if (!opts.createdByUserId) {
       await tx.claimToken.create({
         data: { token: claimToken, decaId: deca.id, expiresAt: claimExpiresAt },
@@ -74,5 +101,10 @@ export async function createDeca(
     return { decaId: deca.id, versionId: version.id };
   });
 
-  return { ...result, token, claimToken: opts.createdByUserId ? "" : claimToken, claimExpiresAt };
+  return {
+    ...result,
+    token,
+    claimToken: opts.createdByUserId ? "" : claimToken,
+    claimExpiresAt,
+  };
 }

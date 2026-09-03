@@ -38,16 +38,17 @@
 | 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓, docs/estimate.md (v1) ✓, docs/token-ledger.md ✓, docs/keel-conformance.md ✓, docs/issues.md ✓ |
 | 2 Functional spec | done | docs/02-functional-spec.md ✓ (F1–F18, AC-01…AC-37), docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ (7 flows), docs/estimate.md v2 firm ✓, .claude/rules/ + .claude/agents/ ✓ |
 | 3+4 Design (folded — D-019) | done | docs/design/IMPLEMENTATION-BRIEF.md ✓ (screen list + journey + concrete tokens; no external design-tool round-trip) |
-| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/05-test-points.md ✓ · BUILD 05–07 done · BUILD 08–15 pending |
+| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/05-test-points.md ✓ · BUILD 05–08 done · BUILD 09–15 pending |
 | 6 Documentation | pending | docs/architecture.md, docs/api/, docs/usage/ |
 | 7 Release | pending | docs/07-release.md |
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 1.
-- Done: BUILD 05 (scaffold), BUILD 06 (production landing), BUILD 07 (anonymous 3-step creator `/crear`: mobile-first wizard, zod per step + `validateDeca` R-2, accessible error summary + inline errors, sessionStorage draft survives refresh/back, plate normalisation, foreign-NIF warn-not-block, `POST /api/deca` persists deca+version atomically with 256-bit token + 30-day claim token, idempotency-key dedup, `deca_started` once, result page `/crear/[id]` with priority actions). Green: build (+ standalone), typecheck, lint, 20 unit, 22 e2e (incl. @axe-core), keel-verify.
-- Next action: BUILD 08 — real compliant PDF + QR + public inspection URL (EPIC #4, F2–F6, R-1…R-13): `@react-pdf/renderer` native text PDF (all mandatory fields, creation/mod metadata, ≤5 MB), QR → `/d/[token]`, store in private Supabase Storage, `GET /d/[token]` streams the PDF directly (no auth/interstitial/button, noindex, safe filename), unknown token → 404, fail-closed on any render/storage error, prior versions never overwritten. Wire the result screen's "Ver / descargar PDF" to the real file. Then BUILD 09 (signup + claim), continue 10→15.
-- Note: `/d/[token]` and `/registro` are referenced by the BUILD 07 result screen but land in BUILD 08 / BUILD 09.
+- Done: BUILD 05 (scaffold), BUILD 06 (landing), BUILD 07 (anonymous creator), BUILD 08 (compliant PDF + QR + public URL: `@react-pdf/renderer` native text PDF ≈20 KB with all R-2 fields as selectable text, embedded Inter OFL font, QR (error-correction H) → `/d/[token]`, PDF metadata CreationDate + Creator; `lib/storage` pluggable — Supabase Storage in prod, local FS in dev/tests; `GET /d/[token]` streams the exact PDF with `application/pdf` + `inline` + `noindex`, no cookie, no interstitial; unknown token → 404; `isPubliclyAvailable` R-9 7-day window; hashed-IP access log; render/store BEFORE any DB write so it fails closed; `deca_generated` emitted on the result page; `npm run test:compliance` suite = 6 R-1…R-13 checks, a Phase 7 gate). Green: build + standalone (fonts traced), typecheck, lint, 24 unit, 28 e2e (6 compliance + 3 a11y), keel-verify.
+- **The core flow now works end to end:** open `/` → CREAR DECA GRATIS → 3 steps (no signup) → GENERAR DECA → real compliant PDF+QR at `/crear/[id]` → Ver/descargar PDF (`/d/[token]`, direct download) / Compartir (WhatsApp/email/copy).
+- Next action: BUILD 09 — company signup + claim the anonymous DeCA without losing work (F6/F10, D-016): Supabase Auth (email OTP or email+password) with SSR sessions, `/registro?claim=<token>` → create `company` + `user` idempotently → attach the existing anonymous DeCA via the one-time 30-day claim token → land on `/app` with the document present. Keep signup to name + NIF + address only (no lead-qual fields). Emit `signup_started/completed`, `claim_completed`. Then BUILD 10 (workspace) → 15.
+- Note: `/registro` and `/app` are referenced by the result screen and land in BUILD 09/10.
 - Gap to close at sprint end: `.githooks/pre-commit` confidential gate + CI workflow (D-010 full assistant-config) not yet materialised.
 
 ## Open items
@@ -59,4 +60,4 @@
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — BUILD 05-07 done, starting BUILD 08
+Last updated: 2026-09-03 — BUILD 05-08 done, starting BUILD 09

@@ -5,7 +5,15 @@
 |---------|------|-----------|-----|--------------------|
 | GET /health | route | app/health/route.ts | docs/reference/endpoints.md | Liveness + DB reachability + app version |
 | POST /api/events | route | app/api/events/route.ts | docs/reference/endpoints.md | First-party analytics ingest; schema-validated, always 204, never 5xx |
-| POST /api/deca | route | app/api/deca/route.ts | docs/reference/endpoints.md | Create a DeCA (F1): validate R-2, persist deca+version, return token + claim token; 422 on invalid, fails closed |
+| POST /api/deca | route | app/api/deca/route.ts | docs/reference/endpoints.md | Create a DeCA (F1): validate R-2, render compliant PDF, store it, persist deca+version, return token + claim token; 422 on invalid, fails closed |
+| GET /d/[token] | route | app/d/[token]/route.ts | docs/reference/endpoints.md | Public inspection (F4/R-6..R-9): streams the exact PDF, no auth/cookie/interstitial, noindex; 404 unknown, 410 outside the 7-day window |
+| renderDecaPdf() / PdfRenderError | fn/class | lib/pdf/render.ts | docs/reference/lib.md | Render the compliant text PDF (R-3), embed QR (R-5) + metadata timestamps (R-11), enforce ≤5 MB (R-4) |
+| DecaDocument | component | lib/pdf/deca-document.tsx | docs/reference/lib.md | The @react-pdf document — every field as selectable text, A4, QR + URL footer |
+| qrPngDataUri() / qrPngBuffer() | function | lib/pdf/qr.ts | docs/reference/lib.md | QR PNG for a URL (error correction H) |
+| ensureFonts() | function | lib/pdf/fonts.ts | docs/reference/lib.md | Register bundled Inter (OFL) as data URIs for @react-pdf |
+| getPdfStore() / pdfKey() / PdfStore / StorageError | fn/type | lib/storage/index.ts | docs/reference/lib.md | Pluggable PDF store: Supabase Storage (prod) or local FS (dev/tests) |
+| isPubliclyAvailable() | function | lib/deca/deactivation.ts | docs/reference/lib.md | R-9 7-day post-service availability window |
+| hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
 | decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |
 | normalizePlate() / looksLikeSpanishPlate() | function | lib/deca/plate.ts | docs/reference/lib.md | Plate normalisation + soft Spanish-format hint |

@@ -23,4 +23,14 @@
 | 2026-09-03 | BUILD 07 creator | AC-09 POST /api/deca 422 + field errors on missing mandatory field | driven | n/a | e2e crear.spec | PASS | next commit |
 | 2026-09-03 | BUILD 07 creator | AC-01 POST /api/deca 201 + ≥256-bit token + claim token for anonymous | driven | n/a | e2e crear.spec | PASS | next commit |
 | 2026-09-03 | BUILD 07 creator | AC-04b same idempotency-key never creates a 2nd DeCA | driven | n/a | e2e crear.spec | PASS | next commit |
-| 2026-09-03 | BUILD 07 creator | AC-04 wizard axe-clean; progressbar named; error summary role=alert focus | driven (@axe-core) | n/a | e2e a11y.spec + crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-04 wizard axe-clean; progressbar named; error summary role=alert focus | driven (@axe-core) | n/a | e2e a11y.spec + crear.spec | PASS | 7641709 |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-5/AC-07 QR encodes URL X → jsQR decodes back to exactly X | driven (Vitest, pngjs+jsqr) | pure logic — QR round-trip | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-8 public token: ≥40 url-safe chars, unique per call | driven (Vitest) | pure logic | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-9 availability window: available until 7 natural days after service end, then not | driven (Vitest) | pure logic — written from R-9 | `npm run test:unit` | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-3/R-4 PDF is native text (all R-2 values extractable via pdfjs), starts %PDF-, < 5 MB (~20 KB) | driven (Playwright + pdfjs) `test:compliance` | n/a | `npm run test:compliance` | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-5/R-6 PDF carries the exact /d/[token] URL as text | driven | n/a | test:compliance | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-7/R-8 /d/[token] streams the PDF directly: application/pdf, inline, noindex, no set-cookie, not HTML | driven | n/a | test:compliance | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-8 unknown token → generic 404 text/plain | driven | n/a | test:compliance | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-11 PDF metadata records CreationDate + Creator="Farvertrans DeCA v..." | driven (pdfjs getMetadata) | n/a | test:compliance | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | R-13 fails closed — invalid payload → 422, no document | driven | n/a | test:compliance | PASS | next commit |
+| 2026-09-03 | BUILD 08 PDF/QR/URL | standalone build traces lib/pdf/fonts into .next/standalone (Hostinger Docker) | driven | n/a | `NEXT_STANDALONE=1 npm run build` + ls | PASS | next commit |
