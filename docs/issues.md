@@ -2,9 +2,9 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-03 23:30 — issues #1–#20 open; no third-party comments. #1–#15 awaiting
-> deploy; #16 code-complete on `main`; #17–#20 landed on `develop`, commented (beat 1), awaiting the
-> user's merge to `main` + deploy.
+> Last inbound sweep: 2026-09-04 — issues #1–#20 open; no third-party comments. #1–#20 all merged to
+> `main`, CI green; every issue commented (beat 1). All awaiting the user's deploy + verification, then
+> beat 3, then the user closes them.
 
 ## Inventory
 | # | Title | Type | Priority | Status | Entry |
@@ -24,21 +24,20 @@
 | 13 | BUILD 13 — Sharing, corrections/versioning, abuse controls | build | high | awaiting deploy | E-010 |
 | 14 | BUILD 14 — Launch SEO base + core DeCA search pages | build | medium | awaiting deploy | E-010 |
 | 15 | BUILD 15 — Launch gate: compliance, mobile, security, perf, deploy | build | high | awaiting deploy | E-010 |
-| 16 | FIX 16 — Hostinger Cloud Startup runtime compatibility (ESM 503) | fix | high | fixed on `main`, awaiting deploy test | E-011 |
-| 17 | FIX 17 — Rebuild DeCA form against exact legal data model | fix | high | on `develop`, awaiting main+deploy | E-011 |
-| 18 | FIX 18 — Production PDF/QR path + persistent storage + metadata | fix | high | on `develop`, awaiting main+deploy | E-011 |
-| 19 | FIX 19 — Legal versioning, correction workflow, 1-year preservation | fix | high | on `develop`, awaiting main+deploy | E-011 |
-| 20 | LAUNCH 20 — Public-ready DeCA happy path | launch | high | automated part on `develop`; blocked on deploy + manual QR | E-011 |
+| 16 | FIX 16 — Hostinger Cloud Startup runtime compatibility (ESM 503) | fix | high | on `main`, awaiting deploy test | E-011 |
+| 17 | FIX 17 — Rebuild DeCA form against exact legal data model | fix | high | on `main`, awaiting deploy | E-011 |
+| 18 | FIX 18 — Production PDF/QR path + persistent storage + metadata | fix | high | on `main`, awaiting deploy | E-011 |
+| 19 | FIX 19 — Legal versioning, correction workflow, 1-year preservation | fix | high | on `main`, awaiting deploy | E-011 |
+| 20 | LAUNCH 20 — Public-ready DeCA happy path | launch | high | automated part on `main`; blocked on deploy + manual QR | E-011 |
 
 ### E-011 — FIX #16–#19 + LAUNCH #20 (Hostinger CJS, legal data model, PDF hash/persistence, retention, happy-path)
-- Status: #16 fixed on `main` (`d200158` — see E-… / D-025), awaiting the user's deploy test.
-  #17–#20 landed on `develop`, all green (52 unit + 63 e2e + 8 compliance + typecheck + lint + format
-  + keel-verify). Commented beat 1 on #16–#20. NOT merged to `main` (needs the user's word).
-- Commits on `develop`: #17 legal data model / carrier domicilio / review step · #18+#19 pdf_sha256 /
-  FVD_STORAGE_DIR / version author / retention doc (migration `20260903230000`) · #20 launch-happy-path
-  spec + `docs/production-smoke-checklist.md`. Decision D-026.
-- Pending: merge `develop` → `main` (user); deploy with persistent DB + storage; run
-  `docs/production-smoke-checklist.md` incl. the external QR scan; then beat 3 + the user closes #16–#20.
+- Status: **all merged to `main` at `0272c33`, CI green** (52 unit + 63 e2e + 8 compliance + typecheck
+  + lint + format + keel-verify + the "Standalone server is CommonJS" guard). Commented beat 1 on #16–#20.
+- Commits: #16 → `d200158` (D-025) · #17 → `9459cba` · #18+#19 → `593fc2a` (migration `20260903230000`)
+  · #20 → `2ec398b`. Decision D-026.
+- Pending: the user deploys (Cloud Startup startup file `server.cjs`, or VPS+Docker) with persistent
+  DB + storage (`FVD_STORAGE_DIR` / Supabase); runs `docs/production-smoke-checklist.md` incl. the
+  external QR scan; then beat 3 + the user closes #16–#20.
 
 ### E-010 — BUILD 10–15 (workspace, attribution, dashboard, sharing/versioning/abuse, SEO, launch gate)
 - Status: **awaiting deploy** — all landed on `develop`; **v1 merged to `main`** (commit 75419dc,
