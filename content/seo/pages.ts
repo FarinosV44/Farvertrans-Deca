@@ -102,8 +102,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿DeCA y documento de control son lo mismo?", a: "El DeCA es el documento de control en formato electrónico, con los requisitos técnicos añadidos por la resolución de 5 de junio de 2026." },
-      { q: "¿Necesito firma electrónica?", a: "La resolución no exige firma electrónica; sí exige PDF nativo, QR, URL HTTPS de descarga directa y registro de creación y modificaciones." },
+      {
+        q: "¿DeCA y documento de control son lo mismo?",
+        a: "El DeCA es el documento de control en formato electrónico, con los requisitos técnicos añadidos por la resolución de 5 de junio de 2026.",
+      },
+      {
+        q: "¿Necesito firma electrónica?",
+        a: "La resolución no exige firma electrónica; sí exige PDF nativo, QR, URL HTTPS de descarga directa y registro de creación y modificaciones.",
+      },
     ],
     sources: [BOE, MIN, CETM],
     related: ["deca-obligatorio-2026", "requisitos-deca", "como-hacer-un-deca"],
@@ -137,8 +143,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿Hay multa por no llevar el DeCA?", a: "El documento de control es exigible en carretera; su ausencia o incorrección es sancionable conforme a la normativa de transporte." },
-      { q: "¿Puedo empezar a usarlo antes del 5 de octubre?", a: "Sí. Puedes generar DeCA válidos desde ya y llegar preparado a la fecha de obligatoriedad." },
+      {
+        q: "¿Hay multa por no llevar el DeCA?",
+        a: "El documento de control es exigible en carretera; su ausencia o incorrección es sancionable conforme a la normativa de transporte.",
+      },
+      {
+        q: "¿Puedo empezar a usarlo antes del 5 de octubre?",
+        a: "Sí. Puedes generar DeCA válidos desde ya y llegar preparado a la fecha de obligatoriedad.",
+      },
     ],
     sources: [BOE, MIN],
     related: ["que-es-el-deca", "quien-esta-obligado-deca", "generador-deca"],
@@ -151,7 +163,9 @@ export const SEO_PAGES: SeoPage[] = [
       "Guía paso a paso para generar el Documento Electrónico de Control Administrativo: datos a introducir, generación del PDF con QR y entrega al conductor.",
     intent: "Cómo se hace un DeCA.",
     lastReviewed: REVIEWED,
-    intro: ["Hacer un DeCA correcto son tres pasos: introducir los datos, generar el fichero y entregárselo al conductor antes de que empiece el servicio."],
+    intro: [
+      "Hacer un DeCA correcto son tres pasos: introducir los datos, generar el fichero y entregárselo al conductor antes de que empiece el servicio.",
+    ],
     sections: [
       {
         h2: "1. Introduce los datos",
@@ -177,8 +191,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿Y si tengo que corregir un dato después?", a: "Se genera una nueva versión con un QR y una URL nuevos; la versión anterior se conserva. Entrega al conductor la versión vigente." },
-      { q: "¿Puedo reutilizar datos de un DeCA anterior?", a: "Sí, con una cuenta gratuita puedes duplicar un DeCA y guardar empresas, vehículos y direcciones habituales." },
+      {
+        q: "¿Y si tengo que corregir un dato después?",
+        a: "Se genera una nueva versión con un QR y una URL nuevos; la versión anterior se conserva. Entrega al conductor la versión vigente.",
+      },
+      {
+        q: "¿Puedo reutilizar datos de un DeCA anterior?",
+        a: "Sí, con una cuenta gratuita puedes duplicar un DeCA y guardar empresas, vehículos y direcciones habituales.",
+      },
     ],
     sources: [ART6, BOE, CETM],
     related: ["datos-obligatorios-deca", "requisitos-deca", "generador-deca"],
@@ -191,7 +211,9 @@ export const SEO_PAGES: SeoPage[] = [
       "Requisitos que debe cumplir el DeCA según la resolución vigente: PDF nativo, tamaño máximo 5 MB, QR, URL HTTPS de descarga directa, registro de cambios y conservación mínima de 1 año.",
     intent: "Qué requisitos debe cumplir el DeCA.",
     lastReviewed: REVIEWED,
-    intro: ["Estos son los requisitos técnicos exigibles al DeCA para el transporte interior de mercancías."],
+    intro: [
+      "Estos son los requisitos técnicos exigibles al DeCA para el transporte interior de mercancías.",
+    ],
     sections: [
       {
         h2: "Formato del fichero",
@@ -218,8 +240,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿La URL puede pedir login?", a: "No. No es válida ninguna URL que dirija a una página que requiera credenciales o autenticación." },
-      { q: "¿Puede tener un botón de descarga?", a: "No. La URL debe descargar el PDF directamente, sin elementos que impliquen una interacción manual." },
+      {
+        q: "¿La URL puede pedir login?",
+        a: "No. No es válida ninguna URL que dirija a una página que requiera credenciales o autenticación.",
+      },
+      {
+        q: "¿Puede tener un botón de descarga?",
+        a: "No. La URL debe descargar el PDF directamente, sin elementos que impliquen una interacción manual.",
+      },
     ],
     sources: [BOE, CETM, MIN],
     related: ["deca-pdf-qr", "datos-obligatorios-deca", "que-es-el-deca"],
@@ -232,7 +260,9 @@ export const SEO_PAGES: SeoPage[] = [
       "Datos mínimos que debe contener el DeCA según el artículo 6 de la Orden FOM/2861/2012: cargador, transportista, origen y destino, mercancía y peso, fecha y matrículas.",
     intent: "Qué datos lleva un DeCA.",
     lastReviewed: REVIEWED,
-    intro: ["El DeCA debe contener, como mínimo, los datos del artículo 6 de la Orden FOM/2861/2012."],
+    intro: [
+      "El DeCA debe contener, como mínimo, los datos del artículo 6 de la Orden FOM/2861/2012.",
+    ],
     sections: [
       {
         h2: "Datos mínimos",
@@ -253,8 +283,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿El NIF del transportista extranjero vale?", a: "Sí. El identificador fiscal extranjero es válido aunque no tenga el formato español." },
-      { q: "¿Y si no sé el peso exacto?", a: "Se admite una medida alternativa (por ejemplo, una plataforma completa) cuando el peso exacto no es determinable." },
+      {
+        q: "¿El NIF del transportista extranjero vale?",
+        a: "Sí. El identificador fiscal extranjero es válido aunque no tenga el formato español.",
+      },
+      {
+        q: "¿Y si no sé el peso exacto?",
+        a: "Se admite una medida alternativa (por ejemplo, una plataforma completa) cuando el peso exacto no es determinable.",
+      },
     ],
     sources: [ART6, BOE],
     related: ["requisitos-deca", "como-hacer-un-deca", "generador-deca"],
@@ -287,8 +323,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿El QR caduca?", a: "El acceso está disponible durante el servicio y puede desactivarse siete días naturales después de finalizarlo. El documento se conserva un año." },
-      { q: "¿Puedo imprimir el DeCA?", a: "Sí. La copia impresa es válida siempre que muestre el QR." },
+      {
+        q: "¿El QR caduca?",
+        a: "El acceso está disponible durante el servicio y puede desactivarse siete días naturales después de finalizarlo. El documento se conserva un año.",
+      },
+      {
+        q: "¿Puedo imprimir el DeCA?",
+        a: "Sí. La copia impresa es válida siempre que muestre el QR.",
+      },
     ],
     sources: [BOE, CETM],
     related: ["requisitos-deca", "que-es-el-deca", "generador-deca"],
@@ -323,8 +365,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿Tengo que hacerlo yo o el cliente?", a: "La normativa obliga tanto al cargador contractual como al transportista efectivo. En la práctica lo genera quien organiza el servicio y ambos lo conservan." },
-      { q: "¿Y el transporte internacional?", a: "La obligación del DeCA se refiere al transporte interior. En internacional se usa la documentación propia de ese ámbito (por ejemplo, la carta de porte CMR)." },
+      {
+        q: "¿Tengo que hacerlo yo o el cliente?",
+        a: "La normativa obliga tanto al cargador contractual como al transportista efectivo. En la práctica lo genera quien organiza el servicio y ambos lo conservan.",
+      },
+      {
+        q: "¿Y el transporte internacional?",
+        a: "La obligación del DeCA se refiere al transporte interior. En internacional se usa la documentación propia de ese ámbito (por ejemplo, la carta de porte CMR).",
+      },
     ],
     sources: [MIN, BOE, ART6],
     related: ["deca-obligatorio-2026", "deca-vs-cmr", "soy-obligado"],
@@ -364,8 +412,14 @@ export const SEO_PAGES: SeoPage[] = [
       },
     ],
     faq: [
-      { q: "¿Necesito los dos en un porte nacional?", a: "En transporte interior necesitas el documento de control (DeCA). El CMR es propio del transporte internacional." },
-      { q: "¿El eCMR cumple como DeCA?", a: "Solo si incluye todos los datos exigidos y cumple los requisitos técnicos del DeCA para el tramo interior." },
+      {
+        q: "¿Necesito los dos en un porte nacional?",
+        a: "En transporte interior necesitas el documento de control (DeCA). El CMR es propio del transporte internacional.",
+      },
+      {
+        q: "¿El eCMR cumple como DeCA?",
+        a: "Solo si incluye todos los datos exigidos y cumple los requisitos técnicos del DeCA para el tramo interior.",
+      },
     ],
     sources: [ART6, BOE],
     related: ["quien-esta-obligado-deca", "datos-obligatorios-deca", "que-es-el-deca"],
@@ -394,12 +448,20 @@ export const SEO_PAGES: SeoPage[] = [
       },
       {
         h2: "Empezar",
-        body: ["Puedes crear tu primer DeCA sin registrarte. Con una cuenta gratuita guardas el historial y reutilizas tus datos habituales."],
+        body: [
+          "Puedes crear tu primer DeCA sin registrarte. Con una cuenta gratuita guardas el historial y reutilizas tus datos habituales.",
+        ],
       },
     ],
     faq: [
-      { q: "¿Tengo que registrarme?", a: "No para el primer DeCA. Registrarte es gratis y sirve para guardar y reutilizar." },
-      { q: "¿El documento generado es válido para inspección?", a: "Sí: PDF nativo, QR y URL de descarga directa conforme a la resolución de 5 de junio de 2026." },
+      {
+        q: "¿Tengo que registrarme?",
+        a: "No para el primer DeCA. Registrarte es gratis y sirve para guardar y reutilizar.",
+      },
+      {
+        q: "¿El documento generado es válido para inspección?",
+        a: "Sí: PDF nativo, QR y URL de descarga directa conforme a la resolución de 5 de junio de 2026.",
+      },
     ],
     sources: [BOE, MIN],
     related: ["deca-gratis", "como-hacer-un-deca", "requisitos-deca"],

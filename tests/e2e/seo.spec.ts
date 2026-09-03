@@ -32,17 +32,19 @@ test.describe("BUILD 14 — SEO cluster", () => {
 
       await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
       await expect(page.locator('meta[name="description"]')).toHaveCount(1);
-      await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
 
       // real CTA to the generator, works with JS disabled
       const cta = page.getByTestId("cta-crear").first();
       await expect(cta).toHaveAttribute("href", "/crear");
 
       // internal links to the cluster
-      const links = await page.locator("main a[href^='/']").evaluateAll((els) =>
-        els.map((e) => e.getAttribute("href")),
-      );
-      expect(links.some((h) => h && h !== "/" && h.startsWith("/")), `${slug} internal links`).toBe(true);
+      const links = await page
+        .locator("main a[href^='/']")
+        .evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+      expect(
+        links.some((h) => h && h !== "/" && h.startsWith("/")),
+        `${slug} internal links`,
+      ).toBe(true);
 
       // last-reviewed date present
       await expect(page.getByText(/Última revisión normativa:/)).toBeVisible();

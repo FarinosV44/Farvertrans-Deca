@@ -23,7 +23,9 @@ async function fillStep1(page: Page) {
 }
 
 test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
-  test("AC-01: an anonymous visitor completes all steps and reaches the result", async ({ page }) => {
+  test("AC-01: an anonymous visitor completes all steps and reaches the result", async ({
+    page,
+  }) => {
     await page.goto("/crear");
     await expect(page.getByText("No necesitas registrarte")).toBeVisible();
 
@@ -114,8 +116,14 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
 
   test("AC-04b: the same idempotency key never creates a second DeCA", async ({ request }) => {
     const key = `test-${Date.now()}-${Math.random()}`;
-    const a = await request.post("/api/deca", { data: payload, headers: { "idempotency-key": key } });
-    const b = await request.post("/api/deca", { data: payload, headers: { "idempotency-key": key } });
+    const a = await request.post("/api/deca", {
+      data: payload,
+      headers: { "idempotency-key": key },
+    });
+    const b = await request.post("/api/deca", {
+      data: payload,
+      headers: { "idempotency-key": key },
+    });
     expect(a.status()).toBe(201);
     expect(b.status()).toBe(201);
     expect((await a.json()).decaId).toBe((await b.json()).decaId);

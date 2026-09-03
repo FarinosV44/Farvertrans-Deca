@@ -31,8 +31,10 @@ export type SignupInput = {
 
 export async function signup(input: SignupInput): Promise<{ userId: string; companyId: string }> {
   const email = normEmail(input.email);
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new AuthError("bad_input", "Email no válido.");
-  if (!isStrongEnough(input.password)) throw new AuthError("weak_password", "La contraseña debe tener al menos 8 caracteres.");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+    throw new AuthError("bad_input", "Email no válido.");
+  if (!isStrongEnough(input.password))
+    throw new AuthError("weak_password", "La contraseña debe tener al menos 8 caracteres.");
   if (!input.company.name.trim() || !input.company.nif.trim())
     throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
 

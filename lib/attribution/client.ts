@@ -35,7 +35,11 @@ function writeCookie(a: Attribution): void {
 export function captureAttribution(): void {
   if (typeof window === "undefined") return;
   try {
-    const merged = mergeFromUrl(readCookie(), new URL(window.location.href), document.referrer || null);
+    const merged = mergeFromUrl(
+      readCookie(),
+      new URL(window.location.href),
+      document.referrer || null,
+    );
     writeCookie(merged);
   } catch {
     /* ignore */

@@ -14,7 +14,10 @@ const schema = z.object({
 
 describe("environment parsing rules", () => {
   it("rejects a non-URL base url", () => {
-    const r = schema.safeParse({ NEXT_PUBLIC_FVD_BASE_URL: "not-a-url", FVD_HASH_SECRET: "x".repeat(16) });
+    const r = schema.safeParse({
+      NEXT_PUBLIC_FVD_BASE_URL: "not-a-url",
+      FVD_HASH_SECRET: "x".repeat(16),
+    });
     expect(r.success).toBe(false);
   });
 

@@ -2,7 +2,7 @@
 schema: keel.sprint/1
 sprint: 2
 goal: Registered value + acquisition tracking + launch readiness (BUILD 10–15)
-status: in-progress
+status: done
 slices:
   - id: S-10
     title: BUILD 10 — Registered workspace (history, saved entities, duplicate)
@@ -36,7 +36,7 @@ slices:
     criteria: [AC-37]
   - id: S-15
     title: BUILD 15 — Launch gate (perf, security headers, compliance re-run, deploy runbook)
-    status: not-started
+    status: done
     hours: 10
     depends_on: [S-10, S-11, S-12, S-13, S-14]
     criteria: [AC-11, AC-12, AC-28]

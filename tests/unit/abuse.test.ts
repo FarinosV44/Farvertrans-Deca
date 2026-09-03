@@ -29,7 +29,12 @@ describe("proof-of-work challenge", () => {
     let nonce = "";
     for (let i = 0; i < 5_000_000; i++) {
       const c = i.toString(36);
-      if (createHash("sha256").update(`${prefix}:${c}`).digest("hex").startsWith("0".repeat(POW_DIFFICULTY))) {
+      if (
+        createHash("sha256")
+          .update(`${prefix}:${c}`)
+          .digest("hex")
+          .startsWith("0".repeat(POW_DIFFICULTY))
+      ) {
         nonce = c;
         break;
       }

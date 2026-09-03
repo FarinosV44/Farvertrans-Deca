@@ -14,3 +14,4 @@ AI cost mode: subscription (Claude Code) — marginal cost ≈ €0.
 | 2026-09-03 | Phase 5 — BUILD 11 (ref+UTM attribution) + BUILD 12 (operator dashboard) | claude-sonnet-5 | ~0.5M | 43 unit + 43 e2e |
 | 2026-09-03 | Phase 5 — BUILD 13 (sharing + corrections/versioning R-13 + abuse controls F16) | claude-sonnet-5 | ~0.6M | 47 unit + 48 e2e |
 | 2026-09-03 | Phase 5 — BUILD 14 (SEO base + 10 core pages + "¿Estoy obligado?") | claude-sonnet-5 | ~0.5M | 47 unit + 53 e2e |
+| 2026-09-03 | Phase 5 — BUILD 15 (launch gate: CSP+headers, cross-tenant tests, pre-commit, CI, Dockerfile, release runbook) + merge to main | claude-sonnet-5 | ~0.7M | 47 unit + 57 e2e; v1 release |

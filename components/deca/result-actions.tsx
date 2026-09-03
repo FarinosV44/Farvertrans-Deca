@@ -140,7 +140,8 @@ export function ResultActions({
       )}
       {claimToken && (
         <p className="text-xs text-[var(--color-text-muted)]">
-          Crear la cuenta guarda tus documentos y tus datos habituales. No es un formulario comercial.
+          Crear la cuenta guarda tus documentos y tus datos habituales. No es un formulario
+          comercial.
         </p>
       )}
     </div>

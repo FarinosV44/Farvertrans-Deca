@@ -10,8 +10,6 @@ export function hashIdentifier(value: string): string {
 /** Best-effort client IP from proxy headers (Hostinger reverse proxy sets X-Forwarded-For). */
 export function clientIp(headers: Headers): string {
   return (
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headers.get("x-real-ip") ||
-    "unknown"
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown"
   );
 }

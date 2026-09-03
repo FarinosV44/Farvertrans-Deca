@@ -144,7 +144,8 @@ export async function correctDeca(
   changeReason: string,
 ): Promise<{ decaId: string; versionId: string; versionNo: number; token: string }> {
   const reason = changeReason.trim();
-  if (reason.length < 3) throw new DecaCorrectionError("reason_required", "Indica el motivo de la corrección.");
+  if (reason.length < 3)
+    throw new DecaCorrectionError("reason_required", "Indica el motivo de la corrección.");
 
   const deca = await prisma.deca.findFirst({
     where: { id: decaId, companyId },

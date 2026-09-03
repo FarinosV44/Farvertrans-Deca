@@ -8,7 +8,11 @@ import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
  */
 
 const payload = {
-  shipper: { name: "Cargas del Turia SL", nif: "B96789011", address: "Av. del Puerto 120, Valencia" },
+  shipper: {
+    name: "Cargas del Turia SL",
+    nif: "B96789011",
+    address: "Av. del Puerto 120, Valencia",
+  },
   carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
   origin: "Valencia",
   destination: "Madrid",
@@ -63,7 +67,9 @@ test.describe("R-1…R-13 compliance", () => {
       "1234BCD",
       "R9876XYZ",
     ]) {
-      expect(flat, `PDF must contain "${v}" as text`).toContain(v.replace(/\s+/g, "").toUpperCase());
+      expect(flat, `PDF must contain "${v}" as text`).toContain(
+        v.replace(/\s+/g, "").toUpperCase(),
+      );
     }
     expect(text.length).toBeGreaterThan(200); // not an image-only page
   });
@@ -97,7 +103,7 @@ test.describe("R-1…R-13 compliance", () => {
   test("R-8: an unknown token returns a generic 404", async ({ request }) => {
     const res = await request.get("/d/this-token-does-not-exist-000000000000");
     expect(res.status()).toBe(404);
-    expect((res.headers()["content-type"] ?? "")).toContain("text/plain");
+    expect(res.headers()["content-type"] ?? "").toContain("text/plain");
   });
 
   test("R-11: creation date/time is recorded in the PDF metadata", async ({ request }) => {

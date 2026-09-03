@@ -89,7 +89,10 @@ export default function HomePage() {
           </h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {BENEFITS.map((b) => (
-              <div key={b.title} className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6">
+              <div
+                key={b.title}
+                className="rounded-[var(--radius-lg)] border border-[var(--color-border)] p-6"
+              >
                 <h3 className="text-lg font-bold">{b.title}</h3>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">{b.body}</p>
               </div>
@@ -98,10 +101,7 @@ export default function HomePage() {
         </section>
 
         {/* Legal / trust */}
-        <section
-          className="mx-auto max-w-[1120px] px-4 py-12 md:px-6"
-          aria-labelledby="normativa"
-        >
+        <section className="mx-auto max-w-[1120px] px-4 py-12 md:px-6" aria-labelledby="normativa">
           <h2 id="normativa" className="text-2xl font-bold md:text-3xl">
             Qué exige la normativa
           </h2>

@@ -64,7 +64,9 @@ describe("validateDeca (R-2 / AC-09)", () => {
   });
 
   it("rejects a malformed transport date", () => {
-    expect(() => validateDeca({ ...valid, transportDate: "06/10/2026" })).toThrow(DecaValidationError);
+    expect(() => validateDeca({ ...valid, transportDate: "06/10/2026" })).toThrow(
+      DecaValidationError,
+    );
   });
 
   it("does NOT block a foreign NIF — it warns instead", () => {

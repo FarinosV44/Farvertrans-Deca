@@ -22,7 +22,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ kind: s
   } catch (e) {
     if (e instanceof z.ZodError) {
       return NextResponse.json(
-        { error: { code: "validation", message: "Revisa los datos.", fields: e.flatten().fieldErrors } },
+        {
+          error: {
+            code: "validation",
+            message: "Revisa los datos.",
+            fields: e.flatten().fieldErrors,
+          },
+        },
         { status: 422 },
       );
     }

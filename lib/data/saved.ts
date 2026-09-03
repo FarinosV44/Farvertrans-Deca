@@ -22,7 +22,9 @@ export async function listSaved(userId: string) {
 export async function createSaved(userId: string, kind: SavedKind, input: unknown) {
   if (kind === "company") {
     const d = savedCompanySchema.parse(input);
-    return prisma.savedCompany.create({ data: { userId, name: d.name, nif: d.nif, address: d.address || null } });
+    return prisma.savedCompany.create({
+      data: { userId, name: d.name, nif: d.nif, address: d.address || null },
+    });
   }
   if (kind === "vehicle") {
     const d = savedVehicleSchema.parse(input);

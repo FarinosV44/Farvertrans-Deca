@@ -100,7 +100,8 @@ export async function operatorStats() {
   const known = new Set(operators.map((o) => o.refCode));
 
   for (const a of acqs) {
-    const code = a.firstRefCode && known.has(a.firstRefCode) ? a.firstRefCode : a.firstRefCode ?? ORGANIC;
+    const code =
+      a.firstRefCode && known.has(a.firstRefCode) ? a.firstRefCode : (a.firstRefCode ?? ORGANIC);
     const s = agg.get(code) ?? { companies: 0, firstDeca: 0, totalDeca: 0, a7: 0, a30: 0 };
     s.companies += 1;
     if (a.firstDecaAt) s.firstDeca += 1;

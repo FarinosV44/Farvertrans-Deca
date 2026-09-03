@@ -51,8 +51,8 @@ export default async function ResultPage({
         <ResultActions publicUrl={publicUrl} claimToken={claim} />
 
         <p className="mt-8 text-xs text-[var(--color-text-muted)]">
-          Documento conservado durante al menos 1 año. La URL pública permite la descarga directa del PDF
-          sin registro, conforme a la resolución vigente.
+          Documento conservado durante al menos 1 año. La URL pública permite la descarga directa
+          del PDF sin registro, conforme a la resolución vigente.
         </p>
         <p className="mt-4 text-sm">
           <Link href="/crear">Crear otro DeCA</Link>

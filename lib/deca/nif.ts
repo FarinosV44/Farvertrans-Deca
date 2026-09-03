@@ -4,10 +4,17 @@
  */
 const DNI_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE";
 
-export type NifCheck = { normalized: string; valid: boolean; kind: "dni" | "nie" | "cif" | "unknown" };
+export type NifCheck = {
+  normalized: string;
+  valid: boolean;
+  kind: "dni" | "nie" | "cif" | "unknown";
+};
 
 export function checkNif(input: string): NifCheck {
-  const n = input.toUpperCase().replace(/[\s.\-]/g, "").trim();
+  const n = input
+    .toUpperCase()
+    .replace(/[\s.\-]/g, "")
+    .trim();
 
   // DNI: 8 digits + control letter
   const dni = /^(\d{8})([A-Z])$/.exec(n);

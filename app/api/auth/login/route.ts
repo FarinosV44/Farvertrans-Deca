@@ -14,7 +14,10 @@ const schema = z.object({
 export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: { code: "bad_input", message: "Revisa los datos." } }, { status: 422 });
+    return NextResponse.json(
+      { error: { code: "bad_input", message: "Revisa los datos." } },
+      { status: 422 },
+    );
   }
   const b = parsed.data;
 
@@ -25,7 +28,10 @@ export async function POST(req: Request) {
     if (e instanceof AuthError) {
       return NextResponse.json({ error: { code: e.code, message: e.message } }, { status: 401 });
     }
-    return NextResponse.json({ error: { code: "internal", message: "Error al iniciar sesión." } }, { status: 500 });
+    return NextResponse.json(
+      { error: { code: "internal", message: "Error al iniciar sesión." } },
+      { status: 500 },
+    );
   }
 
   await setSessionCookie(user.userId);

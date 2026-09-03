@@ -38,16 +38,17 @@
 | 1 Discovery | done | docs/00-competitive-landscape.md ✓, docs/01-discovery.md ✓, docs/01a-confrontation.md ✓, docs/estimate.md (v1) ✓, docs/token-ledger.md ✓, docs/keel-conformance.md ✓, docs/issues.md ✓ |
 | 2 Functional spec | done | docs/02-functional-spec.md ✓ (F1–F18, AC-01…AC-37), docs/03-technical-plan.md ✓, docs/threat-model.md ✓, docs/flows/ ✓ (7 flows), docs/estimate.md v2 firm ✓, .claude/rules/ + .claude/agents/ ✓ |
 | 3+4 Design (folded — D-019) | done | docs/design/IMPLEMENTATION-BRIEF.md ✓ (screen list + journey + concrete tokens; no external design-tool round-trip) |
-| 5 Development | in progress | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–14 done · BUILD 15 pending |
+| 5 Development | done (v1) | docs/sprints/sprint-1.md ✓, docs/sprints/sprint-2.md ✓, docs/05-test-points.md ✓ · BUILD 05–15 done — v1 released to main |
 | 6 Documentation | pending | docs/architecture.md, docs/api/, docs/usage/ |
 | 7 Release | pending | docs/07-release.md |
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
-- Phase: 5 — Development (execution mode, D-019). Sprint 2.
-- **Done: BUILD 05–14.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
-  tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13) + SEO cluster (14). All green: 47 unit + 53 e2e
-  (6 compliance R-1…R-13 + axe on every public screen) + typecheck + lint + standalone build + keel-verify.
+- Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **Done: BUILD 05–15.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
+  tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13) + SEO cluster (14) + launch
+  gate (15). All green: 47 unit + 57 e2e (6 compliance R-1…R-13 + axe on every public screen +
+  cross-tenant + security headers) + typecheck + lint + format + standalone build + keel-verify.
   - 05 scaffold · 06 landing · 07 `/crear` 3-step creator · 08 compliant PDF+QR+`/d/[token]` +
     `npm run test:compliance` gate · 09 signup+claim (own auth D-021) ·
     10 `/app` + `/app/historico` (search + date range) + `/app/datos` (saved data CRUD) + wizard
@@ -79,24 +80,32 @@
   (`dynamicParams=false` → unknown slug 404s; static generation; FAQPage JSON-LD; canonical; internal
   cluster links; CTA to `/crear`). `/soy-obligado` guided obligation check (SSR query-param form, works
   without JS). `sitemap.ts` extended. SEO technical base (robots/meta/OG) was already done in BUILD 06.
-- Next action: **BUILD 15** — launch gate: (a) `.githooks/pre-commit` confidential gate + CI workflow
-  (D-010); (b) CSP + HSTS + security headers (`next.config.ts headers()`); (c) cross-tenant authz e2e
-  (company A cannot read company B's `/app/deca/[id]`, history, saved data); (d) error/failure-path
-  tests (DB/storage/email down); (e) full `npm run test:compliance` re-run + a sample DeCA for legal
-  review; (f) `docs/07-release.md` deploy runbook (Hostinger VPS + Docker + Supabase project/RLS/Storage
-  + DNS + Resend + hCaptcha + backups + health). Then merge `develop` → `main` (user authorised it).
-- Gaps before Phase 7 release: `.githooks/pre-commit` gate + `.github/workflows/ci.yml` (D-010, deferred
-  at scaffold); `docs/.keel/plan.json` + `scripts/keel-close`/`keel-handoff-verify` (execution shortcut);
-  password reset; real Supabase project + domain + email + hCaptcha (CREDENTIAL, pre-launch);
-  RGPD review of anonymous-doc retention (D-016); legal check that a generated DeCA passes inspection.
+- **BUILD 15 done** — launch gate: `middleware.ts` (CSP + HSTS-in-prod + nosniff + X-Frame-Options DENY
+  + Referrer-Policy + Permissions-Policy); cross-tenant authz e2e (company B → 404 on A's document,
+  correction, history); token-entropy + failure-path e2e; `.githooks/pre-commit` confidential gate
+  (`core.hooksPath` set) + `.claude/settings.json` allow-list + `.github/workflows/ci.yml` +
+  `Dockerfile` (Next standalone, non-root, healthcheck) + `.dockerignore`; `docs/07-release.md`
+  (compliance matrix with evidence, quality gate, Hostinger+Supabase deploy runbook, sample-DeCA
+  instructions, merge-to-main steps).
+- **v1 released:** `develop` merged to `main` and pushed (BUILD 05–15). No version tag created (not
+  requested).
+- **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
+  (D-016); legal/inspection check of a real generated DeCA; provision the real Supabase project +
+  Hostinger VPS + domain + Resend + hCaptcha, deploy per `docs/07-release.md`, then close issues #5–#15.
+- **Post-launch code items (tracked in `docs/07-release.md`):** nonce-based CSP; password-reset flow;
+  `docs/.keel/plan.json` + `scripts/keel-close`/`keel-handoff-verify` (skipped under execution mode
+  D-019); local + long-tail SEO pages (`docs/sprints/deferred.md`).
+- If work continues: **Phase 6 (Documentation)** — `docs/architecture.md`, `docs/api/` full reference,
+  `docs/security.md`, `docs/accessibility.md` (record the guided AT pass), `README.md`, `guide/`
+  end-user HTML guide.
 
 ## Open items
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: nothing yet.
+- Ready for `main`: DONE — v1 (BUILD 05-15) merged to main 2026-09-03.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; multi-user/team; public API; bulk import; eCMR interop feature.
 
-Last updated: 2026-09-03 — BUILD 05-14 done, starting BUILD 15
+Last updated: 2026-09-03 — BUILD 05-15 done; v1 merged to main

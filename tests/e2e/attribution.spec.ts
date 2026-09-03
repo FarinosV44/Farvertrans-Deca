@@ -30,7 +30,9 @@ test.describe("BUILD 11 — referral + UTM attribution", () => {
     request,
   }) => {
     // arrive via the operator link
-    await page.goto("/?ref=adrian&utm_source=whatsapp&utm_medium=direct&utm_campaign=lanzamiento_deca");
+    await page.goto(
+      "/?ref=adrian&utm_source=whatsapp&utm_medium=direct&utm_campaign=lanzamiento_deca",
+    );
     // browse other pages — attribution must survive navigation
     await page.goto("/crear");
     await page.goto("/registro");
@@ -63,7 +65,10 @@ test.describe("BUILD 11 — referral + UTM attribution", () => {
     expect(adrian.companies).toBeGreaterThanOrEqual(1);
   });
 
-  test("AC-21/22: no ref and no UTM → organic/direct, still recorded", async ({ page, request }) => {
+  test("AC-21/22: no ref and no UTM → organic/direct, still recorded", async ({
+    page,
+    request,
+  }) => {
     await page.goto("/");
     await page.goto("/registro");
     await registerWith(page, "B12345674");
@@ -71,7 +76,10 @@ test.describe("BUILD 11 — referral + UTM attribution", () => {
     expect(stats.organic.companies).toBeGreaterThanOrEqual(1);
   });
 
-  test("first_deca_at is set when an attributed company generates its first DeCA", async ({ page, request }) => {
+  test("first_deca_at is set when an attributed company generates its first DeCA", async ({
+    page,
+    request,
+  }) => {
     await page.goto("/?ref=diana");
     await page.goto("/registro");
     await registerWith(page, "B12345674");

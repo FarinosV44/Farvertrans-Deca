@@ -39,8 +39,7 @@ export type EventInput = z.infer<typeof eventInputSchema>;
 export function pickRefSnapshot(
   params: URLSearchParams | Record<string, string | undefined>,
 ): Record<string, string> {
-  const get = (k: string) =>
-    params instanceof URLSearchParams ? params.get(k) : params[k];
+  const get = (k: string) => (params instanceof URLSearchParams ? params.get(k) : params[k]);
   const out: Record<string, string> = {};
   for (const k of REF_KEYS) {
     const v = get(k);

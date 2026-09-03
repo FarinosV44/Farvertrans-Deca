@@ -15,10 +15,7 @@ export default async function AppHome() {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro");
 
-  const [rows, saved] = await Promise.all([
-    listHistory(user.companyId),
-    listSaved(user.id),
-  ]);
+  const [rows, saved] = await Promise.all([listHistory(user.companyId), listSaved(user.id)]);
   const recent = rows.slice(0, 5);
   const last = rows[0];
 
@@ -79,7 +76,11 @@ export default async function AppHome() {
                   <div className="flex shrink-0 gap-3">
                     <Link href={`/crear/${r.id}`}>Ver</Link>
                     <Link href={`/crear?from=${r.id}`}>Duplicar</Link>
-                    <a href={`${publicEnv.baseUrl}/d/${r.token}`} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={`${publicEnv.baseUrl}/d/${r.token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       PDF
                     </a>
                   </div>
@@ -95,7 +96,11 @@ export default async function AppHome() {
             count={saved.companies.length}
             href="/app/datos"
           />
-          <SummaryCard title="Vehículos habituales" count={saved.vehicles.length} href="/app/datos" />
+          <SummaryCard
+            title="Vehículos habituales"
+            count={saved.vehicles.length}
+            href="/app/datos"
+          />
         </section>
       </main>
       <SiteFooter />

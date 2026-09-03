@@ -283,7 +283,11 @@ export function CrearWizard({
         />
       </div>
 
-      <h1 ref={headingRef} tabIndex={-1} className="mt-3 text-2xl font-bold outline-none md:text-3xl">
+      <h1
+        ref={headingRef}
+        tabIndex={-1}
+        className="mt-3 text-2xl font-bold outline-none md:text-3xl"
+      >
         {["Cargador y transportista", "Origen, destino y fecha", "Mercancía y vehículo"][step]}
       </h1>
       {isCorrection ? (
@@ -356,14 +360,47 @@ export function CrearWizard({
             )}
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
               <legend className="px-1 text-sm font-bold">Cargador contractual</legend>
-              <Field id="shipperName" label="Nombre o razón social" value={form.shipperName} onChange={set("shipperName")} error={errors.shipperName} autoComplete="organization" />
-              <Field id="shipperNif" label="NIF" value={form.shipperNif} onChange={set("shipperNif")} error={errors.shipperNif} />
-              <Field id="shipperAddress" label="Domicilio" value={form.shipperAddress} onChange={set("shipperAddress")} error={errors.shipperAddress} autoComplete="street-address" />
+              <Field
+                id="shipperName"
+                label="Nombre o razón social"
+                value={form.shipperName}
+                onChange={set("shipperName")}
+                error={errors.shipperName}
+                autoComplete="organization"
+              />
+              <Field
+                id="shipperNif"
+                label="NIF"
+                value={form.shipperNif}
+                onChange={set("shipperNif")}
+                error={errors.shipperNif}
+              />
+              <Field
+                id="shipperAddress"
+                label="Domicilio"
+                value={form.shipperAddress}
+                onChange={set("shipperAddress")}
+                error={errors.shipperAddress}
+                autoComplete="street-address"
+              />
             </fieldset>
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
               <legend className="px-1 text-sm font-bold">Transportista efectivo</legend>
-              <Field id="carrierName" label="Nombre o razón social" value={form.carrierName} onChange={set("carrierName")} error={errors.carrierName} autoComplete="organization" />
-              <Field id="carrierNif" label="NIF" value={form.carrierNif} onChange={set("carrierNif")} error={errors.carrierNif} />
+              <Field
+                id="carrierName"
+                label="Nombre o razón social"
+                value={form.carrierName}
+                onChange={set("carrierName")}
+                error={errors.carrierName}
+                autoComplete="organization"
+              />
+              <Field
+                id="carrierNif"
+                label="NIF"
+                value={form.carrierNif}
+                onChange={set("carrierNif")}
+                error={errors.carrierNif}
+              />
             </fieldset>
           </>
         )}
@@ -371,9 +408,28 @@ export function CrearWizard({
         {step === 1 && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
             <legend className="px-1 text-sm font-bold">Trayecto</legend>
-            <Field id="origin" label="Lugar de origen" value={form.origin} onChange={set("origin")} error={errors.origin} />
-            <Field id="destination" label="Lugar de destino" value={form.destination} onChange={set("destination")} error={errors.destination} />
-            <Field id="transportDate" label="Fecha del transporte" type="date" value={form.transportDate} onChange={set("transportDate")} error={errors.transportDate} />
+            <Field
+              id="origin"
+              label="Lugar de origen"
+              value={form.origin}
+              onChange={set("origin")}
+              error={errors.origin}
+            />
+            <Field
+              id="destination"
+              label="Lugar de destino"
+              value={form.destination}
+              onChange={set("destination")}
+              error={errors.destination}
+            />
+            <Field
+              id="transportDate"
+              label="Fecha del transporte"
+              type="date"
+              value={form.transportDate}
+              onChange={set("transportDate")}
+              error={errors.transportDate}
+            />
           </fieldset>
         )}
 
@@ -408,11 +464,46 @@ export function CrearWizard({
                 </select>
               </label>
             )}
-            <Field id="goods" label="Naturaleza de la mercancía" value={form.goods} onChange={set("goods")} error={errors.goods} />
-            <Field id="weight" label="Peso (o medida alternativa)" value={form.weight} onChange={set("weight")} error={errors.weight} hint="Ej.: 12000 kg, o «una plataforma completa» si el peso exacto no es determinable." />
-            <Field id="tractorPlate" label="Matrícula de la tractora" value={form.tractorPlate} onChange={set("tractorPlate")} error={errors.tractorPlate} hint={plateHint} />
-            <Field id="trailerPlate" label="Matrícula del remolque / semirremolque" value={form.trailerPlate} onChange={set("trailerPlate")} error={errors.trailerPlate} required={false} hint="Solo si es un conjunto articulado." />
-            <Field id="reference" label="Referencia o notas (opcional)" value={form.reference} onChange={set("reference")} error={errors.reference} required={false} />
+            <Field
+              id="goods"
+              label="Naturaleza de la mercancía"
+              value={form.goods}
+              onChange={set("goods")}
+              error={errors.goods}
+            />
+            <Field
+              id="weight"
+              label="Peso (o medida alternativa)"
+              value={form.weight}
+              onChange={set("weight")}
+              error={errors.weight}
+              hint="Ej.: 12000 kg, o «una plataforma completa» si el peso exacto no es determinable."
+            />
+            <Field
+              id="tractorPlate"
+              label="Matrícula de la tractora"
+              value={form.tractorPlate}
+              onChange={set("tractorPlate")}
+              error={errors.tractorPlate}
+              hint={plateHint}
+            />
+            <Field
+              id="trailerPlate"
+              label="Matrícula del remolque / semirremolque"
+              value={form.trailerPlate}
+              onChange={set("trailerPlate")}
+              error={errors.trailerPlate}
+              required={false}
+              hint="Solo si es un conjunto articulado."
+            />
+            <Field
+              id="reference"
+              label="Referencia o notas (opcional)"
+              value={form.reference}
+              onChange={set("reference")}
+              error={errors.reference}
+              required={false}
+            />
             {isCorrection && (
               <div className="mt-3">
                 <label htmlFor="reason" className="block text-sm font-medium">

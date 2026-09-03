@@ -49,7 +49,9 @@ export default async function OperadoresPage() {
                   <td className="py-2">
                     <span className="font-medium">{r.name}</span>
                     {r.active === false && r.refCode !== stats.organic.refCode && (
-                      <span className="ml-1 text-xs text-[var(--color-text-muted)]">(inactivo)</span>
+                      <span className="ml-1 text-xs text-[var(--color-text-muted)]">
+                        (inactivo)
+                      </span>
                     )}
                     <br />
                     <span className="text-xs text-[var(--color-text-muted)]">{r.refCode}</span>
@@ -70,8 +72,8 @@ export default async function OperadoresPage() {
         </div>
 
         <p className="mt-4 text-xs text-[var(--color-text-muted)]">
-          «Empresas» son altas atribuidas a ese código (first-touch). Una empresa que se registra pero
-          nunca genera un DeCA tiene «Primer DeCA» = 0 y «Activas» = 0.
+          «Empresas» son altas atribuidas a ese código (first-touch). Una empresa que se registra
+          pero nunca genera un DeCA tiene «Primer DeCA» = 0 y «Activas» = 0.
         </p>
       </main>
       <SiteFooter />

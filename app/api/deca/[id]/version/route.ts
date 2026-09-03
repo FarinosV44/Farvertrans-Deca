@@ -14,7 +14,8 @@ const schema = z.object({
 /** Correct a DeCA → new version (R-13). Authenticated owner only. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user?.companyId) return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
+  if (!user?.companyId)
+    return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
 
   const { id } = await params;
   const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -48,7 +49,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     console.error("[deca] correction failed", e);
     return NextResponse.json(
-      { error: { code: "internal", message: "No se pudo guardar la corrección. Inténtalo de nuevo." } },
+      {
+        error: {
+          code: "internal",
+          message: "No se pudo guardar la corrección. Inténtalo de nuevo.",
+        },
+      },
       { status: 500 },
     );
   }

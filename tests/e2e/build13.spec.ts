@@ -3,7 +3,11 @@ import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { createHash } from "node:crypto";
 
 const V = {
-  shipper: { name: "Cargas del Turia SL", nif: "B96789011", address: "Av. del Puerto 120, Valencia" },
+  shipper: {
+    name: "Cargas del Turia SL",
+    nif: "B96789011",
+    address: "Av. del Puerto 120, Valencia",
+  },
   carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
   origin: "Valencia",
   destination: "Madrid",
@@ -97,7 +101,10 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
 });
 
 test.describe("BUILD 13 — driver sharing (F9)", () => {
-  test("share panel: WhatsApp deep link + copy + email endpoint responds", async ({ page, request }) => {
+  test("share panel: WhatsApp deep link + copy + email endpoint responds", async ({
+    page,
+    request,
+  }) => {
     const decaId = await registerAndCreate(page);
     await page.goto(`/crear/${decaId}`);
     await page.getByTestId("result-share-toggle").click();
@@ -132,7 +139,12 @@ test.describe("BUILD 13 — abuse controls (F16)", () => {
     let nonce = "";
     for (let i = 0; i < 8_000_000; i++) {
       const c = i.toString(36);
-      if (createHash("sha256").update(`${prefix}:${c}`).digest("hex").startsWith("0".repeat(difficulty))) {
+      if (
+        createHash("sha256")
+          .update(`${prefix}:${c}`)
+          .digest("hex")
+          .startsWith("0".repeat(difficulty))
+      ) {
         nonce = c;
         break;
       }

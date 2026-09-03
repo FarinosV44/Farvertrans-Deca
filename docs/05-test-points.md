@@ -70,3 +70,9 @@
 | 2026-09-03 | BUILD 14 SEO | sitemap lists all 10 + /soy-obligado, no /app /api /d/; robots disallows private areas | driven | n/a | e2e seo.spec | PASS | next commit |
 | 2026-09-03 | BUILD 14 SEO | "¿Estoy obligado?" returns a conclusion with JavaScript disabled (SSR query-param form) | driven | n/a | e2e seo.spec | PASS | next commit |
 | 2026-09-03 | BUILD 14 SEO | representative SEO page axe-clean (no serious/critical) | driven (@axe-core) | n/a | e2e seo.spec | PASS | next commit |
+| 2026-09-03 | BUILD 15 gate | no cross-tenant access: company B → 404 on A's /app/deca/[id], /corregir, /api/deca/[id]/version; B's history has 0 of A's docs | driven (Playwright, 2 contexts) | n/a | e2e launch-gate.spec | PASS | next commit |
+| 2026-09-03 | BUILD 15 gate | security headers on HTML: CSP (default-src 'self', frame-ancestors 'none', no unsafe-eval in prod), nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy | driven | n/a | e2e launch-gate.spec | PASS | next commit |
+| 2026-09-03 | BUILD 15 gate | public tokens ≥240-bit base64url, unique, adjacent guess → 404 | driven | n/a | e2e launch-gate.spec | PASS | next commit |
+| 2026-09-03 | BUILD 15 gate | failure paths: malformed create → 422, bad beacon → 204 (never 5xx), unknown token → 404, bad share → 422 | driven | n/a | e2e launch-gate.spec | PASS | next commit |
+| 2026-09-03 | BUILD 15 gate | full compliance suite re-run on the build | driven | n/a | `npm run test:compliance` | PASS (6/6 R-1…R-13) | next commit |
+| 2026-09-03 | BUILD 15 gate | Docker standalone production build + keel-verify + format:check | driven | n/a | `NEXT_STANDALONE=1 npm run build` / `npm run format:check` | PASS | next commit |

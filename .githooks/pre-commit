@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Confidential-data gate (Keel). Blocks a commit that would introduce a secret.
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+fail=0
+note() { echo "  pre-commit: $1"; fail=1; }
+
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    .env|.env.*) [ "$f" = ".env.example" ] || note "tracked env file: $f" ;;
+    *.pem|*.key|*.p12|*.pfx|id_rsa*) note "key/cert file: $f" ;;
+  esac
+  case "$f" in
+    *.ts|*.tsx|*.js|*.mjs|*.json|*.yml|*.yaml|*.prisma|*.env|*.sh)
+      if grep -nE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|re_[A-Za-z0-9]{24,}|xox[baprs]-[A-Za-z0-9-]{10,}|eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}' "$f" \
+         | grep -vE 'your-|example|placeholder|CHANGE|<[A-Z_]+>' >/dev/null; then
+        note "possible secret in $f"
+      fi
+      if grep -nE 'SUPABASE_SERVICE_ROLE_KEY[[:space:]]*[:=][[:space:]]*["'"'"'][A-Za-z0-9._-]{20,}' "$f" >/dev/null 2>&1; then
+        note "service-role key literal in $f"
+      fi
+      ;;
+  esac
+done <<< "$staged"
+
+if [ "$fail" -ne 0 ]; then
+  echo "  pre-commit: commit blocked — resolve the findings above (or add the file to .gitignore)."
+  exit 1
+fi
+exit 0

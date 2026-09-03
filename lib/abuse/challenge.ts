@@ -46,7 +46,9 @@ export function verifyPow(scope: string, prefix: string, nonce: string): boolean
 }
 
 /** Verify an hCaptcha token server-side. Null secret → hCaptcha not configured. */
-export async function verifyHcaptcha(token: string | null | undefined): Promise<boolean | "unconfigured"> {
+export async function verifyHcaptcha(
+  token: string | null | undefined,
+): Promise<boolean | "unconfigured"> {
   const secretKey = process.env.HCAPTCHA_SECRET_KEY;
   if (!secretKey) return "unconfigured";
   if (!token) return false;

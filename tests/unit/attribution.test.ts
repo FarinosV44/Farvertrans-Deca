@@ -29,12 +29,19 @@ describe("parseTouch", () => {
     });
   });
   it("classifies campaign / organic / direct", () => {
-    expect(parseTouch(new URLSearchParams("utm_source=google"), { landingUrl: "/" }).channel).toBe("campaign");
-    expect(parseTouch(new URLSearchParams(""), { landingUrl: "/", referrer: "https://google.com" }).channel).toBe("organic");
+    expect(parseTouch(new URLSearchParams("utm_source=google"), { landingUrl: "/" }).channel).toBe(
+      "campaign",
+    );
+    expect(
+      parseTouch(new URLSearchParams(""), { landingUrl: "/", referrer: "https://google.com" })
+        .channel,
+    ).toBe("organic");
     expect(parseTouch(new URLSearchParams(""), { landingUrl: "/" }).channel).toBe("direct");
   });
   it("only referral/campaign touches are qualifying", () => {
-    expect(touchIsQualifying(parseTouch(new URLSearchParams("ref=maria"), { landingUrl: "/" }))).toBe(true);
+    expect(
+      touchIsQualifying(parseTouch(new URLSearchParams("ref=maria"), { landingUrl: "/" })),
+    ).toBe(true);
     expect(touchIsQualifying(parseTouch(new URLSearchParams(""), { landingUrl: "/" }))).toBe(false);
   });
 });
@@ -84,7 +91,10 @@ describe("attribution merge rules (F12 / EPIC 02)", () => {
 
   it("mergeTouch is a no-op once locked", () => {
     const locked = lock(mergeFromUrl(EMPTY_ATTRIBUTION, url("/?ref=adrian"), null));
-    const after = mergeTouch(locked, parseTouch(new URLSearchParams("ref=zzz"), { landingUrl: "/" }));
+    const after = mergeTouch(
+      locked,
+      parseTouch(new URLSearchParams("ref=zzz"), { landingUrl: "/" }),
+    );
     expect(after).toBe(locked);
   });
 });

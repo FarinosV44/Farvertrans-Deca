@@ -58,14 +58,22 @@ export function SavedDataManager({
 
       <Section
         title="Empresas / transportistas"
-        items={companies.map((c) => ({ id: c.id, primary: c.name, secondary: `${c.nif}${c.address ? " · " + c.address : ""}` }))}
+        items={companies.map((c) => ({
+          id: c.id,
+          primary: c.name,
+          secondary: `${c.nif}${c.address ? " · " + c.address : ""}`,
+        }))}
         onRemove={(id) => remove("company", id)}
         busy={busy}
         form={<CompanyForm onSubmit={(b) => add("company", b)} busy={busy} />}
       />
       <Section
         title="Vehículos"
-        items={vehicles.map((v) => ({ id: v.id, primary: v.tractorPlate, secondary: v.trailerPlate ? `Remolque ${v.trailerPlate}` : "" }))}
+        items={vehicles.map((v) => ({
+          id: v.id,
+          primary: v.tractorPlate,
+          secondary: v.trailerPlate ? `Remolque ${v.trailerPlate}` : "",
+        }))}
         onRemove={(id) => remove("vehicle", id)}
         busy={busy}
         form={<VehicleForm onSubmit={(b) => add("vehicle", b)} busy={busy} />}
@@ -110,7 +118,9 @@ function Section({
             <li key={it.id} className="flex items-center justify-between gap-3 py-2 text-sm">
               <span>
                 <span className="font-medium">{it.primary}</span>
-                {it.secondary && <span className="text-[var(--color-text-muted)]"> — {it.secondary}</span>}
+                {it.secondary && (
+                  <span className="text-[var(--color-text-muted)]"> — {it.secondary}</span>
+                )}
               </span>
               <button
                 type="button"
@@ -127,42 +137,107 @@ function Section({
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">Nada guardado todavía.</p>
       )}
       <details className="mt-3">
-        <summary className="cursor-pointer text-sm font-medium text-[var(--color-primary)]">Añadir</summary>
+        <summary className="cursor-pointer text-sm font-medium text-[var(--color-primary)]">
+          Añadir
+        </summary>
         {form}
       </details>
     </section>
   );
 }
 
-function CompanyForm({ onSubmit, busy }: { onSubmit: (b: Record<string, string>) => void; busy: boolean }) {
+function CompanyForm({
+  onSubmit,
+  busy,
+}: {
+  onSubmit: (b: Record<string, string>) => void;
+  busy: boolean;
+}) {
   const [f, setF] = useState({ name: "", nif: "", address: "" });
   return (
     <FormWrap busy={busy} onSubmit={() => onSubmit(f)}>
-      <Field id="c-name" label="Nombre o razón social" value={f.name} onChange={(v) => setF((s) => ({ ...s, name: v }))} />
-      <Field id="c-nif" label="NIF" value={f.nif} onChange={(v) => setF((s) => ({ ...s, nif: v }))} />
-      <Field id="c-address" label="Domicilio (opcional)" required={false} value={f.address} onChange={(v) => setF((s) => ({ ...s, address: v }))} />
+      <Field
+        id="c-name"
+        label="Nombre o razón social"
+        value={f.name}
+        onChange={(v) => setF((s) => ({ ...s, name: v }))}
+      />
+      <Field
+        id="c-nif"
+        label="NIF"
+        value={f.nif}
+        onChange={(v) => setF((s) => ({ ...s, nif: v }))}
+      />
+      <Field
+        id="c-address"
+        label="Domicilio (opcional)"
+        required={false}
+        value={f.address}
+        onChange={(v) => setF((s) => ({ ...s, address: v }))}
+      />
     </FormWrap>
   );
 }
-function VehicleForm({ onSubmit, busy }: { onSubmit: (b: Record<string, string>) => void; busy: boolean }) {
+function VehicleForm({
+  onSubmit,
+  busy,
+}: {
+  onSubmit: (b: Record<string, string>) => void;
+  busy: boolean;
+}) {
   const [f, setF] = useState({ tractorPlate: "", trailerPlate: "" });
   return (
     <FormWrap busy={busy} onSubmit={() => onSubmit(f)}>
-      <Field id="v-tractor" label="Matrícula tractora" value={f.tractorPlate} onChange={(v) => setF((s) => ({ ...s, tractorPlate: v }))} />
-      <Field id="v-trailer" label="Matrícula remolque (opcional)" required={false} value={f.trailerPlate} onChange={(v) => setF((s) => ({ ...s, trailerPlate: v }))} />
+      <Field
+        id="v-tractor"
+        label="Matrícula tractora"
+        value={f.tractorPlate}
+        onChange={(v) => setF((s) => ({ ...s, tractorPlate: v }))}
+      />
+      <Field
+        id="v-trailer"
+        label="Matrícula remolque (opcional)"
+        required={false}
+        value={f.trailerPlate}
+        onChange={(v) => setF((s) => ({ ...s, trailerPlate: v }))}
+      />
     </FormWrap>
   );
 }
-function AddressForm({ onSubmit, busy }: { onSubmit: (b: Record<string, string>) => void; busy: boolean }) {
+function AddressForm({
+  onSubmit,
+  busy,
+}: {
+  onSubmit: (b: Record<string, string>) => void;
+  busy: boolean;
+}) {
   const [f, setF] = useState({ label: "", address: "" });
   return (
     <FormWrap busy={busy} onSubmit={() => onSubmit(f)}>
-      <Field id="a-label" label="Etiqueta (p. ej. «Almacén Valencia»)" value={f.label} onChange={(v) => setF((s) => ({ ...s, label: v }))} />
-      <Field id="a-address" label="Dirección" value={f.address} onChange={(v) => setF((s) => ({ ...s, address: v }))} />
+      <Field
+        id="a-label"
+        label="Etiqueta (p. ej. «Almacén Valencia»)"
+        value={f.label}
+        onChange={(v) => setF((s) => ({ ...s, label: v }))}
+      />
+      <Field
+        id="a-address"
+        label="Dirección"
+        value={f.address}
+        onChange={(v) => setF((s) => ({ ...s, address: v }))}
+      />
     </FormWrap>
   );
 }
-function FormWrap({ children, onSubmit, busy }: { children: React.ReactNode; onSubmit: () => void; busy: boolean }) {
+function FormWrap({
+  children,
+  onSubmit,
+  busy,
+}: {
+  children: React.ReactNode;
+  onSubmit: () => void;
+  busy: boolean;
+}) {
   return (
     <form
       className="mt-2"

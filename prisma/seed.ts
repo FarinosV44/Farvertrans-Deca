@@ -42,7 +42,9 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${operators.length} operators + 1 internal user (${adminEmail} / admin-dev-only).`);
+  console.log(
+    `Seeded ${operators.length} operators + 1 internal user (${adminEmail} / admin-dev-only).`,
+  );
 }
 
 main()

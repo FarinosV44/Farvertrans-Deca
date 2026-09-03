@@ -17,12 +17,32 @@ function probe(cmd) {
 }
 
 const checks = [
-  { name: "Node.js >=20.11", detected: probe("node --version"), required: ">=20.11", blocking: true },
+  {
+    name: "Node.js >=20.11",
+    detected: probe("node --version"),
+    required: ">=20.11",
+    blocking: true,
+  },
   { name: "npm", detected: probe("npm --version"), required: "any", blocking: true },
-  { name: "Docker (playground/integration)", detected: probe("docker --version"), required: "24+", blocking: true },
-  { name: "Docker daemon running", detected: probe("docker info --format {{.ServerVersion}}") ? "running" : null, required: "running", blocking: false },
+  {
+    name: "Docker (playground/integration)",
+    detected: probe("docker --version"),
+    required: "24+",
+    blocking: true,
+  },
+  {
+    name: "Docker daemon running",
+    detected: probe("docker info --format {{.ServerVersion}}") ? "running" : null,
+    required: "running",
+    blocking: false,
+  },
   { name: "git", detected: probe("git --version"), required: "2.40+", blocking: true },
-  { name: "gh (issue automation)", detected: probe("gh --version")?.split("\n")[0] ?? null, required: "authenticated", blocking: false },
+  {
+    name: "gh (issue automation)",
+    detected: probe("gh --version")?.split("\n")[0] ?? null,
+    required: "authenticated",
+    blocking: false,
+  },
 ];
 
 const credentialStops = [
@@ -52,7 +72,5 @@ if (asJson) {
   for (const s of credentialStops) console.log(`   - ${s}`);
 }
 
-const blockingMissing = result.checks.filter(
-  (c) => !c.detected && c.blocking,
-);
+const blockingMissing = result.checks.filter((c) => !c.detected && c.blocking);
 process.exit(blockingMissing.length ? 1 : 0);

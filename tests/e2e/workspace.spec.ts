@@ -1,7 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const DECA = {
-  shipper: { name: "Cargas del Turia SL", nif: "B96789011", address: "Av. del Puerto 120, Valencia" },
+  shipper: {
+    name: "Cargas del Turia SL",
+    nif: "B96789011",
+    address: "Av. del Puerto 120, Valencia",
+  },
   carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
   origin: "Valencia",
   destination: "Madrid",
@@ -65,7 +69,9 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.getByText("0 documentos")).toBeVisible();
   });
 
-  test("Repetir último DeCA pre-fills a new document, date reset, new id on generate", async ({ page }) => {
+  test("Repetir último DeCA pre-fills a new document, date reset, new id on generate", async ({
+    page,
+  }) => {
     await registerCompany(page);
     await createDecaAuthed(page);
     const firstUrl = page.url();
@@ -97,21 +103,32 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.goto("/app/datos");
     // add a saved company
     await page.getByText("Empresas / transportistas").scrollIntoViewIfNeeded();
-    await page.locator("section", { hasText: "Empresas / transportistas" }).getByText("Añadir").click();
+    await page
+      .locator("section", { hasText: "Empresas / transportistas" })
+      .getByText("Añadir")
+      .click();
     await page.fill("#c-name", "Habitual Cargas SL");
     await page.fill("#c-nif", "B12345674");
-    await page.locator("section", { hasText: "Empresas / transportistas" }).getByRole("button", { name: "Guardar" }).click();
+    await page
+      .locator("section", { hasText: "Empresas / transportistas" })
+      .getByRole("button", { name: "Guardar" })
+      .click();
     await expect(page.getByText("Habitual Cargas SL")).toBeVisible();
 
     // add a saved vehicle
     await page.locator("section", { hasText: "Vehículos" }).getByText("Añadir").click();
     await page.fill("#v-tractor", "5555 XYZ");
-    await page.locator("section", { hasText: "Vehículos" }).getByRole("button", { name: "Guardar" }).click();
+    await page
+      .locator("section", { hasText: "Vehículos" })
+      .getByRole("button", { name: "Guardar" })
+      .click();
     await expect(page.getByText("5555XYZ")).toBeVisible();
 
     // autofill in the wizard
     await page.goto("/crear");
-    await page.getByTestId("autofill-company").selectOption({ label: "Habitual Cargas SL — B12345674" });
+    await page
+      .getByTestId("autofill-company")
+      .selectOption({ label: "Habitual Cargas SL — B12345674" });
     await expect(page.locator("#carrierName")).toHaveValue("Habitual Cargas SL");
     await page.fill("#shipperName", DECA.shipper.name);
     await page.fill("#shipperNif", DECA.shipper.nif);
@@ -126,7 +143,10 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     // delete the saved company — the earlier generated DeCA still shows its original carrier
     await page.goto("/app/datos");
-    await page.locator("li", { hasText: "Habitual Cargas SL" }).getByRole("button", { name: "Borrar" }).click();
+    await page
+      .locator("li", { hasText: "Habitual Cargas SL" })
+      .getByRole("button", { name: "Borrar" })
+      .click();
     await expect(page.getByText("Habitual Cargas SL")).toHaveCount(0);
     await page.goto("/app/historico");
     await expect(page.getByText("Transportes Pérez SL").first()).toBeVisible();
@@ -139,7 +159,9 @@ test.describe("BUILD 10 — registered workspace", () => {
     await registerCompany(page);
     for (const path of ["/app", "/app/historico", "/app/datos"]) {
       await page.goto(path);
-      const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
+      const r = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
+        .analyze();
       const bad = r.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""));
       expect(bad.map((v) => `${path} ${v.id}`)).toEqual([]);
     }

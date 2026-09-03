@@ -10,10 +10,7 @@ export const dynamic = "force-dynamic";
  * auth, no cookie, no HTML interstitial and no button. Unknown token → 404.
  * Outside the availability window → 410 (document still retained, R-10).
  */
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   if (!token || token.length < 16 || token.length > 128) {
@@ -30,7 +27,10 @@ export async function GET(
   if (!isPubliclyAvailable(version.deca.serviceEnd)) {
     return new NextResponse(
       "Este documento ya no está disponible públicamente. El titular puede volver a compartirlo desde su cuenta.",
-      { status: 410, headers: { "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" } },
+      {
+        status: 410,
+        headers: { "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" },
+      },
     );
   }
 

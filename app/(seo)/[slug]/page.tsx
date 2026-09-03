@@ -28,7 +28,13 @@ export async function generateMetadata({
     title: p.title,
     description: p.description,
     alternates: { canonical: url },
-    openGraph: { type: "article", url, title: p.title, description: p.description, siteName: "Farvertrans DeCA" },
+    openGraph: {
+      type: "article",
+      url,
+      title: p.title,
+      description: p.description,
+      siteName: "Farvertrans DeCA",
+    },
   };
 }
 
@@ -36,20 +42,9 @@ export default async function SeoPageView({ params }: { params: Promise<{ slug: 
   const p = getSeoPage((await params).slug);
   if (!p) notFound();
 
-  const faqLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: p.faq.map((f) => ({
-      "@type": "Question",
-      name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
-    })),
-  };
-
   return (
     <>
       <TrackView event="landing_view" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
       <SiteHeader />
 
       <main id="contenido" className="mx-auto max-w-[760px] px-4 pb-24 pt-10 md:px-6 md:pb-12">

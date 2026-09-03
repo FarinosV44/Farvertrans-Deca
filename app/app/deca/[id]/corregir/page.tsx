@@ -37,7 +37,11 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
     <>
       <SiteHeader />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-10 md:px-6">
-        <CrearWizard initial={initial} saved={{ companies: [], vehicles: [], addresses: [] }} correctDecaId={deca.id} />
+        <CrearWizard
+          initial={initial}
+          saved={{ companies: [], vehicles: [], addresses: [] }}
+          correctDecaId={deca.id}
+        />
       </main>
       <SiteFooter />
     </>

@@ -9,11 +9,7 @@ describe("QR round-trip (R-5 / AC-07)", () => {
   it("a QR generated for a URL decodes back to exactly that URL", async () => {
     const url = "https://deca.farvertrans.es/d/AbC-123_xyz456";
     const png = PNG.sync.read(await qrPngBuffer(url));
-    const decoded = jsQR(
-      Uint8ClampedArray.from(png.data),
-      png.width,
-      png.height,
-    );
+    const decoded = jsQR(Uint8ClampedArray.from(png.data), png.width, png.height);
     expect(decoded?.data).toBe(url);
   });
 });

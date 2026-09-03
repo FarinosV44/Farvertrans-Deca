@@ -30,9 +30,7 @@ export const step1Schema = z.object({
 export const step2Schema = z.object({
   origin: trimmed(2, 200, "Indica el lugar de origen"),
   destination: trimmed(2, 200, "Indica el lugar de destino"),
-  transportDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha del transporte (AAAA-MM-DD)"),
+  transportDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha del transporte (AAAA-MM-DD)"),
 });
 
 export const step3Schema = z.object({

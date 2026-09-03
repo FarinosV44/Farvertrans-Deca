@@ -45,15 +45,30 @@ export default async function HistoricoPage({
             <label htmlFor="from" className="block text-sm font-medium">
               Desde
             </label>
-            <input id="from" name="from" type="date" defaultValue={sp.from ?? ""} className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3" />
+            <input
+              id="from"
+              name="from"
+              type="date"
+              defaultValue={sp.from ?? ""}
+              className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+            />
           </div>
           <div>
             <label htmlFor="to" className="block text-sm font-medium">
               Hasta
             </label>
-            <input id="to" name="to" type="date" defaultValue={sp.to ?? ""} className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3" />
+            <input
+              id="to"
+              name="to"
+              type="date"
+              defaultValue={sp.to ?? ""}
+              className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+            />
           </div>
-          <button type="submit" className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)]">
+          <button
+            type="submit"
+            className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)]"
+          >
             Filtrar
           </button>
           {(sp.q || sp.from || sp.to) && (
@@ -83,7 +98,9 @@ export default async function HistoricoPage({
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-[var(--color-border)]">
-                  <td className="py-2">{r.transportDate || r.createdAt.toISOString().slice(0, 10)}</td>
+                  <td className="py-2">
+                    {r.transportDate || r.createdAt.toISOString().slice(0, 10)}
+                  </td>
                   <td>
                     {r.origin} → {r.destination}
                   </td>
@@ -93,7 +110,11 @@ export default async function HistoricoPage({
                   <td className="whitespace-nowrap">
                     <Link href={`/crear/${r.id}`}>Ver</Link> ·{" "}
                     <Link href={`/crear?from=${r.id}`}>Duplicar</Link> ·{" "}
-                    <a href={`${publicEnv.baseUrl}/d/${r.token}`} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={`${publicEnv.baseUrl}/d/${r.token}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Descargar
                     </a>
                   </td>
@@ -109,11 +130,17 @@ export default async function HistoricoPage({
                   {r.origin} → {r.destination}
                 </p>
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  {r.transportDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} · {r.tractorPlate} · {r.status}
+                  {r.transportDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
+                  {r.tractorPlate} · {r.status}
                 </p>
                 <p className="mt-1">
-                  <Link href={`/crear/${r.id}`}>Ver</Link> · <Link href={`/crear?from=${r.id}`}>Duplicar</Link> ·{" "}
-                  <a href={`${publicEnv.baseUrl}/d/${r.token}`} target="_blank" rel="noopener noreferrer">
+                  <Link href={`/crear/${r.id}`}>Ver</Link> ·{" "}
+                  <Link href={`/crear?from=${r.id}`}>Duplicar</Link> ·{" "}
+                  <a
+                    href={`${publicEnv.baseUrl}/d/${r.token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Descargar
                   </a>
                 </p>

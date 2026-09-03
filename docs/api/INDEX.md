@@ -46,6 +46,10 @@
 | /[slug] (SEO cluster) | route | app/(seo)/[slug]/page.tsx | docs/reference/endpoints.md | 10 static SEO pages (dynamicParams=false); FAQPage JSON-LD, canonical, CTA |
 | /soy-obligado | route | app/(seo)/soy-obligado/page.tsx | docs/reference/endpoints.md | "¿Estoy obligado?" guided page — SSR query-param form, works without JS (F17) |
 | SEO_PAGES / getSeoPage() | const/fn | content/seo/pages.ts | docs/reference/lib.md | The 10 SEO pages' content (intent, sections, faq, sources, related) |
+| middleware() | function | middleware.ts | docs/reference/lib.md | CSP + HSTS + security headers on every HTML response (T-5/T-8) |
+| .githooks/pre-commit | hook | .githooks/pre-commit | docs/07-release.md | Confidential-data gate (`core.hooksPath=.githooks`) |
+| CI workflow | workflow | .github/workflows/ci.yml | docs/07-release.md | typecheck/lint/format/unit/e2e/compliance/keel-verify + secret scan on main, tags, PRs to main |
+| Dockerfile | build | Dockerfile | docs/07-release.md | Production image — Next standalone, non-root, healthcheck |
 | hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
 | decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |

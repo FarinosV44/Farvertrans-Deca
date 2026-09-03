@@ -31,9 +31,7 @@ export function RegisterForm() {
     track("signup_started");
     const url = mode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
-      mode === "register"
-        ? { ...f, claim }
-        : { email: f.email, password: f.password, claim };
+      mode === "register" ? { ...f, claim } : { email: f.email, password: f.password, claim };
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -76,7 +74,14 @@ export function RegisterForm() {
       )}
 
       <form onSubmit={submit} className="mt-4" noValidate>
-        <Field id="email" label="Email" type="email" autoComplete="email" value={f.email} onChange={set("email")} />
+        <Field
+          id="email"
+          label="Email"
+          type="email"
+          autoComplete="email"
+          value={f.email}
+          onChange={set("email")}
+        />
         <Field
           id="password"
           label="Contraseña"
@@ -89,9 +94,22 @@ export function RegisterForm() {
         {mode === "register" && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
             <legend className="px-1 text-sm font-bold">Tu empresa</legend>
-            <Field id="companyName" label="Nombre o razón social" autoComplete="organization" value={f.companyName} onChange={set("companyName")} />
+            <Field
+              id="companyName"
+              label="Nombre o razón social"
+              autoComplete="organization"
+              value={f.companyName}
+              onChange={set("companyName")}
+            />
             <Field id="companyNif" label="NIF" value={f.companyNif} onChange={set("companyNif")} />
-            <Field id="companyAddress" label="Domicilio (opcional)" required={false} autoComplete="street-address" value={f.companyAddress} onChange={set("companyAddress")} />
+            <Field
+              id="companyAddress"
+              label="Domicilio (opcional)"
+              required={false}
+              autoComplete="street-address"
+              value={f.companyAddress}
+              onChange={set("companyAddress")}
+            />
           </fieldset>
         )}
         <button

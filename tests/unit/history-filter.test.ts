@@ -33,7 +33,9 @@ describe("history filter", () => {
 
 describe("saved-entity schemas", () => {
   it("normalises a vehicle plate", () => {
-    expect(savedVehicleSchema.parse({ tractorPlate: "1234-bcd", trailerPlate: " r 99 x " }).tractorPlate).toBe("1234BCD");
+    expect(
+      savedVehicleSchema.parse({ tractorPlate: "1234-bcd", trailerPlate: " r 99 x " }).tractorPlate,
+    ).toBe("1234BCD");
   });
   it("rejects a company with no NIF", () => {
     expect(savedCompanySchema.safeParse({ name: "X SL", nif: "" }).success).toBe(false);

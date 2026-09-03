@@ -32,8 +32,8 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
         <AppNav current="historico" />
 
         <p className="mt-4 text-sm text-[var(--color-text-muted)]">
-          Versión actual: {deca.current.versionNo} · Transportista: {String(d.carrier?.name ?? "")} ·
-          Matrícula: {String(d.tractorPlate ?? "")}
+          Versión actual: {deca.current.versionNo} · Transportista: {String(d.carrier?.name ?? "")}{" "}
+          · Matrícula: {String(d.tractorPlate ?? "")}
         </p>
 
         <ResultActions publicUrl={publicUrl} />
@@ -67,15 +67,19 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
                     {v.changeReason ? ` · ${v.changeReason}` : ""}
                   </p>
                 </div>
-                <a href={`${publicEnv.baseUrl}/d/${v.token}`} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={`${publicEnv.baseUrl}/d/${v.token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Ver PDF
                 </a>
               </li>
             ))}
           </ul>
           <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-            Cada corrección genera una versión nueva con su propio QR y URL. Las versiones anteriores no
-            se borran.
+            Cada corrección genera una versión nueva con su propio QR y URL. Las versiones
+            anteriores no se borran.
           </p>
         </section>
       </main>

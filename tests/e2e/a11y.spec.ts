@@ -9,7 +9,9 @@ for (const path of PAGES) {
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
       .analyze();
-    const serious = results.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""));
+    const serious = results.violations.filter((v) =>
+      ["serious", "critical"].includes(v.impact ?? ""),
+    );
     expect(
       serious,
       serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`).join("\n"),

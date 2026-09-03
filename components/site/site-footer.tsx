@@ -7,7 +7,8 @@ export function SiteFooter() {
     <footer className="mt-16 border-t border-[var(--color-border)]">
       <div className="mx-auto max-w-[1120px] px-4 py-8 text-sm text-[var(--color-text-muted)] md:px-6">
         <p>
-          Farvertrans DeCA — generador gratuito del Documento Electrónico de Control. Fuente normativa:{" "}
+          Farvertrans DeCA — generador gratuito del Documento Electrónico de Control. Fuente
+          normativa:{" "}
           <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
             {LEGAL_SOURCE.label}
           </a>
