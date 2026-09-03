@@ -74,6 +74,40 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.getByText("0 documentos")).toBeVisible();
   });
 
+  test("WORKSPACE #24: carrier + plate filters, history actions, mobile cards", async ({
+    page,
+  }) => {
+    await registerCompany(page);
+    await createDecaAuthed(page);
+    await page.goto("/panel/historico");
+
+    // carrier filter (populated from real history)
+    await page.selectOption("#carrier", "Transportes Pérez SL");
+    await page.getByRole("button", { name: "Filtrar" }).click();
+    await expect(page.getByText("1 documento")).toBeVisible();
+
+    await page.goto("/panel/historico");
+    // plate filter, tolerant of spacing
+    await page.fill("#plate", "1234 bcd");
+    await page.getByRole("button", { name: "Filtrar" }).click();
+    await expect(page.getByText("1 documento")).toBeVisible();
+    await page.goto("/panel/historico?plate=0000ZZZ");
+    await expect(page.getByText("0 documentos")).toBeVisible();
+
+    // row actions reach the owner detail + correction views
+    await page.goto("/panel/historico");
+    const row = page.getByTestId("historico-table").locator("tr", { hasText: "Valencia → Madrid" });
+    await row.getByRole("link", { name: "Detalle" }).click();
+    await expect(page).toHaveURL(/\/panel\/deca\/[a-z0-9]+$/i);
+    await expect(page.getByRole("heading", { name: "Historial de versiones" })).toBeVisible();
+
+    // mobile: the history is stacked cards, not a broken table
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("/panel/historico");
+    await expect(page.getByTestId("historico-cards")).toBeVisible();
+    await expect(page.getByTestId("historico-table")).toBeHidden();
+  });
+
   test("Repetir último DeCA pre-fills a new document, date reset, new id on generate", async ({
     page,
   }) => {
@@ -155,15 +189,15 @@ test.describe("BUILD 10 — registered workspace", () => {
       .click();
     await expect(page.getByText("Habitual Cargas SL")).toHaveCount(0);
     await page.goto("/panel/historico");
-    await expect(page.getByText("Transportes Pérez SL").first()).toBeVisible();
+    await expect(page.getByTestId("historico-table")).toContainText("Transportes Pérez SL");
   });
 
-  test("a11y: /app, /panel/historico and /panel/datos have no serious/critical violations", async ({
+  test("a11y: /panel, /panel/historico and /panel/datos have no serious/critical violations", async ({
     page,
   }) => {
     const AxeBuilder = (await import("@axe-core/playwright")).default;
     await registerCompany(page);
-    for (const path of ["/app", "/panel/historico", "/panel/datos"]) {
+    for (const path of ["/panel", "/panel/historico", "/panel/datos"]) {
       await page.goto(path);
       const r = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag22aa"])

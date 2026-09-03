@@ -29,6 +29,16 @@ describe("history filter", () => {
     expect(rowMatches(row, { from: "2026-11-01" })).toBe(false);
     expect(rowMatches(row, { to: "2026-09-30" })).toBe(false);
   });
+  it("filters by exact effective-carrier name (WORKSPACE #24)", () => {
+    expect(rowMatches(row, { carrier: "Transportes Pérez SL" })).toBe(true);
+    expect(rowMatches(row, { carrier: "Otro SL" })).toBe(false);
+    expect(rowMatches(row, { carrier: "" })).toBe(true); // no filter
+  });
+  it("filters by plate, ignoring spaces/dashes, across tractor and trailer", () => {
+    expect(rowMatches({ ...row, trailerPlate: "R9876XYZ" }, { plate: "1234 bcd" })).toBe(true);
+    expect(rowMatches({ ...row, trailerPlate: "R9876XYZ" }, { plate: "r-9876-xyz" })).toBe(true);
+    expect(rowMatches(row, { plate: "0000AAA" })).toBe(false);
+  });
 });
 
 describe("saved-entity schemas", () => {

@@ -12,8 +12,11 @@ export type HistoryRow = {
   transportDate: string;
   origin: string;
   destination: string;
+  shipper: string;
   carrier: string;
   tractorPlate: string;
+  trailerPlate: string;
+  versionNo: number;
   token: string;
   status: "activo" | "no disponible";
 };
@@ -60,8 +63,11 @@ export async function listHistory(
       transportDate: data.transportDate ?? "",
       origin: data.origin ?? "",
       destination: data.destination ?? "",
+      shipper: data.shipper?.name ?? "",
       carrier: data.carrier?.name ?? "",
       tractorPlate: data.tractorPlate ?? "",
+      trailerPlate: data.trailerPlate ?? "",
+      versionNo: d.currentVersion.versionNo,
       token: d.currentVersion.token,
       status: isPubliclyAvailable(d.serviceEnd) ? "activo" : "no disponible",
     };
@@ -80,6 +86,14 @@ export async function listHistory(
     }
   }
   return rows;
+}
+
+/** Distinct effective-carrier names across a company's history (WORKSPACE #24 filter). */
+export async function listHistoryCarriers(companyId: string): Promise<string[]> {
+  const rows = await listHistory(companyId);
+  return [...new Set(rows.map((r) => r.carrier).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, "es"),
+  );
 }
 
 /** A source DeCA's payload for the duplicate flow — company-scoped. */

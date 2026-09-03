@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { getCurrentUser } from "@/lib/auth";
-import { listHistory } from "@/lib/data/history";
+import { listHistory, listHistoryCarriers } from "@/lib/data/history";
 import { publicEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +13,29 @@ export const metadata = { title: "Historial", robots: { index: false } };
 export default async function HistoricoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; from?: string; to?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    from?: string;
+    to?: string;
+    carrier?: string;
+    plate?: string;
+  }>;
 }) {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro");
 
   const sp = await searchParams;
-  const rows = await listHistory(user.companyId, { q: sp.q, from: sp.from, to: sp.to });
+  const [rows, carriers] = await Promise.all([
+    listHistory(user.companyId, {
+      q: sp.q,
+      from: sp.from,
+      to: sp.to,
+      carrier: sp.carrier,
+      plate: sp.plate,
+    }),
+    listHistoryCarriers(user.companyId),
+  ]);
+  const active = sp.q || sp.from || sp.to || sp.carrier || sp.plate;
 
   return (
     <>
@@ -65,13 +81,45 @@ export default async function HistoricoPage({
               className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
             />
           </div>
+          {carriers.length > 0 && (
+            <div>
+              <label htmlFor="carrier" className="block text-sm font-medium">
+                Transportista
+              </label>
+              <select
+                id="carrier"
+                name="carrier"
+                defaultValue={sp.carrier ?? ""}
+                className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+              >
+                <option value="">Todos</option>
+                {carriers.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div>
+            <label htmlFor="plate" className="block text-sm font-medium">
+              Matrícula
+            </label>
+            <input
+              id="plate"
+              name="plate"
+              defaultValue={sp.plate ?? ""}
+              placeholder="1234 BCD"
+              className="mt-1 min-h-11 w-[120px] rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+            />
+          </div>
           <button
             type="submit"
             className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)]"
           >
             Filtrar
           </button>
-          {(sp.q || sp.from || sp.to) && (
+          {active && (
             <Link href="/panel/historico" className="text-sm">
               Limpiar
             </Link>
@@ -89,6 +137,7 @@ export default async function HistoricoPage({
               <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
                 <th className="py-2">Fecha</th>
                 <th>Origen → Destino</th>
+                <th>Cargador</th>
                 <th>Transportista</th>
                 <th>Matrícula</th>
                 <th>Estado</th>
@@ -104,18 +153,26 @@ export default async function HistoricoPage({
                   <td>
                     {r.origin} → {r.destination}
                   </td>
+                  <td>{r.shipper}</td>
                   <td>{r.carrier}</td>
-                  <td>{r.tractorPlate}</td>
-                  <td>{r.status}</td>
+                  <td>
+                    {r.tractorPlate}
+                    {r.trailerPlate ? ` + ${r.trailerPlate}` : ""}
+                  </td>
+                  <td>
+                    {r.status}
+                    {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
+                  </td>
                   <td className="whitespace-nowrap">
-                    <Link href={`/crear/${r.id}`}>Ver</Link> ·{" "}
+                    <Link href={`/panel/deca/${r.id}`}>Detalle</Link> ·{" "}
+                    <Link href={`/panel/deca/${r.id}/corregir`}>Corregir</Link> ·{" "}
                     <Link href={`/crear?from=${r.id}`}>Duplicar</Link> ·{" "}
                     <a
                       href={`${publicEnv.baseUrl}/d/${r.token}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Descargar
+                      PDF
                     </a>
                   </td>
                 </tr>
@@ -123,7 +180,10 @@ export default async function HistoricoPage({
             </tbody>
           </table>
 
-          <ul className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)] md:hidden">
+          <ul
+            className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)] md:hidden"
+            data-testid="historico-cards"
+          >
             {rows.map((r) => (
               <li key={r.id} className="py-3 text-sm">
                 <p className="font-medium">
@@ -132,16 +192,18 @@ export default async function HistoricoPage({
                 <p className="text-xs text-[var(--color-text-muted)]">
                   {r.transportDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
                   {r.tractorPlate} · {r.status}
+                  {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
                 </p>
-                <p className="mt-1">
-                  <Link href={`/crear/${r.id}`}>Ver</Link> ·{" "}
-                  <Link href={`/crear?from=${r.id}`}>Duplicar</Link> ·{" "}
+                <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                  <Link href={`/panel/deca/${r.id}`}>Detalle</Link>
+                  <Link href={`/panel/deca/${r.id}/corregir`}>Corregir</Link>
+                  <Link href={`/crear?from=${r.id}`}>Duplicar</Link>
                   <a
                     href={`${publicEnv.baseUrl}/d/${r.token}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Descargar
+                    PDF
                   </a>
                 </p>
               </li>

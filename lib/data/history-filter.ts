@@ -2,6 +2,8 @@ export type HistoryFilters = {
   q?: string; // free text: reference / company / carrier / plate / origin / destination
   from?: string; // yyyy-mm-dd (transport date >=)
   to?: string; // yyyy-mm-dd (transport date <=)
+  carrier?: string; // exact effective-carrier name (WORKSPACE #24)
+  plate?: string; // tractor/trailer plate contains (normalised, case-insensitive)
 };
 
 export type FilterableRow = {
@@ -10,6 +12,7 @@ export type FilterableRow = {
   destination: string;
   carrier: string;
   tractorPlate: string;
+  trailerPlate?: string;
   transportDate: string;
   shipperName?: string;
   shipperNif?: string;
@@ -20,6 +23,16 @@ export type FilterableRow = {
 export function rowMatches(row: FilterableRow, f: HistoryFilters): boolean {
   if (f.from && row.transportDate && row.transportDate < f.from) return false;
   if (f.to && row.transportDate && row.transportDate > f.to) return false;
+
+  if (f.carrier && f.carrier.trim() && row.carrier !== f.carrier.trim()) return false;
+
+  const plate = f.plate?.replace(/[\s-]/g, "").toLowerCase();
+  if (plate) {
+    const plates = `${row.tractorPlate} ${row.trailerPlate ?? ""}`
+      .replace(/[\s-]/g, "")
+      .toLowerCase();
+    if (!plates.includes(plate)) return false;
+  }
 
   const q = f.q?.trim().toLowerCase();
   if (!q) return true;

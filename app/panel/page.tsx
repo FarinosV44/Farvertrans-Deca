@@ -74,7 +74,7 @@ export default async function AppHome() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-3">
-                    <Link href={`/crear/${r.id}`}>Ver</Link>
+                    <Link href={`/panel/deca/${r.id}`}>Detalle</Link>
                     <Link href={`/crear?from=${r.id}`}>Duplicar</Link>
                     <a
                       href={`${publicEnv.baseUrl}/d/${r.token}`}
