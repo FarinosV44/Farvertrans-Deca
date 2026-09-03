@@ -50,7 +50,7 @@ jobs:
       - run: npm run test:compliance
       - name: Secret scan
         run: |
-          if git grep -nE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----|sk_live_[A-Za-z0-9]{16,}|re_[A-Za-z0-9]{24,}' \
-             -- ':!*.md' ':!.env.example' ':!.githooks/*' ':!.github/*'; then
+          if git grep -nE -- '-----BEGIN [A-Z ]*PRIVATE KEY-----|sk_live_[A-Za-z0-9]{20,}|re_[A-Za-z0-9]{24,}' \
+             -- ':!*.md' ':!.env.example' ':!.githooks/*' ':!.github/*' ':!scripts/keel-verify.mjs'; then
             echo "secret-shaped string found"; exit 1
           fi

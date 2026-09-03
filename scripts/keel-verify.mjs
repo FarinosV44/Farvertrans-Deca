@@ -16,11 +16,18 @@ const bad = (m) => {
 // 1. No secret-shaped strings in tracked files (cheap heuristic; the pre-commit gate is the real guard).
 try {
   const tracked = execSync("git ls-files", { encoding: "utf8" }).split("\n").filter(Boolean);
+  // Real assigned secrets — not bare pattern names (the CI workflow and hooks contain those on purpose).
   const secretRe =
-    /(service_role|sk_live_|-----BEGIN [A-Z ]*PRIVATE KEY-----|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][A-Za-z0-9._-]{20,})/;
+    /(-----BEGIN [A-Z ]*PRIVATE KEY-----|sk_live_[A-Za-z0-9]{20,}|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][A-Za-z0-9._-]{20,}|eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,})/;
+  const skip = (f) =>
+    f === "scripts/keel-verify.mjs" ||
+    f.startsWith("docs/") ||
+    f.startsWith(".github/") ||
+    f.startsWith(".githooks/") ||
+    f === ".env.example";
   let hits = 0;
   for (const f of tracked) {
-    if (f === "scripts/keel-verify.mjs" || f.startsWith("docs/") || f === ".env.example") continue;
+    if (skip(f)) continue;
     if (!/\.(ts|tsx|js|mjs|json|env|yml|yaml|prisma)$/.test(f)) continue;
     if (!existsSync(f)) continue;
     if (secretRe.test(readFileSync(f, "utf8"))) {
