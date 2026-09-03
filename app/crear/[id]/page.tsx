@@ -48,7 +48,12 @@ export default async function ResultPage({
           </div>
         </div>
 
-        <ResultActions publicUrl={publicUrl} claimToken={claim} />
+        <ResultActions
+          publicUrl={publicUrl}
+          claimToken={claim}
+          versionNo={deca.currentVersion.versionNo}
+          pdfSha256={deca.currentVersion.pdfSha256 ?? undefined}
+        />
 
         <p className="mt-8 text-xs text-[var(--color-text-muted)]">
           Documento conservado durante al menos 1 año. La URL pública permite la descarga directa

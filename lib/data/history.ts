@@ -134,6 +134,7 @@ export async function getDecaDetail(companyId: string, decaId: string) {
     current: {
       versionNo: deca.currentVersion.versionNo,
       token: deca.currentVersion.token,
+      pdfSha256: deca.currentVersion.pdfSha256 ?? "",
       data: currentData,
     },
     versions: deca.versions.map((v) => ({

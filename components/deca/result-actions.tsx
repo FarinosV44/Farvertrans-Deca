@@ -1,29 +1,41 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics/client";
 
 /**
- * Result-screen actions in priority order (issue #8): view/download PDF, share
- * with the driver, copy link, save by creating an account.
+ * Driver-delivery actions (OPS #26), in priority order: open/download PDF →
+ * send to driver (native share / WhatsApp / email) → copy link → print →
+ * save (anonymous). Plus a "Comprobar QR" confidence tool. No PII in analytics.
  */
 export function ResultActions({
   publicUrl,
   claimToken,
+  versionNo = 1,
+  pdfSha256,
+  correctedReminder = false,
 }: {
   publicUrl: string;
   claimToken?: string;
+  versionNo?: number;
+  pdfSha256?: string;
+  correctedReminder?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
   const [emailTo, setEmailTo] = useState("");
   const [emailMsg, setEmailMsg] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
+  }, []);
+
   const token = publicUrl.split("/d/")[1] ?? "";
-  const waHref = `https://wa.me/?text=${encodeURIComponent(
-    `Documento de control (DeCA) del transporte: ${publicUrl}`,
-  )}`;
+  const shareText = `Documento de control (DeCA) del transporte: ${publicUrl}`;
+  const waHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   const mailtoHref = `mailto:?subject=${encodeURIComponent("DeCA del transporte")}&body=${encodeURIComponent(
     `Documento de control (DeCA): ${publicUrl}`,
   )}`;
@@ -32,10 +44,19 @@ export function ResultActions({
     try {
       await navigator.clipboard.writeText(publicUrl);
       setCopied(true);
-      track("deca_shared");
+      track("public_link_copied");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
+    }
+  }
+
+  async function nativeShare() {
+    try {
+      await navigator.share({ title: "DeCA del transporte", text: shareText, url: publicUrl });
+      track("share_native");
+    } catch {
+      /* user cancelled — no-op */
     }
   }
 
@@ -68,33 +89,62 @@ export function ResultActions({
 
   return (
     <div className="mt-6 space-y-3">
+      {correctedReminder && (
+        <p
+          role="status"
+          data-testid="reshare-reminder"
+          className="rounded-[var(--radius-md)] border border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)] p-3 text-sm font-medium"
+        >
+          Este DeCA se ha corregido. Reenvía al conductor la versión actual — la anterior queda como
+          histórico y sigue accesible por su URL.
+        </p>
+      )}
+
       <a
         href={publicUrl}
         target="_blank"
         rel="noopener noreferrer"
         data-testid="result-download"
+        onClick={() => track("pdf_opened")}
         className="flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] font-medium text-[var(--color-primary-contrast)] no-underline hover:bg-[var(--color-primary-hover)]"
       >
-        Ver / descargar PDF
+        Abrir / descargar PDF
       </a>
 
       <button
         type="button"
-        onClick={() => setShareOpen((v) => !v)}
+        onClick={() => {
+          setShareOpen((v) => !v);
+          if (!shareOpen) track("share_opened");
+        }}
         aria-expanded={shareOpen}
         data-testid="result-share-toggle"
         className="flex min-h-12 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-primary)] font-medium text-[var(--color-primary)]"
       >
-        Compartir con el conductor
+        Enviar al conductor
       </button>
       {shareOpen && (
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
+          {canNativeShare && (
+            <button
+              type="button"
+              onClick={nativeShare}
+              data-testid="share-native"
+              className="block w-full py-2 text-left"
+            >
+              Compartir…
+            </button>
+          )}
           <a
             className="block py-2"
             href={waHref}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => track("deca_shared")}
+            data-testid="share-whatsapp"
+            onClick={() => {
+              track("share_whatsapp");
+              track("deca_shared");
+            }}
           >
             Enviar por WhatsApp
           </a>
@@ -120,14 +170,63 @@ export function ResultActions({
         </div>
       )}
 
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={copy}
+          data-testid="result-copy"
+          className="flex min-h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] font-medium"
+        >
+          {copied ? "Enlace copiado" : "Copiar enlace"}
+        </button>
+        <a
+          href={publicUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="result-print"
+          onClick={() => track("print_clicked")}
+          className="flex min-h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] font-medium no-underline"
+        >
+          Imprimir
+        </a>
+      </div>
+
       <button
         type="button"
-        onClick={copy}
-        data-testid="result-copy"
-        className="flex min-h-12 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] font-medium"
+        onClick={() => {
+          setVerifyOpen((v) => !v);
+          if (!verifyOpen) track("qr_verify_opened");
+        }}
+        aria-expanded={verifyOpen}
+        data-testid="qr-verify-toggle"
+        className="text-sm underline"
       >
-        {copied ? "Enlace copiado" : "Copiar enlace"}
+        Comprobar QR
       </button>
+      {verifyOpen && (
+        <div
+          data-testid="qr-verify-panel"
+          className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm"
+        >
+          <p className="font-medium">Este es el enlace que lleva el QR del PDF:</p>
+          <p className="mt-1 break-all font-mono text-xs">{publicUrl}</p>
+          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+            Versión {versionNo}
+            {pdfSha256 ? ` · SHA-256 ${pdfSha256.slice(0, 16)}…` : ""}
+          </p>
+          <a
+            href={publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block"
+          >
+            Abrir el enlace de inspección en una pestaña nueva
+          </a>
+          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+            Para la comprobación real, escanea el QR con otro móvil.
+          </p>
+        </div>
+      )}
 
       {claimToken && (
         <Link
@@ -135,7 +234,7 @@ export function ResultActions({
           data-testid="result-save"
           className="flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface)] font-medium no-underline"
         >
-          Guardar este DeCA creando una cuenta
+          Guardar mis DeCA creando una cuenta
         </Link>
       )}
       {claimToken && (

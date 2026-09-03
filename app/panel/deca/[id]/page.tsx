@@ -37,7 +37,12 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
           · Matrícula: {String(d.tractorPlate ?? "")}
         </p>
 
-        <ResultActions publicUrl={publicUrl} />
+        <ResultActions
+          publicUrl={publicUrl}
+          versionNo={deca.current.versionNo}
+          pdfSha256={deca.current.pdfSha256}
+          correctedReminder={deca.current.versionNo > 1}
+        />
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
