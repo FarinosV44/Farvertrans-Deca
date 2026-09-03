@@ -24,7 +24,9 @@ export function DecaPreview() {
             ),
           )}
         </div>
-        <div className="mt-3 h-9 rounded-[var(--radius-md)] bg-[var(--color-primary)]" />
+        <div className="mt-3 flex h-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] text-xs font-bold tracking-wide text-[var(--color-primary-contrast)]">
+          GENERAR DECA
+        </div>
       </div>
       <div className="mt-3 flex items-center gap-3 rounded-[var(--radius-md)] bg-white p-3">
         <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--color-success)] text-white">
