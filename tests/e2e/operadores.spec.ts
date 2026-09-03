@@ -27,6 +27,7 @@ async function registerAndGenerate(page: Page, ref?: string) {
     ["#shipperAddress", "Calle 1"],
     ["#carrierName", "Trans SL"],
     ["#carrierNif", "B12345674"],
+    ["#carrierAddress", "Av. Central 3, Madrid"],
   ] as const) {
     await page.fill(sel, val);
   }

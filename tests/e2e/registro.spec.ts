@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
+import { createHash } from "node:crypto";
 
 const payload = {
   shipper: {
@@ -6,7 +7,11 @@ const payload = {
     nif: "B96789011",
     address: "Av. del Puerto 120, Valencia",
   },
-  carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
+  carrier: {
+    name: "Transportes Pérez SL",
+    nif: "B12345674",
+    address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
+  },
   origin: "Valencia",
   destination: "Madrid",
   transportDate: "2026-10-06",
@@ -17,7 +22,12 @@ const payload = {
 
 async function createAnon(request: APIRequestContext) {
   const res = await request.post("/api/deca", { data: payload });
-  return res.json() as Promise<{ decaId: string; claimToken: string }>;
+  return res.json() as Promise<{
+    decaId: string;
+    token: string;
+    pdfSha256: string;
+    claimToken: string;
+  }>;
 }
 
 function uniqueEmail() {
@@ -105,6 +115,35 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
     // account is created, but the claim is reported as already used
     const body = await second.json();
     expect(body.claimWarning ?? "").toMatch(/utilizado|caducado|no es válido/i);
+  });
+
+  test("FIX #19: claiming an anonymous DeCA preserves its public URL byte-for-byte (retention clock untouched)", async ({
+    request,
+  }) => {
+    const anon = await createAnon(request);
+    const before = Buffer.from(await (await request.get(`/d/${anon.token}`)).body());
+    expect(createHash("sha256").update(before).digest("hex")).toBe(anon.pdfSha256);
+
+    const claimed = await request.post("/api/auth/register", {
+      data: {
+        email: uniqueEmail(),
+        password: "supersecret123",
+        companyName: "Titular SL",
+        companyNif: "B12345674",
+        claim: anon.claimToken,
+      },
+    });
+    expect(claimed.status()).toBe(201);
+    expect((await claimed.json()).claimedDecaId).toBe(anon.decaId);
+
+    // same token, same URL, identical bytes — no regeneration, no new token
+    const after = await request.get(`/d/${anon.token}`);
+    expect(after.status()).toBe(200);
+    expect(
+      createHash("sha256")
+        .update(Buffer.from(await after.body()))
+        .digest("hex"),
+    ).toBe(anon.pdfSha256);
   });
 
   test("keep signup short — no lead-qualification fields on the form", async ({ page }) => {

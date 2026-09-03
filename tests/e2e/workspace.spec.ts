@@ -6,7 +6,11 @@ const DECA = {
     nif: "B96789011",
     address: "Av. del Puerto 120, Valencia",
   },
-  carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
+  carrier: {
+    name: "Transportes Pérez SL",
+    nif: "B12345674",
+    address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
+  },
   origin: "Valencia",
   destination: "Madrid",
   transportDate: "2026-10-06",
@@ -37,6 +41,7 @@ async function createDecaAuthed(page: Page) {
   await page.fill("#shipperAddress", DECA.shipper.address);
   await page.fill("#carrierName", DECA.carrier.name);
   await page.fill("#carrierNif", DECA.carrier.nif);
+  await page.fill("#carrierAddress", DECA.carrier.address);
   await page.getByTestId("wizard-next").click();
   await page.fill("#origin", DECA.origin);
   await page.fill("#destination", DECA.destination);
@@ -133,6 +138,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.fill("#shipperName", DECA.shipper.name);
     await page.fill("#shipperNif", DECA.shipper.nif);
     await page.fill("#shipperAddress", DECA.shipper.address);
+    await page.fill("#carrierAddress", DECA.carrier.address);
     await page.getByTestId("wizard-next").click();
     await page.fill("#origin", DECA.origin);
     await page.fill("#destination", DECA.destination);

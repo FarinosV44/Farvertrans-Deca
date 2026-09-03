@@ -23,6 +23,7 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
     shipperAddress: d.shipper?.address ?? "",
     carrierName: d.carrier?.name ?? "",
     carrierNif: d.carrier?.nif ?? "",
+    carrierAddress: d.carrier?.address ?? "",
     origin: d.origin ?? "",
     destination: d.destination ?? "",
     transportDate: d.transportDate ?? "",

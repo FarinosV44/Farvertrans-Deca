@@ -8,7 +8,11 @@ const V = {
     nif: "B96789011",
     address: "Av. del Puerto 120, Valencia",
   },
-  carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
+  carrier: {
+    name: "Transportes Pérez SL",
+    nif: "B12345674",
+    address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
+  },
   origin: "Valencia",
   destination: "Madrid",
   transportDate: "2026-10-06",
@@ -36,6 +40,7 @@ async function registerAndCreate(page: Page): Promise<string> {
   await page.fill("#shipperAddress", V.shipper.address);
   await page.fill("#carrierName", V.carrier.name);
   await page.fill("#carrierNif", V.carrier.nif);
+  await page.fill("#carrierAddress", V.carrier.address);
   await page.getByTestId("wizard-next").click();
   await page.fill("#origin", V.origin);
   await page.fill("#destination", V.destination);
@@ -61,6 +66,10 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
     const v1Pdf = page.locator("a", { hasText: "Ver PDF" }).first();
     const v1Href = await v1Pdf.getAttribute("href");
 
+    // capture v1's exact bytes BEFORE the correction (FIX #19: never mutated)
+    const v1BytesBefore = Buffer.from(await (await request.get(v1Href!)).body());
+    const v1HashBefore = createHash("sha256").update(v1BytesBefore).digest("hex");
+
     await page.getByTestId("deca-corregir").click();
     await expect(page).toHaveURL(/\/corregir$/);
     // change the destination + give a reason
@@ -79,7 +88,10 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
     // both versions' PDFs are retrievable and different
     const v1 = await request.get(v1Href!);
     expect(v1.status()).toBe(200);
-    const v1Text = await extractText(new Uint8Array(await v1.body()));
+    const v1BytesAfter = Buffer.from(await v1.body());
+    // FIX #19: v1's bytes are byte-for-byte unchanged after the correction
+    expect(createHash("sha256").update(v1BytesAfter).digest("hex")).toBe(v1HashBefore);
+    const v1Text = await extractText(new Uint8Array(v1BytesAfter));
     expect(v1Text).toContain("Madrid"); // original destination preserved
 
     const links = await page.locator("a", { hasText: "Ver PDF" }).all();
@@ -173,7 +185,7 @@ test.describe("BUILD 13 — abuse controls (F16)", () => {
 function buildPayload() {
   return {
     shipper: { name: V.shipper.name, nif: V.shipper.nif, address: V.shipper.address },
-    carrier: { name: V.carrier.name, nif: V.carrier.nif },
+    carrier: { name: V.carrier.name, nif: V.carrier.nif, address: V.carrier.address },
     origin: V.origin,
     destination: V.destination,
     transportDate: V.transportDate,

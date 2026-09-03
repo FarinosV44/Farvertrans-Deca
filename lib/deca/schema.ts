@@ -22,9 +22,14 @@ export const shipperSchema = partySchema.extend({
   address: trimmed(4, 300, "Indica el domicilio del cargador"),
 });
 
+// Art. 6.1.a) Orden FOM/2861/2012 requires the domicilio of BOTH parties.
+export const carrierSchema = partySchema.extend({
+  address: trimmed(4, 300, "Indica el domicilio del transportista"),
+});
+
 export const step1Schema = z.object({
   shipper: shipperSchema,
-  carrier: partySchema,
+  carrier: carrierSchema,
 });
 
 export const step2Schema = z.object({
@@ -33,9 +38,21 @@ export const step2Schema = z.object({
   transportDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha del transporte (AAAA-MM-DD)"),
 });
 
+/**
+ * Weight / legally-appropriate measure (Art. 6.1.b). Kept VERBATIM — never
+ * silently reformatted, so "12.500 kg", "12,5 t" or "una plataforma completa"
+ * all pass through to the PDF exactly as typed. Only obviously-meaningless
+ * values (zero, placeholders) are rejected.
+ */
+const MEANINGLESS_WEIGHT =
+  /^(0+([.,]0+)?\s*(kg|kgs|t|tn|toneladas?|kilos?)?|-+|\.+|n\/?a|s\/?e|sin\s+especificar|desconocido)$/i;
+
 export const step3Schema = z.object({
   goods: trimmed(2, 300, "Describe la mercancía"),
-  weight: trimmed(1, 60, "Indica el peso o una medida alternativa"),
+  weight: trimmed(1, 60, "Indica el peso o una medida alternativa").refine(
+    (w) => !MEANINGLESS_WEIGHT.test(w),
+    "Indica un peso real (p. ej. 12.000 kg) o una medida alternativa concreta",
+  ),
   tractorPlate: z
     .string()
     .transform((s) => normalizePlate(s))

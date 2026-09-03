@@ -70,6 +70,7 @@ export function DecaDocument(p: DecaDocProps) {
             <B label="DOMICILIO DEL CARGADOR" value={p.data.shipper.address} />
             <B label="TRANSPORTISTA EFECTIVO" value={p.data.carrier.name} />
             <B label="NIF DEL TRANSPORTISTA" value={p.data.carrier.nif} />
+            <B label="DOMICILIO DEL TRANSPORTISTA" value={p.data.carrier.address} />
             <B label="FECHA DEL TRANSPORTE" value={p.data.transportDate} />
             <B label="ORIGEN" value={p.data.origin} />
             <B label="DESTINO" value={p.data.destination} />

@@ -91,6 +91,7 @@ test.describe("BUILD 11 — referral + UTM attribution", () => {
     await page.fill("#shipperAddress", "Calle 1");
     await page.fill("#carrierName", "Trans SL");
     await page.fill("#carrierNif", "B12345674");
+    await page.fill("#carrierAddress", "Av. Central 3, Madrid");
     await page.getByTestId("wizard-next").click();
     await page.fill("#origin", "Valencia");
     await page.fill("#destination", "Madrid");

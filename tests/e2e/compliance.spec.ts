@@ -1,5 +1,6 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { createHash } from "node:crypto";
 
 /**
  * BUILD 08 — R-1…R-13 compliance suite. This is a Phase 7 release gate.
@@ -13,7 +14,11 @@ const payload = {
     nif: "B96789011",
     address: "Av. del Puerto 120, Valencia",
   },
-  carrier: { name: "Transportes Pérez SL", nif: "B12345674" },
+  carrier: {
+    name: "Transportes Pérez SL",
+    nif: "B12345674",
+    address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
+  },
   origin: "Valencia",
   destination: "Madrid",
   transportDate: "2026-10-06",
@@ -26,7 +31,12 @@ const payload = {
 async function generate(request: APIRequestContext) {
   const res = await request.post("/api/deca", { data: payload });
   expect(res.status()).toBe(201);
-  return res.json() as Promise<{ decaId: string; token: string; claimToken: string }>;
+  return res.json() as Promise<{
+    decaId: string;
+    token: string;
+    pdfSha256: string;
+    claimToken: string;
+  }>;
 }
 
 async function extractPdfText(bytes: Uint8Array) {
@@ -59,6 +69,7 @@ test.describe("R-1…R-13 compliance", () => {
       payload.shipper.address,
       payload.carrier.name,
       payload.carrier.nif,
+      payload.carrier.address,
       payload.origin,
       payload.destination,
       payload.transportDate,
@@ -120,5 +131,31 @@ test.describe("R-1…R-13 compliance", () => {
   test("R-13: fails closed — an invalid payload produces no document", async ({ request }) => {
     const res = await request.post("/api/deca", { data: { ...payload, goods: "" } });
     expect(res.status()).toBe(422);
+  });
+
+  test("FIX-18: the served PDF bytes hash matches the stored per-version SHA-256", async ({
+    request,
+  }) => {
+    const { token, pdfSha256 } = await generate(request);
+    expect(pdfSha256).toMatch(/^[0-9a-f]{64}$/);
+    const res = await request.get(`/d/${token}`);
+    const bytes = Buffer.from(await res.body());
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe(pdfSha256);
+    // and it is stable across re-fetches (repository of record, not regenerated per request)
+    const again = Buffer.from(await (await request.get(`/d/${token}`)).body());
+    expect(createHash("sha256").update(again).digest("hex")).toBe(pdfSha256);
+  });
+
+  test("FIX-18: the public URL/QR is built from the configured base URL (NEXT_PUBLIC_FVD_BASE_URL)", async ({
+    request,
+    baseURL,
+  }) => {
+    const { token } = await generate(request);
+    const { text } = await extractPdfText(
+      new Uint8Array(await (await request.get(`/d/${token}`)).body()),
+    );
+    const flat = text.replace(/\s+/g, "");
+    const host = new URL(baseURL!).host; // CI sets NEXT_PUBLIC_FVD_BASE_URL to the same origin
+    expect(flat).toContain(`${host}/d/${token}`);
   });
 });

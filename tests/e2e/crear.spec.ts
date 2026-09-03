@@ -6,6 +6,7 @@ const V = {
   shipperAddress: "Av. del Puerto 120, Valencia",
   carrierName: "Transportes Pérez SL",
   carrierNif: "B12345674",
+  carrierAddress: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
   origin: "Valencia",
   destination: "Madrid",
   transportDate: "2026-10-06",
@@ -20,6 +21,7 @@ async function fillStep1(page: Page) {
   await page.fill("#shipperAddress", V.shipperAddress);
   await page.fill("#carrierName", V.carrierName);
   await page.fill("#carrierNif", V.carrierNif);
+  await page.fill("#carrierAddress", V.carrierAddress);
 }
 
 test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
@@ -40,6 +42,14 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
     await page.fill("#tractorPlate", V.tractorPlate);
+
+    // AC: the review summary shows the exact final data before generating
+    const review = page.getByTestId("review-summary");
+    await expect(review).toBeVisible();
+    await expect(review).toContainText(V.carrierAddress);
+    await expect(review).toContainText(V.shipperName);
+    await expect(review).toContainText(V.goods);
+
     await page.getByTestId("wizard-generate").click();
 
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
@@ -84,7 +94,7 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
 test.describe("POST /api/deca (F1/F2/R-2)", () => {
   const payload = {
     shipper: { name: V.shipperName, nif: V.shipperNif, address: V.shipperAddress },
-    carrier: { name: V.carrierName, nif: V.carrierNif },
+    carrier: { name: V.carrierName, nif: V.carrierNif, address: V.carrierAddress },
     origin: V.origin,
     destination: V.destination,
     transportDate: V.transportDate,
@@ -131,7 +141,10 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
 
   test("a foreign NIF is accepted (warning, not rejection)", async ({ request }) => {
     const res = await request.post("/api/deca", {
-      data: { ...payload, carrier: { name: "Spedition GmbH", nif: "DE811569869" } },
+      data: {
+        ...payload,
+        carrier: { name: "Spedition GmbH", nif: "DE811569869", address: "Hafenstraße 12, Hamburg" },
+      },
     });
     expect(res.status()).toBe(201);
     const body = await res.json();

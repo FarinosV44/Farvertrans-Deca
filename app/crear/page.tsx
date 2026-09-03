@@ -39,6 +39,7 @@ export default async function CrearPage({
         shipperAddress: source.shipper?.address ?? "",
         carrierName: source.carrier?.name ?? "",
         carrierNif: source.carrier?.nif ?? "",
+        carrierAddress: source.carrier?.address ?? "",
         origin: source.origin ?? "",
         destination: source.destination ?? "",
         transportDate: "", // reset — the operator sets the new date

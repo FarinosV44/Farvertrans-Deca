@@ -28,7 +28,7 @@ type Data = {
   tractorPlate?: string;
   trailerPlate?: string;
   shipper?: { name?: string; nif?: string; address?: string };
-  carrier?: { name?: string; nif?: string };
+  carrier?: { name?: string; nif?: string; address?: string };
 };
 
 export type DecaPayloadData = Data;
@@ -100,6 +100,20 @@ export async function getDecaDetail(companyId: string, decaId: string) {
   });
   if (!deca?.currentVersion) return null;
   const currentData = deca.currentVersion.dataJson as Data;
+
+  // Resolve version authors (correction audit — FIX #19). Private to the owner UI;
+  // never exposed through the public inspection token.
+  const authorIds = [
+    ...new Set(deca.versions.map((v) => v.createdByUserId).filter((x): x is string => !!x)),
+  ];
+  const authors = authorIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, email: true },
+      })
+    : [];
+  const emailById = new Map(authors.map((a) => [a.id, a.email]));
+
   return {
     id: deca.id,
     createdAt: deca.createdAt,
@@ -113,6 +127,7 @@ export async function getDecaDetail(companyId: string, decaId: string) {
       token: v.token,
       createdAt: v.createdAt,
       changeReason: v.changeReason,
+      author: v.createdByUserId ? (emailById.get(v.createdByUserId) ?? null) : null,
       isCurrent: v.id === deca.currentVersionId,
     })),
   };

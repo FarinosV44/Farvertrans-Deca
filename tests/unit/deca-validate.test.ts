@@ -5,7 +5,11 @@ import { checkNif } from "@/lib/deca/nif";
 
 const valid = {
   shipper: { name: "Cargas SL", nif: "B12345678", address: "Calle Mayor 1, Valencia" },
-  carrier: { name: "Transportes Pérez SL", nif: "B98765432" },
+  carrier: {
+    name: "Transportes Pérez SL",
+    nif: "B98765432",
+    address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
+  },
   origin: "Valencia",
   destination: "Madrid",
   transportDate: "2026-10-06",
@@ -58,6 +62,7 @@ describe("validateDeca (R-2 / AC-09)", () => {
       { ...valid, weight: "" },
       { ...valid, tractorPlate: "" },
       { ...valid, shipper: { ...valid.shipper, address: "" } },
+      { ...valid, carrier: { ...valid.carrier, address: "" } },
     ]) {
       expect(() => validateDeca(missing)).toThrow(DecaValidationError);
     }
@@ -72,10 +77,28 @@ describe("validateDeca (R-2 / AC-09)", () => {
   it("does NOT block a foreign NIF — it warns instead", () => {
     const r = validateDeca({
       ...valid,
-      carrier: { name: "Spedition GmbH", nif: "DE811569869" },
+      carrier: { name: "Spedition GmbH", nif: "DE811569869", address: "Hafenstraße 12, Hamburg" },
     });
     expect(r.data).toBeTruthy();
     expect(r.warnings.some((w) => w.includes("transportista"))).toBe(true);
+  });
+
+  it("keeps the weight VERBATIM — never silently reformats the commercial meaning", () => {
+    for (const w of [
+      "12.500 kg",
+      "12,5 t",
+      "1.234,56 kg",
+      "una plataforma completa (aprox. 24 t)",
+    ]) {
+      const r = validateDeca({ ...valid, weight: w });
+      expect(r.data.weight).toBe(w);
+    }
+  });
+
+  it("rejects a meaningless weight (zero / placeholder) with no alternative measure", () => {
+    for (const w of ["0", "0 kg", "0,0 t", "-", "n/a", "sin especificar"]) {
+      expect(() => validateDeca({ ...valid, weight: w })).toThrow(DecaValidationError);
+    }
   });
 
   it("collects field errors keyed by path", () => {

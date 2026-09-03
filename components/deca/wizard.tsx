@@ -13,6 +13,7 @@ type FormState = {
   shipperAddress: string;
   carrierName: string;
   carrierNif: string;
+  carrierAddress: string;
   origin: string;
   destination: string;
   transportDate: string;
@@ -29,6 +30,7 @@ const EMPTY: FormState = {
   shipperAddress: "",
   carrierName: "",
   carrierNif: "",
+  carrierAddress: "",
   origin: "",
   destination: "",
   transportDate: "",
@@ -40,6 +42,16 @@ const EMPTY: FormState = {
 };
 
 const STORAGE_KEY = "fvd_crear_draft";
+
+/** zod payload path → flat FormState field id (both the client and the 422 path use this). */
+const FIELD_KEY_MAP: Record<string, keyof FormState> = {
+  "shipper.name": "shipperName",
+  "shipper.nif": "shipperNif",
+  "shipper.address": "shipperAddress",
+  "carrier.name": "carrierName",
+  "carrier.nif": "carrierNif",
+  "carrier.address": "carrierAddress",
+};
 
 export type SavedData = {
   companies: { id: string; name: string; nif: string | null; address: string | null }[];
@@ -53,7 +65,7 @@ export type WizardInitial = Partial<FormState>;
 function toPayload(f: FormState) {
   return {
     shipper: { name: f.shipperName, nif: f.shipperNif, address: f.shipperAddress },
-    carrier: { name: f.carrierName, nif: f.carrierNif },
+    carrier: { name: f.carrierName, nif: f.carrierNif, address: f.carrierAddress },
     origin: f.origin,
     destination: f.destination,
     transportDate: f.transportDate,
@@ -63,6 +75,51 @@ function toPayload(f: FormState) {
     trailerPlate: f.trailerPlate || undefined,
     reference: f.reference || undefined,
   };
+}
+
+/**
+ * Read-only summary of everything that will go on the DeCA — shown on the last
+ * step before GENERAR DECA so the operator confirms the exact final data (F1).
+ */
+function ReviewSummary({ form }: { form: FormState }) {
+  const rows: [string, string][] = [
+    ["Cargador contractual", form.shipperName],
+    ["NIF del cargador", form.shipperNif],
+    ["Domicilio del cargador", form.shipperAddress],
+    ["Transportista efectivo", form.carrierName],
+    ["NIF del transportista", form.carrierNif],
+    ["Domicilio del transportista", form.carrierAddress],
+    ["Origen", form.origin],
+    ["Destino", form.destination],
+    ["Fecha del transporte", form.transportDate],
+    ["Mercancía", form.goods],
+    ["Peso o medida", form.weight],
+    ["Matrícula tractora", form.tractorPlate],
+    ["Matrícula remolque", form.trailerPlate || "—"],
+    ...(form.reference ? ([["Referencia", form.reference]] as [string, string][]) : []),
+  ];
+  return (
+    <section
+      data-testid="review-summary"
+      aria-labelledby="review-summary-h"
+      className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+    >
+      <h2 id="review-summary-h" className="text-sm font-bold">
+        Revisa antes de generar
+      </h2>
+      <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+        Estos son los datos exactos que aparecerán en el DeCA y en el PDF.
+      </p>
+      <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex flex-col">
+            <dt className="text-xs font-medium text-[var(--color-text-muted)]">{k}</dt>
+            <dd className="text-sm break-words">{v || "—"}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
 }
 
 export function CrearWizard({
@@ -157,14 +214,7 @@ export function CrearWizard({
     const flat: Record<string, string> = {};
     for (const i of r.error.issues) {
       const path = i.path.join(".");
-      const map: Record<string, string> = {
-        "shipper.name": "shipperName",
-        "shipper.nif": "shipperNif",
-        "shipper.address": "shipperAddress",
-        "carrier.name": "carrierName",
-        "carrier.nif": "carrierNif",
-      };
-      flat[map[path] ?? path] = i.message;
+      flat[FIELD_KEY_MAP[path] ?? path] = i.message;
     }
     setErrors(flat);
     requestAnimationFrame(() => summaryRef.current?.focus());
@@ -242,7 +292,7 @@ export function CrearWizard({
         if (res.status === 422 && data?.error?.fields) {
           const flat: Record<string, string> = {};
           for (const [k, v] of Object.entries(data.error.fields as Record<string, string[]>)) {
-            flat[k.replace("shipper.", "shipper").replace("carrier.", "carrier")] = v[0];
+            flat[FIELD_KEY_MAP[k] ?? k] = v[0];
           }
           setErrors(flat);
           setStep(0);
@@ -344,6 +394,7 @@ export function CrearWizard({
                         ...f,
                         carrierName: c.name,
                         carrierNif: c.nif ?? "",
+                        carrierAddress: c.address ?? f.carrierAddress,
                       }));
                     e.currentTarget.value = "";
                   }}
@@ -400,6 +451,14 @@ export function CrearWizard({
                 value={form.carrierNif}
                 onChange={set("carrierNif")}
                 error={errors.carrierNif}
+              />
+              <Field
+                id="carrierAddress"
+                label="Domicilio"
+                value={form.carrierAddress}
+                onChange={set("carrierAddress")}
+                error={errors.carrierAddress}
+                autoComplete="street-address"
               />
             </fieldset>
           </>
@@ -529,6 +588,8 @@ export function CrearWizard({
             )}
           </fieldset>
         )}
+
+        {step === 2 && !isCorrection && <ReviewSummary form={form} />}
 
         {submitError && (
           <p role="alert" className="mt-4 text-sm text-[var(--color-danger)]">

@@ -22,6 +22,7 @@ async function createDeca(page: Page): Promise<string> {
     ["#shipperAddress", "Calle 1"],
     ["#carrierName", "Trans SL"],
     ["#carrierNif", "B12345674"],
+    ["#carrierAddress", "Av. Central 3, Madrid"],
   ] as const)
     await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
@@ -113,7 +114,7 @@ test.describe("BUILD 15 — launch gate", () => {
 function buildPayload() {
   return {
     shipper: { name: "Cargas SL", nif: "B96789011", address: "Calle 1" },
-    carrier: { name: "Trans SL", nif: "B12345674" },
+    carrier: { name: "Trans SL", nif: "B12345674", address: "Av. Central 3, Madrid" },
     origin: "Valencia",
     destination: "Madrid",
     transportDate: "2026-10-06",
