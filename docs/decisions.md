@@ -125,3 +125,15 @@
 - Alternatives rejected: running Supabase locally via the CLI (heavy, another moving part); blocking BUILD 09 on the Supabase project (breaks "value before signup" for the deadline).
 - Not checked: whether Supabase Auth's email deliverability / OTP UX is materially better for this audience — to weigh when the Supabase project exists; email OTP can be added alongside password without schema change.
 - Pre-launch: decide password reset (email) and consider migrating to Supabase Auth or adding OTP.
+
+## D-022 — PDF storage is explicit (FVD_STORAGE); v1 shipped with green CI on main
+- Date / phase: 2026-09-03 / BUILD 15 close
+- Decision: `lib/storage` selects its backend from `FVD_STORAGE` (`local` default / `supabase`), not from
+  guessing whether the Supabase URL "looks real". Dev, tests and CI use the local filesystem store (no
+  external calls); production sets `FVD_STORAGE=supabase`. `keel-verify` and the CI secret scan exclude
+  their own detection-pattern files (`.github/`, `.githooks/`, `scripts/keel-verify.mjs`).
+  `@types/node` pinned via `overrides` so `npm ci` resolves the committed lock on standard npm.
+- Why: CI on `main` failed three times — placeholder Supabase host (DNS), self-flagging secret patterns,
+  a lock drift between this machine's hardened npm and GitHub's npm. All fixed; CI is green.
+- v1 = BUILD 05–15, on `main` at 946ac88, CI passing (typecheck, lint, format, 47 unit, 57 e2e,
+  6 compliance, keel-verify, secret scan).

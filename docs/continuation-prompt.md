@@ -4,7 +4,7 @@ Repo: FarinosV44/Farvertrans-Deca
 Branch: develop (v1 also on main)
 Generated: 2026-09-03
 Keel: v5.19.2
-Position: **v1 complete — BUILD 05–15 all done, develop merged to main.** Phase 5 closed.
+Position: **v1 complete — BUILD 05–15 done, on `main` (946ac88), CI green.** Phase 5 closed.
 
 ## What happened
 

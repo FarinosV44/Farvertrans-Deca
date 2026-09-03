@@ -28,7 +28,7 @@
 - Status: **awaiting deploy** — all landed on `develop`; **v1 merged to `main`** (commit 75419dc,
   authorised by the user). 47 unit + 57 e2e + 6-check compliance suite + standalone build + keel-verify,
   all green. Commented beat 1 on #10–#15.
-- Commits: 10 → 596418e · 11+12 → 3a52c54 · 13 → bc654ec · 14 → 90942db · 15 → 75419dc.
+- Commits: 10 → 596418e · 11+12 → 3a52c54 · 13 → bc654ec · 14 → 90942db · 15 → 75419dc · CI fixes → 946ac88. v1 on main; CI green.
 - Deploy: still needed (CREDENTIAL — Supabase project, Hostinger VPS, domain, Resend, hCaptcha).
   Runbook: `docs/07-release.md`.
 - Pending: the user's RGPD + legal-inspection reviews; deploy; then beat 3 on #1–#15; then the user closes them.

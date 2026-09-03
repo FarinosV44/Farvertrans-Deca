@@ -87,7 +87,8 @@
   `Dockerfile` (Next standalone, non-root, healthcheck) + `.dockerignore`; `docs/07-release.md`
   (compliance matrix with evidence, quality gate, Hostinger+Supabase deploy runbook, sample-DeCA
   instructions, merge-to-main steps).
-- **v1 released:** `develop` merged to `main` and pushed (BUILD 05–15). No version tag created (not
+- **v1 released:** `develop` merged to `main` (946ac88, BUILD 05–15). CI green on main (typecheck, lint,
+  format, 47 unit, 57 e2e, 6 compliance, keel-verify, secret scan). No version tag (not
   requested).
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision the real Supabase project +
