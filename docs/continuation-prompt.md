@@ -4,7 +4,11 @@ Repo: FarinosV44/Farvertrans-Deca
 Branch: develop (v1 also on main)
 Generated: 2026-09-03
 Keel: v5.19.2
-Position: **v1 complete — BUILD 05–15 done, on `main` (d200158), CI green.** Phase 5 closed.
+Position: **v1 + 503 fixes on `main`. FIX #16–#19 + LAUNCH #20 done on `develop` (head), green
+locally, NOT yet merged to `main` — needs the user's explicit word.** Phase 5 closed.
+`develop` head: `test(launch): LAUNCH #20 …`. Local gate: 52 unit + 63 e2e + 8 compliance + typecheck
++ lint + format + keel-verify all green. Run `npm run db:up && npx prisma migrate deploy && npm run seed`
+first (migration `20260903230000` adds `deca_version.pdf_sha256` + `.created_by_user_id`).
 Post-release hotfixes on `main`: Prisma Linux engines (`ff731dd`); **503 #1** = `/app` route segment
 collided with `/` in the standalone build → `/app`→`/panel` rename (`fbc19ca`, D-023); attribution
 captured in `middleware.ts`, race + cookie double-encoding fixed (`a653d37` + `7a0b175`);
@@ -13,6 +17,15 @@ LiteSpeed `lsnode.js` does `require(startupFile)` and the ESM standalone `server
 `ERR_REQUIRE_ESM` → removed `"type":"module"` (Next emits CJS `server.js`) + `server.cjs` startup file
 + `scripts/standalone-postbuild.mjs` + CI guard (`d200158`, D-025). All verified end-to-end locally.
 Two deploy paths documented in `docs/07-release.md`: VPS+Docker (`server.js`) / Cloud Startup (`server.cjs`).
+
+**FIX #16–#19 + LAUNCH #20 (D-026), on `develop`:** #16 = the Cloud Startup 503 (code-complete on
+`main`, awaiting the user's deploy test). #17 = `carrier.address` now required (Art. 6.1.a), weight kept
+verbatim, wizard review step (`review-summary`), `docs/legal-data-model.md`. #18 = `deca_version.pdf_sha256`
+(returned by `POST /api/deca`, re-checked on every `/d/[token]`), `FVD_STORAGE_DIR` persistent path.
+#19 = `deca_version.created_by_user_id` + owner audit view + `docs/retention-policy.md` (claim never
+resets retention / regenerates). #20 = `tests/e2e/launch-happy-path.spec.ts` + `docs/production-smoke-checklist.md`.
+**Next action: the user says whether to merge `develop` → `main`** (then CI runs, then deploy, then
+`docs/production-smoke-checklist.md` incl. the external QR scan, then close #16–#20).
 
 ## What happened
 
