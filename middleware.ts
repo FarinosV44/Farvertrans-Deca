@@ -48,20 +48,27 @@ export function middleware(req: NextRequest) {
   }
 
   // Server-side acquisition capture (F12 / EPIC 02).
+  //
+  // Cookie encoding contract: the RAW stored value is `encodeURIComponent(json)`
+  // — that is what the client (`document.cookie`) writes and what
+  // `readAttributionCookie()` (`decodeURIComponent` then `JSON.parse`) expects.
+  // `NextRequest/NextResponse` cookies url-encode/decode for us, so here we pass
+  // and read the plain JSON string — NOT double-encoded, or the client discards
+  // it as unparseable and overwrites first-touch with a null ref.
   try {
     let current: Attribution = EMPTY_ATTRIBUTION;
     const raw = req.cookies.get(ATTR_COOKIE)?.value;
     if (raw) {
       try {
-        current = JSON.parse(decodeURIComponent(raw)) as Attribution;
+        current = JSON.parse(raw) as Attribution;
       } catch {
         current = EMPTY_ATTRIBUTION;
       }
     }
     if (!current.lockedAt) {
-      const merged = mergeFromUrl(current, new URL(req.url), req.headers.get("referer"));
+      const merged = mergeFromUrl(current, req.nextUrl, req.headers.get("referer"));
       if (JSON.stringify(merged) !== JSON.stringify(current)) {
-        res.cookies.set(ATTR_COOKIE, encodeURIComponent(JSON.stringify(merged)), {
+        res.cookies.set(ATTR_COOKIE, JSON.stringify(merged), {
           maxAge: ATTR_MAX_AGE_S,
           path: "/",
           sameSite: "lax",
