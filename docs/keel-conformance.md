@@ -85,3 +85,15 @@
 - Row 60 (Phase 8 site set): **n/a** — site is in the main codebase (D-001), Website intent recorded, no separate Phase 8.
 - Row 63 (issues.md): **present** — inventory of #1–#4 + one entry each.
 - All other Phase 1 rows: present. Phase 2+ rows remain missing with their phase named.
+
+## Phase 2 close update (2026-09-03)
+- Row 14 (`docs/02-functional-spec.md`): **present** — F1–F18, AC-01…AC-37 (+ AC-04b from the adversarial self-review).
+- Row 15 (`docs/03-technical-plan.md`): **present** — stack, support matrix, architecture, code map (all `[A]`/`[G]` marked, no `[E]` yet — greenfield), change map, conventions, testing + driver-per-surface, `## Environment requirements`, version touchpoints, license rule.
+- Row 16 (`docs/threat-model.md`): **present** — assumptions, T-1…T-15 with delivery states (all `TO BUILD`/`MANUAL`/`VERIFY` — nothing `IN PLACE` yet), "Not defended" table with consequences.
+- Row 17 (`docs/flows/`): **present** — 7 flows.
+- Rows 19–21 (spec-references, rubrics, design/references): **n/a** — none recorded / no rubric (D-015) / no user references.
+- Rows 22–23 (assistant rules + subagents): **present** — `.claude/rules/` (3) + `.claude/agents/` (8; `guide-qa` deferred to Phase 6) — D-018.
+- Row 28 (`.gitattributes`): **present** (`* text=auto eol=lf`).
+- `Test-first policy:` card line: **present** — `pure-logic` (D-014).
+- `Models:` card line: **present** — D-017.
+- Adversarial spec review (Phase 2 §6a): done as a strict self-check (no subagent dispatched from the main session per host guidance); mechanical checklist passed; one gap found (double-submit) and closed → AC-04b. Rubric question asked → "none for this project" (D-015).

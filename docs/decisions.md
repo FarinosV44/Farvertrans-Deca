@@ -67,3 +67,37 @@
 - Date / phase: 2026-09-03 / Phase 1
 - Decision: No prior brand system. The assistant proposes the founding identity (palette, typography, logo, personality — direction: modern SaaS, sober, conversion- and legal-trust-oriented, mobile-first) and the user reacts to it on real design in Phase 3. Open interview items (exact colours, typeface licensing, dark mode, iconography, vetoes, whether Farvertrans has existing brand elements) go to `SPEC/open-questions.md` for Design/Phase 3.
 - Why: User chose "you propose and show me in Phase 3".
+
+## D-013 — Stack: Next.js + Supabase, hosted on Hostinger
+- Date / phase: 2026-09-03 / Phase 2
+- Decision: Next.js (App Router, SSR/SSG) on Node 20 LTS, TypeScript. Supabase for PostgreSQL, object storage (PDFs), and authentication (passwordless email OTP + optional password). ORM: Prisma against the Supabase Postgres (or Supabase client where RLS is the better fit — decided per module in the technical plan). PDF: `@react-pdf/renderer` (genuine text-based PDF from React components, embedded fonts, small output — NOT headless-browser screenshot). QR: `qrcode`. Rate limiting / abuse: Postgres-backed limiter + a hashed IP/fingerprint counter (Upstash Redis optional later). Hosting: Hostinger VPS running the Next.js server via Docker (Node SSR needs a running process; Hostinger shared/cloud web hosting is not sufficient). Email: a transactional provider (Resend / Postmark — pinned in Phase 5).
+- Why: User chose "Hostinger y Supabase". Supabase collapses Postgres + storage + auth + RLS into one managed service, which fits the deadline and a solo maintainer. Next.js gives SSR/SSG for the SEO requirement (EPIC 01/03) in one codebase with the app.
+- Alternatives rejected: Vercel + Neon (user prefers Hostinger/Supabase); VPS + self-hosted Postgres/MinIO (more ops burden, no benefit here); WordPress (poor fit for the document engine).
+- Not checked: whether Hostinger's specific VPS tier limits (RAM, bandwidth) suffice at peak capture volume — to size in Phase 5 with the user; does not change the architecture.
+
+## D-014 — Test-first policy: pure-logic
+- Date / phase: 2026-09-03 / Phase 2 §4e
+- Decision: `Test-first policy: pure-logic`. Pure functions of their inputs — DeCA data validation against R-2, public URL/token generation, 7-day deactivation logic, version/correction rules (R-13), abuse-limit calculations, attribution first-touch/last-touch rules (EPIC 02) — get their test written and seen failing before the implementation. Markup, framework glue and third-party integration are exempt. Two rules hold regardless: every bug fix starts from a failing reproduction test; a test derived from an AC-nn or a reproduced bug is never edited to pass.
+- Why: User chose the recommended default. The compliance engine and the attribution engine are logic-dense — exactly where test-first pays.
+
+## D-015 — No quality rubric for this project
+- Date / phase: 2026-09-03 / Phase 2 §6a
+- Decision: No `docs/rubrics/` domain. The adversarial spec review uses the standard mechanical checklist only.
+- Why: User chose "no for this project" — it is a web app, not an extensible library/plugin/MCP whose extension surface locks on release.
+
+## D-016 — Anonymous DeCA: valid document + 30-day claim link
+- Date / phase: 2026-09-03 / Phase 2
+- Decision: A DeCA created without an account is generated complete, legally valid, and retained 1 year (R-10) like any other. The creator receives a claim link (high-entropy token, valid 30 days) to attach the document to a new or existing account. Unclaimed after 30 days: the document remains valid and retained (legal obligation) but becomes unrecoverable by the creator through the UI (no account link). Anonymous creation is rate-limited per hashed IP + browser fingerprint (abuse control, confrontation row 19). Registering unlocks history, saved data (companies/vehicles/addresses), duplication and corrections.
+- Why: User chose the recommended option — preserves the zero-friction differentiator vs DecaDoc while keeping legal validity and bounding abuse.
+- Not checked: the RGPD retention basis for orphaned anonymous documents containing third-party personal data (shipper/carrier/driver) — to confirm with a data-protection review before launch; recorded as a pre-launch open item.
+
+## D-017 — Assistant subagent model binding
+- Date / phase: 2026-09-03 / Phase 2 close
+- Decision: Role→model map (Claude Code): orchestrator = the session model the user launches with (Keel does not set it); reviewer = `sonnet` (`code-reviewer`, `security-auditor`, `design-fidelity-auditor`); mechanical = `haiku` (`docs-verifier`, `playground-qa`, `a11y-auditor`, `test-driver`, `launch-verifier`). Applied as the tool default without interrogating the user (recommend-don't-interrogate).
+- Why: On a flat Claude Code subscription the marginal token cost is ≈ €0, so cheaper models buy speed and rate-limit headroom, not money — `test-driver` is the most repeated Phase 5 invocation and benefits most. Reviewers need real judgment; `sonnet` handles it.
+- Materialised in: `.claude/agents/*.md` `model:` fields; project card `Models:` line.
+
+## D-018 — Assistant config rules + agents materialised (Phase 2 close)
+- Date / phase: 2026-09-03 / Phase 2 close
+- Decision: `.claude/rules/` (code-style, security, docs-discipline — path-scoped to `app/**`, `lib/**`, `prisma/**`, `content/**`) and `.claude/agents/` (code-reviewer, security-auditor, docs-verifier, design-fidelity-auditor, playground-qa, a11y-auditor, test-driver, launch-verifier) generated. `guide-qa` deferred to Phase 6 (guide decision not yet made). Permission allow-list (`.claude/settings.json`), `.githooks/pre-commit` gate, and CI workflow deferred to the Phase 5 scaffold (their sources — verified tooling commands — do not exist yet).
+- Why: Sources (§Conventions, threat model, code map globs) are fixed at Phase 2 close per `references/assistant-config.md`.
