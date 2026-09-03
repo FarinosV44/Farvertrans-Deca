@@ -77,7 +77,8 @@ node -e "fetch('http://localhost:3000/api/deca',{method:'POST',headers:{'content
 
 ### 1. Supabase (one-time)
 1. Create a project. Note the project URL, the `anon` key and the `service_role` key.
-2. **Storage:** create a **private** bucket named `deca-pdfs` (no public access).
+2. **Storage:** create a **private** bucket named `deca-pdfs` (no public access). Set
+   `FVD_STORAGE=supabase` in `.env` (dev/CI leave it `local`).
 3. **Database:** get the connection string (session pooler) → `DATABASE_URL`.
 4. RLS: the app talks to the DB only through the server with the service role; the `anon` key has no
    table grants. Leave RLS deny-by-default on any table the client could reach (none in v1).

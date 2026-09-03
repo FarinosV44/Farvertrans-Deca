@@ -57,11 +57,14 @@ let store: PdfStore | null = null;
 
 export function getPdfStore(): PdfStore {
   if (store) return store;
-  const hasSupabase =
+  // Opt in to Supabase Storage explicitly (production runbook sets FVD_STORAGE=supabase).
+  // Dev, tests and CI use the local filesystem store — no external calls.
+  const useSupabase =
+    process.env.FVD_STORAGE === "supabase" &&
     !!process.env.SUPABASE_SERVICE_ROLE_KEY &&
     !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("YOUR-PROJECT");
-  store = hasSupabase
+  store = useSupabase
     ? new SupabaseStore(process.env.FVD_PDF_BUCKET || "deca-pdfs")
     : new LocalFsStore();
   return store;

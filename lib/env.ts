@@ -14,6 +14,7 @@ const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   FVD_PDF_BUCKET: z.string().min(1).default("deca-pdfs"),
+  FVD_STORAGE: z.enum(["local", "supabase"]).optional().default("local"),
   FVD_HASH_SECRET: z.string().min(16),
   RESEND_API_KEY: z.string().optional(),
   FVD_MAIL_FROM: z.string().optional(),
