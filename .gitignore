@@ -1,0 +1,9 @@
+.keel-update-check
+.claude/settings.local.json
+CLAUDE.local.md
+docs/continuation-prompt.md
+docs/.keel/e2e-status.json
+node_modules/
+.env
+.env.*
+*.log
