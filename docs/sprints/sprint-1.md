@@ -18,7 +18,7 @@ slices:
     criteria: [AC-25, AC-26, AC-27, AC-29, AC-31, AC-32, AC-33]
   - id: S-07
     title: BUILD 07 — Anonymous 3-step DeCA creator with real validation
-    status: not-started
+    status: done
     hours: 15
     depends_on: [S-05]
     criteria: [AC-01, AC-02, AC-04, AC-04b, AC-09]

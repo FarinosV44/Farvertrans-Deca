@@ -95,6 +95,7 @@ model Deca {
   companyId        String?   @map("company_id")
   createdByUserId  String?   @map("created_by_user_id")
   currentVersionId String?   @unique @map("current_version_id")
+  idempotencyKey   String?   @unique @map("idempotency_key")
   serviceStart     DateTime? @map("service_start")
   serviceEnd       DateTime? @map("service_end")
   createdAt        DateTime  @default(now()) @map("created_at")

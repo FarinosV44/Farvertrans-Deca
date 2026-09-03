@@ -1,0 +1,308 @@
+"use client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Field } from "./field";
+import { step1Schema, step2Schema, step3Schema } from "@/lib/deca/schema";
+import { track, getSessionId } from "@/lib/analytics/client";
+import { looksLikeSpanishPlate } from "@/lib/deca/plate";
+
+type FormState = {
+  shipperName: string;
+  shipperNif: string;
+  shipperAddress: string;
+  carrierName: string;
+  carrierNif: string;
+  origin: string;
+  destination: string;
+  transportDate: string;
+  goods: string;
+  weight: string;
+  tractorPlate: string;
+  trailerPlate: string;
+  reference: string;
+};
+
+const EMPTY: FormState = {
+  shipperName: "",
+  shipperNif: "",
+  shipperAddress: "",
+  carrierName: "",
+  carrierNif: "",
+  origin: "",
+  destination: "",
+  transportDate: "",
+  goods: "",
+  weight: "",
+  tractorPlate: "",
+  trailerPlate: "",
+  reference: "",
+};
+
+const STORAGE_KEY = "fvd_crear_draft";
+
+function toPayload(f: FormState) {
+  return {
+    shipper: { name: f.shipperName, nif: f.shipperNif, address: f.shipperAddress },
+    carrier: { name: f.carrierName, nif: f.carrierNif },
+    origin: f.origin,
+    destination: f.destination,
+    transportDate: f.transportDate,
+    goods: f.goods,
+    weight: f.weight,
+    tractorPlate: f.tractorPlate,
+    trailerPlate: f.trailerPlate || undefined,
+    reference: f.reference || undefined,
+  };
+}
+
+export function CrearWizard() {
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState<FormState>(EMPTY);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const idempotencyKey = useMemo(
+    () => (typeof crypto !== "undefined" ? crypto.randomUUID() : String(Date.now())),
+    [],
+  );
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const startedRef = useRef(false);
+
+  // Restore a draft on mount; fire deca_started once.
+  useEffect(() => {
+    if (!startedRef.current) {
+      startedRef.current = true;
+      track("deca_started");
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (raw) setForm({ ...EMPTY, ...(JSON.parse(raw) as Partial<FormState>) });
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  // Persist the draft as the user types (survives refresh).
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+    } catch {
+      /* ignore */
+    }
+  }, [form]);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [step]);
+
+  const set = (k: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const plateHint =
+    form.tractorPlate && !looksLikeSpanishPlate(form.tractorPlate)
+      ? "No parece una matrícula española (formato 1234 BCD). Es válida si el vehículo es extranjero."
+      : undefined;
+
+  function validateStep(): boolean {
+    const p = toPayload(form);
+    const schema = [step1Schema, step2Schema, step3Schema][step];
+    const slice =
+      step === 0
+        ? { shipper: p.shipper, carrier: p.carrier }
+        : step === 1
+          ? { origin: p.origin, destination: p.destination, transportDate: p.transportDate }
+          : {
+              goods: p.goods,
+              weight: p.weight,
+              tractorPlate: p.tractorPlate,
+              trailerPlate: p.trailerPlate,
+              reference: p.reference,
+            };
+    const r = schema.safeParse(slice);
+    if (r.success) {
+      setErrors({});
+      return true;
+    }
+    const flat: Record<string, string> = {};
+    for (const i of r.error.issues) {
+      const path = i.path.join(".");
+      const map: Record<string, string> = {
+        "shipper.name": "shipperName",
+        "shipper.nif": "shipperNif",
+        "shipper.address": "shipperAddress",
+        "carrier.name": "carrierName",
+        "carrier.nif": "carrierNif",
+      };
+      flat[map[path] ?? path] = i.message;
+    }
+    setErrors(flat);
+    requestAnimationFrame(() => summaryRef.current?.focus());
+    return false;
+  }
+
+  function next() {
+    if (validateStep()) setStep((s) => Math.min(2, s + 1));
+  }
+  function back() {
+    setErrors({});
+    setStep((s) => Math.max(0, s - 1));
+  }
+
+  async function submit() {
+    if (!validateStep() || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/deca", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": idempotencyKey,
+          "x-fvd-session": getSessionId(),
+        },
+        body: JSON.stringify(toPayload(form)),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 422 && data?.error?.fields) {
+          const flat: Record<string, string> = {};
+          for (const [k, v] of Object.entries(data.error.fields as Record<string, string[]>)) {
+            flat[k.replace("shipper.", "shipper").replace("carrier.", "carrier")] = v[0];
+          }
+          setErrors(flat);
+          setStep(0);
+        }
+        setSubmitError(data?.error?.message ?? "No se pudo generar el DeCA. Inténtalo de nuevo.");
+        setSubmitting(false);
+        return;
+      }
+      try {
+        sessionStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+      const q = data.claimToken ? `?claim=${encodeURIComponent(data.claimToken)}` : "";
+      router.push(`/crear/${data.decaId}${q}`);
+    } catch {
+      setSubmitError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setSubmitting(false);
+    }
+  }
+
+  const errorList = Object.entries(errors);
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">Paso {step + 1} de 3</p>
+      <div
+        className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]"
+        role="progressbar"
+        aria-label={`Paso ${step + 1} de 3`}
+        aria-valuenow={step + 1}
+        aria-valuemin={1}
+        aria-valuemax={3}
+      >
+        <div
+          className="h-full bg-[var(--color-primary)] transition-[width]"
+          style={{ width: `${((step + 1) / 3) * 100}%` }}
+        />
+      </div>
+
+      <h1 ref={headingRef} tabIndex={-1} className="mt-3 text-2xl font-bold outline-none md:text-3xl">
+        {["Cargador y transportista", "Origen, destino y fecha", "Mercancía y vehículo"][step]}
+      </h1>
+      <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+        No necesitas registrarte para crear tu primer DeCA.
+      </p>
+
+      {errorList.length > 0 && (
+        <div
+          ref={summaryRef}
+          tabIndex={-1}
+          role="alert"
+          data-testid="error-summary"
+          className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[#fdecec] p-4 outline-none"
+        >
+          <p className="font-bold text-[var(--color-danger)]">Revisa estos campos:</p>
+          <ul className="mt-1 list-disc pl-5 text-sm">
+            {errorList.map(([k, v]) => (
+              <li key={k}>{v}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (step < 2) next();
+          else void submit();
+        }}
+        noValidate
+      >
+        {step === 0 && (
+          <>
+            <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+              <legend className="px-1 text-sm font-bold">Cargador contractual</legend>
+              <Field id="shipperName" label="Nombre o razón social" value={form.shipperName} onChange={set("shipperName")} error={errors.shipperName} autoComplete="organization" />
+              <Field id="shipperNif" label="NIF" value={form.shipperNif} onChange={set("shipperNif")} error={errors.shipperNif} />
+              <Field id="shipperAddress" label="Domicilio" value={form.shipperAddress} onChange={set("shipperAddress")} error={errors.shipperAddress} autoComplete="street-address" />
+            </fieldset>
+            <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+              <legend className="px-1 text-sm font-bold">Transportista efectivo</legend>
+              <Field id="carrierName" label="Nombre o razón social" value={form.carrierName} onChange={set("carrierName")} error={errors.carrierName} autoComplete="organization" />
+              <Field id="carrierNif" label="NIF" value={form.carrierNif} onChange={set("carrierNif")} error={errors.carrierNif} />
+            </fieldset>
+          </>
+        )}
+
+        {step === 1 && (
+          <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+            <legend className="px-1 text-sm font-bold">Trayecto</legend>
+            <Field id="origin" label="Lugar de origen" value={form.origin} onChange={set("origin")} error={errors.origin} />
+            <Field id="destination" label="Lugar de destino" value={form.destination} onChange={set("destination")} error={errors.destination} />
+            <Field id="transportDate" label="Fecha del transporte" type="date" value={form.transportDate} onChange={set("transportDate")} error={errors.transportDate} />
+          </fieldset>
+        )}
+
+        {step === 2 && (
+          <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+            <legend className="px-1 text-sm font-bold">Mercancía y vehículo</legend>
+            <Field id="goods" label="Naturaleza de la mercancía" value={form.goods} onChange={set("goods")} error={errors.goods} />
+            <Field id="weight" label="Peso (o medida alternativa)" value={form.weight} onChange={set("weight")} error={errors.weight} hint="Ej.: 12000 kg, o «una plataforma completa» si el peso exacto no es determinable." />
+            <Field id="tractorPlate" label="Matrícula de la tractora" value={form.tractorPlate} onChange={set("tractorPlate")} error={errors.tractorPlate} hint={plateHint} />
+            <Field id="trailerPlate" label="Matrícula del remolque / semirremolque" value={form.trailerPlate} onChange={set("trailerPlate")} error={errors.trailerPlate} required={false} hint="Solo si es un conjunto articulado." />
+            <Field id="reference" label="Referencia o notas (opcional)" value={form.reference} onChange={set("reference")} error={errors.reference} required={false} />
+          </fieldset>
+        )}
+
+        {submitError && (
+          <p role="alert" className="mt-4 text-sm text-[var(--color-danger)]">
+            {submitError}
+          </p>
+        )}
+
+        <div className="mt-6 flex gap-3">
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={back}
+              className="min-h-12 rounded-[var(--radius-md)] border border-[var(--color-primary)] px-5 font-medium text-[var(--color-primary)]"
+            >
+              Atrás
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={submitting}
+            data-testid={step < 2 ? "wizard-next" : "wizard-generate"}
+            className="min-h-12 flex-1 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)] disabled:opacity-55"
+          >
+            {step < 2 ? "Siguiente" : submitting ? "Generando…" : "GENERAR DECA"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

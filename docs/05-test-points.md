@@ -15,4 +15,12 @@
 | 2026-09-03 | BUILD 06 landing | AC-31 landing_view event emitted + accepted (204) | driven | n/a | e2e landing.spec | PASS | next commit |
 | 2026-09-03 | BUILD 06 landing | AC-29 no serious/critical axe violations on / and /crear; CTA keyboard-reachable | driven (@axe-core/playwright) | n/a | e2e a11y.spec | PASS | next commit |
 | 2026-09-03 | BUILD 06 landing | responsive: no horizontal overflow at 360/768/1280; mobile CTA shows <768 only | driven | n/a | e2e landing.spec | PASS | next commit |
-| 2026-09-03 | BUILD 06 landing | pickRefSnapshot / eventInputSchema / landing JSON-LD builder | driven (Vitest 7 tests) | pure logic — analytics + content builders | `npm run test:unit` | PASS (10 unit total) | next commit |
+| 2026-09-03 | BUILD 06 landing | pickRefSnapshot / eventInputSchema / landing JSON-LD builder | driven (Vitest 7 tests) | pure logic — analytics + content builders | `npm run test:unit` | PASS (10 unit total) | 7262ca1 |
+| 2026-09-03 | BUILD 07 creator | validateDeca R-2/AC-09 (missing-field rejection, foreign-NIF warn-not-block, date format, path-keyed errors); normalizePlate; checkNif | driven (Vitest, 10 tests) | logic written from R-2/AC-09, not the impl; tests pass on first run (velocity note — no observed red) | `npm run test:unit` | PASS (20 unit total) | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-01 anonymous completes 3 steps → /crear/[id] "DeCA generado" | driven (Playwright) | n/a | e2e crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-02 mandatory omission blocks advance, Spanish message, accessible error summary, stays on step | driven | n/a | e2e crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | back/forward preserves entered data (sessionStorage draft) | driven | n/a | e2e crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-09 POST /api/deca 422 + field errors on missing mandatory field | driven | n/a | e2e crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-01 POST /api/deca 201 + ≥256-bit token + claim token for anonymous | driven | n/a | e2e crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-04b same idempotency-key never creates a 2nd DeCA | driven | n/a | e2e crear.spec | PASS | next commit |
+| 2026-09-03 | BUILD 07 creator | AC-04 wizard axe-clean; progressbar named; error summary role=alert focus | driven (@axe-core) | n/a | e2e a11y.spec + crear.spec | PASS | next commit |

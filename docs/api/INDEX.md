@@ -5,6 +5,14 @@
 |---------|------|-----------|-----|--------------------|
 | GET /health | route | app/health/route.ts | docs/reference/endpoints.md | Liveness + DB reachability + app version |
 | POST /api/events | route | app/api/events/route.ts | docs/reference/endpoints.md | First-party analytics ingest; schema-validated, always 204, never 5xx |
+| POST /api/deca | route | app/api/deca/route.ts | docs/reference/endpoints.md | Create a DeCA (F1): validate R-2, persist deca+version, return token + claim token; 422 on invalid, fails closed |
+| validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
+| decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |
+| normalizePlate() / looksLikeSpanishPlate() | function | lib/deca/plate.ts | docs/reference/lib.md | Plate normalisation + soft Spanish-format hint |
+| checkNif() | function | lib/deca/nif.ts | docs/reference/lib.md | DNI/NIE/CIF control validation (advisory) |
+| newPublicToken() / newClaimToken() | function | lib/deca/token.ts | docs/reference/lib.md | 256-bit base64url tokens for the public URL and the claim link |
+| createDeca() | function | lib/deca/persist.ts | docs/reference/lib.md | Atomic persist of deca + version 1 (+ claim token for anonymous); idempotency-key aware |
+| CrearWizard / Field / ResultActions | component | components/deca/* | docs/reference/lib.md | 3-step creator UI + result-screen actions |
 | GET /robots.txt | route | app/robots.ts | docs/reference/endpoints.md | Allow site; disallow /app /api /d/ /operadores /claim |
 | GET /sitemap.xml | route | app/sitemap.ts | docs/reference/endpoints.md | Public indexable pages only |
 | EVENT_NAMES / eventInputSchema / pickRefSnapshot() | const/fn | lib/analytics/events.ts | docs/reference/lib.md | Closed event set + ingest schema + ref/UTM extraction |
