@@ -35,3 +35,35 @@
 - Date / phase: 2026-09-03 / Phase 1
 - Decision: Work survives off this machine via `origin` = https://github.com/FarinosV44/Farvertrans-Deca.git. Integration branch `develop` created from `main`.
 - Why: Repo already had a GitHub remote at session start. Satisfies SKILL.md "Work never lives only on this machine".
+
+## D-007 — v1 scope: confrontation rows 1–23 in, 24–29 Later, 30–32 Never
+- Date / phase: 2026-09-03 / Phase 1
+- Decision: v1 = rows 1–23 of `docs/01a-confrontation.md`. Later = 24 (local SEO pages), 25 (long-tail/user-type SEO pages), 26 (multi-user/team), 27 (public API), 28 (bulk import), 29 (eCMR/CMR/ADR interop feature — SEO page now, feature later). Never in v1 = 30 (paid WhatsApp Business API), 31 (AI/LLM assistant), 32 (pricing/plans/checkout).
+- Why: User chose "accept my recommendations" as the decision mode; recorded as default accepted. Rows 1–16 are the launch product, 17–23 are the differentiators that make it win, all cheap except row 19 (abuse controls, mandatory companion to unlimited-free row 17).
+- Alternatives rejected: "add everything" (drags in local SEO thin-content risk, multi-user, API — none needed for capture, all delay launch); row-by-row (user delegated to the recommendation column).
+- Not checked: whether Truckio/DecaHub free tiers are genuinely capped (search inconclusive) — does not change the decision, unlimited-free is our positioning regardless.
+
+## D-008 — Build sequence: EPIC 04 + 01 + 02 to launch, SEO content after
+- Date / phase: 2026-09-03 / Phase 1
+- Decision: Compliance engine (EPIC 04) + landing (EPIC 01) + acquisition tracking (EPIC 02) + SEO technical base built to a launchable state before 2026-10-05. The 10 core SEO content pages (EPIC 03) land immediately after launch; local + long-tail pages post-launch. Launch is NOT gated on the full SEO architecture.
+- Why: Organic SEO will not pay off before the mandate; the pre-mandate capture spike comes from operator links. The compliance engine is the hard part and must be solid. User confirmed.
+
+## D-009 — Chaining: off
+- Date / phase: 2026-09-03 / Phase 1
+- Decision: `Chaining: off`. Every session writes `docs/continuation-prompt.md` and shows the prompt; the user opens the next chat. `Chaining model: n/a`. `start` was not available anyway (Windows; macOS-verified only).
+- Why: User chose off — simple, no unattended development, no surprises.
+
+## D-010 — Portability: embed skill; Assistant config: full + CI on main
+- Date / phase: 2026-09-03 / Phase 1
+- Decision: Embed the Keel skill in the repo (`.claude/skills/keel/` + `.agents/skills/keel/`). Assistant config package = full: path-scoped rules + reviewer/verifier subagents + permission allow-lists + `.githooks/pre-commit` confidential-data gate + CI workflow. `CI runs on: main` (push to main, version tags, PRs targeting main) — not every develop push, since Keel drives the full suite locally before each commit. Tools: claude (primary); AGENTS.md covers codex/copilot/cursor/windsurf.
+- Why: User chose all recommended. Repo becomes self-sufficient in any environment.
+
+## D-011 — Domain: placeholder until the user decides
+- Date / phase: 2026-09-03 / Phase 1
+- Decision: Use `deca.farvertrans.es` as a configurable placeholder for canonical URLs, sitemap, OG tags, the DeCA QR base URL and each document's public URL. A single config value; the user sets the real domain before launch. Public document URLs must be domain-portable (no hardcoded host).
+- Why: User does not have the domain decided yet; it does not block development.
+
+## D-012 — Brand: assistant founds the identity, user reviews in Phase 3
+- Date / phase: 2026-09-03 / Phase 1
+- Decision: No prior brand system. The assistant proposes the founding identity (palette, typography, logo, personality — direction: modern SaaS, sober, conversion- and legal-trust-oriented, mobile-first) and the user reacts to it on real design in Phase 3. Open interview items (exact colours, typeface licensing, dark mode, iconography, vetoes, whether Farvertrans has existing brand elements) go to `SPEC/open-questions.md` for Design/Phase 3.
+- Why: User chose "you propose and show me in Phase 3".

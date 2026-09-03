@@ -46,6 +46,12 @@
 | 31 | AI/LLM assistant (FAQ bot, data extraction) | — | none | Never (v1) | — | drop — forced filler, legal-accuracy risk on a defined document | |
 | 32 | Pricing page / plans / checkout | DeCAtrans, Surtia, DecaDoc | — | Never (v1) | — | drop — explicitly forbidden by EPIC 01 | |
 
+## DECISIONS (recorded 2026-09-03 — D-007; mode: "accept recommendations", default accepted)
+- **v1:** rows 1–23 (all recommendations followed).
+- **Later:** row 24 (local SEO), 25 (long-tail/user-type SEO), 26 (multi-user), 27 (public API), 28 (bulk import), 29 (eCMR feature — SEO page now).
+- **Never (v1):** row 30 (paid WhatsApp API), 31 (AI assistant), 32 (pricing/checkout).
+- **Launch subset (D-008):** rows 1–14, 17–20, 22 + SEO technical base (#15). Rows 16, 21, 23 land right after launch.
+
 ## Notes
 - Rows 1–16 are the launch product; removing any of 1–11 breaks compliance or the core promise.
 - Rows 17–23 are what makes the product win rather than merely exist; all are cheap except #19 (which is mandatory if #17 stays).

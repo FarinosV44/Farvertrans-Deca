@@ -37,15 +37,16 @@ Source issues: GitHub #1 (EPIC 01 Landing), #2 (EPIC 02 Tracking), #3 (EPIC 03 S
 See the confrontation table below; the agreed v1 scope is recorded under `## Scope` after the user decides.
 
 ## Competitive confrontation (step 3a)
-- Decision mode chosen by the user: _pending_.
-- Table: see `docs/01a-confrontation.md` (kept separate for length).
-- Scope impact: _pending user decisions_.
-- Honest assessment revisited after the confrontation: _pending_.
+- Decision mode chosen by the user: **accept the assistant's recommendations** (recorded as default accepted — D-007).
+- Table: see `docs/01a-confrontation.md` (32 rows, decisions recorded there).
+- Scope impact vs the step 3 proposal: none material — the proposal already reflected the confrontation. Rows 24–29 confirmed as Later, 30–32 as Never.
+- Honest assessment revisited after the confrontation: not required — scope did not change materially.
 
 ## Scope
-- v1: _pending confrontation decisions_.
-- Later: _pending_.
-- Never: _pending_.
+- v1: confrontation rows 1–23 — compliance engine (native PDF ≤5 MB, QR→unique no-auth HTTPS URL, direct download, 7-day deactivation option, audit trail, versioning R-1…R-13), 3-step creation flow, public document URL, document history ≥12 months, saved companies/vehicles/addresses, duplicate a DeCA, driver share by link + WhatsApp deep link + email, printable driver copy, account/auth, first-DeCA-without-signup, unlimited free, abuse controls, landing (EPIC 01 full structure), acquisition tracking (EPIC 02: ref + UTMs, first/last touch, operators table, DB-queryable, lite internal dashboard), analytics events, SEO technical base, 10 core SEO pages, "am I obligated?" guided page.
+- Launch-first subset (D-008): rows 1–14, 17–20, 22 + SEO technical base. Rows 16 (10 SEO pages), 21 (obligation page), 23 (operator dashboard) land immediately after launch.
+- Later: local SEO pages (#24), long-tail/user-type SEO pages (#25), multi-user/team (#26), public API (#27), bulk import (#28), eCMR/CMR/ADR interop feature (#29 — SEO content page in v1, feature later).
+- Never (v1): paid WhatsApp Business API (#30), AI/LLM assistant (#31), pricing/plans/checkout (#32) — each a D-entry (D-007) so it is not re-proposed.
 
 ## Honest assessment
 The mandate creates a real, dated, non-optional demand from a large, non-technical audience — a strong
@@ -71,7 +72,7 @@ foundation. But:
 launchable state first, EPIC 02 (tracking) alongside since it is cheap and time-sensitive, and EPIC 03 as a
 core-pages-now / long-tail-later effort. Do not gate launch on the full SEO architecture.
 
-- User decision: _pending_.
+- User decision: **proceed** with the adjusted sequencing (D-008 confirmed by the user).
 
 ## Constraints & non-negotiables
 - **Regulatory**: every generated DeCA must satisfy R-1…R-13 (`docs/00-competitive-landscape.md`). This is a
@@ -122,12 +123,12 @@ unavailable, generation fails closed with a clear user error — never emits a n
 - Status: **founding** — no existing brand system found; this project creates the canonical one.
 - Canonical home: this project's `design-handoff/ SPEC/design-tokens.md` + `artifacts/styles/` + logo assets.
 - Target surfaces: web/HTML only (landing, app, SEO pages, the generated PDF's visual layout, email).
-- Founding interview: _pending user answers (batched below)_.
+- Founding interview: the user chose "assistant proposes, user reviews in Phase 3" (D-012). Direction: modern SaaS, sober, conversion- and legal-trust-oriented, mobile-first. Open items (exact colours, typeface + licensing, dark mode, iconography, vetoes, any existing Farvertrans brand elements) → `SPEC/open-questions.md` at Phase 3.
 
 ## Environment & test drivers (step 5a preflight)
 - This session can run commands where the repo lives: **yes** (Windows 11, PowerShell + Git Bash, git + gh present).
 - Environment restrictions found: none blocking. Platform is Windows — Playwright/Node tooling runs headless; no Apple/Windows-native UI surface in scope.
-- `claude` on PATH: _to verify if chaining is enabled_ — n/a so far (Chaining not yet set).
+- `claude` on PATH: n/a — Chaining: off (D-009), no fan-out planned.
 - Machines in play: single machine (user + repo + test runner).
 - Present: git, gh (authenticated — issues readable). Node/PDF tooling: to be installed at the Phase 5 scaffold (or offered at Phase 2 §4d).
 - Impossible on this machine: none (web-only project).
@@ -135,12 +136,9 @@ unavailable, generation fails closed with a clear user error — never emits a n
 
 ## Preliminary estimate (AI-time based)
 - Recorded in `docs/estimate.md` (Estimate v1). Token ledger: `docs/token-ledger.md`.
-- Client budget: **no** (internal product, no client to bill) — pending user confirmation in the batch.
-- Chaining: _pending user answer_.
+- Client budget: **no** — internal Farvertrans product, no client to bill (D-005 batch; user confirmed). No `docs/budget.md`.
+- Chaining: **off** (D-009). `docs/continuation-prompt.md` written every session; the user opens the next chat.
+- Keel portability: **lock + embedded** (D-010). Assistant config: **full** + CI on `main` (D-010).
 
 ## Open questions for the user
-1. Founding brand interview (logo, colours, typography, personality, references, dark mode, iconography, vetoes).
-2. Domain for the site.
-3. Confrontation decision mode + per-row scope decisions.
-4. Client budget yes/no; chaining off/prefill/start; embed Keel skill in repo yes/no; assistant-config package.
-5. Confirm the sequencing (EPIC 04+01+02 to launch, EPIC 03 core-then-longtail).
+_All Phase 1 questions resolved._ Deferred to Phase 3: the founding brand interview open items (exact colours, typeface licensing, dark mode, iconography, vetoes, existing Farvertrans brand elements) — `SPEC/open-questions.md`. Deferred to pre-launch: the real domain (placeholder `deca.farvertrans.es` — D-011).

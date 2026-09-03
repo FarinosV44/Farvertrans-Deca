@@ -71,3 +71,17 @@
 | 63 | `docs/issues.md` | first forge contact | missing — create at Phase 1 close (issues #1–#4 are the source EPICs; capture is on) |
 | 64 | `docs/old/` | first sprint close | n/a — condition: "when archiving starts" |
 | 65 | `docs/04-adoption-audit.md` | adoption | n/a — condition: "adopted projects only" (this is greenfield) |
+
+## Phase 1 close update (2026-09-03)
+- Row 8 (embedded skill): **present** — `.claude/skills/keel/` + `.agents/skills/keel/`, 41 files each, verified identical to source (D-010).
+- Row 13 (keel-conformance.md): present (this file).
+- Row 18 (budget.md): **n/a** — `Client budget: no` confirmed (D-005 batch).
+- Rows 22–23 (assistant rules + subagents): **missing — Phase 2 close** (full package accepted, D-010).
+- Rows 39/40/45/47 (chaining scripts + Chain verified): **n/a** — `Chaining: off` (D-009).
+- Row 46 (Chaining model card line): **n/a** — `Chaining: off`.
+- Row 48 (pre-commit gate): **missing — Phase 5 scaffold** (assistant-config full accepted).
+- Row 49 (permission allow-lists): **missing — Phase 5 scaffold**.
+- Row 50 (CI workflow): **missing — Phase 5 scaffold** — `CI runs on: main` (D-010); GitHub has CI.
+- Row 60 (Phase 8 site set): **n/a** — site is in the main codebase (D-001), Website intent recorded, no separate Phase 8.
+- Row 63 (issues.md): **present** — inventory of #1–#4 + one entry each.
+- All other Phase 1 rows: present. Phase 2+ rows remain missing with their phase named.
