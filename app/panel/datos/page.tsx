@@ -17,7 +17,7 @@ export default async function DatosPage() {
 
   return (
     <>
-      <SiteHeader authed />
+      <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
         <h1 className="text-2xl font-bold">Datos habituales</h1>
         <AppNav current="datos" />

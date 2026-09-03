@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CtaButton } from "./cta-button";
 import { TrackedLink } from "@/components/analytics/tracked-link";
+import { AccountMenu } from "@/components/auth/account-menu";
 import { Wordmark } from "@/components/brand/wordmark";
 import { es } from "@/lib/i18n/es";
 
@@ -12,7 +13,15 @@ import { es } from "@/lib/i18n/es";
  *   (the caller passes it so static pages stay static)
  * - persistent primary CTA
  */
-export function SiteHeader({ nav = false, authed = false }: { nav?: boolean; authed?: boolean }) {
+export function SiteHeader({
+  nav = false,
+  authed = false,
+  companyName,
+}: {
+  nav?: boolean;
+  authed?: boolean;
+  companyName?: string;
+}) {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg)_92%,transparent)] backdrop-blur">
       <div className="mx-auto flex max-w-[1120px] items-center gap-4 px-4 py-3 md:px-6">
@@ -40,13 +49,17 @@ export function SiteHeader({ nav = false, authed = false }: { nav?: boolean; aut
 
         <div className="ml-auto flex items-center gap-2">
           {authed ? (
-            <Link
-              href="/panel"
-              data-testid="header-panel"
-              className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm font-medium no-underline hover:border-[var(--color-primary)]"
-            >
-              {es.common.panelCta}
-            </Link>
+            companyName ? (
+              <AccountMenu companyName={companyName} />
+            ) : (
+              <Link
+                href="/panel"
+                data-testid="header-panel"
+                className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm font-medium no-underline hover:border-[var(--color-primary)]"
+              >
+                {es.common.panelCta}
+              </Link>
+            )
           ) : (
             <TrackedLink
               href="/entrar"

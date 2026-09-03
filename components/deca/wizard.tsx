@@ -306,6 +306,7 @@ export function CrearWizard({
       } catch {
         /* ignore */
       }
+      if (data.firstForCompany) track("first_authenticated_deca");
       const q = data.claimToken ? `?claim=${encodeURIComponent(data.claimToken)}` : "";
       router.push(`/crear/${data.decaId}${q}`);
     } catch {

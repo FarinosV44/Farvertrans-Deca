@@ -29,7 +29,7 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
     if (busy) return;
     setBusy(true);
     setError(null);
-    track("signup_started");
+    if (mode === "register") track("signup_started");
     const url = mode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
       mode === "register" ? { ...f, claim } : { email: f.email, password: f.password, claim };
@@ -47,7 +47,11 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
       }
       if (mode === "register") {
         track("signup_completed");
+        track("company_created");
         lockAttribution(); // first-touch is now permanent
+        if (data?.claimedDecaId) track("anonymous_deca_claimed");
+      } else {
+        track("login_completed");
       }
       if (claim) track("claim_completed");
       router.push(nextPath.startsWith("/") ? nextPath : "/panel");
@@ -123,16 +127,23 @@ export function RegisterForm({ initialMode = "register" }: { initialMode?: "regi
         </button>
       </form>
 
-      <button
-        type="button"
-        onClick={() => {
-          setMode((m) => (m === "register" ? "login" : "register"));
-          setError(null);
-        }}
-        className="mt-4 text-sm underline"
-      >
-        {mode === "register" ? "Ya tengo cuenta" : "Crear una cuenta"}
-      </button>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setMode((m) => (m === "register" ? "login" : "register"));
+            setError(null);
+          }}
+          className="underline"
+        >
+          {mode === "register" ? "Ya tengo cuenta" : "Crear una cuenta"}
+        </button>
+        {mode === "login" && (
+          <Link href="/recuperar" data-testid="forgot-password">
+            ¿Has olvidado la contraseña?
+          </Link>
+        )}
+      </div>
       <p className="mt-6 text-sm">
         <Link href="/">Volver al inicio</Link>
       </p>

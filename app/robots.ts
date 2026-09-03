@@ -6,7 +6,16 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/panel", "/api", "/d/", "/operadores", "/claim"],
+      disallow: [
+        "/panel",
+        "/api",
+        "/d/",
+        "/operadores",
+        "/claim",
+        "/entrar",
+        "/registro",
+        "/recuperar",
+      ],
     },
     sitemap: `${publicEnv.baseUrl}/sitemap.xml`,
     host: publicEnv.baseUrl,

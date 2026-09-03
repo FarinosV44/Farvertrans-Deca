@@ -13,6 +13,7 @@ export type CreatedDeca = {
   versionId: string;
   token: string;
   pdfSha256: string;
+  firstForCompany: boolean;
   claimToken: string;
   claimExpiresAt: Date;
 };
@@ -49,6 +50,7 @@ export async function createDeca(
         versionId: existing.versions[0].id,
         token: existing.versions[0].token,
         pdfSha256: existing.versions[0].pdfSha256 ?? "",
+        firstForCompany: false, // a repeat of an existing create is never "the first"
         claimToken: existing.claimTokens[0]?.token ?? "",
         claimExpiresAt: existing.claimTokens[0]?.expiresAt ?? new Date(),
       };
@@ -108,10 +110,17 @@ export async function createDeca(
 
   await maybeMarkFirstDeca(opts.companyId);
 
+  // First DeCA for this company by an authenticated user (ACCOUNT #23 milestone).
+  let firstForCompany = false;
+  if (opts.companyId) {
+    firstForCompany = (await prisma.deca.count({ where: { companyId: opts.companyId } })) === 1;
+  }
+
   return {
     ...result,
     token,
     pdfSha256: sha256,
+    firstForCompany,
     claimToken: opts.createdByUserId ? "" : claimToken,
     claimExpiresAt,
   };

@@ -19,7 +19,7 @@ export default async function OperadoresPage() {
 
   return (
     <>
-      <SiteHeader authed={!!user?.companyId} />
+      <SiteHeader authed={!!user?.companyId} companyName={user?.company?.name} />
       <main id="contenido" className="mx-auto max-w-[1100px] px-4 py-8 md:px-6">
         <h1 className="text-2xl font-bold">Captación por operador</h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">

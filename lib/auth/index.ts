@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, isStrongEnough, verifyPassword } from "./password";
@@ -86,4 +87,71 @@ export async function getCurrentUser() {
   const uid = verifySession(store.get(SESSION_COOKIE)?.value);
   if (!uid) return null;
   return prisma.user.findUnique({ where: { id: uid }, include: { company: true } });
+}
+
+// ---------------------------------------------------------------------------
+// Password reset (ACCOUNT #23) — token delivered by email; stored hashed.
+// ---------------------------------------------------------------------------
+
+const RESET_TTL_MIN = 60;
+const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
+
+/**
+ * Start a password reset. Always resolves the same way whether or not the email
+ * exists (no account enumeration). Returns the raw token + email ONLY when a
+ * user was found, so the caller can send the message.
+ */
+export async function requestPasswordReset(
+  emailRaw: string,
+): Promise<{ token: string; email: string; userId: string } | null> {
+  const email = normEmail(emailRaw);
+  const user = await prisma.user.findFirst({ where: { email } });
+  if (!user) return null;
+
+  const token = randomBytes(32).toString("base64url");
+  await prisma.passwordResetToken.create({
+    data: {
+      tokenHash: sha256(token),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + RESET_TTL_MIN * 60 * 1000),
+    },
+  });
+  return { token, email, userId: user.id };
+}
+
+export class ResetError extends Error {
+  constructor(
+    public code: "invalid" | "expired" | "used" | "weak_password",
+    message: string,
+  ) {
+    super(message);
+    this.name = "ResetError";
+  }
+}
+
+/** Complete a password reset. Single-use, TTL-checked. Invalidates other reset tokens. */
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<{ userId: string }> {
+  if (!isStrongEnough(newPassword))
+    throw new ResetError("weak_password", "La contraseña debe tener al menos 8 caracteres.");
+
+  const row = await prisma.passwordResetToken.findUnique({ where: { tokenHash: sha256(token) } });
+  if (!row) throw new ResetError("invalid", "Este enlace de recuperación no es válido.");
+  if (row.usedAt) throw new ResetError("used", "Este enlace de recuperación ya se ha utilizado.");
+  if (row.expiresAt.getTime() < Date.now())
+    throw new ResetError("expired", "El enlace de recuperación ha caducado. Pide otro.");
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: row.userId },
+      data: { passwordHash: hashPassword(newPassword) },
+    }),
+    prisma.passwordResetToken.updateMany({
+      where: { userId: row.userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+  return { userId: row.userId };
 }

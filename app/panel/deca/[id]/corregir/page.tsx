@@ -36,7 +36,7 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <SiteHeader authed />
+      <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-10 md:px-6">
         <CrearWizard
           initial={initial}

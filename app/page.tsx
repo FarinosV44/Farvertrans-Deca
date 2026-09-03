@@ -53,7 +53,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd()) }}
       />
-      <SiteHeader nav authed={authed} />
+      <SiteHeader nav authed={authed} companyName={user?.company?.name} />
 
       <main id="contenido" className="pb-24 md:pb-0">
         {/* Hero */}

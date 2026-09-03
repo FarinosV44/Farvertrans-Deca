@@ -216,6 +216,18 @@ model DecaAccessLog {
   @@map("deca_access_log")
 }
 
+/// One-time password-reset token (ACCOUNT #23). Short TTL, single use.
+model PasswordResetToken {
+  tokenHash String    @id @map("token_hash")
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("password_reset_token")
+}
+
 /// Sliding-window abuse counter keyed on hashed IP/fingerprint + window.
 model AbuseCounter {
   keyHash     String   @map("key_hash")
