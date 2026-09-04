@@ -184,8 +184,17 @@
     already in place (#19/#27/#28/#30). **Deferred with the user: Google OAuth handshake + 2-step
     progressive onboarding** — land together in the OAuth slice. Gate green: 98 unit + 120 e2e + 8
     compliance.
-  - **#32 CMS: not started** — the last V3 issue. Full DB-backed Guides + Blog CMS with admin
-    publishing (user's choice). Biggest remaining slice.
+  - **#32 SEO — Guides + Blog CMS (D-038), on `develop`:** `ContentItem` model (migration
+    `20260904160000_content`) + `/guias/[slug]` + `/blog/[slug]` (SSR, published-only, `?preview=1`
+    for internal) + `/guias` + `/blog` indexes + Article/BreadcrumbList JSON-LD + sitemap + slug
+    redirects. Safe in-house markdown renderer (no `dangerouslySetInnerHTML`). Admin:
+    `/admin/contenido` (+ nuevo / [id] / guias / blog), `ContentEditor` with live editorial warnings,
+    draft/publish/unpublish/archive, `POST`+`PATCH`+`DELETE /api/admin/contenido`. Core SEO cluster
+    stays in code (not migrated — churn for no gain). Seed content via `npm run seed:content`
+    (idempotent). Gate green: 105 unit + 125 e2e + 8 compliance.
+  - **All of Product V3 (#29–#38) is on `develop`.** Splits opened: #39 (company logo on PDF), #40
+    (PWA/offline). Deferred to the OAuth slice: Google handshake + 2-step onboarding (part of #30/#38).
+    Nothing on `main` yet — awaits the user's `develop`→`main` merge.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close

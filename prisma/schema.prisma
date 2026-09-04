@@ -335,3 +335,51 @@ model GenerationFailure {
   @@index([createdAt])
   @@map("generation_failure")
 }
+
+/// Editorial content managed from the admin CMS (SEO #32) — guides and blog
+/// posts rendered at /guias/[slug] and /blog/[slug]. Separate from the core
+/// SEO cluster (content/seo/pages.ts), which stays at root slugs.
+model ContentItem {
+  id                String        @id @default(cuid())
+  type              ContentType
+  slug              String        @unique
+  status            ContentStatus @default(draft)
+  title             String
+  excerpt           String
+  body              String // markdown
+  category          String?
+  tags              String[]      @default([])
+  heroImage         String?       @map("hero_image")
+  authorName        String?       @map("author_name")
+  focusKeyword      String?       @map("focus_keyword")
+  seoTitle          String?       @map("seo_title")
+  metaDescription   String?       @map("meta_description")
+  canonicalOverride String?       @map("canonical_override")
+  ogTitle           String?       @map("og_title")
+  ogDescription     String?       @map("og_description")
+  ogImage           String?       @map("og_image")
+  robotsIndex       Boolean       @default(true) @map("robots_index")
+  sources           Json          @default("[]") // {label,url}[]
+  relatedSlugs      String[]      @default([]) @map("related_slugs")
+  previousSlugs     String[]      @default([]) @map("previous_slugs")
+  ctaLabel          String?       @map("cta_label")
+  publishedAt       DateTime?     @map("published_at")
+  lastReviewedAt    DateTime?     @map("last_reviewed_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  @@index([type, status, publishedAt])
+  @@index([status])
+  @@map("content_item")
+}
+
+enum ContentType {
+  guide
+  blog
+}
+
+enum ContentStatus {
+  draft
+  published
+  archived
+}

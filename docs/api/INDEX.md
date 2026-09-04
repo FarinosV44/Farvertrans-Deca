@@ -19,6 +19,10 @@
 | hashPassword() / verifyPassword() / isStrongEnough() | function | lib/auth/password.ts | docs/reference/lib.md | scrypt password hashing (constant-time verify) |
 | signSession() / verifySession() / SESSION_COOKIE | fn/const | lib/auth/session.ts | docs/reference/lib.md | HMAC-signed 30-day session token + cookie options |
 | safeInternalPath() | function | lib/auth/safe-redirect.ts | docs/reference/lib.md | Post-auth `next` redirect safety (#38): only a same-origin path, never an absolute/protocol-relative URL or a bounce back into an auth screen |
+| contentInputSchema / contentWarnings() / ContentInput | module | lib/content/schema.ts | docs/reference/lib.md | CMS content shape + client-safe editorial warnings (#32) — heuristics, not a score |
+| createContent() / updateContent() / setStatus() / resolvePublic() / listPublished() / SlugTakenError | module | lib/content/cms.ts | docs/reference/lib.md | CMS DB layer (#32): guides/blog, slug-change redirects via previousSlugs, soft archive |
+| Markdown / extractHeadings() / slugifyHeading() | module | lib/content/markdown.tsx (+ markdown-toc.ts) | docs/reference/lib.md | Safe in-house Markdown→React renderer for CMS bodies (#32) — no dangerouslySetInnerHTML; headings/lists/links/callouts/tables/FAQ/[[cta]] |
+| GET/PATCH/DELETE /api/admin/contenido[/[id]] | route | app/api/admin/contenido/ | docs/reference/endpoints.md | CMS create / update+status / soft-archive (#32); internal session or x-fvd-admin-token, 404 otherwise |
 | claimDeca() / ClaimError | fn/class | lib/deca/claim.ts | docs/reference/lib.md | Attach an anonymous DeCA to a company via its one-time claim token (D-016) |
 | GET /api/saved | route | app/api/saved/route.ts | docs/reference/endpoints.md | The current user's saved companies/vehicles/addresses (wizard autofill) |
 | POST /api/saved/[kind] | route | app/api/saved/[kind]/route.ts | docs/reference/endpoints.md | Create a saved company/vehicle/address (scoped to the user); 422 on invalid |

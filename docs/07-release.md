@@ -143,6 +143,7 @@ repo is built to avoid that:
    npm install --omit=optional --foreground-scripts   # or `npm ci` on Node 22
    npx prisma generate
    npx prisma migrate deploy
+   npm run seed:content   # idempotent — seeds the initial CMS guides/blog (#32) if absent
    NEXT_STANDALONE=1 SKIP_BUILD_CHECKS=1 npm run build
    ```
 5. Restart the Node app in hPanel. `https://<domain>/health` must return `{"status":"ok","db":"up"}`.

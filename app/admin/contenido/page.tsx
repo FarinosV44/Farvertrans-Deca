@@ -1,38 +1,114 @@
 import Link from "next/link";
+import { listContent, type ContentType, type ContentStatus } from "@/lib/content/cms";
 import { SEO_PAGES } from "@/content/seo/pages";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
 
-export default async function AdminContenido() {
-  const pages = SEO_PAGES;
+type SP = { [k: string]: string | string[] | undefined };
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+const STATUS_TONE: Record<string, string> = {
+  published: "green",
+  draft: "yellow",
+  archived: "muted",
+};
+
+export default async function AdminContenido({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : (sp[k] as string | undefined));
+  const type = one("type") as ContentType | undefined;
+  const status = one("status") as ContentStatus | undefined;
+  const items = await listContent({ type, status });
+
+  const link = (patch: Record<string, string | undefined>) => {
+    const p = new URLSearchParams();
+    for (const [k, val] of Object.entries({ type, status, ...patch })) if (val) p.set(k, val);
+    const qs = p.toString();
+    return `/admin/contenido${qs ? `?${qs}` : ""}`;
+  };
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Contenido"
-        lead="Las páginas SEO actuales son estáticas (generadas del código). La gestión editorial de Guías y Blog — borradores, publicación, revisión, enlazado interno — llega con SEO #32."
+        lead="Guías y blog publicados desde aquí, sin desplegar. El clúster SEO principal sigue en el código y no se toca desde este panel."
+        action={
+          <Link
+            href="/admin/contenido/nuevo"
+            className="min-h-10 self-start rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-[var(--color-primary-contrast)] no-underline"
+          >
+            Nuevo
+          </Link>
+        }
       />
 
-      <Empty>
-        Guías y Blog con panel de publicación: pendiente de <strong>SEO #32</strong>. Hasta entonces
-        el contenido se edita en <code>content/seo/pages.ts</code> y se despliega con la app.
-      </Empty>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link
+          href={link({ type: undefined })}
+          className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 py-1 no-underline"
+        >
+          Todo
+        </Link>
+        <Link
+          href={link({ type: "guide" })}
+          className={`rounded-[var(--radius-sm)] border px-2 py-1 no-underline ${type === "guide" ? "border-[var(--color-primary)] font-medium text-[var(--color-primary)]" : "border-[var(--color-border)]"}`}
+        >
+          Guías
+        </Link>
+        <Link
+          href={link({ type: "blog" })}
+          className={`rounded-[var(--radius-sm)] border px-2 py-1 no-underline ${type === "blog" ? "border-[var(--color-primary)] font-medium text-[var(--color-primary)]" : "border-[var(--color-border)]"}`}
+        >
+          Blog
+        </Link>
+        <span className="mx-1 text-[var(--color-border)]">|</span>
+        {(["draft", "published", "archived"] as const).map((s) => (
+          <Link
+            key={s}
+            href={link({ status: status === s ? undefined : s })}
+            className={`rounded-[var(--radius-sm)] border px-2 py-1 no-underline ${status === s ? "border-[var(--color-primary)] font-medium text-[var(--color-primary)]" : "border-[var(--color-border)]"}`}
+          >
+            {s === "draft" ? "borradores" : s === "published" ? "publicados" : "archivados"}
+          </Link>
+        ))}
+      </div>
 
-      <section aria-labelledby="seo">
-        <h2 id="seo" className="mb-2 text-sm font-bold">
-          Páginas SEO publicadas ({pages.length})
-        </h2>
-        <Table head={["Slug", "Título", "Última revisión"]}>
-          {pages.map((p) => (
-            <Row key={p.slug}>
-              <Cell mono>
-                <Link href={`/${p.slug}`} className="no-underline" target="_blank" rel="noreferrer">
-                  /{p.slug}
+      {items.length === 0 ? (
+        <Empty>Ningún contenido con estos filtros. Empieza con «Nuevo».</Empty>
+      ) : (
+        <Table head={["Título", "Tipo", "Slug", "Estado", "Actualizado", "Publicado"]}>
+          {items.map((c) => (
+            <Row key={c.id}>
+              <Cell>
+                <Link href={`/admin/contenido/${c.id}`} className="font-medium no-underline">
+                  {c.title}
                 </Link>
               </Cell>
-              <Cell>{p.title}</Cell>
-              <Cell mono>
-                {p.lastReviewed ? p.lastReviewed : <Badge tone="yellow">sin fecha</Badge>}
+              <Cell>{c.type === "guide" ? "Guía" : "Blog"}</Cell>
+              <Cell mono>{c.slug}</Cell>
+              <Cell>
+                <Badge tone={STATUS_TONE[c.status] ?? "muted"}>{c.status}</Badge>
               </Cell>
+              <Cell mono>{fmt(c.updatedAt)}</Cell>
+              <Cell mono>{c.publishedAt ? fmt(c.publishedAt) : "—"}</Cell>
+            </Row>
+          ))}
+        </Table>
+      )}
+
+      <section aria-labelledby="cluster">
+        <h2 id="cluster" className="mb-2 text-sm font-bold">
+          Clúster SEO principal ({SEO_PAGES.length}) — editable en el código
+        </h2>
+        <Table head={["Slug", "Título", "Última revisión"]}>
+          {SEO_PAGES.map((p) => (
+            <Row key={p.slug}>
+              <Cell mono>
+                <a href={`/${p.slug}`} target="_blank" rel="noreferrer" className="no-underline">
+                  /{p.slug}
+                </a>
+              </Cell>
+              <Cell>{p.title}</Cell>
+              <Cell mono>{p.lastReviewed}</Cell>
             </Row>
           ))}
         </Table>

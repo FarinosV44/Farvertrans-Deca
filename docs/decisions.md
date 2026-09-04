@@ -492,3 +492,40 @@
   `/panel`). The company fieldset stays on the first `/registro` render
   (D-031/D-032); the OAuth round-trip is what will force a post-auth onboarding
   step, so both land together in the OAuth slice.
+
+## D-038 — Guides + Blog CMS with admin publishing (SEO #32)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** a DB-backed editorial content engine, separate from the core SEO
+  cluster.
+  - **Data:** `ContentItem` (migration `20260904160000_content`) — type
+    (guide|blog), slug (unique), status (draft|published|archived), title,
+    excerpt, markdown body, category, tags, hero image, author, all SEO fields
+    (seoTitle, metaDescription, canonical override, OG, robots index),
+    focusKeyword (editorial guidance only), sources, relatedSlugs, previousSlugs
+    (slug-change redirects), ctaLabel, publishedAt, lastReviewedAt.
+  - **Public:** `/guias/[slug]` + `/blog/[slug]` (SSR, published-only, draft →
+    404 unless `?preview=1` as an internal user), `/guias` + `/blog` indexes.
+    Premium `ArticleLayout` — breadcrumbs, ToC on long guides, autor / última
+    revisión, sources, "sigue leyendo", contextual CTAs. Article/BlogPosting +
+    BreadcrumbList JSON-LD. In the sitemap. A moved slug 301s from the old one.
+  - **Markdown:** an in-house safe renderer (`lib/content/markdown.tsx`) — React
+    elements only, never `dangerouslySetInnerHTML` for body content (T-5) —
+    supporting headings, lists, bold/italic/code/links, blockquote callouts,
+    tables, `::: faq` blocks and the `[[cta]]` token.
+  - **Admin:** `/admin/contenido` (list + type/status filters + the read-only
+    core cluster), `/admin/contenido/nuevo`, `/admin/contenido/[id]`,
+    `/admin/guias` + `/admin/blog` (filtered). `ContentEditor` — a plain
+    markdown textarea (not a page builder), live editorial warnings (missing
+    meta, long title, no CTA, normative claims with no source — heuristics, not
+    a fake score), draft / publish / unpublish / archive, public preview link.
+    `POST /api/admin/contenido` + `PATCH`/`DELETE /api/admin/contenido/[id]` —
+    internal only (404). Archive is soft; never a hard delete.
+  - **Analytics:** `content_view`, `content_cta_click`.
+- **The core SEO cluster stays in code and at root slugs.** The 10
+  `content/seo/pages.ts` pages are not migrated into the CMS — moving them would
+  churn every internal link, the sitemap and the SEO tests for no gain. The CMS
+  is the additive editorial layer; `/admin/contenido` shows the cluster as
+  read-only. Seeded editorial content (`prisma/content-seed.ts`,
+  `npm run seed:content`, idempotent, also run by `prisma/seed.ts`) covers the
+  non-overlapping pieces (cómo corregir, cómo llevarlo el conductor, errores
+  frecuentes, cuenta atrás) so the CMS is never empty.
