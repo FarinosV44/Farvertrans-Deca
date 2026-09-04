@@ -9,7 +9,10 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: { code: "unauthorized", message: "Inicia sesión." } }, { status: 401 });
+    return NextResponse.json(
+      { error: { code: "unauthorized", message: "Inicia sesión." } },
+      { status: 401 },
+    );
   }
   if (user.emailVerifiedAt) {
     return NextResponse.json({ ok: true, delivery: "already_verified" as const });

@@ -76,7 +76,9 @@ test.describe("BUILD 06 — production landing", () => {
   }) => {
     await page.goto("/");
     // hero: headline + proof + primary CTA above the fold
-    await expect(page.locator("h1")).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
+    await expect(page.locator("h1")).toHaveText(
+      "DeCA profesional, sencillo y listo para trabajar.",
+    );
     await expect(
       page.getByText(
         "Mercancías · PDF + QR · Custodia digital · Histórico · Multiusuario · Gratis durante la fase de lanzamiento",
@@ -177,7 +179,9 @@ test.describe("BUILD 06 — production landing", () => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
+    await expect(page.locator("h1")).toHaveText(
+      "DeCA profesional, sencillo y listo para trabajar.",
+    );
     const cta = page.getByTestId("cta-crear").first();
     await expect(cta).toHaveAttribute("href", "/crear");
     await cta.click();

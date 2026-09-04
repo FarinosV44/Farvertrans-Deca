@@ -80,7 +80,9 @@ test.describe("LAUNCH #20 — production happy path", () => {
     // 1-2. Landing → CREAR DECA GRATIS (mobile viewport)
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
+    await expect(page.locator("h1")).toHaveText(
+      "DeCA profesional, sencillo y listo para trabajar.",
+    );
     await page.getByTestId("cta-crear").first().click();
     await expect(page).toHaveURL(/\/crear$/);
     // no signup wall

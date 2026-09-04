@@ -188,7 +188,12 @@ export function RegisterForm({
               value={f.companyName}
               onChange={set("companyName")}
             />
-            <Field id="companyNif" label="CIF / NIF" value={f.companyNif} onChange={set("companyNif")} />
+            <Field
+              id="companyNif"
+              label="CIF / NIF"
+              value={f.companyNif}
+              onChange={set("companyNif")}
+            />
             <Field
               id="companyContactName"
               label="Persona de contacto (opcional)"

@@ -15,9 +15,7 @@ const schema = z.object({
   companyAddress: z.string().trim().max(300).optional().default(""),
   companyContactName: z.string().trim().max(200).optional().default(""),
   companyPhone: z.string().trim().max(40).optional().default(""),
-  companyProfile: z
-    .enum(["carrier_goods", "shipper", "operator", "carrier_passengers"])
-    .optional(),
+  companyProfile: z.enum(["carrier_goods", "shipper", "operator", "carrier_passengers"]).optional(),
   acceptTerms: z.boolean(),
   claim: z.string().trim().max(200).optional(),
   invite: z.string().trim().max(200).optional(),

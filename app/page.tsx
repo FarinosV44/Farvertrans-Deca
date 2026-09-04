@@ -252,7 +252,10 @@ export default async function HomePage() {
           <h2 id="operador" className="text-lg font-bold text-[var(--color-text-muted)]">
             {OPERATOR_TRUST.heading}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]" data-testid="operator-trust">
+          <p
+            className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]"
+            data-testid="operator-trust"
+          >
             {OPERATOR_TRUST.body}
           </p>
         </section>

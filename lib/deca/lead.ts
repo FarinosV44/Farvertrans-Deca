@@ -8,11 +8,7 @@ import { z } from "zod";
 export const LEAD_COOKIE = "fvd_lead";
 
 export const leadSchema = z.object({
-  leadName: z
-    .string()
-    .trim()
-    .min(2, "Indica tu nombre")
-    .max(200),
+  leadName: z.string().trim().min(2, "Indica tu nombre").max(200),
   leadEmail: z.string().trim().toLowerCase().email("Indica un email válido"),
 });
 

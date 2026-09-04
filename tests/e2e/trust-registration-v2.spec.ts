@@ -91,7 +91,9 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     const body = await res.json();
 
     await expect(page).toHaveURL(/\/verificar-email/);
-    await expect(page.getByRole("heading", { name: "Confirma tu correo electrónico" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Confirma tu correo electrónico" }),
+    ).toBeVisible();
     await expect(page.getByTestId("verify-email-address")).toBeVisible();
 
     // "Ya he confirmado mi cuenta" never traps the user — it always leaves.

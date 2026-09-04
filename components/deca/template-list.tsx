@@ -42,7 +42,10 @@ export function TemplateList({ templates }: { templates: Row[] }) {
             <div>
               <p className="font-medium">{t.name}</p>
               <p className="text-xs text-[var(--color-text-muted)]">
-                {[loadShort && unloadShort ? `${loadShort} → ${unloadShort}` : null, t.carrier?.name]
+                {[
+                  loadShort && unloadShort ? `${loadShort} → ${unloadShort}` : null,
+                  t.carrier?.name,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </p>

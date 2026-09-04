@@ -93,7 +93,9 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     await page.goto("/panel");
     await expect(page.getByRole("heading", { name: "Últimos documentos" })).toBeVisible();
-    await expect(page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid").first()).toBeVisible();
+    await expect(
+      page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid").first(),
+    ).toBeVisible();
 
     await page.goto("/panel/historico");
     await expect(page.getByText("1 documento")).toBeVisible();
@@ -128,7 +130,9 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     // row actions reach the owner detail + correction views
     await page.goto("/panel/historico");
-    const row = page.getByTestId("historico-table").locator("tr", { hasText: "Almacén Turia — Valencia → Plataforma Norte — Madrid" });
+    const row = page
+      .getByTestId("historico-table")
+      .locator("tr", { hasText: "Almacén Turia — Valencia → Plataforma Norte — Madrid" });
     await row.getByRole("link", { name: "Detalle" }).click();
     await expect(page).toHaveURL(/\/panel\/deca\/[a-z0-9]+$/i);
     await expect(page.getByRole("heading", { name: "Historial de versiones" })).toBeVisible();

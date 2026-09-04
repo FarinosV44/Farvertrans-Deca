@@ -17,7 +17,10 @@ const schema = z.object({ email: z.string().email() });
 export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: { code: "unauthorized", message: "Inicia sesión." } }, { status: 401 });
+    return NextResponse.json(
+      { error: { code: "unauthorized", message: "Inicia sesión." } },
+      { status: 401 },
+    );
   }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));

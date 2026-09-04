@@ -16,8 +16,7 @@ export default function TerminosPage() {
       <p>
         Estos términos regulan el uso de {BRAND.name}, un servicio operado por{" "}
         <strong>{LEGAL_ENTITY.name}</strong> (CIF {LEGAL_ENTITY.cif}). Al crear una cuenta aceptas
-        estos términos y la{" "}
-        <a href={LEGAL_ENTITY.privacyUrl}>política de privacidad</a>.
+        estos términos y la <a href={LEGAL_ENTITY.privacyUrl}>política de privacidad</a>.
       </p>
       <p className="text-xs text-[var(--color-text-muted)]">
         Versión {LEGAL_ENTITY.termsVersion}. El contenido detallado se completará con la revisión

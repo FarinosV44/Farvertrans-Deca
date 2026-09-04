@@ -43,8 +43,8 @@ export default async function ResultPage({
           <div>
             <h1 className="text-2xl font-bold">DeCA generado</h1>
             <p className="text-sm text-[var(--color-text-muted)]">
-              {formatLocationShort(c.data.loadLocation)} → {formatLocationShort(c.data.unloadLocation)}{" "}
-              · {doc.reference}
+              {formatLocationShort(c.data.loadLocation)} →{" "}
+              {formatLocationShort(c.data.unloadLocation)} · {doc.reference}
             </p>
           </div>
         </div>

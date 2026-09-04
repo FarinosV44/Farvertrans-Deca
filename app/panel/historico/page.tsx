@@ -170,9 +170,7 @@ export default async function HistoricoPage({
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-[var(--color-border)]">
-                  <td className="py-2">
-                    {r.loadDate || r.createdAt.toISOString().slice(0, 10)}
-                  </td>
+                  <td className="py-2">{r.loadDate || r.createdAt.toISOString().slice(0, 10)}</td>
                   <td>
                     {r.loadLocation} → {r.unloadLocation}
                   </td>

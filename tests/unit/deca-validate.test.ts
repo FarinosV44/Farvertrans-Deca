@@ -92,9 +92,7 @@ describe("validateDeca (R-2 / AC-09)", () => {
 
   it("rejects a malformed load/unload date", () => {
     expect(() => validateDeca({ ...valid, loadDate: "06/10/2026" })).toThrow(DecaValidationError);
-    expect(() => validateDeca({ ...valid, unloadDate: "06/10/2026" })).toThrow(
-      DecaValidationError,
-    );
+    expect(() => validateDeca({ ...valid, unloadDate: "06/10/2026" })).toThrow(DecaValidationError);
   });
 
   it("rejects an unload date before the load date (same day is allowed)", () => {

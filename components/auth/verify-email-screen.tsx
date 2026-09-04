@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 /** Best-effort webmail inbox link, by common provider domain — opens the inbox, never a compose window. */
 function webmailUrl(email: string): string | null {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  if (domain === "gmail.com" || domain === "googlemail.com") return "https://mail.google.com/mail/u/0/";
+  if (domain === "gmail.com" || domain === "googlemail.com")
+    return "https://mail.google.com/mail/u/0/";
   if (["outlook.com", "hotmail.com", "live.com", "msn.com"].includes(domain))
     return "https://outlook.live.com/mail/0/inbox";
   if (domain === "yahoo.com" || domain === "yahoo.es") return "https://mail.yahoo.com/";

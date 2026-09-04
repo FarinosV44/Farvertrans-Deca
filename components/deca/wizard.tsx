@@ -610,15 +610,13 @@ export function CrearWizard({
                         loadLocationProvince: t.loadLocation?.province || f.loadLocationProvince,
                         loadLocationCountry: t.loadLocation?.country || f.loadLocationCountry,
                         unloadLocationName: t.unloadLocation?.name || f.unloadLocationName,
-                        unloadLocationAddress:
-                          t.unloadLocation?.address || f.unloadLocationAddress,
+                        unloadLocationAddress: t.unloadLocation?.address || f.unloadLocationAddress,
                         unloadLocationPostalCode:
                           t.unloadLocation?.postalCode || f.unloadLocationPostalCode,
                         unloadLocationCity: t.unloadLocation?.city || f.unloadLocationCity,
                         unloadLocationProvince:
                           t.unloadLocation?.province || f.unloadLocationProvince,
-                        unloadLocationCountry:
-                          t.unloadLocation?.country || f.unloadLocationCountry,
+                        unloadLocationCountry: t.unloadLocation?.country || f.unloadLocationCountry,
                         goods: t.goods || f.goods,
                         weight: t.weight || f.weight,
                         tractorPlate: t.tractorPlate || f.tractorPlate,

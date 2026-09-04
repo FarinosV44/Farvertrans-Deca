@@ -82,7 +82,9 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
 
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
     await expect(page.getByRole("heading", { name: "DeCA generado" })).toBeVisible();
-    await expect(page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid")).toBeVisible();
+    await expect(
+      page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid"),
+    ).toBeVisible();
   });
 
   test("AC-02: a mandatory omission blocks advancing with a Spanish message + error summary", async ({

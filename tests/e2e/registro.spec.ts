@@ -70,7 +70,9 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
 
     await expect(page).toHaveURL(/\/verificar-email/);
     await page.goto("/panel");
-    await expect(page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid")).toBeVisible();
+    await expect(
+      page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid"),
+    ).toBeVisible();
   });
 
   test("AC: an auth failure never orphans/deletes the DeCA; the public URL still works", async ({

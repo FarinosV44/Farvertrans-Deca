@@ -297,7 +297,8 @@ export async function verifyEmailToken(token: string): Promise<{ userId: string 
   const row = await prisma.emailVerificationToken.findUnique({
     where: { tokenHash: sha256(token) },
   });
-  if (!row) throw new EmailVerificationError("invalid", "Este enlace de confirmación no es válido.");
+  if (!row)
+    throw new EmailVerificationError("invalid", "Este enlace de confirmación no es válido.");
   if (row.usedAt)
     throw new EmailVerificationError("used", "Este enlace de confirmación ya se ha utilizado.");
   if (row.expiresAt.getTime() < Date.now())
