@@ -131,7 +131,20 @@
     79 unit + 95 e2e + 8 compliance + typecheck + lint + format + keel-verify. **Not done (CREDENTIAL):**
     reproducing the production exception + switching prod to persistent storage — `npm run diagnose`
     names it.
-  - #30–#38: not started.
+  - **#33 ADMIN V2 — internal command center at `/admin` (D-030), on `develop`:** shell (sidebar +
+    mobile drawer, `requireInternal()` → 404, `noindex`, `/admin` in robots.txt) + 11 screens:
+    Resumen (KPIs + operational alerts), DeCA (cross-tenant table + detail), Empresas (+ detail),
+    Usuarios, Captación (reuses #28), Operadores (reuses #12), Contenido (SEO list; editorial CMS
+    blocked on #32), Errores (#29 failures by correlation code + triage), Sistema (`runDiagnostics`).
+    Global search API across company/user/DeCA ref/correlation code/prospect. `lib/admin/*`
+    (metrics, failures, records, search, range, guard). `PATCH /api/admin/failures/[id]` +
+    `GET /api/admin/search`. Gate green: 84 unit + 100 e2e + 8 compliance + typecheck + lint +
+    format + standalone build + keel-verify. Deferred (recorded in D-030): internal sub-roles,
+    editorial content CMS (#32), axe on admin screens.
+  - #30: **UI-only** agreed with the user — premium auth card redesign next; the real Google OAuth
+    handshake is a follow-up (needs an OAuth-lib decision superseding part of D-021 + Google
+    credentials).
+  - #31, #32, #34, #35, #36, #37, #38: not started.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close
@@ -147,11 +160,11 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: #29 (P0 FIX generation reliability, D-029) is on `develop`, gate green — awaits
-  the user's `develop`→`main` merge. Everything through #28 already on `main`.
+- Ready for `main`: #29 (D-029) + #33 (D-030) on `develop`, gate green — await the user's
+  `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V3 started: #29 (D-029, generation reliability + failure exposure) on `develop`, gate green, awaiting merge to `main`. #30–#38 not started.
+Last updated: 2026-09-04 — Product V3: #29 (D-029) + #33 (D-030, Admin V2 command center) on `develop`, gate green (84 unit + 100 e2e + 8 compliance), awaiting merge to `main`. Next: #30 UI-only. #31/#32/#34–#38 not started.

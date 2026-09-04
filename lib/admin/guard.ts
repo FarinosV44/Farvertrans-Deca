@@ -1,5 +1,6 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
+import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 
 /**
@@ -36,4 +37,15 @@ export function hasAdminToken(headers: Headers): boolean {
 export async function isInternalRequest(headers: Headers): Promise<boolean> {
   if (hasAdminToken(headers)) return true;
   return !!(await getInternalUser());
+}
+
+/**
+ * Gate an `/admin` page or Server Action. Returns the internal user, or renders
+ * the 404 page for everyone else — a normal customer must not learn the area
+ * exists. Call it as the first line of every admin page.
+ */
+export async function requireInternal(): Promise<InternalUser> {
+  const user = await getInternalUser();
+  if (!user) notFound();
+  return user;
 }

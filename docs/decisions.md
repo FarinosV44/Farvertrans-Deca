@@ -306,3 +306,30 @@
 - **Not done here (needs the real host — CREDENTIAL):** reproducing the specific production exception,
   and switching production to persistent storage. `npm run diagnose` is the tool that names it; the
   `storage_config` check warns explicitly when `FVD_STORAGE=local` runs without `FVD_STORAGE_DIR`.
+
+## D-030 — Admin V2 command center at `/admin` (ADMIN #33)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3, issues #29–#38)
+- **Decision:** a dedicated internal area at `/admin` (persistent desktop sidebar + mobile drawer),
+  gated by `requireInternal()` — 404, never 403, for every non-internal caller (no
+  security-by-hidden-link; `noindex` in the layout metadata + `/admin` added to `robots.txt`).
+  Sections: Resumen (KPIs today/7d/30d + operational alerts), DeCA (cross-tenant searchable table +
+  detail with version history, PDF hash, storage key, public/QR URL — content is summarised, never
+  editable from admin), Empresas (+ detail: members, invites, saved-data counts, acquisition, recent
+  DeCA), Usuarios, Captación (reuses #28 `acquisitionFunnel` + `ProspectManager`), Operadores
+  (reuses #12 `operatorStats`), Contenido, Errores (#29 failures by correlation code + triage:
+  resolve/note), Sistema (`runDiagnostics` report). Global search (`GET /api/admin/search`) across
+  company / user / DeCA reference / correlation code / prospect.
+- **Data models** (`lib/admin/*`) deliberately bypass the company scoping that `lib/data/*` enforces —
+  they are only reachable through `requireInternal()`. No auth secret is ever returned; DeCA payloads
+  are summarised, never dumped.
+- **Deliberate omissions (recorded, not forgotten):**
+  - **Fine-grained internal sub-roles** (`internal_admin` / `internal_operator`, #33 §10) — deferred.
+    The existing `Role.internal` is the single gate; a second tier is a schema + session change worth
+    its own slice once there is a reason for read-limited internal users.
+  - **Editorial content management** (Guías + Blog publishing, #33 §6) — blocked on SEO #32. `/admin/
+    contenido` lists the current static SEO pages and says so.
+  - **axe pass on admin screens** — the automated a11y pass covers public + customer screens; the
+    internal cockpit is out of that sweep for now (keyboard/labels still followed in the markup).
+- **Why:** the product can be operated day-to-day from one place — growth, customers, DeCA activity,
+  failures and system health — without SSH or ad-hoc SQL. The Errores + Sistema screens are the ones
+  D-029 forward-referenced.
