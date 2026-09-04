@@ -297,6 +297,26 @@
   - **Still open:** the panel banner (D-045, below) was merged to `main`
     AFTER this E2E pass, so it hasn't been re-verified live; Resend/hCaptcha
     are unconfigured (mail: warn, Google OAuth: warn — both non-blocking).
+  - **Also verified: versioning/corrections (#19) in production.**
+    `POST /api/deca/<id>/version` with a real `changeReason` → new version 2,
+    NEW independent token/PDF (SHA-256 `333f2d98…`). Version 1's URL re-fetched
+    afterward → byte-for-byte identical SHA-256 to before the correction
+    (R-13 retention, confirmed live, not just in the local suite). Document
+    detail page `/panel/deca/<id>` → 200.
+  - **Found and fixed live: double-slash URL bug (SEO-affecting, not
+    transactional).** `NEXT_PUBLIC_FVD_BASE_URL` was set on Hostinger WITH a
+    trailing slash; most URL call sites build `${baseUrl}/path` without
+    stripping it, so canonical tags, OG tags, and every `sitemap.xml` entry
+    were double-slashed (`decaprofesional.es//crear`) — confirmed live via
+    curl before the fix. The `/d/[token]` and QR URLs were unaffected only
+    because that one call site already stripped it defensively. Fixed at the
+    source in `lib/env.ts` (`publicEnv.baseUrl` now strips trailing slashes
+    once, so no per-call-site patching and no future recurrence regardless of
+    how the env var is set) — 2 new unit tests, 108 unit + 27 targeted e2e
+    (landing/SEO/compliance) green, merged to `main`. **Still needs a
+    redeploy** to actually take effect in production (it's a
+    `NEXT_PUBLIC_*` var, baked in at build time — editing the Hostinger env
+    var alone won't fix it without a rebuild).
 - **D-042 done, on `main`:** PRODUCT #41 goods-only
   slice — structured `loadLocation`/`unloadLocation` (name/address/postalCode/
   city/province/country, all required) replace the loose `origin`/`destination`
