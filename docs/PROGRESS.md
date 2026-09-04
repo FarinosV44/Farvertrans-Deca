@@ -219,4 +219,8 @@
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V3 (#29–#38) complete and MERGED to `main` (`f09dde0`); D-029…D-039. Splits #39 (PDF logo) / #40 (PWA). Google OAuth deferred. `develop` == `main`. No version tag.
+Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
+D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
+boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as
+real pages, rebuilt the footer (4 columns), added 4 legal pages, audited nav (no dead links). Gate:
+105 unit + 129 e2e + 8 compliance. `develop` == `main`. No version tag.
