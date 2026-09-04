@@ -47,12 +47,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       const status = e.code === "not_found" ? 404 : e.code === "forbidden" ? 403 : 422;
       return NextResponse.json({ error: { code: e.code, message: e.message } }, { status });
     }
-    console.error("[deca] correction failed", e);
+    const { recordGenerationFailure } = await import("@/lib/deca/failures");
+    const recorded = await recordGenerationFailure(e, {
+      route: "POST /api/deca/[id]/version",
+      authenticated: true,
+      companyId: user.companyId,
+    });
     return NextResponse.json(
       {
         error: {
-          code: "internal",
-          message: "No se pudo guardar la corrección. Inténtalo de nuevo.",
+          code: "generation_failed",
+          message: recorded.message,
+          correlationId: recorded.correlationId,
+          retryable: true,
+          ...(process.env.FVD_DEBUG === "1" ? { stage: recorded.stage } : {}),
         },
       },
       { status: 500 },

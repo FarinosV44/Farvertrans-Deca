@@ -1,20 +1,18 @@
 import "server-only";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
 export { pdfSha256 } from "./hash";
+export { StorageError } from "./errors";
 
-export class StorageError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "StorageError";
-  }
-}
+import { StorageError } from "./errors";
 
 export interface PdfStore {
   put(key: string, body: Buffer): Promise<void>;
   get(key: string): Promise<Buffer>;
+  /** Best-effort removal — used to clean up an orphan object when the DB write fails (#29). */
+  del(key: string): Promise<void>;
 }
 
 /**
@@ -39,6 +37,10 @@ class LocalFsStore implements PdfStore {
     if (!existsSync(file)) throw new StorageError(`not found: ${key}`);
     return readFile(file);
   }
+  async del(key: string) {
+    const file = path.join(this.root, key);
+    if (existsSync(file)) await rm(file, { force: true });
+  }
 }
 
 /** Private Supabase Storage bucket (production). */
@@ -61,6 +63,10 @@ class SupabaseStore implements PdfStore {
     const { data, error } = await c.download(key);
     if (error || !data) throw new StorageError(error?.message ?? "download failed");
     return Buffer.from(await data.arrayBuffer());
+  }
+  async del(key: string) {
+    const c = await this.client();
+    await c.remove([key]);
   }
 }
 

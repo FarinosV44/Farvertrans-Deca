@@ -275,3 +275,34 @@
   hang workaround (Prisma engine download) and the Node 22 recommendation.
 - **Copy:** dropped the hedge "al menos" from the free/unlimited marketing lines — now
   "Sin límite / Gratis **hasta el 31/12/2026**". Legal "conservar **al menos** un año" (R-10) kept.
+
+## D-029 — Generation failures are staged, correlated and recoverable (P0 FIX #29)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3, issues #29–#38)
+- **Problem:** every render/storage/database failure collapsed into one generic 500
+  ("No se pudo generar el DeCA"). Neither the user nor support could tell a missing bucket from a
+  dead database, and diagnosing it needed SSH access to the host's logs.
+- **Decision:**
+  - `lib/deca/generation.ts` (pure) classifies a failure into one of six stages — `validation`,
+    `configuration`, `pdf_render`, `pdf_storage`, `database`, `unknown` — and mints a 6-character
+    correlation code from an unambiguous alphabet (no O/0, no I/1) that the user can read out.
+  - `lib/deca/persist.ts` wraps each pipeline stage; a DB failure AFTER the object upload deletes the
+    stored object best-effort, so unreachable PDFs never accumulate (issue §6).
+  - `lib/deca/failures.ts` logs one structured line and writes a `generation_failure` row
+    (migration `20260904140000`). The row holds the stage, the error class and a **redacted** message —
+    emails and identifier-like runs are stripped — plus runtime metadata. Never the DeCA payload.
+  - The API answers `{ code: "generation_failed", message, correlationId, retryable: true }`; the
+    stage itself is added only when `FVD_DEBUG=1`.
+  - The wizard keeps every field, shows the code and offers `Reintentar generación`, retrying with the
+    SAME idempotency key — a retry can never produce a second document.
+  - `POST /api/deca` resolves the idempotency key BEFORE the anonymous-creation rate limiter: a replay
+    creates nothing, so a user recovering from a transient failure is never answered with a 429.
+  - `lib/diagnostics.ts` + `GET /api/admin/diagnostics` + `npm run diagnose -- <url>` verify a real
+    deployment: env, DB, migrations, PDF render smoke, storage write/read/delete round-trip, public
+    URL (HTTPS in production), providers and the last 24 h of generation health.
+  - `lib/admin/guard.ts` is the single internal-authorization surface (internal-role session or
+    `FVD_ADMIN_TOKEN` header); every internal route answers 404, never 403.
+- **Why:** a failure nobody can diagnose is a failure that repeats. The correlation code turns a
+  support call into a lookup, and the readiness script turns a deploy into a verified deploy.
+- **Not done here (needs the real host — CREDENTIAL):** reproducing the specific production exception,
+  and switching production to persistent storage. `npm run diagnose` is the tool that names it; the
+  `storage_config` check warns explicitly when `FVD_STORAGE=local` runs without `FVD_STORAGE_DIR`.

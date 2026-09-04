@@ -310,3 +310,28 @@ model AbuseCounter {
   @@id([keyHash, windowStart])
   @@map("abuse_counter")
 }
+
+/// A classified DeCA generation failure (P0 FIX #29) — the diagnosis surface behind
+/// `/admin/errores` (#33). Holds NO DeCA payload and no personal data: only the
+/// stage, a redacted error summary and runtime metadata, keyed by the short
+/// correlation code the user is shown.
+model GenerationFailure {
+  id            String    @id @default(cuid())
+  correlationId String    @unique @map("correlation_id")
+  stage         String
+  errorClass    String    @map("error_class")
+  message       String
+  route         String?
+  authenticated Boolean   @default(false)
+  companyId     String?   @map("company_id")
+  appVersion    String?   @map("app_version")
+  storageDriver String?   @map("storage_driver")
+  retriedOk     Boolean   @default(false) @map("retried_ok")
+  resolvedAt    DateTime? @map("resolved_at")
+  note          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([stage, createdAt])
+  @@index([createdAt])
+  @@map("generation_failure")
+}

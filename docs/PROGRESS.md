@@ -115,6 +115,23 @@
   workspaces + invitations (`/panel/equipo`), and the operator acquisition engine
   (`/operadores/captacion` — prospects, onboarding links, activation funnel). 8 commits on `develop`,
   8 new e2e specs, 4 migrations (`20260904090000`…`_120000`). Merged to `main` — CI status below.
+- **Product V3 — #29–#38 (in progress):**
+  - **#29 P0 FIX — generation reliability + real failure exposure (D-029), on `develop`:** every
+    render/storage/DB failure is now classified into a stage (`validation` / `configuration` /
+    `pdf_render` / `pdf_storage` / `database` / `unknown`) and carries a 6-char correlation code the
+    user reads out. `lib/deca/generation.ts` (pure classification + code + PII redaction),
+    `lib/deca/failures.ts` (structured log line + `generation_failure` row — never the payload),
+    `lib/deca/persist.ts` (per-stage wrappers + orphan-object cleanup when the DB write fails after
+    upload), `lib/diagnostics.ts` + `GET /api/admin/diagnostics` + `npm run diagnose -- <url>`
+    (deploy readiness: env, DB, migrations, PDF render smoke, storage round-trip, HTTPS base URL,
+    providers, 24 h generation health), `lib/admin/guard.ts` (internal session or `FVD_ADMIN_TOKEN`
+    header; 404 never 403). Wizard shows the code and retries with the SAME idempotency key.
+    `POST /api/deca` resolves the idempotency key BEFORE the rate limiter so an idempotent replay is
+    never answered with 429. Migration `20260904140000_generation_failure`. Gate green:
+    79 unit + 95 e2e + 8 compliance + typecheck + lint + format + keel-verify. **Not done (CREDENTIAL):**
+    reproducing the production exception + switching prod to persistent storage — `npm run diagnose`
+    names it.
+  - #30–#38: not started.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close
@@ -130,10 +147,11 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: nothing pending — everything through #28 merged. `develop` == `main`.
+- Ready for `main`: #29 (P0 FIX generation reliability, D-029) is on `develop`, gate green — awaits
+  the user's `develop`→`main` merge. Everything through #28 already on `main`.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V2 (#21–#28) on main; + D-028 (CTA text visibility fix, SKIP_BUILD_CHECKS, copy). develop == main.
+Last updated: 2026-09-04 — Product V3 started: #29 (D-029, generation reliability + failure exposure) on `develop`, gate green, awaiting merge to `main`. #30–#38 not started.

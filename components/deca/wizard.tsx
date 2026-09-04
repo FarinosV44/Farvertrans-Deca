@@ -160,11 +160,14 @@ export function CrearWizard({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  /** A classified generation failure (#29): calm message + correlation code + retry. */
+  const [failure, setFailure] = useState<{ message: string; correlationId?: string } | null>(null);
   const idempotencyKey = useMemo(
     () => (typeof crypto !== "undefined" ? crypto.randomUUID() : String(Date.now())),
     [],
   );
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const failureRef = useRef<HTMLDivElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
 
@@ -272,6 +275,7 @@ export function CrearWizard({
     }
     setSubmitting(true);
     setSubmitError(null);
+    setFailure(null);
     try {
       if (isCorrection) {
         const res = await fetch(`/api/deca/${correctDecaId}/version`, {
@@ -309,6 +313,17 @@ export function CrearWizard({
       }
 
       if (!res.ok) {
+        // A classified server-side failure keeps the draft intact and offers a
+        // retry with the SAME idempotency key, so it can never duplicate (#29).
+        if (data?.error?.code === "generation_failed") {
+          setFailure({
+            message: data.error.message ?? "No hemos podido generar el documento.",
+            correlationId: data.error.correlationId,
+          });
+          setSubmitting(false);
+          requestAnimationFrame(() => failureRef.current?.focus());
+          return;
+        }
         if (res.status === 422 && data?.error?.fields) {
           const flat: Record<string, string> = {};
           for (const [k, v] of Object.entries(data.error.fields as Record<string, string[]>)) {
@@ -330,8 +345,9 @@ export function CrearWizard({
       const q = data.claimToken ? `?claim=${encodeURIComponent(data.claimToken)}` : "";
       router.push(`/crear/${data.decaId}${q}`);
     } catch {
-      setSubmitError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setFailure({ message: "Sin conexión. Revisa tu red e inténtalo de nuevo." });
       setSubmitting(false);
+      requestAnimationFrame(() => failureRef.current?.focus());
     }
   }
 
@@ -690,6 +706,46 @@ export function CrearWizard({
           <p role="alert" className="mt-4 text-sm text-[var(--color-danger)]">
             {submitError}
           </p>
+        )}
+
+        {failure && (
+          <div
+            ref={failureRef}
+            tabIndex={-1}
+            role="alert"
+            data-testid="generation-failure"
+            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft,#fff5f5)] p-4"
+          >
+            <p className="font-medium text-[var(--color-danger)]">No se ha generado el DeCA</p>
+            <p className="mt-1 text-sm">{failure.message}</p>
+            {failure.correlationId && (
+              <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                Código: <strong data-testid="failure-code">{failure.correlationId}</strong> —
+                dínoslo si vuelve a ocurrir y localizaremos el fallo exacto.
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button
+                type="button"
+                data-testid="retry-generate"
+                onClick={() => void submit()}
+                disabled={submitting}
+                className="btn-primary min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
+              >
+                {submitting ? "Generando…" : "Reintentar generación"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFailure(null);
+                  setStep(0);
+                }}
+                className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 font-medium"
+              >
+                Volver a revisar datos
+              </button>
+            </div>
+          </div>
         )}
 
         <div className="mt-6 flex gap-3">

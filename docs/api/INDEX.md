@@ -79,3 +79,8 @@
 | prisma | const | lib/prisma.ts | docs/reference/lib.md | Shared PrismaClient singleton |
 | APP_VERSION | const | lib/version.ts | docs/reference/lib.md | Single source of the app version |
 | es | const | lib/i18n/es.ts | docs/reference/lib.md | es-ES string catalog |
+| GENERATION_STAGES / GenerationError / classifyError() / newCorrelationId() / safeErrorSummary() / stageMessage() | module | lib/deca/generation.ts | docs/reference/lib.md | Pure stage classification for DeCA generation failures (#29) + the short user-facing correlation code; redacts PII from every logged message |
+| recordGenerationFailure() / markFailureRetried() / storageDriver() | function | lib/deca/failures.ts | docs/reference/lib.md | Log + persist a classified generation failure keyed by correlation code; never throws, never stores payload/PII |
+| runDiagnostics() / DiagnosticsReport | fn/type | lib/diagnostics.ts | docs/reference/lib.md | Production readiness probes: env, DB, schema, PDF render smoke, storage round-trip, base URL, providers, 24h generation health. Returns no secret |
+| getInternalUser() / hasAdminToken() / isInternalRequest() | function | lib/admin/guard.ts | docs/reference/lib.md | Internal-area authorization: internal-role session or FVD_ADMIN_TOKEN header; callers answer 404 (never 403) |
+| GET /api/admin/diagnostics | route | app/api/admin/diagnostics/route.ts | docs/reference/endpoints.md | Readiness report for deploy verification (`npm run diagnose -- <url>`); internal session or x-fvd-admin-token, 404 otherwise; 503 when a critical check fails |
