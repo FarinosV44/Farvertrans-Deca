@@ -62,33 +62,33 @@ export async function POST(req: Request) {
     // not authed — anonymous path
   }
 
-  // An idempotent replay (the wizard retries a failed generation with the SAME
-  // key, D-029) must never be rate-limited: it creates nothing, it only returns
-  // the document that already exists. Checking it before the abuse gate means a
-  // user recovering from a transient failure can't be thrown a 429 (#29).
-  let idempotentReplay = false;
-  if (idempotencyKey) {
-    const { prisma } = await import("@/lib/prisma");
-    idempotentReplay = !!(await prisma.deca.findUnique({
-      where: { idempotencyKey },
-      select: { id: true },
-    }));
-  }
-
-  // Abuse controls apply to ANONYMOUS creation only — a signed-in company is
-  // already accountable. A first-time user never crosses the soft threshold.
-  if (!owner && !idempotentReplay) {
-    const { checkAbuse } = await import("@/lib/abuse");
-    const { abuseResponse } = await import("@/lib/abuse/response");
-    const decision = await checkAbuse("anon_create", req.headers, {
-      fingerprint: req.headers.get("x-fvd-fp"),
-      challengeToken: req.headers.get("x-fvd-challenge"),
-    });
-    const blocked = abuseResponse(decision);
-    if (blocked) return blocked;
-  }
-
   try {
+    // An idempotent replay (the wizard retries a failed generation with the SAME
+    // key, D-029) must never be rate-limited: it creates nothing, it only returns
+    // the document that already exists. Checking it before the abuse gate means a
+    // user recovering from a transient failure can't be thrown a 429 (#29).
+    let idempotentReplay = false;
+    if (idempotencyKey) {
+      const { prisma } = await import("@/lib/prisma");
+      idempotentReplay = !!(await prisma.deca.findUnique({
+        where: { idempotencyKey },
+        select: { id: true },
+      }));
+    }
+
+    // Abuse controls apply to ANONYMOUS creation only — a signed-in company is
+    // already accountable. A first-time user never crosses the soft threshold.
+    if (!owner && !idempotentReplay) {
+      const { checkAbuse } = await import("@/lib/abuse");
+      const { abuseResponse } = await import("@/lib/abuse/response");
+      const decision = await checkAbuse("anon_create", req.headers, {
+        fingerprint: req.headers.get("x-fvd-fp"),
+        challengeToken: req.headers.get("x-fvd-challenge"),
+      });
+      const blocked = abuseResponse(decision);
+      if (blocked) return blocked;
+    }
+
     const { createDeca } = await import("@/lib/deca/persist");
     const created = await createDeca(validated, { idempotencyKey, ...owner });
     return NextResponse.json(

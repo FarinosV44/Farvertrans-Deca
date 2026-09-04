@@ -382,10 +382,14 @@ export function CrearWizard({
       if (!res.ok) {
         // A classified server-side failure keeps the draft intact and offers a
         // retry with the SAME idempotency key, so it can never duplicate (#29).
-        if (data?.error?.code === "generation_failed") {
+        // Any other 5xx (an unclassified crash) gets the same treatment rather
+        // than a dead-end message — the draft is never lost either way.
+        if (data?.error?.code === "generation_failed" || res.status >= 500) {
           setFailure({
-            message: data.error.message ?? "No hemos podido generar el documento.",
-            correlationId: data.error.correlationId,
+            message:
+              data?.error?.message ??
+              "No hemos podido generar el documento. Tus datos siguen guardados. Reintenta en unos segundos.",
+            correlationId: data?.error?.correlationId,
           });
           setSubmitting(false);
           requestAnimationFrame(() => failureRef.current?.focus());

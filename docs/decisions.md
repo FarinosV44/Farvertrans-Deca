@@ -560,3 +560,46 @@
 - **Also:** `/admin` Resumen now shows real content KPIs (guías/blog publicados,
   borradores, clics de CTA desde contenido) via `contentStats()` instead of the
   "llega con #32" stub, and the e2e spec cleans up the content it creates.
+
+## D-041 — /blog + /guias production crash fixed; footer rebuilt; legal pages added
+- Date / phase: 2026-09-04 / post-V3 hardening
+- **Root cause (verified):** `app/guias/page.tsx` and `app/blog/page.tsx` called
+  `listContent()` (a raw Prisma query) with no error handling. Any DB/config
+  problem on the deploy (unmigrated `content_item` table, unreachable
+  `DATABASE_URL`, a misconfigured `FVD_STORAGE`/Supabase env) threw an
+  unhandled exception, which Next's root `error.tsx` boundary caught and
+  rendered as the generic "Algo no ha ido bien" screen — confirmed by
+  reproducing the exact boundary text the user reported. The landing page never
+  touches `content_item`, which is why `/` kept working.
+- **Fix — defensive data layer:** `listPublishedFullSafe()`, `resolvePublicSafe()`,
+  `resolveRelatedSafe()` (`lib/content/cms.ts`) catch and log
+  (`content_index_failed` / `content_page_failed` / preview) instead of
+  throwing; `/guias` and `/blog` render an elegant empty state on any failure,
+  never the framework error page. `/guias/[slug]` and `/blog/[slug]` still 404
+  correctly when content genuinely doesn't exist.
+- **Also found + fixed the same class of bug in DeCA generation itself:**
+  `POST /api/deca`'s idempotency pre-check and the abuse-gate call (added in
+  D-029/#29) sat OUTSIDE the try/catch that classifies failures — a DB hiccup
+  there produced a raw, unclassified 500 (no correlation code, no
+  `generation_failure` row, the wizard's generic "No se pudo generar el DeCA"
+  message) instead of the staged failure #29 promises. Moved both inside the
+  try/catch. The wizard also now treats ANY 5xx as a retryable classified
+  failure (not only `generation_failed`), so an unclassified crash still keeps
+  the draft and offers a retry instead of a dead end.
+- **`/blog` and `/guias` rebuilt as real pages** (not placeholders): H1, intro,
+  `ArticleCard` (title, excerpt, category, date, estimated reading time, CTA),
+  responsive grid, per-type JSON-LD (`Blog`/`BlogPosting` on `/blog`,
+  `CollectionPage` on `/guias`), canonical + OG metadata. `/guias` adds a
+  client-side search/filter (`GuideSearch`) — no new API route needed at this
+  catalog size.
+- **Footer rebuilt** as a 4-column product footer (Producto / Recursos / Legal +
+  brand column), better hierarchy, hover states, mobile stacking, the BOE
+  reference kept with its link, a clickable support email.
+- **Four legal pages added** (`/aviso-legal`, `/privacidad`, `/cookies`,
+  `/contacto`) — real content, `noindex,follow`. The legal-entity identity
+  (razón social, NIF, domicilio) is explicitly flagged as "se publicará antes
+  del lanzamiento" rather than inventing one — no fabricated company data,
+  consistent with D-039.
+- **Navigation audited**: `tests/e2e/nav-links.spec.ts` crawls every header and
+  footer link and asserts 200; every route the header/footer can reach now
+  exists.

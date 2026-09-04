@@ -113,6 +113,36 @@ export async function listContent(filter: { type?: ContentType; status?: Content
   });
 }
 
+/** Published items of one type, newest first — the `/guias` and `/blog` indexes. */
+export async function listPublishedFull(type: ContentType): Promise<ContentItem[]> {
+  return prisma.contentItem.findMany({
+    where: { type, status: "published" },
+    orderBy: { publishedAt: "desc" },
+  });
+}
+
+/**
+ * Safe wrapper for the public `/guias` and `/blog` index pages: a DB outage or
+ * a pending migration must render an elegant empty state, never the framework
+ * error boundary. Logs one structured line so the failure is diagnosable
+ * (consistent with #29's stage-aware failures) without ever throwing to the caller.
+ */
+export async function listPublishedFullSafe(type: ContentType): Promise<ContentItem[]> {
+  try {
+    return await listPublishedFull(type);
+  } catch (e) {
+    console.error(
+      JSON.stringify({
+        evt: "content_index_failed",
+        type,
+        errorClass: e instanceof Error ? e.name : typeof e,
+        message: e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200),
+      }),
+    );
+    return [];
+  }
+}
+
 /** A published item by public slug — or a redirect target if the slug moved. */
 export async function resolvePublic(
   type: ContentType,
@@ -128,6 +158,31 @@ export async function resolvePublic(
   });
   if (moved) return { redirectTo: `/${type === "guide" ? "guias" : "blog"}/${moved.slug}` };
   return null;
+}
+
+/**
+ * Safe wrapper for `resolvePublic` on the `/guias/[slug]` and `/blog/[slug]`
+ * detail routes: a DB outage renders the normal 404 (via the caller's
+ * `notFound()`) instead of the framework error boundary. Logged, never thrown.
+ */
+export async function resolvePublicSafe(
+  type: ContentType,
+  slug: string,
+): Promise<{ item: ContentItem } | { redirectTo: string } | null> {
+  try {
+    return await resolvePublic(type, slug);
+  } catch (e) {
+    console.error(
+      JSON.stringify({
+        evt: "content_page_failed",
+        type,
+        slug,
+        errorClass: e instanceof Error ? e.name : typeof e,
+        message: e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200),
+      }),
+    );
+    return null;
+  }
 }
 
 /** Every published item, for the sitemap and static params. */
@@ -150,4 +205,13 @@ export async function resolveRelated(slugs: string[]) {
     title: r.title,
     href: `/${r.type === "guide" ? "guias" : "blog"}/${r.slug}`,
   }));
+}
+
+/** Safe wrapper — a failure here must never take down an otherwise-resolved article page. */
+export async function resolveRelatedSafe(slugs: string[]) {
+  try {
+    return await resolveRelated(slugs);
+  } catch {
+    return [];
+  }
 }

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ArticleLayout } from "@/components/content/article-layout";
 import {
-  resolvePublic,
-  resolveRelated,
+  resolvePublicSafe,
+  resolveRelatedSafe,
   getContentById,
   getAnyStatusBySlug,
   type ContentType,
@@ -23,7 +23,7 @@ function familyPath(type: ContentType) {
 }
 
 export async function contentMetadata(type: ContentType, slug: string): Promise<Metadata> {
-  const resolved = await resolvePublic(type, slug);
+  const resolved = await resolvePublicSafe(type, slug);
   if (!resolved || "redirectTo" in resolved) return {};
   const { item } = resolved;
   const url = item.canonicalOverride || `${publicEnv.baseUrl}/${familyPath(type)}/${item.slug}`;
@@ -54,25 +54,37 @@ export async function ContentPage({
   slug: string;
   preview?: string;
 }) {
-  // Internal preview of any status.
+  // Internal preview of any status. Any failure here falls through to the
+  // normal published-only lookup below rather than crashing the page.
   if (preview) {
-    const internal = await getInternalUser();
-    if (internal) {
-      const byId = /^[a-z0-9]{20,}$/i.test(slug) ? await getContentById(slug) : null;
-      const item = byId ?? (await getAnyStatusBySlug(type, slug));
-      if (item && item.type === type) {
-        const related = await resolveRelated(item.relatedSlugs);
-        return <ArticleLayout item={item} related={related} preview />;
+    try {
+      const internal = await getInternalUser();
+      if (internal) {
+        const byId = /^[a-z0-9]{20,}$/i.test(slug) ? await getContentById(slug) : null;
+        const item = byId ?? (await getAnyStatusBySlug(type, slug));
+        if (item && item.type === type) {
+          const related = await resolveRelatedSafe(item.relatedSlugs);
+          return <ArticleLayout item={item} related={related} preview />;
+        }
       }
+    } catch (e) {
+      console.error(
+        JSON.stringify({
+          evt: "content_preview_failed",
+          type,
+          slug,
+          message: e instanceof Error ? e.message.slice(0, 200) : String(e),
+        }),
+      );
     }
   }
 
-  const resolved = await resolvePublic(type, slug);
+  const resolved = await resolvePublicSafe(type, slug);
   if (!resolved) notFound();
   if ("redirectTo" in resolved) redirect(resolved.redirectTo);
 
   const { item } = resolved;
-  const related = await resolveRelated(item.relatedSlugs);
+  const related = await resolveRelatedSafe(item.relatedSlugs);
   const url = `${publicEnv.baseUrl}/${familyPath(type)}/${item.slug}`;
   const jsonLd = [
     {
