@@ -26,9 +26,23 @@ async function registerAndCreate(page: Page, company: string, destination = "Mad
   ] as const)
     await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", "Valencia");
-  await page.fill("#destination", destination);
-  await page.fill("#transportDate", "2026-10-06");
+  for (const [s, v] of [
+    ["#loadLocationName", "Almacén Valencia"],
+    ["#loadLocationAddress", "Calle 1"],
+    ["#loadLocationPostalCode", "46001"],
+    ["#loadLocationCity", "Valencia"],
+    ["#loadLocationProvince", "Valencia"],
+    ["#loadLocationCountry", "España"],
+    ["#loadDate", "2026-10-06"],
+    ["#unloadLocationName", "Almacén Destino"],
+    ["#unloadLocationAddress", "Av 2"],
+    ["#unloadLocationPostalCode", "50001"],
+    ["#unloadLocationCity", destination],
+    ["#unloadLocationProvince", destination],
+    ["#unloadLocationCountry", "España"],
+    ["#unloadDate", "2026-10-06"],
+  ] as const)
+    await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", "Palés de cerámica");
   await page.fill("#weight", "12000 kg");
@@ -70,7 +84,7 @@ test.describe("PRODUCT #34 — history export + workflow status", () => {
     for await (const chunk of stream) csv += chunk;
 
     expect(download.suggestedFilename()).toMatch(/^deca-historial-\d{4}-\d{2}-\d{2}\.csv$/);
-    expect(csv).toContain("referencia,creado,fecha_transporte");
+    expect(csv).toContain("referencia,creado,fecha_carga");
     expect(csv).toContain("Zaragoza");
     expect(csv).toContain("Vigente");
     // never another tenant's route

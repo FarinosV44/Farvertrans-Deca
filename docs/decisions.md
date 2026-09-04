@@ -603,3 +603,67 @@
 - **Navigation audited**: `tests/e2e/nav-links.spec.ts` crawls every header and
   footer link and asserts 200; every route the header/footer can reach now
   exists.
+
+## D-042 — Goods DeCA: structured loading/unloading locations + separate load/unload dates (PRODUCT #41, goods only)
+- Date / phase: 2026-09-04 / launch execution (user directive: production stability → generation → legal data model)
+- **Decision:** for **goods (`mercancías`) transport only**, replaced the loose
+  `origin` (string) / `destination` (string) / `transportDate` (single date)
+  fields with:
+  - `loadLocation` / `unloadLocation` — required structured addresses
+    (`{name, address, postalCode, city, province, country}`, `lib/deca/location.ts`),
+    matching #41 §2's minimum: company/establishment name + complete address.
+  - `loadDate` / `unloadDate` — separate required dates, `unloadDate >= loadDate`
+    enforced both client-side (wizard step 2, immediate feedback) and
+    server-side (`decaPayloadSchema` refine — cannot be bypassed via a direct
+    API call). Same-day loading/unloading is explicitly allowed.
+  - No DB migration: `dataJson` is already a JSON blob (schema-free at the
+    Postgres level), and `Deca.serviceStart`/`serviceEnd` already existed as
+    columns — `loadDate`→`serviceStart`, `unloadDate`→`serviceEnd`
+    (`lib/deca/persist.ts`). This is the first time `serviceEnd` is ever
+    populated, which activates the previously-dead R-9 deactivation window
+    (`lib/deca/deactivation.ts`) for NEW documents only; existing documents
+    keep `serviceEnd = null` and stay always available — not a regression.
+  - Touched: PDF (`lib/pdf/deca-document.tsx`), review summary + wizard step 2 UI
+    (`components/deca/wizard.tsx`), document cockpit (`lib/deca/detail.ts` diff
+    FIELDS extended to track city/province too, `components/deca/doc-summary.tsx`),
+    history + CSV export (`lib/data/history.ts`, `lib/data/history-filter.ts`,
+    `lib/deca/export.ts` — CSV columns `fecha_carga`/`fecha_descarga`/
+    `lugar_carga`/`lugar_descarga`), admin cross-tenant table/search
+    (`lib/admin/records.ts`), templates (`lib/data/templates.ts`,
+    `components/deca/{save-template,template-list}.tsx`), all `/panel/*` and
+    `/crear/*` pages, `lib/diagnostics.ts` smoke payload,
+    `docs/legal-data-model.md` (full rewrite of the requirement→field mapping).
+  - Test suite: `tests/unit/{deca-validate,deca-diff,deca-export,
+    deca-generation-pipeline,history-filter}.test.ts` + all 16 e2e specs that
+    filled `#origin`/`#destination`/`#transportDate` (`tests/e2e/{crear,
+    creator-v2,creator-ux31,team,driver-delivery,export-csv,launch-happy-path,
+    reliability,admin,auth-ux,doc-cockpit,operadores,workspace,growth,registro,
+    launch-gate,attribution,build13}.spec.ts`).
+  - Gate green (local, Docker Postgres): 106 unit + 129 e2e + typecheck + lint.
+- **Deferred (recorded, not forgotten):**
+  - **Passenger (`viajeros`) document schema** (#41 §4) — the issue explicitly
+    requires researching and documenting the exact mandatory passenger-transport
+    data against the applicable regulation BEFORE building a schema/form/PDF
+    ("Do not invent passenger fields by analogy with goods"). This matches the
+    user's own explicit instruction in this session ("Do not invent passenger
+    fields until the passenger legal model is validated"). Not started.
+  - **`GOODS | PASSENGERS` type enum + company-default transport type +
+    first-time `/crear` type picker** (#41 §1/§5/§6) — depend on the passenger
+    schema existing; not started.
+  - **Structured `SavedAddress`** (#41 "saved-address/autocomplete... should
+    save this full structured location, not a loose text string") — the
+    wizard's saved-address autofill was already unused/dead for the load/unload
+    step before this slice (`SavedData.addresses` was passed but never read in
+    step 2 UI), so nothing regressed. Upgrading `SavedAddress` to a structured
+    shape + wiring real autofill is its own slice (schema migration + UI).
+  - **Admin filter by Mercancías/Viajeros** (#41 §7) — depends on the type enum.
+- **Why:** issue #44 (LAUNCH — ruthless launch sequence) lists "correct legal/
+  data model for goods transport (#17 + #41)" as a Phase 0 launch blocker, ahead
+  of acquisition/registration work. The user's own directive this session named
+  goods structured locations + separate dates as the PHASE 3 priority, explicitly
+  deferring passenger fields. This is pure application-layer work (no external
+  credential/deploy dependency), so it proceeded while Hostinger production
+  access was blocked on DNS propagation to the new domain (`decaprofesional.es`).
+- **Not verified in production:** this slice is code-complete and gate-green
+  locally; production deployment/verification is blocked on the DNS cutover
+  (see PROGRESS.md open items) and is the user's infrastructure task.

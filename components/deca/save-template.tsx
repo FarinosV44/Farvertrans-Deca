@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
+import { formatLocationShort, type TransportLocation } from "@/lib/deca/location";
 
 type Data = {
   shipper?: { name?: string; nif?: string; address?: string };
   carrier?: { name?: string; nif?: string; address?: string };
-  origin?: string;
-  destination?: string;
+  loadLocation?: Partial<TransportLocation>;
+  unloadLocation?: Partial<TransportLocation>;
   goods?: string;
   weight?: string;
   tractorPlate?: string;
@@ -14,14 +15,14 @@ type Data = {
 
 /**
  * "Guardar como plantilla" (UX #25) — saves the recurring, non-date data of a
- * generated DeCA as a reusable template. The transport date and the public token
- * are never carried into a template.
+ * generated DeCA as a reusable template. The transport dates and the public
+ * token are never carried into a template.
  */
 export function SaveTemplate({ data }: { data: Data }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(
-    data.origin && data.destination ? `${data.origin} → ${data.destination}` : "",
-  );
+  const loadShort = formatLocationShort(data.loadLocation);
+  const unloadShort = formatLocationShort(data.unloadLocation);
+  const [name, setName] = useState(loadShort && unloadShort ? `${loadShort} → ${unloadShort}` : "");
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   async function save() {
@@ -35,8 +36,8 @@ export function SaveTemplate({ data }: { data: Data }) {
           name: name.trim(),
           shipper: data.shipper ?? {},
           carrier: data.carrier ?? {},
-          origin: data.origin ?? "",
-          destination: data.destination ?? "",
+          loadLocation: data.loadLocation ?? {},
+          unloadLocation: data.unloadLocation ?? {},
           goods: data.goods ?? "",
           weight: data.weight ?? "",
           tractorPlate: data.tractorPlate ?? "",

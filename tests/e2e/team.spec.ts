@@ -27,9 +27,23 @@ async function createDeca(page: Page) {
   ] as const)
     await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", "Sevilla");
-  await page.fill("#destination", "Bilbao");
-  await page.fill("#transportDate", "2026-10-06");
+  for (const [s, v] of [
+    ["#loadLocationName", "Almacén Sevilla"],
+    ["#loadLocationAddress", "Calle 1"],
+    ["#loadLocationPostalCode", "41001"],
+    ["#loadLocationCity", "Sevilla"],
+    ["#loadLocationProvince", "Sevilla"],
+    ["#loadLocationCountry", "España"],
+    ["#loadDate", "2026-10-06"],
+    ["#unloadLocationName", "Almacén Bilbao"],
+    ["#unloadLocationAddress", "Av 2"],
+    ["#unloadLocationPostalCode", "48001"],
+    ["#unloadLocationCity", "Bilbao"],
+    ["#unloadLocationProvince", "Vizcaya"],
+    ["#unloadLocationCountry", "España"],
+    ["#unloadDate", "2026-10-06"],
+  ] as const)
+    await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", "Bobinas");
   await page.fill("#weight", "18000 kg");
@@ -71,7 +85,9 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     // the colleague sees the SAME company name and the owner's DeCA
     await expect(member.locator("h1")).toContainText("Agencia Equipo SL");
     await member.goto("/panel/historico");
-    await expect(member.getByTestId("historico-table")).toContainText("Sevilla → Bilbao");
+    await expect(member.getByTestId("historico-table")).toContainText(
+      "Almacén Sevilla — Sevilla → Almacén Bilbao — Bilbao",
+    );
 
     // exactly one company: the member is listed as an Operador, no new company created
     await owner.goto("/panel/equipo");

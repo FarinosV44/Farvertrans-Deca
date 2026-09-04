@@ -66,10 +66,10 @@ export default async function AppHome() {
                 <li key={r.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                   <div>
                     <p className="font-medium">
-                      {r.origin} → {r.destination}
+                      {r.loadLocation} → {r.unloadLocation}
                     </p>
                     <p className="text-xs text-[var(--color-text-muted)]">
-                      {r.transportDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
+                      {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
                       {r.tractorPlate}
                     </p>
                   </div>

@@ -4,11 +4,11 @@ import { savedVehicleSchema, savedCompanySchema } from "@/lib/data/saved-schema"
 
 const row: FilterableRow = {
   reference: "DECA-AB12CD34",
-  origin: "Valencia",
-  destination: "Madrid",
+  loadLocation: "Almacén Turia — Valencia",
+  unloadLocation: "Plataforma Norte — Madrid",
   carrier: "Transportes Pérez SL",
   tractorPlate: "1234BCD",
-  transportDate: "2026-10-06",
+  loadDate: "2026-10-06",
   shipperName: "Cargas del Turia SL",
   shipperNif: "B96789011",
   carrierNif: "B12345674",
@@ -24,7 +24,7 @@ describe("history filter", () => {
     }
     expect(rowMatches(row, { q: "barcelona" })).toBe(false);
   });
-  it("applies the date range on the transport date", () => {
+  it("applies the date range on the load date", () => {
     expect(rowMatches(row, { from: "2026-10-01", to: "2026-10-31" })).toBe(true);
     expect(rowMatches(row, { from: "2026-11-01" })).toBe(false);
     expect(rowMatches(row, { to: "2026-09-30" })).toBe(false);

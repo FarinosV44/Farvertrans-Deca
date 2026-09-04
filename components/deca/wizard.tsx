@@ -14,9 +14,20 @@ type FormState = {
   carrierName: string;
   carrierNif: string;
   carrierAddress: string;
-  origin: string;
-  destination: string;
-  transportDate: string;
+  loadLocationName: string;
+  loadLocationAddress: string;
+  loadLocationPostalCode: string;
+  loadLocationCity: string;
+  loadLocationProvince: string;
+  loadLocationCountry: string;
+  loadDate: string;
+  unloadLocationName: string;
+  unloadLocationAddress: string;
+  unloadLocationPostalCode: string;
+  unloadLocationCity: string;
+  unloadLocationProvince: string;
+  unloadLocationCountry: string;
+  unloadDate: string;
   goods: string;
   weight: string;
   tractorPlate: string;
@@ -31,9 +42,20 @@ const EMPTY: FormState = {
   carrierName: "",
   carrierNif: "",
   carrierAddress: "",
-  origin: "",
-  destination: "",
-  transportDate: "",
+  loadLocationName: "",
+  loadLocationAddress: "",
+  loadLocationPostalCode: "",
+  loadLocationCity: "",
+  loadLocationProvince: "",
+  loadLocationCountry: "España",
+  loadDate: "",
+  unloadLocationName: "",
+  unloadLocationAddress: "",
+  unloadLocationPostalCode: "",
+  unloadLocationCity: "",
+  unloadLocationProvince: "",
+  unloadLocationCountry: "España",
+  unloadDate: "",
   goods: "",
   weight: "",
   tractorPlate: "",
@@ -46,7 +68,7 @@ const STORAGE_KEY = "fvd_crear_draft";
 /** Plain-language step names for the progress indicator (UX #31). */
 const STEP_LABELS = [
   "Quién contrata y quién transporta",
-  "Ruta y fecha",
+  "Carga y descarga",
   "Vehículo, mercancía y revisión",
 ] as const;
 
@@ -58,6 +80,18 @@ const FIELD_KEY_MAP: Record<string, keyof FormState> = {
   "carrier.name": "carrierName",
   "carrier.nif": "carrierNif",
   "carrier.address": "carrierAddress",
+  "loadLocation.name": "loadLocationName",
+  "loadLocation.address": "loadLocationAddress",
+  "loadLocation.postalCode": "loadLocationPostalCode",
+  "loadLocation.city": "loadLocationCity",
+  "loadLocation.province": "loadLocationProvince",
+  "loadLocation.country": "loadLocationCountry",
+  "unloadLocation.name": "unloadLocationName",
+  "unloadLocation.address": "unloadLocationAddress",
+  "unloadLocation.postalCode": "unloadLocationPostalCode",
+  "unloadLocation.city": "unloadLocationCity",
+  "unloadLocation.province": "unloadLocationProvince",
+  "unloadLocation.country": "unloadLocationCountry",
 };
 
 export type SavedData = {
@@ -66,13 +100,22 @@ export type SavedData = {
   addresses: { id: string; label: string; address: string }[];
 };
 
+type TemplateLocation = {
+  name?: string;
+  address?: string;
+  postalCode?: string;
+  city?: string;
+  province?: string;
+  country?: string;
+};
+
 export type WizardTemplate = {
   id: string;
   name: string;
   shipper?: { name?: string; nif?: string; address?: string };
   carrier?: { name?: string; nif?: string; address?: string };
-  origin?: string;
-  destination?: string;
+  loadLocation?: TemplateLocation;
+  unloadLocation?: TemplateLocation;
   goods?: string;
   weight?: string;
   tractorPlate?: string;
@@ -88,9 +131,24 @@ function toPayload(f: FormState) {
   return {
     shipper: { name: f.shipperName, nif: f.shipperNif, address: f.shipperAddress },
     carrier: { name: f.carrierName, nif: f.carrierNif, address: f.carrierAddress },
-    origin: f.origin,
-    destination: f.destination,
-    transportDate: f.transportDate,
+    loadLocation: {
+      name: f.loadLocationName,
+      address: f.loadLocationAddress,
+      postalCode: f.loadLocationPostalCode,
+      city: f.loadLocationCity,
+      province: f.loadLocationProvince,
+      country: f.loadLocationCountry,
+    },
+    unloadLocation: {
+      name: f.unloadLocationName,
+      address: f.unloadLocationAddress,
+      postalCode: f.unloadLocationPostalCode,
+      city: f.unloadLocationCity,
+      province: f.unloadLocationProvince,
+      country: f.unloadLocationCountry,
+    },
+    loadDate: f.loadDate,
+    unloadDate: f.unloadDate,
     goods: f.goods,
     weight: f.weight,
     tractorPlate: f.tractorPlate,
@@ -128,13 +186,31 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
       ],
     },
     {
-      title: "Ruta y fecha",
+      title: "Lugar y fecha de carga",
       step: 1,
-      key: "route",
+      key: "load",
       rows: [
-        ["Origen", form.origin],
-        ["Destino", form.destination],
-        ["Fecha del transporte", form.transportDate],
+        ["Empresa / establecimiento", form.loadLocationName],
+        ["Dirección", form.loadLocationAddress],
+        ["Código postal", form.loadLocationPostalCode],
+        ["Localidad", form.loadLocationCity],
+        ["Provincia", form.loadLocationProvince],
+        ["País", form.loadLocationCountry],
+        ["Fecha de carga", form.loadDate],
+      ],
+    },
+    {
+      title: "Lugar y fecha de descarga",
+      step: 1,
+      key: "unload",
+      rows: [
+        ["Empresa / establecimiento", form.unloadLocationName],
+        ["Dirección", form.unloadLocationAddress],
+        ["Código postal", form.unloadLocationPostalCode],
+        ["Localidad", form.unloadLocationCity],
+        ["Provincia", form.unloadLocationProvince],
+        ["País", form.unloadLocationCountry],
+        ["Fecha de descarga", form.unloadDate],
       ],
     },
     {
@@ -279,7 +355,12 @@ export function CrearWizard({
       step === 0
         ? { shipper: p.shipper, carrier: p.carrier }
         : step === 1
-          ? { origin: p.origin, destination: p.destination, transportDate: p.transportDate }
+          ? {
+              loadLocation: p.loadLocation,
+              unloadLocation: p.unloadLocation,
+              loadDate: p.loadDate,
+              unloadDate: p.unloadDate,
+            }
           : {
               goods: p.goods,
               weight: p.weight,
@@ -508,8 +589,23 @@ export function CrearWizard({
                         carrierName: t.carrier?.name || f.carrierName,
                         carrierNif: t.carrier?.nif || f.carrierNif,
                         carrierAddress: t.carrier?.address || f.carrierAddress,
-                        origin: t.origin || f.origin,
-                        destination: t.destination || f.destination,
+                        loadLocationName: t.loadLocation?.name || f.loadLocationName,
+                        loadLocationAddress: t.loadLocation?.address || f.loadLocationAddress,
+                        loadLocationPostalCode:
+                          t.loadLocation?.postalCode || f.loadLocationPostalCode,
+                        loadLocationCity: t.loadLocation?.city || f.loadLocationCity,
+                        loadLocationProvince: t.loadLocation?.province || f.loadLocationProvince,
+                        loadLocationCountry: t.loadLocation?.country || f.loadLocationCountry,
+                        unloadLocationName: t.unloadLocation?.name || f.unloadLocationName,
+                        unloadLocationAddress:
+                          t.unloadLocation?.address || f.unloadLocationAddress,
+                        unloadLocationPostalCode:
+                          t.unloadLocation?.postalCode || f.unloadLocationPostalCode,
+                        unloadLocationCity: t.unloadLocation?.city || f.unloadLocationCity,
+                        unloadLocationProvince:
+                          t.unloadLocation?.province || f.unloadLocationProvince,
+                        unloadLocationCountry:
+                          t.unloadLocation?.country || f.unloadLocationCountry,
                         goods: t.goods || f.goods,
                         weight: t.weight || f.weight,
                         tractorPlate: t.tractorPlate || f.tractorPlate,
@@ -659,34 +755,142 @@ export function CrearWizard({
         )}
 
         {step === 1 && (
-          <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <legend className="px-1 text-sm font-bold">Ruta y fecha</legend>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              De dónde sale la mercancía, a dónde va y qué día se hace el transporte.
-            </p>
-            <Field
-              id="origin"
-              label="Lugar de origen"
-              value={form.origin}
-              onChange={set("origin")}
-              error={errors.origin}
-            />
-            <Field
-              id="destination"
-              label="Lugar de destino"
-              value={form.destination}
-              onChange={set("destination")}
-              error={errors.destination}
-            />
-            <Field
-              id="transportDate"
-              label="Fecha del transporte"
-              type="date"
-              value={form.transportDate}
-              onChange={set("transportDate")}
-              error={errors.transportDate}
-            />
-          </fieldset>
+          <>
+            <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+              <legend className="px-1 text-sm font-bold">Lugar de carga</legend>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Dónde se recoge la mercancía y qué día.
+              </p>
+              <Field
+                id="loadLocationName"
+                label="Empresa o establecimiento"
+                value={form.loadLocationName}
+                onChange={set("loadLocationName")}
+                error={errors.loadLocationName}
+                autoComplete="organization"
+              />
+              <Field
+                id="loadLocationAddress"
+                label="Dirección completa"
+                value={form.loadLocationAddress}
+                onChange={set("loadLocationAddress")}
+                error={errors.loadLocationAddress}
+                autoComplete="street-address"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  id="loadLocationPostalCode"
+                  label="Código postal"
+                  value={form.loadLocationPostalCode}
+                  onChange={set("loadLocationPostalCode")}
+                  error={errors.loadLocationPostalCode}
+                  autoComplete="postal-code"
+                />
+                <Field
+                  id="loadLocationCity"
+                  label="Localidad"
+                  value={form.loadLocationCity}
+                  onChange={set("loadLocationCity")}
+                  error={errors.loadLocationCity}
+                  autoComplete="address-level2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  id="loadLocationProvince"
+                  label="Provincia"
+                  value={form.loadLocationProvince}
+                  onChange={set("loadLocationProvince")}
+                  error={errors.loadLocationProvince}
+                  autoComplete="address-level1"
+                />
+                <Field
+                  id="loadLocationCountry"
+                  label="País"
+                  value={form.loadLocationCountry}
+                  onChange={set("loadLocationCountry")}
+                  error={errors.loadLocationCountry}
+                  autoComplete="country-name"
+                />
+              </div>
+              <Field
+                id="loadDate"
+                label="Fecha de carga"
+                type="date"
+                value={form.loadDate}
+                onChange={set("loadDate")}
+                error={errors.loadDate}
+              />
+            </fieldset>
+
+            <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+              <legend className="px-1 text-sm font-bold">Lugar de descarga</legend>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Dónde se entrega la mercancía y qué día. Puede ser el mismo día que la carga.
+              </p>
+              <Field
+                id="unloadLocationName"
+                label="Empresa o establecimiento"
+                value={form.unloadLocationName}
+                onChange={set("unloadLocationName")}
+                error={errors.unloadLocationName}
+                autoComplete="organization"
+              />
+              <Field
+                id="unloadLocationAddress"
+                label="Dirección completa"
+                value={form.unloadLocationAddress}
+                onChange={set("unloadLocationAddress")}
+                error={errors.unloadLocationAddress}
+                autoComplete="street-address"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  id="unloadLocationPostalCode"
+                  label="Código postal"
+                  value={form.unloadLocationPostalCode}
+                  onChange={set("unloadLocationPostalCode")}
+                  error={errors.unloadLocationPostalCode}
+                  autoComplete="postal-code"
+                />
+                <Field
+                  id="unloadLocationCity"
+                  label="Localidad"
+                  value={form.unloadLocationCity}
+                  onChange={set("unloadLocationCity")}
+                  error={errors.unloadLocationCity}
+                  autoComplete="address-level2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field
+                  id="unloadLocationProvince"
+                  label="Provincia"
+                  value={form.unloadLocationProvince}
+                  onChange={set("unloadLocationProvince")}
+                  error={errors.unloadLocationProvince}
+                  autoComplete="address-level1"
+                />
+                <Field
+                  id="unloadLocationCountry"
+                  label="País"
+                  value={form.unloadLocationCountry}
+                  onChange={set("unloadLocationCountry")}
+                  error={errors.unloadLocationCountry}
+                  autoComplete="country-name"
+                />
+              </div>
+              <Field
+                id="unloadDate"
+                label="Fecha de descarga"
+                type="date"
+                value={form.unloadDate}
+                onChange={set("unloadDate")}
+                error={errors.unloadDate}
+                hint="Puede coincidir con la fecha de carga."
+              />
+            </fieldset>
+          </>
         )}
 
         {step === 2 && (

@@ -9,9 +9,10 @@ const row = (over: Partial<HistoryRow> = {}): HistoryRow => ({
   id: "d1",
   reference: "DECA-ABCD1234",
   createdAt: new Date("2026-10-01T08:30:00.000Z"),
-  transportDate: "2026-10-06",
-  origin: "Valencia",
-  destination: "Madrid",
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
+  loadLocation: "Almacén Turia — Valencia",
+  unloadLocation: "Plataforma Norte — Madrid",
   shipper: "Cargas SL",
   carrier: "Trans SL",
   goods: "Palés",
@@ -40,7 +41,7 @@ describe("historyToCsv (PRODUCT #34 §3)", () => {
     const csv = historyToCsv([]);
     expect(csv.startsWith("﻿")).toBe(true);
     expect(csv).toContain(
-      "referencia,creado,fecha_transporte,cargador,transportista,origen,destino,matricula_tractora,matricula_remolque,mercancia,version_actual,estado,url_publica",
+      "referencia,creado,fecha_carga,fecha_descarga,cargador,transportista,lugar_carga,lugar_descarga,matricula_tractora,matricula_remolque,mercancia,version_actual,estado,url_publica",
     );
   });
 

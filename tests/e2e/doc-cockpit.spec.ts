@@ -13,9 +13,20 @@ const V = {
   carrierName: "Transportes Pérez SL",
   carrierNif: "B12345674",
   carrierAddress: "Calle 5, Paterna",
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocationName: "Almacén Turia",
+  loadLocationAddress: "Av. del Puerto 120",
+  loadLocationPostalCode: "46023",
+  loadLocationCity: "Valencia",
+  loadLocationProvince: "Valencia",
+  loadLocationCountry: "España",
+  loadDate: "2026-10-06",
+  unloadLocationName: "Plataforma Norte",
+  unloadLocationAddress: "Calle Alcalá 200",
+  unloadLocationPostalCode: "28028",
+  unloadLocationCity: "Madrid",
+  unloadLocationProvince: "Madrid",
+  unloadLocationCountry: "España",
+  unloadDate: "2026-10-06",
   goods: "Palés de cerámica",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -30,9 +41,20 @@ async function fillWizard(page: Page) {
   await page.fill("#carrierNif", V.carrierNif);
   await page.fill("#carrierAddress", V.carrierAddress);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", V.origin);
-  await page.fill("#destination", V.destination);
-  await page.fill("#transportDate", V.transportDate);
+  await page.fill("#loadLocationName", V.loadLocationName);
+  await page.fill("#loadLocationAddress", V.loadLocationAddress);
+  await page.fill("#loadLocationPostalCode", V.loadLocationPostalCode);
+  await page.fill("#loadLocationCity", V.loadLocationCity);
+  await page.fill("#loadLocationProvince", V.loadLocationProvince);
+  await page.fill("#loadLocationCountry", V.loadLocationCountry);
+  await page.fill("#loadDate", V.loadDate);
+  await page.fill("#unloadLocationName", V.unloadLocationName);
+  await page.fill("#unloadLocationAddress", V.unloadLocationAddress);
+  await page.fill("#unloadLocationPostalCode", V.unloadLocationPostalCode);
+  await page.fill("#unloadLocationCity", V.unloadLocationCity);
+  await page.fill("#unloadLocationProvince", V.unloadLocationProvince);
+  await page.fill("#unloadLocationCountry", V.unloadLocationCountry);
+  await page.fill("#unloadDate", V.unloadDate);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", V.goods);
   await page.fill("#weight", V.weight);
@@ -83,10 +105,10 @@ test.describe("PRODUCT #36 — document cockpit", () => {
     await expect(page.getByRole("heading", { name: "Historial de versiones" })).toBeVisible();
     await expect(page.getByText("Versión actual: 1")).toBeVisible();
 
-    // Correct the destination.
+    // Correct the unload location.
     await page.getByTestId("deca-corregir").click();
     await page.getByTestId("wizard-next").click();
-    await page.fill("#destination", "Zaragoza");
+    await page.fill("#unloadLocationCity", "Zaragoza");
     await page.getByTestId("wizard-next").click();
     await page.fill("#tractorPlate", V.tractorPlate);
     await page.getByTestId("correction-reason").fill("Cambio de destino");
@@ -96,7 +118,7 @@ test.describe("PRODUCT #36 — document cockpit", () => {
     await expect(page.getByText("Versión actual: 2")).toBeVisible();
     const diff = page.getByTestId("change-list");
     await expect(diff).toBeVisible();
-    await expect(diff).toContainText("Destino");
+    await expect(diff).toContainText("Lugar de descarga — localidad");
     await expect(diff).toContainText("Madrid");
     await expect(diff).toContainText("Zaragoza");
   });

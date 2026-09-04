@@ -13,9 +13,20 @@ const V = {
   carrierName: "Transportes Pérez SL",
   carrierNif: "B12345674",
   carrierAddress: "Calle 5, Paterna",
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocationName: "Almacén Turia",
+  loadLocationAddress: "Av. del Puerto 120",
+  loadLocationPostalCode: "46023",
+  loadLocationCity: "Valencia",
+  loadLocationProvince: "Valencia",
+  loadLocationCountry: "España",
+  loadDate: "2026-10-06",
+  unloadLocationName: "Plataforma Norte",
+  unloadLocationAddress: "Calle Alcalá 200",
+  unloadLocationPostalCode: "28028",
+  unloadLocationCity: "Madrid",
+  unloadLocationProvince: "Madrid",
+  unloadLocationCountry: "España",
+  unloadDate: "2026-10-06",
   goods: "Palés de cerámica",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -28,6 +39,23 @@ async function fillStep1(page: Page) {
   await page.fill("#carrierName", V.carrierName);
   await page.fill("#carrierNif", V.carrierNif);
   await page.fill("#carrierAddress", V.carrierAddress);
+}
+
+async function fillStep2(page: Page) {
+  await page.fill("#loadLocationName", V.loadLocationName);
+  await page.fill("#loadLocationAddress", V.loadLocationAddress);
+  await page.fill("#loadLocationPostalCode", V.loadLocationPostalCode);
+  await page.fill("#loadLocationCity", V.loadLocationCity);
+  await page.fill("#loadLocationProvince", V.loadLocationProvince);
+  await page.fill("#loadLocationCountry", V.loadLocationCountry);
+  await page.fill("#loadDate", V.loadDate);
+  await page.fill("#unloadLocationName", V.unloadLocationName);
+  await page.fill("#unloadLocationAddress", V.unloadLocationAddress);
+  await page.fill("#unloadLocationPostalCode", V.unloadLocationPostalCode);
+  await page.fill("#unloadLocationCity", V.unloadLocationCity);
+  await page.fill("#unloadLocationProvince", V.unloadLocationProvince);
+  await page.fill("#unloadLocationCountry", V.unloadLocationCountry);
+  await page.fill("#unloadDate", V.unloadDate);
 }
 
 test.describe("UX #31 — ultra-simple creation flow", () => {
@@ -53,9 +81,7 @@ test.describe("UX #31 — ultra-simple creation flow", () => {
     await page.goto("/crear");
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", V.origin);
-    await page.fill("#destination", V.destination);
-    await page.fill("#transportDate", V.transportDate);
+    await fillStep2(page);
     await page.getByTestId("wizard-next").click();
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
@@ -79,9 +105,7 @@ test.describe("UX #31 — ultra-simple creation flow", () => {
     await page.goto("/crear");
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", V.origin);
-    await page.fill("#destination", V.destination);
-    await page.fill("#transportDate", V.transportDate);
+    await fillStep2(page);
     await page.getByTestId("wizard-next").click();
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);

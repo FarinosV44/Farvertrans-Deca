@@ -133,7 +133,8 @@ export async function createDeca(
           idempotencyKey: opts.idempotencyKey,
           createdByUserId: opts.createdByUserId,
           companyId: opts.companyId,
-          serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
+          serviceStart: new Date(`${validated.data.loadDate}T00:00:00Z`),
+          serviceEnd: new Date(`${validated.data.unloadDate}T00:00:00Z`),
         },
       });
       const version = await tx.decaVersion.create({
@@ -271,7 +272,8 @@ export async function correctDeca(
         where: { id: decaId },
         data: {
           currentVersionId: v.id,
-          serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
+          serviceStart: new Date(`${validated.data.loadDate}T00:00:00Z`),
+          serviceEnd: new Date(`${validated.data.unloadDate}T00:00:00Z`),
         },
       });
       return v;

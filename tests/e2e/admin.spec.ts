@@ -46,9 +46,24 @@ async function registerAndGenerate(page: Page, company: string) {
     await page.fill(sel, val);
   }
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", "Valencia");
-  await page.fill("#destination", "Zaragoza");
-  await page.fill("#transportDate", "2026-10-06");
+  for (const [sel, val] of [
+    ["#loadLocationName", "Almacén Valencia"],
+    ["#loadLocationAddress", "Calle 1"],
+    ["#loadLocationPostalCode", "46001"],
+    ["#loadLocationCity", "Valencia"],
+    ["#loadLocationProvince", "Valencia"],
+    ["#loadLocationCountry", "España"],
+    ["#loadDate", "2026-10-06"],
+    ["#unloadLocationName", "Almacén Zaragoza"],
+    ["#unloadLocationAddress", "Av. Central 3"],
+    ["#unloadLocationPostalCode", "50001"],
+    ["#unloadLocationCity", "Zaragoza"],
+    ["#unloadLocationProvince", "Zaragoza"],
+    ["#unloadLocationCountry", "España"],
+    ["#unloadDate", "2026-10-06"],
+  ] as const) {
+    await page.fill(sel, val);
+  }
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", "Palés de cerámica");
   await page.fill("#weight", "12000 kg");

@@ -7,13 +7,41 @@ const DECA = {
   carrierName: "Transportes Pérez SL",
   carrierNif: "B12345674",
   carrierAddress: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocationName: "Almacén Turia",
+  loadLocationAddress: "Av. del Puerto 120",
+  loadLocationPostalCode: "46023",
+  loadLocationCity: "Valencia",
+  loadLocationProvince: "Valencia",
+  loadLocationCountry: "España",
+  loadDate: "2026-10-06",
+  unloadLocationName: "Plataforma Norte",
+  unloadLocationAddress: "Calle Alcalá 200",
+  unloadLocationPostalCode: "28028",
+  unloadLocationCity: "Madrid",
+  unloadLocationProvince: "Madrid",
+  unloadLocationCountry: "España",
+  unloadDate: "2026-10-06",
   goods: "Palés de cerámica",
   weight: "12.500 kg",
   tractorPlate: "1234 BCD",
 };
+
+async function fillStep2(page: Page) {
+  await page.fill("#loadLocationName", DECA.loadLocationName);
+  await page.fill("#loadLocationAddress", DECA.loadLocationAddress);
+  await page.fill("#loadLocationPostalCode", DECA.loadLocationPostalCode);
+  await page.fill("#loadLocationCity", DECA.loadLocationCity);
+  await page.fill("#loadLocationProvince", DECA.loadLocationProvince);
+  await page.fill("#loadLocationCountry", DECA.loadLocationCountry);
+  await page.fill("#loadDate", DECA.loadDate);
+  await page.fill("#unloadLocationName", DECA.unloadLocationName);
+  await page.fill("#unloadLocationAddress", DECA.unloadLocationAddress);
+  await page.fill("#unloadLocationPostalCode", DECA.unloadLocationPostalCode);
+  await page.fill("#unloadLocationCity", DECA.unloadLocationCity);
+  await page.fill("#unloadLocationProvince", DECA.unloadLocationProvince);
+  await page.fill("#unloadLocationCountry", DECA.unloadLocationCountry);
+  await page.fill("#unloadDate", DECA.unloadDate);
+}
 
 function email() {
   return `cv2${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
@@ -37,9 +65,7 @@ async function fillAndGenerate(page: Page) {
   await page.fill("#carrierNif", DECA.carrierNif);
   await page.fill("#carrierAddress", DECA.carrierAddress);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", DECA.origin);
-  await page.fill("#destination", DECA.destination);
-  await page.fill("#transportDate", DECA.transportDate);
+  await fillStep2(page);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", DECA.goods);
   await page.fill("#weight", DECA.weight);
@@ -89,10 +115,12 @@ test.describe("UX #25 — creator V2", () => {
     });
     await expect(page.locator("#carrierName")).toHaveValue(DECA.carrierName);
     await expect(page.locator("#shipperName")).toHaveValue(DECA.shipperName);
-    // date is NOT carried by a template — must be set fresh
+    // dates are NOT carried by a template — must be set fresh
     await page.getByTestId("wizard-next").click();
-    await expect(page.locator("#transportDate")).toHaveValue("");
-    await page.fill("#transportDate", "2026-11-15");
+    await expect(page.locator("#loadDate")).toHaveValue("");
+    await expect(page.locator("#unloadDate")).toHaveValue("");
+    await page.fill("#loadDate", "2026-11-15");
+    await page.fill("#unloadDate", "2026-11-15");
     await page.getByTestId("wizard-next").click();
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
@@ -129,9 +157,7 @@ test.describe("UX #25 — creator V2", () => {
     await page.fill("#carrierNif", DECA.carrierNif);
     await page.fill("#carrierAddress", DECA.carrierAddress);
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", DECA.origin);
-    await page.fill("#destination", DECA.destination);
-    await page.fill("#transportDate", DECA.transportDate);
+    await fillStep2(page);
     await page.getByTestId("wizard-next").click();
     await page.fill("#goods", DECA.goods);
     await page.fill("#weight", DECA.weight);

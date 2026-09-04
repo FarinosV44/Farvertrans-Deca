@@ -12,9 +12,24 @@ const payload = {
     nif: "B12345674",
     address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
   },
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocation: {
+    name: "Almacén Turia",
+    address: "Av. del Puerto 120",
+    postalCode: "46023",
+    city: "Valencia",
+    province: "Valencia",
+    country: "España",
+  },
+  unloadLocation: {
+    name: "Plataforma Norte",
+    address: "Calle Alcalá 200",
+    postalCode: "28028",
+    city: "Madrid",
+    province: "Madrid",
+    country: "España",
+  },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -53,7 +68,7 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
     await page.getByTestId("register-submit").click();
 
     await expect(page).toHaveURL(/\/panel$/);
-    await expect(page.getByText("Valencia → Madrid")).toBeVisible();
+    await expect(page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid")).toBeVisible();
   });
 
   test("AC: an auth failure never orphans/deletes the DeCA; the public URL still works", async ({

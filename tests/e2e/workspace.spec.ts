@@ -11,13 +11,45 @@ const DECA = {
     nif: "B12345674",
     address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
   },
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocation: {
+    name: "Almacén Turia",
+    address: "Av. del Puerto 120",
+    postalCode: "46023",
+    city: "Valencia",
+    province: "Valencia",
+    country: "España",
+  },
+  unloadLocation: {
+    name: "Plataforma Norte",
+    address: "Calle Alcalá 200",
+    postalCode: "28028",
+    city: "Madrid",
+    province: "Madrid",
+    country: "España",
+  },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés de cerámica",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
 };
+
+async function fillStep2(page: Page) {
+  await page.fill("#loadLocationName", DECA.loadLocation.name);
+  await page.fill("#loadLocationAddress", DECA.loadLocation.address);
+  await page.fill("#loadLocationPostalCode", DECA.loadLocation.postalCode);
+  await page.fill("#loadLocationCity", DECA.loadLocation.city);
+  await page.fill("#loadLocationProvince", DECA.loadLocation.province);
+  await page.fill("#loadLocationCountry", DECA.loadLocation.country);
+  await page.fill("#loadDate", DECA.loadDate);
+  await page.fill("#unloadLocationName", DECA.unloadLocation.name);
+  await page.fill("#unloadLocationAddress", DECA.unloadLocation.address);
+  await page.fill("#unloadLocationPostalCode", DECA.unloadLocation.postalCode);
+  await page.fill("#unloadLocationCity", DECA.unloadLocation.city);
+  await page.fill("#unloadLocationProvince", DECA.unloadLocation.province);
+  await page.fill("#unloadLocationCountry", DECA.unloadLocation.country);
+  await page.fill("#unloadDate", DECA.unloadDate);
+}
 
 function email() {
   return `w${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
@@ -43,9 +75,7 @@ async function createDecaAuthed(page: Page) {
   await page.fill("#carrierNif", DECA.carrier.nif);
   await page.fill("#carrierAddress", DECA.carrier.address);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", DECA.origin);
-  await page.fill("#destination", DECA.destination);
-  await page.fill("#transportDate", DECA.transportDate);
+  await fillStep2(page);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", DECA.goods);
   await page.fill("#weight", DECA.weight);
@@ -61,7 +91,7 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     await page.goto("/panel");
     await expect(page.getByRole("heading", { name: "Últimos documentos" })).toBeVisible();
-    await expect(page.getByText("Valencia → Madrid").first()).toBeVisible();
+    await expect(page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid").first()).toBeVisible();
 
     await page.goto("/panel/historico");
     await expect(page.getByText("1 documento")).toBeVisible();
@@ -96,7 +126,7 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     // row actions reach the owner detail + correction views
     await page.goto("/panel/historico");
-    const row = page.getByTestId("historico-table").locator("tr", { hasText: "Valencia → Madrid" });
+    const row = page.getByTestId("historico-table").locator("tr", { hasText: "Almacén Turia — Valencia → Plataforma Norte — Madrid" });
     await row.getByRole("link", { name: "Detalle" }).click();
     await expect(page).toHaveURL(/\/panel\/deca\/[a-z0-9]+$/i);
     await expect(page.getByRole("heading", { name: "Historial de versiones" })).toBeVisible();
@@ -122,8 +152,10 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.locator("#carrierNif")).toHaveValue(DECA.carrier.nif);
 
     await page.getByTestId("wizard-next").click();
-    await expect(page.locator("#transportDate")).toHaveValue(""); // reset
-    await page.fill("#transportDate", "2026-10-20");
+    await expect(page.locator("#loadDate")).toHaveValue(""); // reset
+    await expect(page.locator("#unloadDate")).toHaveValue("");
+    await page.fill("#loadDate", "2026-10-20");
+    await page.fill("#unloadDate", "2026-10-20");
     await page.getByTestId("wizard-next").click();
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
@@ -174,9 +206,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.fill("#shipperAddress", DECA.shipper.address);
     await page.fill("#carrierAddress", DECA.carrier.address);
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", DECA.origin);
-    await page.fill("#destination", DECA.destination);
-    await page.fill("#transportDate", DECA.transportDate);
+    await fillStep2(page);
     await page.getByTestId("wizard-next").click();
     await page.getByTestId("autofill-vehicle").selectOption({ label: "5555XYZ" });
     await expect(page.locator("#tractorPlate")).toHaveValue("5555XYZ");

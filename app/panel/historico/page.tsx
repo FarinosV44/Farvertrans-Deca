@@ -159,7 +159,7 @@ export default async function HistoricoPage({
             <thead>
               <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
                 <th className="py-2">Fecha</th>
-                <th>Origen → Destino</th>
+                <th>Carga → Descarga</th>
                 <th>Cargador</th>
                 <th>Transportista</th>
                 <th>Matrícula</th>
@@ -171,10 +171,10 @@ export default async function HistoricoPage({
               {rows.map((r) => (
                 <tr key={r.id} className="border-b border-[var(--color-border)]">
                   <td className="py-2">
-                    {r.transportDate || r.createdAt.toISOString().slice(0, 10)}
+                    {r.loadDate || r.createdAt.toISOString().slice(0, 10)}
                   </td>
                   <td>
-                    {r.origin} → {r.destination}
+                    {r.loadLocation} → {r.unloadLocation}
                   </td>
                   <td>{r.shipper}</td>
                   <td>{r.carrier}</td>
@@ -210,10 +210,10 @@ export default async function HistoricoPage({
             {rows.map((r) => (
               <li key={r.id} className="py-3 text-sm">
                 <p className="font-medium">
-                  {r.origin} → {r.destination}
+                  {r.loadLocation} → {r.unloadLocation}
                 </p>
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  {r.transportDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
+                  {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
                   {r.tractorPlate} · {docWorkflowStatus(r)}
                   {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
                 </p>

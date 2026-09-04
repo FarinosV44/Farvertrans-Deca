@@ -9,6 +9,7 @@ import { VersionTimeline } from "@/components/deca/version-timeline";
 import { TrackView } from "@/components/analytics/track-view";
 import { getDecaCockpit } from "@/lib/deca/detail";
 import { qrPngDataUriCached } from "@/lib/pdf/qr";
+import { formatLocationShort } from "@/lib/deca/location";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,8 @@ export default async function ResultPage({
           <div>
             <h1 className="text-2xl font-bold">DeCA generado</h1>
             <p className="text-sm text-[var(--color-text-muted)]">
-              {c.data.origin ?? ""} → {c.data.destination ?? ""} · {doc.reference}
+              {formatLocationShort(c.data.loadLocation)} → {formatLocationShort(c.data.unloadLocation)}{" "}
+              · {doc.reference}
             </p>
           </div>
         </div>

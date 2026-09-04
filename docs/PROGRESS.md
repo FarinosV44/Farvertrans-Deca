@@ -219,8 +219,48 @@
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
+## Launch execution (2026-09-04, user directive — "ruthless launch sequence" per #44)
+- **Production status: BLOCKED on DNS.** The prior Hostinger URL
+  (`https://linen-mantis-554500.hostingersite.com`) is unreachable (TCP connects
+  then drops — consistent with the app process not running, not a network issue
+  on this end; verified via WebFetch + curl, general internet connectivity
+  confirmed working against github.com). The user explains this is because a new
+  domain (`decaprofesional.es`) is being pointed at Hostinger and DNS is still
+  propagating (`decaprofesional.es` does not resolve yet either). **Not this
+  session's to fix** — parked pending the user confirming DNS/deploy is live, at
+  which point Phase 1 (production stability) + Phase 2 (real generation
+  reproduction) + Phase 4 (QR from a second device) + Phase 9 (real E2E test)
+  resume immediately using `npm run diagnose -- <url>` (#29) and
+  `docs/production-smoke-checklist.md`.
+- **D-042 done, on `develop`** (not yet merged/deployed): PRODUCT #41 goods-only
+  slice — structured `loadLocation`/`unloadLocation` (name/address/postalCode/
+  city/province/country, all required) replace the loose `origin`/`destination`
+  strings; separate `loadDate`/`unloadDate` (unload >= load, same-day allowed)
+  replace the single `transportDate`. No DB migration needed (`dataJson` is a
+  JSON blob; `Deca.serviceStart`/`serviceEnd` columns already existed and are now
+  actually populated, which also activates the previously-dead R-9 deactivation
+  window for new documents only). Every consumer updated: PDF, wizard UI, review
+  summary, document cockpit + diff, history + CSV export, admin table/search,
+  templates, all `/panel/*` + `/crear/*` pages, diagnostics smoke payload.
+  `docs/legal-data-model.md` rewritten. **Gate green locally** (Docker Postgres,
+  since production access is blocked): 106 unit + 129 e2e + typecheck + lint.
+  **Deferred, on the record (D-042):** passenger (`viajeros`) schema (needs its
+  own legal-requirement research first, per the issue and the user's explicit
+  instruction not to invent passenger fields), the `GOODS|PASSENGERS` type enum
+  + company default + `/crear` type picker, structured `SavedAddress` (was
+  already dead/unused in the wizard before this slice), admin type filter.
+- **Not started this session:** #42 (Praetoria legal identity, trust-first
+  landing, lightweight name+email registration gate before first DeCA — this
+  SUPERSEDES the anonymous-first flow from D-016 per the user's explicit
+  directive), #46 (high-conversion landing rewrite, company signup with the
+  exact fields, email verification flow + polished confirmation screen — email
+  verification does not exist at all yet; only password reset, D-023).
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as
 real pages, rebuilt the footer (4 columns), added 4 legal pages, audited nav (no dead links). Gate:
 105 unit + 129 e2e + 8 compliance. `develop` == `main`. No version tag.
+D-042 (goods-only structured loading/unloading + separate load/unload dates, PRODUCT #41) done on
+`develop`, gate green (106 unit + 129 e2e); production verification blocked on DNS cutover to
+decaprofesional.es (user's infra task, not code).

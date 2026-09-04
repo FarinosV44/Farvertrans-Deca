@@ -7,6 +7,17 @@ import { prisma } from "@/lib/prisma";
  * from a template always produces a brand-new independent document after review;
  * a template never carries a public token or a transport date.
  */
+const templateLocationSchema = z
+  .object({
+    name: z.string().trim().max(200).default(""),
+    address: z.string().trim().max(300).default(""),
+    postalCode: z.string().trim().max(12).default(""),
+    city: z.string().trim().max(120).default(""),
+    province: z.string().trim().max(120).default(""),
+    country: z.string().trim().max(80).default(""),
+  })
+  .default({});
+
 export const templatePayloadSchema = z.object({
   name: z.string().trim().min(2).max(80),
   shipper: z
@@ -23,8 +34,8 @@ export const templatePayloadSchema = z.object({
       address: z.string().trim().max(300).default(""),
     })
     .default({}),
-  origin: z.string().trim().max(200).default(""),
-  destination: z.string().trim().max(200).default(""),
+  loadLocation: templateLocationSchema,
+  unloadLocation: templateLocationSchema,
   goods: z.string().trim().max(300).default(""),
   weight: z.string().trim().max(60).default(""),
   tractorPlate: z.string().trim().max(20).default(""),

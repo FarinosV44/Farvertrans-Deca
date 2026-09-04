@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import type { DecaPayload } from "@/lib/deca/schema";
+import { formatLocationFull } from "@/lib/deca/location";
 import { BRAND } from "@/lib/brand";
 
 const s = StyleSheet.create({
@@ -72,9 +73,10 @@ export function DecaDocument(p: DecaDocProps) {
             <B label="TRANSPORTISTA EFECTIVO" value={p.data.carrier.name} />
             <B label="NIF DEL TRANSPORTISTA" value={p.data.carrier.nif} />
             <B label="DOMICILIO DEL TRANSPORTISTA" value={p.data.carrier.address} />
-            <B label="FECHA DEL TRANSPORTE" value={p.data.transportDate} />
-            <B label="ORIGEN" value={p.data.origin} />
-            <B label="DESTINO" value={p.data.destination} />
+            <B label="FECHA DE CARGA" value={p.data.loadDate} />
+            <B label="FECHA DE DESCARGA" value={p.data.unloadDate} />
+            <B label="LUGAR DE CARGA" value={formatLocationFull(p.data.loadLocation)} />
+            <B label="LUGAR DE DESCARGA" value={formatLocationFull(p.data.unloadLocation)} />
             <B label="NATURALEZA DE LA MERCANCÍA" value={p.data.goods} />
             <B label="PESO O MEDIDA" value={p.data.weight} />
             <B label="MATRÍCULA TRACTORA" value={p.data.tractorPlate} />

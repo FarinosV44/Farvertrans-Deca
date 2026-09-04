@@ -6,7 +6,7 @@ requirements R-1…R-13 in `docs/00-competitive-landscape.md` are binding on F2/
 ## Functional requirements
 
 ### F1 — 3-step guided DeCA creation
-- **Inputs:** step 1 contractual shipper (name/razón social, NIF, address) + effective carrier (name/razón social, NIF); step 2 origin, destination, date of transport; step 3 goods nature, weight (or alternative measure), vehicle plate(s) (tractor + trailer if articulated). Optional: reference/notes.
+- **Inputs:** step 1 contractual shipper (name/razón social, NIF, address) + effective carrier (name/razón social, NIF, address); step 2 structured loading location (name, address, postal code, city, province, country) + load date, structured unloading location (same shape) + unload date — `unloadDate >= loadDate` (PRODUCT #41); step 3 goods nature, weight (or alternative measure), vehicle plate(s) (tractor + trailer if articulated). Optional: reference/notes. See `docs/legal-data-model.md` for the full requirement→field→PDF→test mapping.
 - **Processing:** each step validated on advance (`zod` + R-2 completeness). Autofill offered from saved entities (F7) for authed users. On final "Generar": assemble (F2) → render PDF (F3) → persist → store.
 - **Outputs:** a DeCA record + version 1 + a stored PDF + the public URL + QR; redirect to the document detail (authed) or the result page with the claim link (anonymous, F6).
 - **Preconditions:** none for anonymous (subject to F16 limits); authed users always allowed.

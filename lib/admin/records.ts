@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { publicEnv } from "@/lib/env";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
+import { formatLocationShort } from "@/lib/deca/location";
 import type { DecaPayloadData } from "@/lib/data/history";
 
 /**
@@ -67,7 +68,9 @@ export async function listDecaAdmin(
     if (filter.corrected === "corrected" && !corrected) continue;
 
     const reference = refOf(d.currentVersion.token);
-    const route = `${data.origin ?? "—"} → ${data.destination ?? "—"}`;
+    const loadShort = formatLocationShort(data.loadLocation) || "—";
+    const unloadShort = formatLocationShort(data.unloadLocation) || "—";
+    const route = `${loadShort} → ${unloadShort}`;
     if (
       q &&
       ![
@@ -75,8 +78,10 @@ export async function listDecaAdmin(
         d.company?.name,
         data.shipper?.name,
         data.carrier?.name,
-        data.origin,
-        data.destination,
+        data.loadLocation?.name,
+        data.loadLocation?.city,
+        data.unloadLocation?.name,
+        data.unloadLocation?.city,
       ]
         .filter(Boolean)
         .some((s) => s!.toLowerCase().includes(q))
@@ -87,7 +92,7 @@ export async function listDecaAdmin(
       id: d.id,
       reference,
       createdAt: d.createdAt,
-      serviceDate: data.transportDate ?? "",
+      serviceDate: data.loadDate ?? "",
       scope: d.companyId ? "empresa" : "anónimo",
       companyName: d.company?.name ?? null,
       route,
@@ -142,7 +147,7 @@ export async function getDecaAdmin(id: string) {
       ? { id: deca.company.id, name: deca.company.name, nif: deca.company.nif }
       : null,
     creator: deca.createdByUser?.email ?? null,
-    route: `${data.origin ?? "—"} → ${data.destination ?? "—"}`,
+    route: `${formatLocationShort(data.loadLocation) || "—"} → ${formatLocationShort(data.unloadLocation) || "—"}`,
     goodsSummary: data.goods ?? "",
     parties: {
       shipper: data.shipper?.name ?? "",

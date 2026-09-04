@@ -13,9 +13,24 @@ const V = {
     nif: "B12345674",
     address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
   },
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocation: {
+    name: "Almacén Turia",
+    address: "Av. del Puerto 120",
+    postalCode: "46023",
+    city: "Valencia",
+    province: "Valencia",
+    country: "España",
+  },
+  unloadLocation: {
+    name: "Plataforma Norte",
+    address: "Calle Alcalá 200",
+    postalCode: "28028",
+    city: "Madrid",
+    province: "Madrid",
+    country: "España",
+  },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -42,9 +57,20 @@ async function registerAndCreate(page: Page): Promise<string> {
   await page.fill("#carrierNif", V.carrier.nif);
   await page.fill("#carrierAddress", V.carrier.address);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", V.origin);
-  await page.fill("#destination", V.destination);
-  await page.fill("#transportDate", V.transportDate);
+  await page.fill("#loadLocationName", V.loadLocation.name);
+  await page.fill("#loadLocationAddress", V.loadLocation.address);
+  await page.fill("#loadLocationPostalCode", V.loadLocation.postalCode);
+  await page.fill("#loadLocationCity", V.loadLocation.city);
+  await page.fill("#loadLocationProvince", V.loadLocation.province);
+  await page.fill("#loadLocationCountry", V.loadLocation.country);
+  await page.fill("#loadDate", V.loadDate);
+  await page.fill("#unloadLocationName", V.unloadLocation.name);
+  await page.fill("#unloadLocationAddress", V.unloadLocation.address);
+  await page.fill("#unloadLocationPostalCode", V.unloadLocation.postalCode);
+  await page.fill("#unloadLocationCity", V.unloadLocation.city);
+  await page.fill("#unloadLocationProvince", V.unloadLocation.province);
+  await page.fill("#unloadLocationCountry", V.unloadLocation.country);
+  await page.fill("#unloadDate", V.unloadDate);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", V.goods);
   await page.fill("#weight", V.weight);
@@ -72,9 +98,9 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
 
     await page.getByTestId("deca-corregir").click();
     await expect(page).toHaveURL(/\/corregir$/);
-    // change the destination + give a reason
+    // change the unload location + give a reason
     await page.getByTestId("wizard-next").click();
-    await page.fill("#destination", "Barcelona");
+    await page.fill("#unloadLocationCity", "Barcelona");
     await page.getByTestId("wizard-next").click();
     await page.fill("#tractorPlate", V.tractorPlate);
     await page.getByTestId("correction-reason").fill("Cambio de destino por incidencia en ruta");
@@ -92,7 +118,7 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
     // FIX #19: v1's bytes are byte-for-byte unchanged after the correction
     expect(createHash("sha256").update(v1BytesAfter).digest("hex")).toBe(v1HashBefore);
     const v1Text = await extractText(new Uint8Array(v1BytesAfter));
-    expect(v1Text).toContain("Madrid"); // original destination preserved
+    expect(v1Text).toContain("Madrid"); // original unload location preserved
 
     const links = await page.locator("a", { hasText: "Ver PDF" }).all();
     const hrefs = await Promise.all(links.map((l) => l.getAttribute("href")));
@@ -186,9 +212,10 @@ function buildPayload() {
   return {
     shipper: { name: V.shipper.name, nif: V.shipper.nif, address: V.shipper.address },
     carrier: { name: V.carrier.name, nif: V.carrier.nif, address: V.carrier.address },
-    origin: V.origin,
-    destination: V.destination,
-    transportDate: V.transportDate,
+    loadLocation: V.loadLocation,
+    unloadLocation: V.unloadLocation,
+    loadDate: V.loadDate,
+    unloadDate: V.unloadDate,
     goods: V.goods,
     weight: V.weight,
     tractorPlate: V.tractorPlate,

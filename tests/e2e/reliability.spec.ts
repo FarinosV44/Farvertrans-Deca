@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { createHash } from "node:crypto";
 
 /**
@@ -13,15 +13,47 @@ import { createHash } from "node:crypto";
 const PAYLOAD = {
   shipper: { name: "Cargas Fiables SL", nif: "B96789011", address: "Av. del Puerto 120, Valencia" },
   carrier: { name: "Transportes Fiables SL", nif: "B12345674", address: "Calle 5, Paterna" },
-  origin: "Valencia",
-  destination: "Zaragoza",
-  transportDate: "2026-10-06",
+  loadLocation: {
+    name: "Almacén Fiable",
+    address: "Av. del Puerto 120",
+    postalCode: "46023",
+    city: "Valencia",
+    province: "Valencia",
+    country: "España",
+  },
+  unloadLocation: {
+    name: "Plataforma Fiable",
+    address: "Calle 6, Zaragoza",
+    postalCode: "50001",
+    city: "Zaragoza",
+    province: "Zaragoza",
+    country: "España",
+  },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés de cerámica",
   weight: "12.500 kg",
   tractorPlate: "1234 BCD",
   trailerPlate: "",
   reference: "",
 };
+
+async function fillStep2(page: Page) {
+  await page.fill("#loadLocationName", PAYLOAD.loadLocation.name);
+  await page.fill("#loadLocationAddress", PAYLOAD.loadLocation.address);
+  await page.fill("#loadLocationPostalCode", PAYLOAD.loadLocation.postalCode);
+  await page.fill("#loadLocationCity", PAYLOAD.loadLocation.city);
+  await page.fill("#loadLocationProvince", PAYLOAD.loadLocation.province);
+  await page.fill("#loadLocationCountry", PAYLOAD.loadLocation.country);
+  await page.fill("#loadDate", PAYLOAD.loadDate);
+  await page.fill("#unloadLocationName", PAYLOAD.unloadLocation.name);
+  await page.fill("#unloadLocationAddress", PAYLOAD.unloadLocation.address);
+  await page.fill("#unloadLocationPostalCode", PAYLOAD.unloadLocation.postalCode);
+  await page.fill("#unloadLocationCity", PAYLOAD.unloadLocation.city);
+  await page.fill("#unloadLocationProvince", PAYLOAD.unloadLocation.province);
+  await page.fill("#unloadLocationCountry", PAYLOAD.unloadLocation.country);
+  await page.fill("#unloadDate", PAYLOAD.unloadDate);
+}
 
 test.describe("#29 — DeCA generation reliability", () => {
   test("a successful create returns a real id, token and PDF hash, immediately fetchable", async ({
@@ -92,9 +124,7 @@ test.describe("#29 — DeCA generation reliability", () => {
     await page.fill("#carrierNif", PAYLOAD.carrier.nif);
     await page.fill("#carrierAddress", PAYLOAD.carrier.address);
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", PAYLOAD.origin);
-    await page.fill("#destination", PAYLOAD.destination);
-    await page.fill("#transportDate", PAYLOAD.transportDate);
+    await fillStep2(page);
     await page.getByTestId("wizard-next").click();
     await page.fill("#goods", PAYLOAD.goods);
     await page.fill("#weight", PAYLOAD.weight);
@@ -123,9 +153,7 @@ test.describe("#29 — DeCA generation reliability", () => {
     await page.fill("#carrierNif", PAYLOAD.carrier.nif);
     await page.fill("#carrierAddress", PAYLOAD.carrier.address);
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", PAYLOAD.origin);
-    await page.fill("#destination", PAYLOAD.destination);
-    await page.fill("#transportDate", PAYLOAD.transportDate);
+    await fillStep2(page);
     await page.getByTestId("wizard-next").click();
     await page.fill("#goods", PAYLOAD.goods);
     await page.fill("#weight", PAYLOAD.weight);

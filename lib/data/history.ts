@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
+import { formatLocationShort, type TransportLocation } from "@/lib/deca/location";
 import { rowMatches, type HistoryFilters } from "./history-filter";
 
 export type { HistoryFilters } from "./history-filter";
@@ -9,9 +10,10 @@ export type HistoryRow = {
   id: string;
   reference: string;
   createdAt: Date;
-  transportDate: string;
-  origin: string;
-  destination: string;
+  loadDate: string;
+  unloadDate: string;
+  loadLocation: string;
+  unloadLocation: string;
   shipper: string;
   carrier: string;
   goods: string;
@@ -24,9 +26,10 @@ export type HistoryRow = {
 
 type Data = {
   reference?: string;
-  origin?: string;
-  destination?: string;
-  transportDate?: string;
+  loadLocation?: Partial<TransportLocation>;
+  unloadLocation?: Partial<TransportLocation>;
+  loadDate?: string;
+  unloadDate?: string;
   goods?: string;
   weight?: string;
   tractorPlate?: string;
@@ -61,9 +64,10 @@ export async function listHistory(
       id: d.id,
       reference: `DECA-${d.currentVersion.token.slice(0, 8).toUpperCase()}`,
       createdAt: d.createdAt,
-      transportDate: data.transportDate ?? "",
-      origin: data.origin ?? "",
-      destination: data.destination ?? "",
+      loadDate: data.loadDate ?? "",
+      unloadDate: data.unloadDate ?? "",
+      loadLocation: formatLocationShort(data.loadLocation),
+      unloadLocation: formatLocationShort(data.unloadLocation),
       shipper: data.shipper?.name ?? "",
       carrier: data.carrier?.name ?? "",
       goods: data.goods ?? "",

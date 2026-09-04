@@ -8,9 +8,10 @@ import { diffVersions } from "@/lib/deca/detail";
 const base = {
   shipper: { name: "Cargas SL", nif: "B1", address: "Calle 1" },
   carrier: { name: "Trans SL", nif: "B2", address: "Calle 2" },
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocation: { name: "Almacén Turia", address: "Av. Puerto 120", city: "Valencia" },
+  unloadLocation: { name: "Plataforma Norte", address: "Calle Alcalá 200", city: "Madrid" },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -24,9 +25,13 @@ describe("diffVersions — 'Qué ha cambiado' (PRODUCT #36 §6)", () => {
   });
 
   it("reports only the changed fields, with human labels and both values", () => {
-    const changed = diffVersions(base, { ...base, destination: "Barcelona", weight: "13000 kg" });
+    const changed = diffVersions(base, {
+      ...base,
+      unloadLocation: { ...base.unloadLocation, name: "Plataforma Este" },
+      weight: "13000 kg",
+    });
     expect(changed).toEqual([
-      { label: "Destino", from: "Madrid", to: "Barcelona" },
+      { label: "Lugar de descarga — nombre", from: "Plataforma Norte", to: "Plataforma Este" },
       { label: "Peso o medida", from: "12000 kg", to: "13000 kg" },
     ]);
   });

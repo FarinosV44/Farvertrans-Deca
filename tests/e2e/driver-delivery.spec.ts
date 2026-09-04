@@ -7,9 +7,24 @@ const D = {
   carrierName: "Transportes Pérez SL",
   carrierNif: "B12345674",
   carrierAddress: "Pol. Ind. Fuente del Jarro 5, Paterna",
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocation: {
+    name: "Almacén Turia",
+    address: "Av. del Puerto 120",
+    postalCode: "46023",
+    city: "Valencia",
+    province: "Valencia",
+    country: "España",
+  },
+  unloadLocation: {
+    name: "Plataforma Norte",
+    address: "Calle Alcalá 200",
+    postalCode: "28028",
+    city: "Madrid",
+    province: "Madrid",
+    country: "España",
+  },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -28,9 +43,23 @@ async function anonCreate(page: Page) {
   await page.fill("#carrierNif", D.carrierNif);
   await page.fill("#carrierAddress", D.carrierAddress);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", D.origin);
-  await page.fill("#destination", D.destination);
-  await page.fill("#transportDate", D.transportDate);
+  for (const [s, v] of [
+    ["#loadLocationName", D.loadLocation.name],
+    ["#loadLocationAddress", D.loadLocation.address],
+    ["#loadLocationPostalCode", D.loadLocation.postalCode],
+    ["#loadLocationCity", D.loadLocation.city],
+    ["#loadLocationProvince", D.loadLocation.province],
+    ["#loadLocationCountry", D.loadLocation.country],
+    ["#loadDate", D.loadDate],
+    ["#unloadLocationName", D.unloadLocation.name],
+    ["#unloadLocationAddress", D.unloadLocation.address],
+    ["#unloadLocationPostalCode", D.unloadLocation.postalCode],
+    ["#unloadLocationCity", D.unloadLocation.city],
+    ["#unloadLocationProvince", D.unloadLocation.province],
+    ["#unloadLocationCountry", D.unloadLocation.country],
+    ["#unloadDate", D.unloadDate],
+  ] as const)
+    await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", D.goods);
   await page.fill("#weight", D.weight);
@@ -105,9 +134,10 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
       data: {
         shipper: { name: D.shipperName, nif: D.shipperNif, address: D.shipperAddress },
         carrier: { name: D.carrierName, nif: D.carrierNif, address: D.carrierAddress },
-        origin: D.origin,
-        destination: D.destination,
-        transportDate: D.transportDate,
+        loadLocation: D.loadLocation,
+        unloadLocation: D.unloadLocation,
+        loadDate: D.loadDate,
+        unloadDate: D.unloadDate,
         goods: D.goods,
         weight: D.weight,
         tractorPlate: D.tractorPlate,
@@ -140,7 +170,7 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     await expect(page).toHaveURL(/\/panel$/);
     await anonCreate(page);
 
-    // go to the owner detail, correct the destination
+    // go to the owner detail, correct the unload location
     await page.goto("/panel/historico");
     await page
       .getByTestId("historico-table")
@@ -150,7 +180,7 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     const v1Url = await page.getByTestId("result-download").getAttribute("href");
     await page.getByTestId("deca-corregir").click();
     await page.getByTestId("wizard-next").click();
-    await page.fill("#destination", "Barcelona");
+    await page.fill("#unloadLocationCity", "Barcelona");
     await page.getByTestId("wizard-next").click();
     await page.getByTestId("correction-reason").fill("Cambio de destino");
     await page.getByTestId("wizard-generate").click();

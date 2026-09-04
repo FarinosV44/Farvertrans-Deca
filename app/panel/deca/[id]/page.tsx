@@ -11,6 +11,7 @@ import { VersionTimeline, ChangeList } from "@/components/deca/version-timeline"
 import { getCurrentUser } from "@/lib/auth";
 import { getDecaCockpit } from "@/lib/deca/detail";
 import { qrPngDataUriCached } from "@/lib/pdf/qr";
+import { formatLocationShort } from "@/lib/deca/location";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Documento", robots: { index: false } };
@@ -33,7 +34,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
       <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[760px] px-4 py-8 md:px-6">
         <h1 className="text-2xl font-bold">
-          {c.data.origin ?? ""} → {c.data.destination ?? ""}
+          {formatLocationShort(c.data.loadLocation)} → {formatLocationShort(c.data.unloadLocation)}
         </h1>
         <AppNav current="historico" />
 
@@ -52,7 +53,9 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
             {doc.status === "activo" ? "URL pública activa" : "URL pública no disponible"}
           </span>
           <span aria-hidden>·</span>
-          <span>Servicio {c.data.transportDate ?? "—"}</span>
+          <span>
+            Carga {c.data.loadDate ?? "—"} · Descarga {c.data.unloadDate ?? "—"}
+          </span>
           <span aria-hidden>·</span>
           <span>Generado {fmt(doc.createdAt)}</span>
         </div>

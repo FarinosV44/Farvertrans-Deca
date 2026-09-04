@@ -26,9 +26,23 @@ async function createDeca(page: Page): Promise<string> {
   ] as const)
     await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", "Valencia");
-  await page.fill("#destination", "Madrid");
-  await page.fill("#transportDate", "2026-10-06");
+  for (const [s, v] of [
+    ["#loadLocationName", "Almacén Valencia"],
+    ["#loadLocationAddress", "Calle 1"],
+    ["#loadLocationPostalCode", "46001"],
+    ["#loadLocationCity", "Valencia"],
+    ["#loadLocationProvince", "Valencia"],
+    ["#loadLocationCountry", "España"],
+    ["#loadDate", "2026-10-06"],
+    ["#unloadLocationName", "Almacén Madrid"],
+    ["#unloadLocationAddress", "Av. Central 3"],
+    ["#unloadLocationPostalCode", "28001"],
+    ["#unloadLocationCity", "Madrid"],
+    ["#unloadLocationProvince", "Madrid"],
+    ["#unloadLocationCountry", "España"],
+    ["#unloadDate", "2026-10-06"],
+  ] as const)
+    await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", "Palés");
   await page.fill("#weight", "12000 kg");
@@ -115,9 +129,24 @@ function buildPayload() {
   return {
     shipper: { name: "Cargas SL", nif: "B96789011", address: "Calle 1" },
     carrier: { name: "Trans SL", nif: "B12345674", address: "Av. Central 3, Madrid" },
-    origin: "Valencia",
-    destination: "Madrid",
-    transportDate: "2026-10-06",
+    loadLocation: {
+      name: "Almacén Valencia",
+      address: "Calle 1",
+      postalCode: "46001",
+      city: "Valencia",
+      province: "Valencia",
+      country: "España",
+    },
+    unloadLocation: {
+      name: "Almacén Madrid",
+      address: "Av. Central 3",
+      postalCode: "28001",
+      city: "Madrid",
+      province: "Madrid",
+      country: "España",
+    },
+    loadDate: "2026-10-06",
+    unloadDate: "2026-10-06",
     goods: "Palés",
     weight: "12000 kg",
     tractorPlate: "1234 BCD",

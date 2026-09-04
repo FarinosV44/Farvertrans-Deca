@@ -93,9 +93,23 @@ test.describe("BUILD 11 — referral + UTM attribution", () => {
     await page.fill("#carrierNif", "B12345674");
     await page.fill("#carrierAddress", "Av. Central 3, Madrid");
     await page.getByTestId("wizard-next").click();
-    await page.fill("#origin", "Valencia");
-    await page.fill("#destination", "Madrid");
-    await page.fill("#transportDate", "2026-10-06");
+    for (const [s, v] of [
+      ["#loadLocationName", "Almacén Valencia"],
+      ["#loadLocationAddress", "Calle 1"],
+      ["#loadLocationPostalCode", "46001"],
+      ["#loadLocationCity", "Valencia"],
+      ["#loadLocationProvince", "Valencia"],
+      ["#loadLocationCountry", "España"],
+      ["#loadDate", "2026-10-06"],
+      ["#unloadLocationName", "Almacén Madrid"],
+      ["#unloadLocationAddress", "Av. Central 3"],
+      ["#unloadLocationPostalCode", "28001"],
+      ["#unloadLocationCity", "Madrid"],
+      ["#unloadLocationProvince", "Madrid"],
+      ["#unloadLocationCountry", "España"],
+      ["#unloadDate", "2026-10-06"],
+    ] as const)
+      await page.fill(s, v);
     await page.getByTestId("wizard-next").click();
     await page.fill("#goods", "Palés");
     await page.fill("#weight", "12000 kg");

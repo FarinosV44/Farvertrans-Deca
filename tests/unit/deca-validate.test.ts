@@ -10,9 +10,24 @@ const valid = {
     nif: "B98765432",
     address: "Pol. Ind. Fuente del Jarro, calle 5, Paterna",
   },
-  origin: "Valencia",
-  destination: "Madrid",
-  transportDate: "2026-10-06",
+  loadLocation: {
+    name: "Almacén Turia",
+    address: "Av. del Puerto 120",
+    postalCode: "46023",
+    city: "Valencia",
+    province: "Valencia",
+    country: "España",
+  },
+  unloadLocation: {
+    name: "Plataforma Norte",
+    address: "Calle Alcalá 200",
+    postalCode: "28028",
+    city: "Madrid",
+    province: "Madrid",
+    country: "España",
+  },
+  loadDate: "2026-10-06",
+  unloadDate: "2026-10-06",
   goods: "Palés de cerámica",
   weight: "12000 kg",
   tractorPlate: "1234 BCD",
@@ -55,9 +70,16 @@ describe("validateDeca (R-2 / AC-09)", () => {
     for (const missing of [
       { ...valid, shipper: { ...valid.shipper, nif: "" } },
       { ...valid, carrier: { ...valid.carrier, name: "" } },
-      { ...valid, origin: "" },
-      { ...valid, destination: "" },
-      { ...valid, transportDate: "" },
+      { ...valid, loadLocation: { ...valid.loadLocation, name: "" } },
+      { ...valid, loadLocation: { ...valid.loadLocation, address: "" } },
+      { ...valid, loadLocation: { ...valid.loadLocation, postalCode: "" } },
+      { ...valid, loadLocation: { ...valid.loadLocation, city: "" } },
+      { ...valid, loadLocation: { ...valid.loadLocation, province: "" } },
+      { ...valid, loadLocation: { ...valid.loadLocation, country: "" } },
+      { ...valid, unloadLocation: { ...valid.unloadLocation, name: "" } },
+      { ...valid, unloadLocation: { ...valid.unloadLocation, address: "" } },
+      { ...valid, loadDate: "" },
+      { ...valid, unloadDate: "" },
       { ...valid, goods: "" },
       { ...valid, weight: "" },
       { ...valid, tractorPlate: "" },
@@ -68,10 +90,20 @@ describe("validateDeca (R-2 / AC-09)", () => {
     }
   });
 
-  it("rejects a malformed transport date", () => {
-    expect(() => validateDeca({ ...valid, transportDate: "06/10/2026" })).toThrow(
+  it("rejects a malformed load/unload date", () => {
+    expect(() => validateDeca({ ...valid, loadDate: "06/10/2026" })).toThrow(DecaValidationError);
+    expect(() => validateDeca({ ...valid, unloadDate: "06/10/2026" })).toThrow(
       DecaValidationError,
     );
+  });
+
+  it("rejects an unload date before the load date (same day is allowed)", () => {
+    expect(() =>
+      validateDeca({ ...valid, loadDate: "2026-10-10", unloadDate: "2026-10-09" }),
+    ).toThrow(DecaValidationError);
+    // Same-day loading/unloading must be allowed.
+    const r = validateDeca({ ...valid, loadDate: "2026-10-10", unloadDate: "2026-10-10" });
+    expect(r.data).toBeTruthy();
   });
 
   it("does NOT block a foreign NIF — it warns instead", () => {
@@ -103,12 +135,14 @@ describe("validateDeca (R-2 / AC-09)", () => {
 
   it("collects field errors keyed by path", () => {
     try {
-      validateDeca({ ...valid, origin: "", goods: "" });
+      validateDeca({ ...valid, loadLocation: { ...valid.loadLocation, name: "" }, goods: "" });
       throw new Error("should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(DecaValidationError);
       const err = e as DecaValidationError;
-      expect(Object.keys(err.fieldErrors)).toEqual(expect.arrayContaining(["origin", "goods"]));
+      expect(Object.keys(err.fieldErrors)).toEqual(
+        expect.arrayContaining(["loadLocation.name", "goods"]),
+      );
     }
   });
 });

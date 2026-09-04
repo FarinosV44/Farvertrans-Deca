@@ -1,19 +1,19 @@
 export type HistoryFilters = {
-  q?: string; // free text: reference / company / carrier / plate / origin / destination
-  from?: string; // yyyy-mm-dd (transport date >=)
-  to?: string; // yyyy-mm-dd (transport date <=)
+  q?: string; // free text: reference / company / carrier / plate / load / unload location
+  from?: string; // yyyy-mm-dd (load date >=)
+  to?: string; // yyyy-mm-dd (load date <=)
   carrier?: string; // exact effective-carrier name (WORKSPACE #24)
   plate?: string; // tractor/trailer plate contains (normalised, case-insensitive)
 };
 
 export type FilterableRow = {
   reference: string;
-  origin: string;
-  destination: string;
+  loadLocation: string;
+  unloadLocation: string;
   carrier: string;
   tractorPlate: string;
   trailerPlate?: string;
-  transportDate: string;
+  loadDate: string;
   shipperName?: string;
   shipperNif?: string;
   carrierNif?: string;
@@ -21,8 +21,8 @@ export type FilterableRow = {
 
 /** Pure predicate: does a history row match the given filters? */
 export function rowMatches(row: FilterableRow, f: HistoryFilters): boolean {
-  if (f.from && row.transportDate && row.transportDate < f.from) return false;
-  if (f.to && row.transportDate && row.transportDate > f.to) return false;
+  if (f.from && row.loadDate && row.loadDate < f.from) return false;
+  if (f.to && row.loadDate && row.loadDate > f.to) return false;
 
   if (f.carrier && f.carrier.trim() && row.carrier !== f.carrier.trim()) return false;
 
@@ -39,8 +39,8 @@ export function rowMatches(row: FilterableRow, f: HistoryFilters): boolean {
 
   const hay = [
     row.reference,
-    row.origin,
-    row.destination,
+    row.loadLocation,
+    row.unloadLocation,
     row.carrier,
     row.tractorPlate,
     row.shipperName ?? "",

@@ -1,4 +1,5 @@
 import type { DecaPayloadData } from "@/lib/data/history";
+import { formatLocationFull } from "@/lib/deca/location";
 
 /**
  * The generated DeCA's structured data, in the exact sections of the PDF
@@ -26,9 +27,10 @@ export function DocSummary({ data }: { data: DecaPayloadData }) {
     {
       title: "Transporte",
       rows: [
-        ["Fecha", data.transportDate ?? ""],
-        ["Origen", data.origin ?? ""],
-        ["Destino", data.destination ?? ""],
+        ["Fecha de carga", data.loadDate ?? ""],
+        ["Fecha de descarga", data.unloadDate ?? ""],
+        ["Lugar de carga", formatLocationFull(data.loadLocation)],
+        ["Lugar de descarga", formatLocationFull(data.unloadLocation)],
         ["Matrícula tractora", data.tractorPlate ?? ""],
         ["Matrícula remolque / semirremolque", data.trailerPlate || "—"],
       ],

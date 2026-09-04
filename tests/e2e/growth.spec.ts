@@ -35,9 +35,23 @@ async function createDeca(page: Page) {
   ] as const)
     await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
-  await page.fill("#origin", "León");
-  await page.fill("#destination", "Vigo");
-  await page.fill("#transportDate", "2026-10-06");
+  for (const [s, v] of [
+    ["#loadLocationName", "Almacén León"],
+    ["#loadLocationAddress", "Calle 1"],
+    ["#loadLocationPostalCode", "24001"],
+    ["#loadLocationCity", "León"],
+    ["#loadLocationProvince", "León"],
+    ["#loadLocationCountry", "España"],
+    ["#loadDate", "2026-10-06"],
+    ["#unloadLocationName", "Almacén Vigo"],
+    ["#unloadLocationAddress", "Av 2"],
+    ["#unloadLocationPostalCode", "36201"],
+    ["#unloadLocationCity", "Vigo"],
+    ["#unloadLocationProvince", "Pontevedra"],
+    ["#unloadLocationCountry", "España"],
+    ["#unloadDate", "2026-10-06"],
+  ] as const)
+    await page.fill(s, v);
   await page.getByTestId("wizard-next").click();
   await page.fill("#goods", "Madera");
   await page.fill("#weight", "9000 kg");
