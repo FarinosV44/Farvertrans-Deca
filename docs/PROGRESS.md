@@ -212,8 +212,9 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: nothing pending — all of Product V3 (#29–#38) merged to `main` at `f09dde0` on 2026-09-04. `develop` == `main`.
-  `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
+- Ready for `main`: the unverified-email panel banner (`a4a28bb`, this session) — small additive
+  feature, not yet forwarded (only CI/CD-fix commits were forwarded without re-asking this session).
+  `main` is at `04ad0e3`; `develop` is one commit ahead.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
@@ -222,35 +223,50 @@
 ## Launch execution (2026-09-04, user directive — "ruthless launch sequence" per #44)
 - **DNS resolved.** `https://decaprofesional.es/` now serves HTTP 200 with a
   valid cert and the app's own security headers — confirmed via `curl`.
-- **`develop` merged to `main` (fast-forward, `4df23dd`), pushed, CI running.**
-  `main` now includes D-042 (PRODUCT #41 structured goods legal data model) and
-  D-043 (TRUST #42 + GROWTH #46 — Praetoria identity, versioned terms, email
-  verification, lead gate) — merge explicitly authorised by the user this
-  session.
-- **BLOCKED — production DB is down and the live app has not been redeployed
-  with `main`'s latest commit.** Evidence:
+- **`develop` merged to `main`, pushed, CI green at `04ad0e3`.** `main` now
+  includes D-042 (PRODUCT #41 structured goods legal data model), D-043
+  (TRUST #42 + GROWTH #46 — Praetoria identity, versioned terms, email
+  verification, lead gate) — merge explicitly authorised by the user — plus two
+  fixes forwarded the same session: a `format:check` red (prettier) and the
+  `directUrl`/connection-pool fix below.
+- **BLOCKED — the live app has not been redeployed with `main`'s latest
+  commit; production DB was reported down but is now root-caused and fixed in
+  code.** Evidence:
   - `GET /health` on `https://decaprofesional.es/health` → `{"status":"degraded",
-    "version":"0.1.0","db":"down"}`.
+    "version":"0.1.0","db":"down"}` (unchanged as of the last check — expected,
+    since nothing has been redeployed yet).
   - The live site is still serving the PRE-D-042/D-043 build: `/terminos` 404s
-    and the homepage carries no Praetoria trust copy, even though that page and
-    copy exist on `main` as of `4df23dd`. Hostinger deploy is a manual SSH/build
-    step (`docs/07-release.md` "Hostinger Cloud Startup") — it does not
-    auto-deploy on `git push`, so the merge above does not reach production by
-    itself.
-  - **CREDENTIAL block — needs the user:** (1) check the Postgres/Supabase
-    project is live and `DATABASE_URL` on Hostinger is correct — DB down means
-    registration, login, DeCA generation, panel/history all fail regardless of
-    which build is deployed; (2) run the redeploy steps in
-    `docs/07-release.md` §"Hostinger Cloud Startup" step 4
-    (`npm ci && npx prisma generate && npx prisma migrate deploy && npm run
-    seed:content && NEXT_STANDALONE=1 npm run build`, then restart the Node app
-    in hPanel) so `main`'s `4df23dd` actually ships.
-  - Once both are done, resume immediately: Phase 1 (production stability) via
+    and the homepage carries no Praetoria trust copy, even though both exist on
+    `main`. Hostinger deploy is a manual SSH/build step
+    (`docs/07-release.md` "Hostinger Cloud Startup") — it does not auto-deploy
+    on `git push`.
+  - **Root cause of `db: "down"`, diagnosed and fixed:** the user shared the
+    production `DATABASE_URL` — Supabase's SESSION pooler (port 5432,
+    Supavisor free-tier `pool_size` 15). `npx prisma migrate status` against it
+    returned `FATAL: max clients reached in session mode`; the same
+    credentials over the TRANSACTION pooler (port 6543, `pgbouncer=true`)
+    answered a real query fine. Prisma had no `directUrl`, so the app's
+    runtime queries and every migration/tooling connection fought over the
+    same 15-connection cap. Fixed on `main` (`04ad0e3`): `directUrl` added to
+    `prisma/schema.prisma`; `DATABASE_URL` (app, transaction pooler) split from
+    `DIRECT_URL` (migrations, session pooler) in `.env.example`,
+    `.env.prod.example`, CI, and `docs/07-release.md`. The credential itself
+    was never written to any file — used only as a transient shell env var for
+    the connectivity test.
+  - **CREDENTIAL block — needs the user:** set BOTH `DATABASE_URL` (port 6543 +
+    `?pgbouncer=true`) and `DIRECT_URL` (port 5432) on the Hostinger
+    deployment, then run the redeploy steps in `docs/07-release.md`
+    §"Hostinger Cloud Startup" step 4 (`npm ci && npx prisma generate && npx
+    prisma migrate deploy && npm run seed:content && NEXT_STANDALONE=1 npm run
+    build`, then restart the Node app in hPanel) so `main`'s `04ad0e3` actually
+    ships.
+  - Once redeployed, resume immediately: Phase 1 (production stability) via
     `npm run diagnose -- https://decaprofesional.es` (#29, needs
-    `FVD_ADMIN_TOKEN` set on the deployment) + Phase 2 (real generation
+    `FVD_ADMIN_TOKEN` set on the deployment — value received from the user this
+    session, not persisted to any file) + Phase 2 (real generation
     reproduction) + Phase 4 (QR from a second device) + Phase 9 (real E2E test)
     per `docs/production-smoke-checklist.md`.
-- **D-042 done, on `develop`** (not yet merged/deployed): PRODUCT #41 goods-only
+- **D-042 done, on `main`:** PRODUCT #41 goods-only
   slice — structured `loadLocation`/`unloadLocation` (name/address/postalCode/
   city/province/country, all required) replace the loose `origin`/`destination`
   strings; separate `loadDate`/`unloadDate` (unload >= load, same-day allowed)
@@ -267,7 +283,7 @@
   instruction not to invent passenger fields), the `GOODS|PASSENGERS` type enum
   + company default + `/crear` type picker, structured `SavedAddress` (was
   already dead/unused in the wizard before this slice), admin type filter.
-- **D-043 done, on `develop`** (not yet merged/deployed): #42 + #46 —
+- **D-043 done, on `main`:** #42 + #46 —
   Praetoria legal identity (footer + legal pages + `/terminos` + landing trust
   section), versioned `TermsAcceptance` (required checkbox, team-invite joins
   exempt), company signup fields (contactName/phone/profile picker — logo
@@ -287,8 +303,14 @@
 - **Not started:** company logo upload (#46, deferred); passenger transport
   type (#41 §4/§5 — GOODS|PASSENGERS enum, company default, `/crear` picker,
   admin filter — blocked on the passenger legal-requirement research the issue
-  itself demands before building); an in-`/panel` unverified-email reminder
-  banner (low priority, soft-gate design already avoids dead ends).
+  itself demands before building).
+- **In-`/panel` unverified-email reminder banner — DONE** (this session):
+  `panel-verify-email-banner` shown on `/panel` whenever `user.emailVerifiedAt`
+  is null, linking to `/verificar-email?next=/panel`. e2e assertion added to
+  `trust-registration-v2.spec.ts` (banner visible right after the soft-gate
+  skip, gone after verifying via the token link). Typecheck/lint/format/106
+  unit green locally; e2e needs CI (no local Docker in this session) — **on
+  `develop` only, not yet forwarded to `main`** (new scope, not a break-fix).
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
@@ -300,3 +322,9 @@ D-042 (goods-only structured loading/unloading + separate load/unload dates, PRO
 email verification, lightweight lead gate — TRUST #42 + GROWTH #46) done on `develop`, gate green
 (106 unit + 134 e2e). Production verification blocked on DNS cutover to decaprofesional.es (user's
 infra task, not code).
+DNS resolved 2026-09-04 (later same day). `develop` (D-042+D-043) merged to `main`, CI red on
+format:check, fixed and re-forwarded (`04ad0e3`) — `main` CI fully green. Root-caused the
+production `db: "down"` health check to a Supabase session-pooler connection-limit exhaustion
+(no `directUrl` split between app runtime and migrations) — fixed in `prisma/schema.prisma` +
+env docs; needs the user to set `DATABASE_URL`(6543,pgbouncer)+`DIRECT_URL`(5432) on Hostinger and
+redeploy. Added an unverified-email reminder banner to `/panel` (`a4a28bb`, on `develop` only).
