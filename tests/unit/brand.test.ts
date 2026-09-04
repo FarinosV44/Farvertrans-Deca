@@ -4,19 +4,11 @@ import { es } from "@/lib/i18n/es";
 
 describe("BRAND (#21 — centralised product brand)", () => {
   it("exposes every field the UI, PDF, email and SEO layers need", () => {
-    for (const k of [
-      "name",
-      "shortName",
-      "tagline",
-      "legalName",
-      "attribution",
-      "supportEmail",
-    ] as const) {
+    for (const k of ["name", "shortName", "tagline", "supportEmail"] as const) {
       expect(typeof BRAND[k], k).toBe("string");
       expect(BRAND[k].length, k).toBeGreaterThan(1);
     }
     expect(BRAND.supportEmail).toMatch(/@/);
-    expect(BRAND.attribution).toContain(BRAND.legalName);
   });
 
   it("is the single source for the product name — the i18n catalog defers to it", () => {
@@ -24,9 +16,12 @@ describe("BRAND (#21 — centralised product brand)", () => {
     expect(titleTemplate).toBe(`%s | ${BRAND.name}`);
   });
 
-  it("does not leak the internal 'Farvertrans DeCA' product name", () => {
+  it("carries no company attribution and never mentions Farvertrans (decision 2026-09-04)", () => {
+    const json = JSON.stringify({ BRAND, common: es.common }).toLowerCase();
+    expect(json).not.toContain("farvertrans");
+    expect(json).not.toContain("s.l.");
     expect(BRAND.name).not.toBe("Farvertrans DeCA");
-    // Farvertrans survives only as the company attribution
-    expect(BRAND.attribution.toLowerCase()).toContain("farvertrans");
+    expect("attribution" in BRAND).toBe(false);
+    expect("legalName" in BRAND).toBe(false);
   });
 });

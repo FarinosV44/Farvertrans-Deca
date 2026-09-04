@@ -18,9 +18,6 @@ export function AuthShell({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      <p className="mt-5 text-center text-xs text-[var(--color-text-muted)]">
-        Un servicio de Farvertrans S.L.
-      </p>
     </div>
   );
 }

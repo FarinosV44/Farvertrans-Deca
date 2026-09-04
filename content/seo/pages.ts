@@ -40,7 +40,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Quiero generar un DeCA sin pagar.",
     lastReviewed: REVIEWED,
     intro: [
-      "Con Farvertrans DeCA puedes crear y descargar el Documento Electrónico de Control Administrativo sin coste, sin tarjeta y sin límite de documentos, al menos hasta el 31 de diciembre de 2026.",
+      "Con DeCA Fácil puedes crear y descargar el Documento Electrónico de Control Administrativo sin coste, sin tarjeta y sin límite de documentos, al menos hasta el 31 de diciembre de 2026.",
       "El documento que se genera cumple los requisitos técnicos de la resolución vigente: PDF nativo digital, código QR y una URL única HTTPS que permite la descarga directa del fichero sin registro ni contraseña.",
     ],
     sections: [
@@ -433,7 +433,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Necesito un generador de DeCA.",
     lastReviewed: REVIEWED,
     intro: [
-      "Farvertrans DeCA es un generador online del Documento Electrónico de Control Administrativo. No necesitas instalar nada ni pasar por un comercial.",
+      "DeCA Fácil es un generador online del Documento Electrónico de Control Administrativo. No necesitas instalar nada ni pasar por un comercial.",
       "Introduces los datos del servicio, generas el DeCA y lo compartes con el conductor. El documento cumple los requisitos técnicos de la resolución vigente.",
     ],
     sections: [

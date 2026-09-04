@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Company acquisition engine (GROWTH #28). Farvertrans operators seed prospects,
+ * Company acquisition engine (GROWTH #28). Internal operators seed prospects,
  * send an operator-attributed onboarding link, and see which prospects actually
  * generated a first DeCA (the activation milestone). Internal-only.
  */

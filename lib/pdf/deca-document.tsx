@@ -87,7 +87,7 @@ export function DecaDocument(p: DecaDocProps) {
             <Text style={s.label}>URL DE VERIFICACIÓN (descarga directa)</Text>
             <Text style={s.url}>{p.publicUrl}</Text>
             <Text style={s.meta}>
-              Generado por {BRAND.name} · {BRAND.attribution} · v{p.appVersion}
+              Generado por {BRAND.name} · v{p.appVersion}
             </Text>
           </View>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}

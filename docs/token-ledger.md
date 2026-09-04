@@ -25,3 +25,4 @@ AI cost mode: subscription (Claude Code) — marginal cost ≈ €0.
 | 2026-09-04 | Phase 5 — Product V3 #34 (PRODUCT): history CSV export + workflow status + integration boundary; logo→#39, PWA→#40; e2e workers capped at 3 locally | claude-sonnet-5 | ~0.35M | 94 unit + 117 e2e + 8 compliance green; D-036 |
 | 2026-09-04 | Phase 5 — Product V3 #38 (AUTH, minus OAuth): safeInternalPath open-redirect guard + invalid-invite recovery state | claude-sonnet-5 | ~0.25M | 98 unit + 120 e2e + 8 compliance green; D-037 |
 | 2026-09-04 | Phase 5 — Product V3 #32 (SEO): DB-backed Guides + Blog CMS — ContentItem model + /guias + /blog + admin editor + safe markdown renderer + seed content | claude-sonnet-5 | ~1.0M | 105 unit + 125 e2e + 8 compliance green; D-038 |
+| 2026-09-04 | Product V3 — remove company attribution from every public surface (footer, auth card, PDF, SEO copy); D-039 | claude-sonnet-5 | ~0.1M | 105 unit + 125 e2e + 8 compliance green |

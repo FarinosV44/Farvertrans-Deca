@@ -8,7 +8,6 @@ import { BRAND } from "@/lib/brand";
 export const es = {
   common: {
     appName: BRAND.name,
-    attribution: BRAND.attribution,
     createCta: "CREAR DECA GRATIS",
     loginCta: "Entrar",
     panelCta: "Ir a mi panel",

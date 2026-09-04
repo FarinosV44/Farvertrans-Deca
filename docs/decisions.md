@@ -529,3 +529,24 @@
   `npm run seed:content`, idempotent, also run by `prisma/seed.ts`) covers the
   non-overlapping pieces (cómo corregir, cómo llevarlo el conductor, errores
   frecuentes, cuenta atrás) so the CMS is never empty.
+
+## D-039 — The product carries no company attribution
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision (user request):** remove every user-facing reference that links the
+  product to a company. "DeCA Fácil" stands on its own.
+  - `lib/brand.ts`: `legalName` and `attribution` fields removed.
+  - Footer: "Un servicio de Farvertrans S.L. · vX" → "DeCA Fácil · vX".
+  - Auth card: the "Un servicio de …" line removed.
+  - Generated PDF footer: "Generado por DeCA Fácil · vX" (company dropped).
+  - `lib/i18n/es.ts`: `common.attribution` key removed.
+  - SEO copy: "Con/es Farvertrans DeCA …" → "Con/es DeCA Fácil …".
+  - `lib/growth.ts` comment: "Farvertrans operators" → "internal operators".
+  - `tests/unit/brand.test.ts` + `tests/e2e/landing.spec.ts` now assert the
+    string "farvertrans"/"s.l." appears nowhere on the public surface.
+- **Not changed (mechanical identifiers, not user-facing — flagged to the user):**
+  the git repository name (`FarinosV44/Farvertrans-Deca`), the `FVD_` /
+  `NEXT_PUBLIC_FVD_` environment-variable prefix, the npm package name
+  (`farvertrans-deca`), and the internal `docs/` which still call the project
+  "Farvertrans DeCA". Renaming any of these is a breaking, cross-cutting change
+  (every deploy config, every env var) and none of them is visible to a user or
+  in the product; left for an explicit follow-up if wanted.
