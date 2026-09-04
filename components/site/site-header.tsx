@@ -41,6 +41,12 @@ export function SiteHeader({
             <Link href="/soy-obligado" className="no-underline hover:text-[var(--color-primary)]">
               Normativa
             </Link>
+            <Link href="/guias" className="no-underline hover:text-[var(--color-primary)]">
+              Guías
+            </Link>
+            <Link href="/blog" className="no-underline hover:text-[var(--color-primary)]">
+              Blog
+            </Link>
             <Link href="/#faq" className="no-underline hover:text-[var(--color-primary)]">
               Preguntas
             </Link>

@@ -1,4 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
+import { PrismaClient } from "@/prisma/generated/client";
 
 /**
  * SEO #32 — the content engine. An internal user creates a guide, previews the
@@ -9,6 +10,16 @@ import { test, expect, type Browser, type Page } from "@playwright/test";
 const ADMIN = { email: "admin@farvertrans.local", password: "admin-dev-only" };
 const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
 const rnd = () => `${Date.now()}${Math.floor(Math.random() * 1e5)}`;
+
+// The tests create real content; remove it so it doesn't pollute a dev /guias list.
+test.afterAll(async () => {
+  const prisma = new PrismaClient();
+  try {
+    await prisma.contentItem.deleteMany({ where: { slug: { startsWith: "guia-e2e-" } } });
+  } finally {
+    await prisma.$disconnect();
+  }
+});
 
 async function internalPage(browser: Browser): Promise<{ page: Page; close: () => Promise<void> }> {
   const ctx = await browser.newContext({ baseURL });

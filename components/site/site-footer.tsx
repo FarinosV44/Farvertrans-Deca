@@ -14,8 +14,15 @@ export function SiteFooter() {
           </a>
           .
         </p>
-        <p className="mt-2">
-          <Link href="/crear">Crear DeCA</Link> · <Link href="/soy-obligado">Normativa</Link> ·{" "}
+        <p className="mt-2 flex flex-wrap gap-x-2 gap-y-1">
+          <Link href="/crear">Crear DeCA</Link>
+          <span aria-hidden>·</span>
+          <Link href="/guias">Guías</Link>
+          <span aria-hidden>·</span>
+          <Link href="/blog">Blog</Link>
+          <span aria-hidden>·</span>
+          <Link href="/soy-obligado">Normativa</Link>
+          <span aria-hidden>·</span>
           <a href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>
         </p>
         <p className="mt-2 text-xs">

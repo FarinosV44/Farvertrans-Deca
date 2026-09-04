@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { overviewMetrics, operationalAlerts } from "@/lib/admin/metrics";
-import { PageHeader, Kpi, KpiGrid, Badge, Empty } from "@/components/admin/ui";
+import { overviewMetrics, operationalAlerts, contentStats } from "@/lib/admin/metrics";
+import { PageHeader, Kpi, KpiGrid, Badge } from "@/components/admin/ui";
+import { SEO_PAGES } from "@/content/seo/pages";
 
 const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
 
 export default async function AdminOverview() {
-  const [metrics, alerts] = await Promise.all([overviewMetrics(), operationalAlerts()]);
+  const [metrics, alerts, content] = await Promise.all([
+    overviewMetrics(),
+    operationalAlerts(),
+    contentStats(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -122,10 +127,16 @@ export default async function AdminOverview() {
         <h2 id="content" className="mb-2 text-sm font-bold">
           Contenido / SEO
         </h2>
-        <Empty>
-          La gestión de Guías y Blog llega con SEO #32. Las 10 páginas SEO actuales son estáticas (
-          <Link href="/admin/contenido">ver estado</Link>).
-        </Empty>
+        <KpiGrid>
+          <Kpi label="Guías publicadas" value={content.guidesPublished} />
+          <Kpi label="Blog publicados" value={content.blogPublished} />
+          <Kpi label="Borradores" value={content.drafts} sub="pendientes de revisar" />
+          <Kpi label="Clics CTA desde contenido (30d)" value={content.ctaClicks30d} />
+          <Kpi label="Clúster SEO en código" value={SEO_PAGES.length} />
+        </KpiGrid>
+        <p className="mt-2 text-sm">
+          <Link href="/admin/contenido">Gestionar guías y blog →</Link>
+        </p>
       </section>
     </div>
   );

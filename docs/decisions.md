@@ -550,3 +550,13 @@
   "Farvertrans DeCA". Renaming any of these is a breaking, cross-cutting change
   (every deploy config, every env var) and none of them is visible to a user or
   in the product; left for an explicit follow-up if wanted.
+
+## D-040 — Guides + Blog are discoverable from the site nav (SEO #32 follow-up)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Fix:** #32 shipped the routes, the CMS and the sitemap entries, but nothing
+  in the site header or footer linked to `/guias` or `/blog`, so a human
+  browsing the site could not find them (only crawlers via the sitemap). Added
+  "Guías" and "Blog" to the landing header nav and the footer link row.
+- **Also:** `/admin` Resumen now shows real content KPIs (guías/blog publicados,
+  borradores, clics de CTA desde contenido) via `contentStats()` instead of the
+  "llega con #32" stub, and the e2e spec cleans up the content it creates.
