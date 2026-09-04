@@ -43,6 +43,13 @@ const EMPTY: FormState = {
 
 const STORAGE_KEY = "fvd_crear_draft";
 
+/** Plain-language step names for the progress indicator (UX #31). */
+const STEP_LABELS = [
+  "Quién contrata y quién transporta",
+  "Ruta y fecha",
+  "Vehículo, mercancía y revisión",
+] as const;
+
 /** zod payload path → flat FormState field id (both the client and the 422 path use this). */
 const FIELD_KEY_MAP: Record<string, keyof FormState> = {
   "shipper.name": "shipperName",
@@ -95,23 +102,53 @@ function toPayload(f: FormState) {
 /**
  * Read-only summary of everything that will go on the DeCA — shown on the last
  * step before GENERAR DECA so the operator confirms the exact final data (F1).
+ * The blocks mirror the PDF sections, and each carries an `Editar` action that
+ * jumps back to the step that owns it (UX #31).
  */
-function ReviewSummary({ form }: { form: FormState }) {
-  const rows: [string, string][] = [
-    ["Cargador contractual", form.shipperName],
-    ["NIF del cargador", form.shipperNif],
-    ["Domicilio del cargador", form.shipperAddress],
-    ["Transportista efectivo", form.carrierName],
-    ["NIF del transportista", form.carrierNif],
-    ["Domicilio del transportista", form.carrierAddress],
-    ["Origen", form.origin],
-    ["Destino", form.destination],
-    ["Fecha del transporte", form.transportDate],
-    ["Mercancía", form.goods],
-    ["Peso o medida", form.weight],
-    ["Matrícula tractora", form.tractorPlate],
-    ["Matrícula remolque", form.trailerPlate || "—"],
-    ...(form.reference ? ([["Referencia", form.reference]] as [string, string][]) : []),
+function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: number) => void }) {
+  const blocks: { title: string; step: number; key: string; rows: [string, string][] }[] = [
+    {
+      title: "Empresa que contrata el transporte",
+      step: 0,
+      key: "shipper",
+      rows: [
+        ["Nombre o razón social", form.shipperName],
+        ["NIF / VAT", form.shipperNif],
+        ["Domicilio", form.shipperAddress],
+      ],
+    },
+    {
+      title: "Transportista que realiza el transporte",
+      step: 0,
+      key: "carrier",
+      rows: [
+        ["Nombre o razón social", form.carrierName],
+        ["NIF / VAT", form.carrierNif],
+        ["Domicilio", form.carrierAddress],
+      ],
+    },
+    {
+      title: "Ruta y fecha",
+      step: 1,
+      key: "route",
+      rows: [
+        ["Origen", form.origin],
+        ["Destino", form.destination],
+        ["Fecha del transporte", form.transportDate],
+      ],
+    },
+    {
+      title: "Vehículo y mercancía",
+      step: 2,
+      key: "goods",
+      rows: [
+        ["Matrícula tractora", form.tractorPlate],
+        ["Matrícula remolque", form.trailerPlate || "—"],
+        ["Mercancía", form.goods],
+        ["Peso o medida", form.weight],
+        ...(form.reference ? ([["Referencia", form.reference]] as [string, string][]) : []),
+      ],
+    },
   ];
   return (
     <section
@@ -119,20 +156,41 @@ function ReviewSummary({ form }: { form: FormState }) {
       aria-labelledby="review-summary-h"
       className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
     >
-      <h2 id="review-summary-h" className="text-sm font-bold">
+      <h2 id="review-summary-h" className="text-base font-bold">
         Revisa antes de generar
       </h2>
       <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-        Estos son los datos exactos que aparecerán en el DeCA y en el PDF.
+        Estos son los datos exactos que aparecerán en el DeCA y en el PDF. Usa «Editar» si algo no
+        es correcto.
       </p>
-      <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex flex-col">
-            <dt className="text-xs font-medium text-[var(--color-text-muted)]">{k}</dt>
-            <dd className="text-sm break-words">{v || "—"}</dd>
+      <div className="mt-3 space-y-3">
+        {blocks.map((b) => (
+          <div
+            key={b.key}
+            className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] p-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-sm font-bold">{b.title}</h3>
+              <button
+                type="button"
+                data-testid={`review-edit-${b.key}`}
+                onClick={() => onEdit(b.step)}
+                className="shrink-0 text-sm font-medium text-[var(--color-primary)]"
+              >
+                Editar
+              </button>
+            </div>
+            <dl className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2">
+              {b.rows.map(([k, v]) => (
+                <div key={k} className="flex flex-col">
+                  <dt className="text-xs font-medium text-[var(--color-text-muted)]">{k}</dt>
+                  <dd className="text-sm break-words">{v || "—"}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         ))}
-      </dl>
+      </div>
     </section>
   );
 }
@@ -235,12 +293,21 @@ export function CrearWizard({
       return true;
     }
     const flat: Record<string, string> = {};
+    const order: string[] = [];
     for (const i of r.error.issues) {
       const path = i.path.join(".");
-      flat[FIELD_KEY_MAP[path] ?? path] = i.message;
+      const key = FIELD_KEY_MAP[path] ?? path;
+      if (!(key in flat)) order.push(key);
+      flat[key] = i.message;
     }
     setErrors(flat);
-    requestAnimationFrame(() => summaryRef.current?.focus());
+    // Send focus straight to the first field that needs fixing (UX #31); the
+    // error summary is still there for screen-reader users who prefer the list.
+    requestAnimationFrame(() => {
+      const first = order[0] && document.getElementById(order[0]);
+      if (first instanceof HTMLElement) first.focus();
+      else summaryRef.current?.focus();
+    });
     return false;
   }
 
@@ -355,11 +422,13 @@ export function CrearWizard({
 
   return (
     <div>
-      <p className="text-sm font-medium text-[var(--color-text-muted)]">Paso {step + 1} de 3</p>
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">
+        Paso {step + 1} de 3 · <span className="text-[var(--color-text)]">{STEP_LABELS[step]}</span>
+      </p>
       <div
-        className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]"
+        className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]"
         role="progressbar"
-        aria-label={`Paso ${step + 1} de 3`}
+        aria-label={`Paso ${step + 1} de 3: ${STEP_LABELS[step]}`}
         aria-valuenow={step + 1}
         aria-valuemin={1}
         aria-valuemax={3}
@@ -375,7 +444,7 @@ export function CrearWizard({
         tabIndex={-1}
         className="mt-3 text-2xl font-bold outline-none md:text-3xl"
       >
-        {["Cargador y transportista", "Origen, destino y fecha", "Mercancía y vehículo"][step]}
+        {STEP_LABELS[step]}
       </h1>
       {isCorrection ? (
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
@@ -521,7 +590,10 @@ export function CrearWizard({
               </label>
             )}
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="px-1 text-sm font-bold">Cargador contractual</legend>
+              <legend className="px-1 text-sm font-bold">Empresa que contrata el transporte</legend>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                ¿Quién te ha contratado este transporte?
+              </p>
               <Field
                 id="shipperName"
                 label="Nombre o razón social"
@@ -532,10 +604,11 @@ export function CrearWizard({
               />
               <Field
                 id="shipperNif"
-                label="NIF"
+                label="NIF / VAT"
                 value={form.shipperNif}
                 onChange={set("shipperNif")}
                 error={errors.shipperNif}
+                hint="Puedes usar un NIF/VAT extranjero."
               />
               <Field
                 id="shipperAddress"
@@ -547,7 +620,12 @@ export function CrearWizard({
               />
             </fieldset>
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="px-1 text-sm font-bold">Transportista efectivo</legend>
+              <legend className="px-1 text-sm font-bold">
+                Transportista que realiza el transporte
+              </legend>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                ¿Qué empresa realiza físicamente el transporte?
+              </p>
               <Field
                 id="carrierName"
                 label="Nombre o razón social"
@@ -558,10 +636,11 @@ export function CrearWizard({
               />
               <Field
                 id="carrierNif"
-                label="NIF"
+                label="NIF / VAT"
                 value={form.carrierNif}
                 onChange={set("carrierNif")}
                 error={errors.carrierNif}
+                hint="Puedes usar un NIF/VAT extranjero."
               />
               <Field
                 id="carrierAddress"
@@ -577,7 +656,10 @@ export function CrearWizard({
 
         {step === 1 && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <legend className="px-1 text-sm font-bold">Trayecto</legend>
+            <legend className="px-1 text-sm font-bold">Ruta y fecha</legend>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              De dónde sale la mercancía, a dónde va y qué día se hace el transporte.
+            </p>
             <Field
               id="origin"
               label="Lugar de origen"
@@ -605,7 +687,10 @@ export function CrearWizard({
 
         {step === 2 && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <legend className="px-1 text-sm font-bold">Mercancía y vehículo</legend>
+            <legend className="px-1 text-sm font-bold">Vehículo y mercancía</legend>
+            <p className="mb-1 text-xs text-[var(--color-text-muted)]">
+              El vehículo que hace el porte y qué se transporta.
+            </p>
             {saved && saved.vehicles.length > 0 && (
               <label className="block text-sm">
                 <span className="font-medium">Usar un vehículo guardado</span>
@@ -664,7 +749,7 @@ export function CrearWizard({
               onChange={set("trailerPlate")}
               error={errors.trailerPlate}
               required={false}
-              hint="Solo si es un conjunto articulado."
+              hint="Si no hay remolque, déjalo vacío."
             />
             <Field
               id="reference"
@@ -700,7 +785,29 @@ export function CrearWizard({
           </fieldset>
         )}
 
-        {step === 2 && !isCorrection && <ReviewSummary form={form} />}
+        {step === 2 && !isCorrection && (
+          <ReviewSummary
+            form={form}
+            onEdit={(s) => {
+              setErrors({});
+              setStep(s);
+            }}
+          />
+        )}
+
+        {submitting && !isCorrection && (
+          <p
+            role="status"
+            data-testid="generating-status"
+            className="mt-4 flex items-center gap-2 text-sm font-medium text-[var(--color-primary)]"
+          >
+            <span
+              aria-hidden
+              className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-r-transparent"
+            />
+            Estamos generando tu PDF y QR… no cierres esta página.
+          </p>
+        )}
 
         {submitError && (
           <p role="alert" className="mt-4 text-sm text-[var(--color-danger)]">
@@ -748,7 +855,7 @@ export function CrearWizard({
           </div>
         )}
 
-        <div className="mt-6 flex gap-3">
+        <div className="sticky bottom-0 z-10 mt-6 flex gap-3 border-t border-[var(--color-border)] bg-[var(--color-bg)] py-3 sm:static sm:border-0 sm:bg-transparent sm:py-0">
           {step > 0 && (
             <button
               type="button"

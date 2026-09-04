@@ -150,7 +150,13 @@
     Gate green: 84 unit + 104 e2e + 8 compliance + build + keel-verify.
     **Deferred to the OAuth slice (D-031):** the real Google handshake (needs OAuth-lib decision vs
     D-021 + Google credentials), account-linking safety, progressive company onboarding (2-step).
-  - #31, #32, #34, #35, #36, #37, #38: not started.
+  - **#31 UX — creation-flow clarity (D-032), on `develop`:** plain-language progress label
+    (`Paso 1 de 3 · Quién contrata…`), focus jumps to the first field to fix, review grouped into
+    PDF sections each with `Editar`, visible "Estamos generando tu PDF y QR…" status, human
+    microcopy, sticky mobile action bar. Kept at 3 steps + inline review (see D-032). Gate green:
+    84 unit + 108 e2e + 8 compliance.
+  - #32, #34, #35, #36, #37, #38: not started. User approved: full DB CMS for #32, #38 without the
+    OAuth handshake, #34 minus PWA/offline (split to its own issue).
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close

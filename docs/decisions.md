@@ -357,3 +357,27 @@
 - **Why:** the auth experience now reads like a mature SaaS product (#21 brand) without touching a
   line of the auth logic, so it ships with zero regression risk and the OAuth work starts from a
   finished surface.
+
+## D-032 — Creation flow clarity, kept at 3 steps + review (UX #31)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** `/crear` keeps its **3 input steps + inline review on step 3** rather than splitting
+  into 4 steps + a separate review screen. The issue asks for "at most 4 short steps and a final
+  review" — 3 + review satisfies it, and a 4th step index would have rippled through ~23
+  `wizard-generate` call sites across 13 e2e specs for no user-visible gain over an inline review
+  that is already sectioned and scannable.
+- **What changed (the issue's actual intent):**
+  - Progress indicator now carries a plain-language label — `Paso 1 de 3 · Quién contrata y quién
+    transporta` — not only a number.
+  - Continuing with a gap sends focus straight to the **first field to fix** (the error summary
+    stays for screen-reader users).
+  - The review is grouped into the **PDF's own sections**, each with an `Editar` button that jumps
+    back to the owning step.
+  - A visible **"Estamos generando tu PDF y QR… no cierres esta página"** status with a spinner
+    while the request is in flight; the button locks (double-submit already impossible via #29's
+    idempotency key).
+  - Human microcopy on every block: *¿Quién te ha contratado este transporte?*, *¿Qué empresa
+    realiza físicamente el transporte?*, *Puedes usar un NIF/VAT extranjero*, *Si no hay remolque,
+    déjalo vacío*.
+  - Sticky action bar on mobile.
+- **Not changed:** field order within step 3, and the company fieldset still shows on `/registro`
+  (that is #38's progressive-onboarding work).
