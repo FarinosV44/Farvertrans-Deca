@@ -355,6 +355,24 @@
   type (#41 §4/§5 — GOODS|PASSENGERS enum, company default, `/crear` picker,
   admin filter — blocked on the passenger legal-requirement research the issue
   itself demands before building).
+- **AUTH #30 — Google OAuth ACTIVATED (D-046), on `main`.** The real handshake
+  (`lib/auth/google.ts` + `lib/auth/oauth-state.ts`, plain fetch, no SDK),
+  `/api/auth/google` + `/api/auth/google/callback`, account linking by email
+  (`findOrCreateGoogleUser`), and the 2-step company-completion screen
+  (`/registro/completar-empresa` + `completeCompanyForUser`) for a brand-new
+  Google sign-up. Migration `20260904225323_google_oauth`. Stays inert
+  ("disponible muy pronto") until `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`
+  are set — the user is adding those the next morning; no further deploy
+  needed once they do. 114 unit (6 new) + 134 e2e + 8 compliance green.
+- **Investigated: "el botón de entrar no funciona"** — reproduced live in a
+  real browser against `https://decaprofesional.es/entrar` with the
+  `launch-test-*` test account: filled the form, clicked Entrar, landed on
+  `/panel` correctly (session cookie set, history + banner rendered). Could
+  not reproduce a failure. One screenshot call timed out mid-navigation
+  (tooling hiccup, not a functional failure — the login had already
+  succeeded by the time it was retried). No fix applied since nothing
+  reproduced; flagged to the user to report exact steps/browser/error if it
+  recurs.
 - **In-`/panel` unverified-email reminder banner — DONE** (this session):
   `panel-verify-email-banner` shown on `/panel` whenever `user.emailVerifiedAt`
   is null, linking to `/verificar-email?next=/panel`. e2e assertion added to

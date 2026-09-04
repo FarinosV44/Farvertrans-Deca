@@ -814,3 +814,33 @@
   real `POST /api/deca` against production immediately succeeded afterward.
 - Real production E2E then run and passed (TEST A + TEST B from the user's
   launch checklist) — see `docs/PROGRESS.md` "Phase 9" for the evidence.
+
+## D-046 — Activated the real Google OAuth handshake (AUTH #30), on the user's explicit instruction, ahead of credentials existing
+- Date: 2026-09-04/05. D-031 deferred the real Google handshake pending an
+  "OAuth-lib decision + Google credentials." The user asked to activate it
+  now (during a live launch-execution session), saying they will connect the
+  actual Google credentials the next morning — i.e., ship the code today so
+  it needs no further deploy once the credentials exist.
+- OAuth-lib decision: plain `fetch` calls against Google's own endpoints, no
+  SDK/Auth.js. The app's auth is fully self-contained (`lib/auth/session.ts`,
+  own HMAC-signed cookie, no Supabase Auth despite the `authUserId` column
+  name) — a full OAuth library would run a second, parallel session system
+  for zero benefit at this size.
+- New user via Google has no company yet (this product requires one): a
+  `/registro/completar-empresa` second step, reusing the exact company
+  fields + profile picker + terms checkbox already in `RegisterForm`,
+  factored into `completeCompanyForUser()` alongside the existing
+  `signup()` logic rather than duplicated.
+- Google-verified emails are trusted: linking an existing password account
+  by matching email also marks it verified, since Google already proved
+  ownership of that address.
+- The feature is inert (existing "disponible muy pronto" caption) until
+  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set — shipping the code now
+  carries no behavior change for anyone until the user configures those
+  tomorrow, then it just works with no further deploy.
+- Migration `20260904225323_google_oauth` (nullable, unique `user.google_id`).
+  114 unit + 134 e2e + 8 compliance green; the actual Google consent screen
+  is untestable without real credentials (CREDENTIAL), so the OAuth code
+  paths are proven by unit tests on their pure pieces (state CSRF round
+  trip/tamper/expiry, the auth-URL builder) plus the existing e2e coverage
+  confirming the button stays correctly inert.
