@@ -308,9 +308,16 @@
   `panel-verify-email-banner` shown on `/panel` whenever `user.emailVerifiedAt`
   is null, linking to `/verificar-email?next=/panel`. e2e assertion added to
   `trust-registration-v2.spec.ts` (banner visible right after the soft-gate
-  skip, gone after verifying via the token link). Typecheck/lint/format/106
-  unit green locally; e2e needs CI (no local Docker in this session) — **on
-  `develop` only, not yet forwarded to `main`** (new scope, not a break-fix).
+  skip, gone after verifying via the token link). **On `develop` only, not yet
+  forwarded to `main`** (new scope, not a break-fix — needs the user's OK).
+- **Real local verification (Docker started this session, not just CI):**
+  at `develop@82bde39` — 106 unit + **134 e2e + 8 compliance (R-1…R-13), all
+  passing** against a real local Postgres, including R-7/R-8 (the public
+  `/d/[token]` URL serves the exact PDF with no auth/cookie/interstitial —
+  Phase 4's requirement, confirmed automated, not just code review). Typecheck
+  + lint + format also clean. The one thing this cannot verify is a literal
+  second physical device scanning a live QR against a reachable HTTPS
+  URL — that needs the real deployment.
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
