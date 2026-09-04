@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { SiteHeader } from "@/components/site/site-header";
-import { SiteFooter } from "@/components/site/site-footer";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { RegisterForm } from "@/components/auth/register-form";
 import { getCurrentUser } from "@/lib/auth";
 import { getInvitePreview } from "@/lib/team";
@@ -37,22 +36,20 @@ export default async function RegistroPage({
 
   const teamInvite = sp.invite ? await getInvitePreview(sp.invite) : null;
   const prospectInvite = sp.invite && !teamInvite ? await resolveProspectInvite(sp.invite) : null;
+  const googleEnabled = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
 
   return (
-    <>
-      <SiteHeader />
-      <main id="contenido" className="mx-auto max-w-[560px] px-4 py-12 md:px-6">
-        <Suspense fallback={null}>
-          <RegisterForm
-            inviteCompany={teamInvite?.companyName ?? null}
-            inviteEmail={teamInvite?.email ?? null}
-            prospectCompany={
-              prospectInvite ? { name: prospectInvite.name, nif: prospectInvite.nif ?? "" } : null
-            }
-          />
-        </Suspense>
-      </main>
-      <SiteFooter />
-    </>
+    <AuthShell>
+      <Suspense fallback={null}>
+        <RegisterForm
+          inviteCompany={teamInvite?.companyName ?? null}
+          inviteEmail={teamInvite?.email ?? null}
+          prospectCompany={
+            prospectInvite ? { name: prospectInvite.name, nif: prospectInvite.nif ?? "" } : null
+          }
+          googleEnabled={googleEnabled}
+        />
+      </Suspense>
+    </AuthShell>
   );
 }

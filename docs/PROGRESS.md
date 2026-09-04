@@ -141,9 +141,15 @@
     `GET /api/admin/search`. Gate green: 84 unit + 100 e2e + 8 compliance + typecheck + lint +
     format + standalone build + keel-verify. Deferred (recorded in D-030): internal sub-roles,
     editorial content CMS (#32), axe on admin screens.
-  - #30: **UI-only** agreed with the user — premium auth card redesign next; the real Google OAuth
-    handshake is a follow-up (needs an OAuth-lib decision superseding part of D-021 + Google
-    credentials).
+  - **#30 AUTH — premium auth card, UI-only (D-031), on `develop`:** `/entrar` + `/registro` now a
+    focused centered card on a branded ground (`AuthShell`), no site chrome. Contextual headings,
+    "Continuar con Google" button (official 4-colour G; **inert** until `GOOGLE_CLIENT_ID`+SECRET
+    set — caption "disponible muy pronto"), "o continúa con email" divider, password show/hide,
+    trust line, in-place login⇆register switch. Auth LOGIC untouched — zero regression.
+    `components/auth/{auth-shell,google-button,password-field}.tsx` + restyled `register-form.tsx`.
+    Gate green: 84 unit + 104 e2e + 8 compliance + build + keel-verify.
+    **Deferred to the OAuth slice (D-031):** the real Google handshake (needs OAuth-lib decision vs
+    D-021 + Google credentials), account-linking safety, progressive company onboarding (2-step).
   - #31, #32, #34, #35, #36, #37, #38: not started.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
@@ -160,11 +166,11 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: #29 (D-029) + #33 (D-030) on `develop`, gate green — await the user's
+- Ready for `main`: #29 (D-029) + #33 (D-030) + #30 (D-031, UI-only) on `develop`, gate green — await the user's `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
   `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V3: #29 (D-029) + #33 (D-030, Admin V2 command center) on `develop`, gate green (84 unit + 100 e2e + 8 compliance), awaiting merge to `main`. Next: #30 UI-only. #31/#32/#34–#38 not started.
+Last updated: 2026-09-04 — Product V3: #29 (D-029) + #33 (D-030, Admin V2) + #30 UI-only (D-031, premium auth card) on `develop`, gate green (84 unit + 104 e2e + 8 compliance). Next: #31. #32/#34–#38 not started.

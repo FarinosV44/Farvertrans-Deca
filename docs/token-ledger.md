@@ -17,3 +17,4 @@ AI cost mode: subscription (Claude Code) — marginal cost ≈ €0.
 | 2026-09-03 | Phase 5 — BUILD 15 (launch gate: CSP+headers, cross-tenant tests, pre-commit, CI, Dockerfile, release runbook) + merge to main | claude-sonnet-5 | ~0.7M | 47 unit + 57 e2e; v1 release |
 | 2026-09-04 | Phase 5 — Product V3 #29 recovery: fixed broken typecheck in an uncommitted WIP tree, found+fixed an idempotent-replay 429 bug, verified the full gate, committed + pushed + beat-1 comment | claude-sonnet-5 | ~0.25M | 79 unit + 95 e2e + 8 compliance green; D-029 |
 | 2026-09-04 | Phase 5 — Product V3 #33: Admin V2 command center (shell + 11 screens + global search + `lib/admin/*` + 2 API routes) | claude-sonnet-5 | ~0.6M | 84 unit + 100 e2e + 8 compliance green; D-030 |
+| 2026-09-04 | Phase 5 — Product V3 #30 (UI-only): premium auth card (AuthShell, Google button inert, password show/hide, restyled register-form) | claude-sonnet-5 | ~0.2M | 84 unit + 104 e2e + 8 compliance green; D-031 |

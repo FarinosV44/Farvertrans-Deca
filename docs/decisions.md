@@ -333,3 +333,27 @@
 - **Why:** the product can be operated day-to-day from one place — growth, customers, DeCA activity,
   failures and system health — without SSH or ad-hoc SQL. The Errores + Sistema screens are the ones
   D-029 forward-referenced.
+
+## D-031 — Premium auth card, UI-only (AUTH #30, first slice)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3, issues #29–#38)
+- **Decision:** `/entrar` and `/registro` now render a focused centered card on a calm branded
+  ground (`AuthShell`, `.auth-ground`), no site header/footer during auth. Contextual headings
+  ("Bienvenido de nuevo" / "Crea tu cuenta gratis" / "Guarda este DeCA" / "Únete al equipo"),
+  supporting text, a **"Continuar con Google"** button with the official four-colour G mark, an
+  "o continúa con email" divider, email, a password field with a show/hide toggle, a trust line
+  ("Gratis · Sin tarjeta · Tus DeCA en un solo lugar"), and an in-place login ⇆ register switch.
+- **The Google button is present but inert** until `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are
+  set — it renders `disabled` with the caption "Acceso con Google disponible muy pronto." Never a
+  dead-looking control; becomes a real `<a href="/api/auth/google">` when `googleEnabled` is true.
+- **Scope call — UI only, agreed with the user.** The real Google OAuth handshake is a separate
+  slice: it needs an OAuth approach against the custom email+password stack (D-021) — a new
+  dependency + a decision superseding part of D-021 — plus a Google Cloud OAuth client (the user's
+  credential). Account-linking safety (§"Account-linking / identity safety") lands with it.
+- **Progressive company onboarding (§"Registration screen")** — NOT changed here. Five e2e specs
+  fill `#companyName`/`#companyNif` on the first `/registro` render; splitting identity from company
+  into two steps is a flow change, not a restyle, and belongs with the OAuth slice (the Google
+  round-trip is what forces a post-auth onboarding step anyway). The company fieldset stays visible,
+  restyled.
+- **Why:** the auth experience now reads like a mature SaaS product (#21 brand) without touching a
+  line of the auth logic, so it ships with zero regression risk and the OAuth work starts from a
+  finished surface.
