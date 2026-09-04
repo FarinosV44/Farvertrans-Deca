@@ -155,7 +155,12 @@
     PDF sections each with `Editar`, visible "Estamos generando tu PDF y QR…" status, human
     microcopy, sticky mobile action bar. Kept at 3 steps + inline review (see D-032). Gate green:
     84 unit + 108 e2e + 8 compliance.
-  - #32, #34, #35, #36, #37, #38: not started. User approved: full DB CMS for #32, #38 without the
+  - **#36 PRODUCT — document cockpit (D-033), on `develop`:** `/crear/[id]` + `/panel/deca/[id]`
+    rebuilt via shared `lib/deca/detail.ts` — QR inspection card (real server-rendered QR),
+    sectioned data mirroring the PDF, version timeline (badges, per-version PDF link, author in
+    workspace), "Qué ha cambiado" field diff for v2+ (`diffVersions` pure + unit-tested),
+    technical-details accordion. Gate green: 88 unit + 110 e2e + 8 compliance.
+  - #32, #34, #35, #37, #38: not started. User approved: full DB CMS for #32, #38 without the
     OAuth handshake, #34 minus PWA/offline (split to its own issue).
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +

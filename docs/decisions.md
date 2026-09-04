@@ -381,3 +381,28 @@
   - Sticky action bar on mobile.
 - **Not changed:** field order within step 3, and the company fieldset still shows on `/registro`
   (that is #38's progressive-onboarding work).
+
+## D-033 — Post-generation document cockpit (PRODUCT #36)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** the bare "DeCA generado ✓" success state and the thin
+  `/panel/deca/[id]` are replaced by a real document cockpit, shared by both the
+  anonymous result view and the authenticated workspace view via
+  `lib/deca/detail.ts` (`getDecaCockpit`). Both render from the stored version
+  payload, so the on-screen summary can never diverge from the PDF.
+- **Pieces** (`components/deca/`): `qr-card.tsx` (the REAL current-version QR
+  rendered server-side from the same URL the PDF embeds, + HTTPS URL + Abrir /
+  Copiar / Descargar QR), `doc-summary.tsx` (structured data in the PDF's own
+  sections), `version-timeline.tsx` (`VersionTimeline` — history with
+  current/superseded badges, per-version PDF link, author in the workspace view;
+  `ChangeList` — field-level "Qué ha cambiado" diff for v2+, `diffVersions()` is
+  pure and unit-tested).
+- **Workspace view** additionally shows: reference, "Versión actual: N", public-
+  URL status badge, service date, generation timestamp, a "Detalles técnicos"
+  `<details>` (SHA-256, token), Corregir / Duplicar / guardar plantilla, and the
+  version history even for a single version.
+- **Anonymous view** keeps the "Guardar mis DeCA" conversion CTA and hides the
+  single-version history.
+- **Tenant isolation:** `getDecaCockpit(id, { companyId })` returns null when the
+  DeCA is not that company's (T-1); without `companyId` (anon result) any holder
+  of the `id` may view it — the result page has never been secret, the claim
+  token is what matters.
