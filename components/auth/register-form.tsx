@@ -148,7 +148,13 @@ export function RegisterForm({
       </p>
 
       <div className="mt-6">
-        <GoogleButton enabled={googleEnabled} label="Continuar con Google" />
+        <GoogleButton
+          enabled={googleEnabled}
+          label="Continuar con Google"
+          href={
+            invite ? `/api/auth/google?invite=${encodeURIComponent(invite)}` : "/api/auth/google"
+          }
+        />
       </div>
 
       <div className="my-5 flex items-center gap-3" aria-hidden>

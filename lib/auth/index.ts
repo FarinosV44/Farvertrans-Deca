@@ -154,6 +154,120 @@ export async function signup(input: SignupInput): Promise<{
   return result;
 }
 
+export type GoogleProfile = { sub: string; email: string; name?: string };
+
+/**
+ * Find-or-create for Google sign-in (AUTH #30). Google already verified the
+ * email, so a match/creation here is trusted without a password:
+ *  - existing `googleId` → that account, unchanged.
+ *  - an existing email/password account with the same email → LINK it (sets
+ *    `googleId`; marks the email verified, since Google just proved it).
+ *  - otherwise → a brand-new user with no password and no company yet — the
+ *    caller sends them to `/registro/completar-empresa`.
+ * Never throws on a normal path; returns which case it was so the route can
+ * decide where to redirect.
+ */
+export async function findOrCreateGoogleUser(
+  profile: GoogleProfile,
+): Promise<{ userId: string; companyId: string | null; isNewAccount: boolean }> {
+  const email = normEmail(profile.email);
+
+  const byGoogleId = await prisma.user.findUnique({ where: { googleId: profile.sub } });
+  if (byGoogleId)
+    return { userId: byGoogleId.id, companyId: byGoogleId.companyId, isNewAccount: false };
+
+  const byEmail = await prisma.user.findFirst({ where: { email } });
+  if (byEmail) {
+    const linked = await prisma.user.update({
+      where: { id: byEmail.id },
+      data: { googleId: profile.sub, emailVerifiedAt: byEmail.emailVerifiedAt ?? new Date() },
+    });
+    return { userId: linked.id, companyId: linked.companyId, isNewAccount: false };
+  }
+
+  const created = await prisma.user.create({
+    data: {
+      authUserId: `google:${profile.sub}`,
+      email,
+      googleId: profile.sub,
+      passwordHash: null,
+      emailVerifiedAt: new Date(),
+    },
+  });
+  return { userId: created.id, companyId: null, isNewAccount: true };
+}
+
+export type CompleteCompanyInput = {
+  company: {
+    name: string;
+    nif: string;
+    address: string;
+    contactName?: string;
+    phone?: string;
+    profile?: "carrier_goods" | "shipper" | "operator" | "carrier_passengers";
+  };
+  inviteToken?: string;
+  acceptTerms: boolean;
+};
+
+/**
+ * The second step of Google sign-up (AUTH #30): a user already exists (from
+ * `findOrCreateGoogleUser`) but has no company yet. Mirrors `signup()`'s two
+ * branches — join a team invite, or found a new company — starting from an
+ * existing user instead of creating one.
+ */
+export async function completeCompanyForUser(
+  userId: string,
+  input: CompleteCompanyInput,
+): Promise<{ companyId: string; joinedTeam: boolean }> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AuthError("bad_input", "Sesión no válida.");
+  if (user.companyId) throw new AuthError("bad_input", "Esta cuenta ya tiene una empresa.");
+
+  if (input.inviteToken) {
+    const { consumeInviteToken, markInviteAccepted } = await import("@/lib/team");
+    const inv = await consumeInviteToken(input.inviteToken);
+    if (inv) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { companyId: inv.companyId, companyRole: inv.role },
+      });
+      await markInviteAccepted(inv.id);
+      return { companyId: inv.companyId, joinedTeam: true };
+    }
+    throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
+  }
+
+  if (!input.company.name.trim() || !input.company.nif.trim())
+    throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
+  if (!input.acceptTerms) {
+    throw new AuthError(
+      "terms_required",
+      "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
+    );
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const company = await tx.company.create({
+      data: {
+        name: input.company.name.trim(),
+        nif: input.company.nif.trim(),
+        address: input.company.address.trim() || null,
+        contactName: input.company.contactName?.trim() || null,
+        phone: input.company.phone?.trim() || null,
+        profile: input.company.profile,
+      },
+    });
+    await tx.user.update({
+      where: { id: userId },
+      data: { companyId: company.id, companyRole: "owner" },
+    });
+    return { companyId: company.id, joinedTeam: false };
+  });
+  await recordTermsAcceptance(userId, result.companyId);
+  return result;
+}
+
 export async function login(emailRaw: string, password: string): Promise<{ userId: string }> {
   const email = normEmail(emailRaw);
   const user = await prisma.user.findFirst({ where: { email } });

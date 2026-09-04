@@ -66,6 +66,7 @@ model User {
   authUserId      String      @unique @map("auth_user_id")
   email           String
   passwordHash    String?     @map("password_hash")
+  googleId        String?     @unique @map("google_id")
   companyId       String?     @map("company_id")
   role            Role        @default(user)
   companyRole     CompanyRole @default(owner) @map("company_role")
