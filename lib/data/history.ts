@@ -14,6 +14,7 @@ export type HistoryRow = {
   destination: string;
   shipper: string;
   carrier: string;
+  goods: string;
   tractorPlate: string;
   trailerPlate: string;
   versionNo: number;
@@ -65,6 +66,7 @@ export async function listHistory(
       destination: data.destination ?? "",
       shipper: data.shipper?.name ?? "",
       carrier: data.carrier?.name ?? "",
+      goods: data.goods ?? "",
       tractorPlate: data.tractorPlate ?? "",
       trailerPlate: data.trailerPlate ?? "",
       versionNo: d.currentVersion.versionNo,

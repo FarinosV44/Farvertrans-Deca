@@ -170,8 +170,15 @@
     page (`/deca-autonomos`, `/deca-empresas-transporte`, `/deca-agencias-transporte`,
     `/deca-cargadores`, auto in sitemap). 4 persona CTA events. No pricing/sales contact. Gate green:
     114 e2e + 8 compliance. Onboarding adaptation deferred to #38.
-  - #32, #34, #38: not started. User approved: full DB CMS for #32, #38 without the
-    OAuth handshake, #34 minus PWA/offline (split to its own issue).
+  - **#34 PRODUCT — competitive feature pack (D-036), on `develop`:** history CSV export
+    (`GET /api/export/history`, company-scoped, filter-aware, RFC 4180 + BOM; `historyToCsv` pure +
+    unit-tested; "Exportar CSV" on `/panel/historico`), operational workflow status
+    (`docWorkflowStatus` — Vigente / Corregida / No disponible, a product state not a legal one),
+    integration boundary documented (DecaPayload + createDeca/correctDeca + historyToCsv). **Company
+    logo → new issue #39** (touches the compliant PDF); **PWA/offline → new issue #40**. Also capped
+    local e2e workers at 3 (react-pdf is CPU-bound; 6 starved the loop). Gate green: 94 unit + 117
+    e2e + 8 compliance.
+  - #32, #38: not started. User approved: full DB CMS for #32, #38 without the OAuth handshake.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close

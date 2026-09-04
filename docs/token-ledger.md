@@ -22,3 +22,4 @@ AI cost mode: subscription (Claude Code) — marginal cost ≈ €0.
 | 2026-09-04 | Phase 5 — Product V3 #36 (PRODUCT): post-generation document cockpit — shared lib/deca/detail.ts, QR card, sectioned summary, version timeline, "what changed" diff | claude-sonnet-5 | ~0.4M | 88 unit + 110 e2e + 8 compliance green; D-033 |
 | 2026-09-04 | Phase 5 — Product V3 #37 (TEAM): role change + resend + member status delta vs #27; #36 QR memoization refinement | claude-sonnet-5 | ~0.3M | 88 unit + 111 e2e + 8 compliance green; D-034 |
 | 2026-09-04 | Phase 5 — Product V3 #35 (GROWTH): persona-led landing cards + 4 persona SEO pages + persona CTA events | claude-sonnet-5 | ~0.35M | unit + 114 e2e + 8 compliance green; D-035 |
+| 2026-09-04 | Phase 5 — Product V3 #34 (PRODUCT): history CSV export + workflow status + integration boundary; logo→#39, PWA→#40; e2e workers capped at 3 locally | claude-sonnet-5 | ~0.35M | 94 unit + 117 e2e + 8 compliance green; D-036 |

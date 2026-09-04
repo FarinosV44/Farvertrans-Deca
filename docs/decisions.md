@@ -445,3 +445,28 @@
 - **Onboarding adaptation** (§"Onboarding adaptation") — NOT built: it would tie
   into #38's progressive onboarding and #30's OAuth flow. Persona pages inform;
   they never lock functionality. Deferred to #38.
+
+## D-036 — Competitive feature pack: CSV export + workflow status + integration boundary (PRODUCT #34)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Delivered here:**
+  - **CSV export** — `GET /api/export/history` streams the signed-in company's
+    DeCA history (company-scoped, T-1; honours the `/panel/historico` filters) as
+    UTF-8 CSV with a BOM and the documented columns (referencia, creado,
+    fecha_transporte, cargador, transportista, origen, destino, matrículas,
+    mercancía, versión, estado, url_publica). `historyToCsv()` is pure (RFC 4180
+    quoting) + unit-tested. "Exportar CSV" link on `/panel/historico`.
+  - **Operational workflow status** — `docWorkflowStatus()` maps a history row to
+    a PRODUCT state (`Vigente` / `Corregida` / `No disponible`), deliberately NOT
+    a legal status; shown in the workspace history (table + mobile cards).
+  - **Integration-ready boundary** — the stable typed payload is
+    `DecaPayload` (`lib/deca/schema.ts`, already exported); the create service is
+    `createDeca()` / `correctDeca()` (`lib/deca/persist.ts`) and the export
+    service is `historyToCsv()` (`lib/deca/export.ts`). No public paid API is
+    built; API-key concepts stay behind a future issue.
+- **Split out to their own issues** (same rationale as the user's PWA split):
+  - **#39** — optional company logo on generated PDFs. Touches the compliant
+    PDF; must be guarded by `tests/compliance/`.
+  - **#40** — driver-friendly offline / PWA access. A stale cached document must
+    never look current — needs careful service-worker design.
+- **P2/Later (per the issue):** AI PDF import, S3/SFTP connectors, full ERP/TMS
+  REST API, premium support — not built, not blocking launch.
