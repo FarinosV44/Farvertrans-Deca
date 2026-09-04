@@ -53,8 +53,10 @@ async function register(page: Page, nif = "B12345674") {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", "Operador CV2 SL");
   await page.fill("#companyNif", nif);
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
 }
 
 async function fillAndGenerate(page: Page) {
@@ -162,6 +164,8 @@ test.describe("UX #25 — creator V2", () => {
     await page.fill("#goods", DECA.goods);
     await page.fill("#weight", DECA.weight);
     await page.fill("#tractorPlate", DECA.tractorPlate);
+    await page.fill("#leadName", "Borrador SL contacto");
+    await page.fill("#leadEmail", "borrador@example.com");
     await page.getByTestId("wizard-generate").click();
 
     await expect(page.getByText(/Fallo simulado|No se pudo generar/)).toBeVisible();

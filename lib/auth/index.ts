@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, isStrongEnough, verifyPassword } from "./password";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS, signSession, verifySession } from "./session";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
 /**
  * v1 authentication (D-021): own email + password with an HMAC-signed httpOnly
@@ -14,7 +15,12 @@ import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS, signSession, verifySession } fr
 
 export class AuthError extends Error {
   constructor(
-    public code: "email_taken" | "invalid_credentials" | "weak_password" | "bad_input",
+    public code:
+      | "email_taken"
+      | "invalid_credentials"
+      | "weak_password"
+      | "bad_input"
+      | "terms_required",
     message: string,
   ) {
     super(message);
@@ -27,9 +33,18 @@ const normEmail = (e: string) => e.trim().toLowerCase();
 export type SignupInput = {
   email: string;
   password: string;
-  company: { name: string; nif: string; address: string };
+  company: {
+    name: string;
+    nif: string;
+    address: string;
+    contactName?: string;
+    phone?: string;
+    profile?: "carrier_goods" | "shipper" | "operator" | "carrier_passengers";
+  };
   /** When set, the user JOINS the invited company instead of creating one (TEAM #27). */
   inviteToken?: string;
+  /** Explicit T&C + privacy acceptance (TRUST #42 §5) — never implied, never pre-checked. */
+  acceptTerms: boolean;
 };
 
 export async function signup(input: SignupInput): Promise<{
@@ -63,6 +78,8 @@ export async function signup(input: SignupInput): Promise<{
         },
       });
       await markInviteAccepted(inv.id);
+      // A team member joins an already-onboarded workspace — no separate T&C
+      // checkbox is shown (matches the client, which hides it for this path).
       return { userId: user.id, companyId: inv.companyId, joinedTeam: true };
     }
 
@@ -70,6 +87,11 @@ export async function signup(input: SignupInput): Promise<{
     const { resolveProspectInvite } = await import("@/lib/growth");
     const prospect = await resolveProspectInvite(input.inviteToken);
     if (!prospect) throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
+    if (!input.acceptTerms)
+      throw new AuthError(
+        "terms_required",
+        "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
+      );
 
     const name = input.company.name.trim() || prospect.name;
     const nif = input.company.nif.trim() || prospect.nif || "";
@@ -89,6 +111,7 @@ export async function signup(input: SignupInput): Promise<{
       });
       return { userId: user.id, companyId: company.id };
     });
+    await recordTermsAcceptance(r.userId, r.companyId);
     return {
       ...r,
       joinedTeam: false,
@@ -99,6 +122,11 @@ export async function signup(input: SignupInput): Promise<{
 
   if (!input.company.name.trim() || !input.company.nif.trim())
     throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
+  if (!input.acceptTerms)
+    throw new AuthError(
+      "terms_required",
+      "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
+    );
 
   const result = await prisma.$transaction(async (tx) => {
     const company = await tx.company.create({
@@ -106,6 +134,9 @@ export async function signup(input: SignupInput): Promise<{
         name: input.company.name.trim(),
         nif: input.company.nif.trim(),
         address: input.company.address.trim() || null,
+        contactName: input.company.contactName?.trim() || null,
+        phone: input.company.phone?.trim() || null,
+        profile: input.company.profile,
       },
     });
     const user = await tx.user.create({
@@ -119,6 +150,7 @@ export async function signup(input: SignupInput): Promise<{
     });
     return { userId: user.id, companyId: company.id, joinedTeam: false };
   });
+  await recordTermsAcceptance(result.userId, result.companyId);
   return result;
 }
 
@@ -208,6 +240,72 @@ export async function resetPassword(
       data: { passwordHash: hashPassword(newPassword) },
     }),
     prisma.passwordResetToken.updateMany({
+      where: { userId: row.userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+  return { userId: row.userId };
+}
+
+// ---------------------------------------------------------------------------
+// Terms & Conditions acceptance (TRUST #42 §5) — versioned, auditable, append-only.
+// ---------------------------------------------------------------------------
+
+async function recordTermsAcceptance(userId: string, companyId: string | null) {
+  await prisma.termsAcceptance.create({
+    data: { userId, companyId, version: LEGAL_ENTITY.termsVersion },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Email verification (GROWTH #46) — a courtesy confirmation, not a hard gate:
+// the account and session exist regardless, so nothing about the product is
+// blocked while a verification email is in flight.
+// ---------------------------------------------------------------------------
+
+const VERIFY_TTL_HOURS = 24;
+
+/** Start (or restart) email verification. Returns the raw token to email. */
+export async function createEmailVerification(
+  userId: string,
+  email: string,
+): Promise<{ token: string }> {
+  const token = randomBytes(32).toString("base64url");
+  await prisma.emailVerificationToken.create({
+    data: {
+      tokenHash: sha256(token),
+      userId,
+      email: normEmail(email),
+      expiresAt: new Date(Date.now() + VERIFY_TTL_HOURS * 60 * 60 * 1000),
+    },
+  });
+  return { token };
+}
+
+export class EmailVerificationError extends Error {
+  constructor(
+    public code: "invalid" | "expired" | "used",
+    message: string,
+  ) {
+    super(message);
+    this.name = "EmailVerificationError";
+  }
+}
+
+/** Complete email verification. Single-use, TTL-checked. */
+export async function verifyEmailToken(token: string): Promise<{ userId: string }> {
+  const row = await prisma.emailVerificationToken.findUnique({
+    where: { tokenHash: sha256(token) },
+  });
+  if (!row) throw new EmailVerificationError("invalid", "Este enlace de confirmación no es válido.");
+  if (row.usedAt)
+    throw new EmailVerificationError("used", "Este enlace de confirmación ya se ha utilizado.");
+  if (row.expiresAt.getTime() < Date.now())
+    throw new EmailVerificationError("expired", "El enlace de confirmación ha caducado.");
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: row.userId }, data: { emailVerifiedAt: new Date() } }),
+    prisma.emailVerificationToken.updateMany({
       where: { userId: row.userId, usedAt: null },
       data: { usedAt: new Date() },
     }),

@@ -10,8 +10,10 @@ async function registerCompany(page: Page, addr = email()) {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", "Cuenta SL");
   await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
 }
 
 test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
@@ -95,6 +97,7 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
         password: "supersecret123",
         companyName: "X SL",
         companyNif: "B12345674",
+        acceptTerms: true,
       },
     });
     expect(r.status()).toBe(201);
@@ -114,6 +117,7 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
         password: "supersecret123",
         companyName: "Y SL",
         companyNif: "B12345674",
+        acceptTerms: true,
       },
     });
     const token = (

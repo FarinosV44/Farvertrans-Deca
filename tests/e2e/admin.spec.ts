@@ -32,8 +32,10 @@ async function registerAndGenerate(page: Page, company: string) {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", company);
   await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
   await page.goto("/crear");
   for (const [sel, val] of [
     ["#shipperName", "Cargas SL"],
@@ -85,8 +87,10 @@ test.describe("ADMIN #33 — internal command center", () => {
     await page.fill("#password", "supersecret123");
     await page.fill("#companyName", "Cliente Normal SL");
     await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page).toHaveURL(/\/verificar-email/);
+    await page.goto("/panel");
     expect((await page.goto("/admin"))?.status()).toBe(404);
   });
 

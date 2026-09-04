@@ -8,6 +8,34 @@ import { GoogleButton } from "@/components/auth/google-button";
 import { track } from "@/lib/analytics/client";
 import { lockAttribution } from "@/lib/attribution/client";
 import { safeInternalPath } from "@/lib/auth/safe-redirect";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
+
+const PROFILES = [
+  {
+    value: "carrier_goods",
+    icon: "🚚",
+    title: "Transportista de mercancías",
+    body: "Realizas el transporte de mercancías por cuenta ajena.",
+  },
+  {
+    value: "shipper",
+    icon: "📦",
+    title: "Empresa cargadora",
+    body: "Contratas transporte para tus propios envíos de mercancías.",
+  },
+  {
+    value: "operator",
+    icon: "🔗",
+    title: "Operador de transporte",
+    body: "Organizas transportes de mercancías (operador logístico o agencia).",
+  },
+  {
+    value: "carrier_passengers",
+    icon: "🚌",
+    title: "Transportista de viajeros",
+    body: "Realizas transporte de viajeros por carretera.",
+  },
+] as const;
 
 export function RegisterForm({
   initialMode = "register",
@@ -37,7 +65,11 @@ export function RegisterForm({
     companyName: prospectCompany?.name ?? "",
     companyNif: prospectCompany?.nif ?? "",
     companyAddress: "",
+    companyContactName: "",
+    companyPhone: "",
+    companyProfile: "" as "" | (typeof PROFILES)[number]["value"],
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [mode, setMode] = useState<"register" | "login">(initialMode);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -46,13 +78,17 @@ export function RegisterForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
+    if (mode === "register" && !joiningTeam && !acceptTerms) {
+      setError("Debes aceptar los Términos y Condiciones y la Política de Privacidad.");
+      return;
+    }
     setBusy(true);
     setError(null);
     if (mode === "register") track("signup_started");
     const url = mode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
       mode === "register"
-        ? { ...f, claim, invite }
+        ? { ...f, companyProfile: f.companyProfile || undefined, acceptTerms, claim, invite }
         : { email: f.email, password: f.password, claim, invite };
     try {
       const res = await fetch(url, {
@@ -69,11 +105,17 @@ export function RegisterForm({
       if (mode === "register") {
         track("signup_completed");
         if (!data?.joinedTeam) track("company_created");
+        if (f.companyProfile) track("company_profile_selected");
         lockAttribution(); // first-touch is now permanent
         if (data?.claimedDecaId) track("anonymous_deca_claimed");
-      } else {
-        track("login_completed");
+        if (claim) track("claim_completed");
+        track("email_verification_sent");
+        // Every fresh account gets the dedicated confirmation screen (GROWTH #46) —
+        // never a dead end: it hands the user straight back to nextPath.
+        router.push(`/verificar-email?next=${encodeURIComponent(nextPath)}`);
+        return;
       }
+      track("login_completed");
       if (claim) track("claim_completed");
       router.push(nextPath);
     } catch {
@@ -146,7 +188,24 @@ export function RegisterForm({
               value={f.companyName}
               onChange={set("companyName")}
             />
-            <Field id="companyNif" label="NIF" value={f.companyNif} onChange={set("companyNif")} />
+            <Field id="companyNif" label="CIF / NIF" value={f.companyNif} onChange={set("companyNif")} />
+            <Field
+              id="companyContactName"
+              label="Persona de contacto (opcional)"
+              required={false}
+              autoComplete="name"
+              value={f.companyContactName}
+              onChange={set("companyContactName")}
+            />
+            <Field
+              id="companyPhone"
+              label="Teléfono (opcional)"
+              type="tel"
+              required={false}
+              autoComplete="tel"
+              value={f.companyPhone}
+              onChange={set("companyPhone")}
+            />
             <Field
               id="companyAddress"
               label="Domicilio (opcional)"
@@ -157,6 +216,85 @@ export function RegisterForm({
             />
           </fieldset>
         )}
+
+        {mode === "register" && !joiningTeam && (
+          <fieldset className="mt-4">
+            <legend className="px-1 text-sm font-bold">
+              ¿Cómo utilizarás principalmente la plataforma? <span aria-hidden>*</span>
+            </legend>
+            <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup">
+              {PROFILES.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={f.companyProfile === p.value}
+                  data-testid={`profile-${p.value}`}
+                  onClick={() => setF((s) => ({ ...s, companyProfile: p.value }))}
+                  className={`flex min-h-24 flex-col items-start gap-1 rounded-[var(--radius-md)] border p-4 text-left ${
+                    f.companyProfile === p.value
+                      ? "border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)]"
+                      : "border-[var(--color-border)]"
+                  }`}
+                >
+                  <span aria-hidden className="text-2xl">
+                    {p.icon}
+                  </span>
+                  <span className="text-sm font-bold">{p.title}</span>
+                  <span className="text-xs text-[var(--color-text-muted)]">{p.body}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+
+        {mode === "register" && !joiningTeam && (
+          <div
+            className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-surface)] p-4 text-xs text-[var(--color-text-muted)]"
+            data-testid="data-protection-notice"
+          >
+            <p className="font-bold text-[var(--color-text)]">
+              Información básica sobre protección de datos
+            </p>
+            <p className="mt-1">
+              <strong>Responsable:</strong> {LEGAL_ENTITY.name}.
+            </p>
+            <p className="mt-1">
+              <strong>Finalidad:</strong> gestionar el alta y la prestación de la Plataforma DeCA.
+            </p>
+            <p className="mt-1">
+              Más información en nuestra{" "}
+              <Link href={LEGAL_ENTITY.privacyUrl} className="underline">
+                Política de Privacidad
+              </Link>
+              .
+            </p>
+          </div>
+        )}
+
+        {mode === "register" && !joiningTeam && (
+          <label className="mt-4 flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              data-testid="accept-terms"
+              checked={acceptTerms}
+              onChange={(e) => setAcceptTerms(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <span>
+              He leído la{" "}
+              <Link href={LEGAL_ENTITY.privacyUrl} className="underline">
+                Política de Privacidad
+              </Link>{" "}
+              y acepto los{" "}
+              <Link href={LEGAL_ENTITY.termsUrl} className="underline">
+                Términos y Condiciones
+              </Link>
+              .
+            </span>
+          </label>
+        )}
+
         <button
           type="submit"
           disabled={busy}

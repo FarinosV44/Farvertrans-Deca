@@ -65,9 +65,11 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
     await page.fill("#password", "supersecret123");
     await page.fill("#companyName", "Mi Transporte SL");
     await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
 
-    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page).toHaveURL(/\/verificar-email/);
+    await page.goto("/panel");
     await expect(page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid")).toBeVisible();
   });
 
@@ -98,6 +100,7 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
         password: "supersecret123",
         companyName: "Recuperada SL",
         companyNif: "B12345674",
+        acceptTerms: true,
         claim: anon.claimToken,
       },
     });
@@ -113,6 +116,7 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
         password: "supersecret123",
         companyName: "A SL",
         companyNif: "B12345674",
+        acceptTerms: true,
         claim: anon.claimToken,
       },
     });
@@ -124,6 +128,7 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
         password: "supersecret123",
         companyName: "B SL",
         companyNif: "B12345674",
+        acceptTerms: true,
         claim: anon.claimToken,
       },
     });
@@ -145,6 +150,7 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
         password: "supersecret123",
         companyName: "Titular SL",
         companyNif: "B12345674",
+        acceptTerms: true,
         claim: anon.claimToken,
       },
     });
@@ -164,15 +170,10 @@ test.describe("BUILD 09 — signup + claim the anonymous DeCA", () => {
   test("keep signup short — no lead-qualification fields on the form", async ({ page }) => {
     await page.goto("/registro");
     const text = (await page.locator("form").innerText()).toLowerCase();
-    for (const banned of [
-      "flota",
-      "facturación",
-      "empleados",
-      "teléfono",
-      "presupuesto",
-      "demo",
-      "cargo",
-    ]) {
+    // TRUST #42 / GROWTH #46 explicitly add persona de contacto + teléfono to the
+    // required field set (D-043, supersedes D-021's "no lead-qualification fields"
+    // for these two) — banned words narrowed to the ones still deliberately absent.
+    for (const banned of ["flota", "facturación", "empleados", "presupuesto", "demo", "cargo"]) {
       expect(text).not.toContain(banned);
     }
   });

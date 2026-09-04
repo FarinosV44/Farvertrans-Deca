@@ -10,8 +10,10 @@ async function registerCompany(page: Page, name: string) {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", name);
   await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
 }
 
 async function createDeca(page: Page): Promise<string> {

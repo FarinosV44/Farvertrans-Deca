@@ -14,7 +14,7 @@ const FORBIDDEN = [
 ];
 
 test.describe("BUILD 06 — production landing", () => {
-  test("AC-25/AC-32: SSR, one h1 with DeCA GRATIS, CTA to /crear, head tags", async ({ page }) => {
+  test("AC-25/AC-32: SSR, one professional h1, CTA to /crear, head tags", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (m) => {
       if (m.type() !== "error") return;
@@ -30,7 +30,7 @@ test.describe("BUILD 06 — production landing", () => {
 
     const h1 = page.locator("h1");
     await expect(h1).toHaveCount(1);
-    await expect(h1).toHaveText("DeCA GRATIS");
+    await expect(h1).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
 
     const cta = page.getByTestId("cta-crear").first();
     await expect(cta).toHaveAttribute("href", "/crear");
@@ -61,10 +61,12 @@ test.describe("BUILD 06 — production landing", () => {
     await expect(page.locator("header")).toContainText(BRAND.name);
     const footer = page.locator("footer");
     await expect(footer).toContainText(BRAND.name);
-    // the product stands on its own — nothing links it to a company (decision 2026-09-04)
+    // the product stands on its own — never linked to Farvertrans (D-039). It DOES
+    // carry a discreet Praetoria legal-custodian line (D-043, TRUST #42) — that is
+    // the one deliberate exception to the "no company attribution" rule.
     const body = (await page.locator("body").innerText()).toLowerCase();
     expect(body).not.toContain("farvertrans");
-    expect(body).not.toContain("s.l.");
+    expect(body).toContain("praetoria");
     // returning-user entry point
     await expect(page.getByTestId("header-login")).toHaveAttribute("href", "/entrar");
   });
@@ -74,10 +76,10 @@ test.describe("BUILD 06 — production landing", () => {
   }) => {
     await page.goto("/");
     // hero: headline + proof + primary CTA above the fold
-    await expect(page.locator("h1")).toHaveText("DeCA GRATIS");
+    await expect(page.locator("h1")).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
     await expect(
       page.getByText(
-        "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite hasta el 31/12/2026",
+        "Mercancías · PDF + QR · Custodia digital · Histórico · Multiusuario · Gratis durante la fase de lanzamiento",
       ),
     ).toBeVisible();
     await expect(page.getByTestId("cta-hero")).toBeInViewport();
@@ -175,7 +177,7 @@ test.describe("BUILD 06 — production landing", () => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText("DeCA GRATIS");
+    await expect(page.locator("h1")).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
     const cta = page.getByTestId("cta-crear").first();
     await expect(cta).toHaveAttribute("href", "/crear");
     await cta.click();

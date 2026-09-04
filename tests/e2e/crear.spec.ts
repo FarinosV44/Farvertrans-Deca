@@ -68,6 +68,8 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
     await page.fill("#tractorPlate", V.tractorPlate);
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
 
     // AC: the review summary shows the exact final data before generating
     const review = page.getByTestId("review-summary");

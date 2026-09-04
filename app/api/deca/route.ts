@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateDeca, DecaValidationError } from "@/lib/deca/validate";
+import { LEAD_COOKIE, leadSchema } from "@/lib/deca/lead";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,19 @@ export async function POST(req: Request) {
       }));
     }
 
+    // Lightweight identity capture (TRUST #42 §3): the wizard requires a name +
+    // email before an anonymous first DeCA and sends them here. Captured
+    // opportunistically — never a hard requirement at this layer, so a direct
+    // API caller (or the abuse-control tests, which create several anonymous
+    // documents from one context on purpose) is never blocked here. The real
+    // "register for your next one" enforcement is the /crear page-level gate
+    // (fvd_lead cookie), which only a browser hits.
+    let lead: { leadName: string; leadEmail: string } | undefined;
+    if (!owner) {
+      const leadParsed = leadSchema.safeParse(body);
+      if (leadParsed.success) lead = leadParsed.data;
+    }
+
     // Abuse controls apply to ANONYMOUS creation only — a signed-in company is
     // already accountable. A first-time user never crosses the soft threshold.
     if (!owner && !idempotentReplay) {
@@ -90,8 +104,14 @@ export async function POST(req: Request) {
     }
 
     const { createDeca } = await import("@/lib/deca/persist");
-    const created = await createDeca(validated, { idempotencyKey, ...owner });
-    return NextResponse.json(
+    const created = await createDeca(validated, {
+      idempotencyKey,
+      ...owner,
+      creatorName: lead?.leadName,
+      creatorEmail: lead?.leadEmail,
+    });
+
+    const res = NextResponse.json(
       {
         decaId: created.decaId,
         token: created.token,
@@ -103,6 +123,32 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
+
+    if (lead) {
+      res.cookies.set(LEAD_COOKIE, "1", {
+        httpOnly: false,
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 365,
+        path: "/",
+      });
+      // Best-effort: the lead's email doubles as their claim/verification link.
+      try {
+        const { publicEnv } = await import("@/lib/env");
+        const { BRAND } = await import("@/lib/brand");
+        const { sendMail } = await import("@/lib/mailer");
+        const publicUrl = `${publicEnv.baseUrl.replace(/\/$/, "")}/d/${created.token}`;
+        const claimUrl = `${publicEnv.baseUrl.replace(/\/$/, "")}/registro?claim=${encodeURIComponent(created.claimToken)}`;
+        await sendMail({
+          to: lead.leadEmail,
+          subject: `Tu DeCA está listo — ${BRAND.name}`,
+          text: `Hola ${lead.leadName},\n\nTu Documento Electrónico de Control ya está generado:\n${publicUrl}\n\nCrea una cuenta gratuita para guardarlo, reutilizar tus datos y hacer el siguiente mucho más rápido:\n${claimUrl}\n\nEste enlace caduca en 30 días.`,
+        });
+      } catch {
+        // never block generation on a mail-provider hiccup
+      }
+    }
+
+    return res;
   } catch (e) {
     // Stage-aware failure (#29): the client gets a calm message plus a short
     // correlation code; the stage itself is exposed only when FVD_DEBUG is on.

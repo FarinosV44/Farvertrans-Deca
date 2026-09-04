@@ -67,6 +67,8 @@ async function fillWizardAnon(page: Page) {
   await page.fill("#goods", DECA.goods);
   await page.fill("#weight", DECA.weight);
   await page.fill("#tractorPlate", DECA.tractorPlate);
+  await page.fill("#leadName", "Ana García");
+  await page.fill("#leadEmail", "ana@example.com");
 }
 
 test.describe("LAUNCH #20 — production happy path", () => {
@@ -78,7 +80,7 @@ test.describe("LAUNCH #20 — production happy path", () => {
     // 1-2. Landing → CREAR DECA GRATIS (mobile viewport)
     await page.setViewportSize({ width: 360, height: 740 });
     await page.goto("/");
-    await expect(page.locator("h1")).toHaveText("DeCA GRATIS");
+    await expect(page.locator("h1")).toHaveText("DeCA profesional, sencillo y listo para trabajar.");
     await page.getByTestId("cta-crear").first().click();
     await expect(page).toHaveURL(/\/crear$/);
     // no signup wall
@@ -134,8 +136,10 @@ test.describe("LAUNCH #20 — production happy path", () => {
     await page.fill("#password", "supersecret123");
     await page.fill("#companyName", "Titular Launch SL");
     await page.fill("#companyNif", DECA.carrierNif);
+    await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page).toHaveURL(/\/verificar-email/);
+    await page.goto("/panel");
 
     // the claimed DeCA appears without regeneration — same token, identical bytes
     const after = await request.get(publicUrl!);

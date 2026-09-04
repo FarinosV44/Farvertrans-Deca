@@ -249,12 +249,28 @@
   instruction not to invent passenger fields), the `GOODS|PASSENGERS` type enum
   + company default + `/crear` type picker, structured `SavedAddress` (was
   already dead/unused in the wizard before this slice), admin type filter.
-- **Not started this session:** #42 (Praetoria legal identity, trust-first
-  landing, lightweight name+email registration gate before first DeCA — this
-  SUPERSEDES the anonymous-first flow from D-016 per the user's explicit
-  directive), #46 (high-conversion landing rewrite, company signup with the
-  exact fields, email verification flow + polished confirmation screen — email
-  verification does not exist at all yet; only password reset, D-023).
+- **D-043 done, on `develop`** (not yet merged/deployed): #42 + #46 —
+  Praetoria legal identity (footer + legal pages + `/terminos` + landing trust
+  section), versioned `TermsAcceptance` (required checkbox, team-invite joins
+  exempt), company signup fields (contactName/phone/profile picker — logo
+  upload deferred), email verification (soft gate — `/verificar-email`
+  dedicated screen + resend/change-email, `/panel` never blocked), and the
+  lightweight name+email identity gate on the first anonymous DeCA
+  (`fvd_lead` cookie → `/crear` shows a "register for your next one" screen;
+  the API itself stays lenient — see D-043 for why the abuse-tolerance tests
+  forced that scope call). Landing hero repositioned to professional-first
+  copy per the issue's exact wording. Migration
+  `20260904190634_trust_registration_v2`. New
+  `tests/e2e/trust-registration-v2.spec.ts` (5 tests) plus ~17 existing e2e
+  files mechanically updated (accept-terms checkbox + /verificar-email
+  redirect at every genuine UI registration; lead fields at every anonymous
+  wizard-generate). **Gate green locally**: 106 unit + 134 e2e + typecheck +
+  lint.
+- **Not started:** company logo upload (#46, deferred); passenger transport
+  type (#41 §4/§5 — GOODS|PASSENGERS enum, company default, `/crear` picker,
+  admin filter — blocked on the passenger legal-requirement research the issue
+  itself demands before building); an in-`/panel` unverified-email reminder
+  banner (low priority, soft-gate design already avoids dead ends).
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
@@ -262,5 +278,7 @@ boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /
 real pages, rebuilt the footer (4 columns), added 4 legal pages, audited nav (no dead links). Gate:
 105 unit + 129 e2e + 8 compliance. `develop` == `main`. No version tag.
 D-042 (goods-only structured loading/unloading + separate load/unload dates, PRODUCT #41) done on
-`develop`, gate green (106 unit + 129 e2e); production verification blocked on DNS cutover to
-decaprofesional.es (user's infra task, not code).
+`develop`, gate green (106 unit + 129 e2e). D-043 (Praetoria trust identity, versioned terms,
+email verification, lightweight lead gate — TRUST #42 + GROWTH #46) done on `develop`, gate green
+(106 unit + 134 e2e). Production verification blocked on DNS cutover to decaprofesional.es (user's
+infra task, not code).

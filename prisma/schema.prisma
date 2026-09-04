@@ -27,11 +27,14 @@ model Operator {
 
 /// The account's own transport company.
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  nif       String?
-  address   String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String          @id @default(cuid())
+  name        String
+  nif         String?
+  address     String?
+  contactName String?         @map("contact_name")
+  phone       String?
+  profile     CompanyProfile?
+  createdAt   DateTime        @default(now()) @map("created_at")
 
   users       User[]
   decas       Deca[]
@@ -41,19 +44,29 @@ model Company {
   @@map("company")
 }
 
+/// Company's primary use-case (TRUST #42 / GROWTH #46 signup profile picker) —
+/// for onboarding/personalisation only, never gates functionality.
+enum CompanyProfile {
+  carrier_goods
+  shipper
+  operator
+  carrier_passengers
+}
+
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.
 model User {
-  id           String      @id @default(cuid())
-  authUserId   String      @unique @map("auth_user_id")
-  email        String
-  passwordHash String?     @map("password_hash")
-  companyId    String?     @map("company_id")
-  role         Role        @default(user)
-  companyRole  CompanyRole @default(owner) @map("company_role")
-  createdAt    DateTime    @default(now()) @map("created_at")
+  id              String      @id @default(cuid())
+  authUserId      String      @unique @map("auth_user_id")
+  email           String
+  passwordHash    String?     @map("password_hash")
+  companyId       String?     @map("company_id")
+  role            Role        @default(user)
+  companyRole     CompanyRole @default(owner) @map("company_role")
+  emailVerifiedAt DateTime?   @map("email_verified_at")
+  createdAt       DateTime    @default(now()) @map("created_at")
 
-  company        Company?        @relation(fields: [companyId], references: [id])
-  createdDecas   Deca[]          @relation("DecaCreatedBy")
+  company        Company?       @relation(fields: [companyId], references: [id])
+  createdDecas   Deca[]         @relation("DecaCreatedBy")
   acquisition    Acquisition?
   savedCompanies SavedCompany[]
   savedVehicles  SavedVehicle[]
@@ -129,6 +142,10 @@ model Deca {
   idempotencyKey   String?   @unique @map("idempotency_key")
   serviceStart     DateTime? @map("service_start")
   serviceEnd       DateTime? @map("service_end")
+  /// Lightweight identity captured before an anonymous first DeCA (TRUST #42 §3).
+  /// Never required once the document has an owning company/user.
+  creatorName      String?   @map("creator_name")
+  creatorEmail     String?   @map("creator_email")
   createdAt        DateTime  @default(now()) @map("created_at")
 
   company        Company?      @relation(fields: [companyId], references: [id])
@@ -218,13 +235,13 @@ model SavedAddress {
 
 /// First-party analytics event. Never carries PII.
 model Event {
-  id             String   @id @default(cuid())
-  name           String
-  ts             DateTime @default(now())
-  sessionId      String   @map("session_id")
-  path           String
-  refSnapshot    Json?    @map("ref_snapshot")
-  appVersion     String?  @map("app_version")
+  id          String   @id @default(cuid())
+  name        String
+  ts          DateTime @default(now())
+  sessionId   String   @map("session_id")
+  path        String
+  refSnapshot Json?    @map("ref_snapshot")
+  appVersion  String?  @map("app_version")
 
   @@index([name, ts])
   @@map("event")
@@ -246,23 +263,23 @@ model DecaAccessLog {
 /// Company acquisition funnel (GROWTH #28) — a prospect Farvertrans is onboarding,
 /// separate from the authenticated workspace until it activates.
 model Prospect {
-  id             String         @id @default(cuid())
-  name           String
-  nif            String?
-  contactName    String?        @map("contact_name")
-  email          String?
-  phone          String?
-  refCode        String         @map("ref_code") // assigned Farvertrans operator
-  source         String? // campaign / channel note
-  status         ProspectStatus @default(prospect)
-  companyId      String?        @unique @map("company_id") // set once registered
-  inviteTokenHash String?       @unique @map("invite_token_hash")
-  inviteExpiresAt DateTime?     @map("invite_expires_at")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  invitedAt      DateTime?      @map("invited_at")
-  registeredAt   DateTime?      @map("registered_at")
-  firstDecaAt    DateTime?      @map("first_deca_at")
-  lastDecaAt     DateTime?      @map("last_deca_at")
+  id              String         @id @default(cuid())
+  name            String
+  nif             String?
+  contactName     String?        @map("contact_name")
+  email           String?
+  phone           String?
+  refCode         String         @map("ref_code") // assigned Farvertrans operator
+  source          String? // campaign / channel note
+  status          ProspectStatus @default(prospect)
+  companyId       String?        @unique @map("company_id") // set once registered
+  inviteTokenHash String?        @unique @map("invite_token_hash")
+  inviteExpiresAt DateTime?      @map("invite_expires_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  invitedAt       DateTime?      @map("invited_at")
+  registeredAt    DateTime?      @map("registered_at")
+  firstDecaAt     DateTime?      @map("first_deca_at")
+  lastDecaAt      DateTime?      @map("last_deca_at")
 
   @@index([refCode])
   @@index([status])
@@ -299,6 +316,33 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_token")
+}
+
+/// Email verification token (GROWTH #46). Longer TTL than a password reset —
+/// this is a courtesy confirmation, not a security-critical action.
+model EmailVerificationToken {
+  tokenHash String    @id @map("token_hash")
+  userId    String    @map("user_id")
+  email     String
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("email_verification_token")
+}
+
+/// Versioned, auditable Terms & Conditions / Privacy acceptance (TRUST #42 §5).
+/// Append-only — never updated after creation.
+model TermsAcceptance {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  companyId  String?  @map("company_id")
+  version    String
+  acceptedAt DateTime @default(now()) @map("accepted_at")
+
+  @@index([userId])
+  @@map("terms_acceptance")
 }
 
 /// Sliding-window abuse counter keyed on hashed IP/fingerprint + window.

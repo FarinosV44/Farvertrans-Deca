@@ -20,6 +20,7 @@ import {
   BENEFITS,
   LEGAL_POINTS,
   LEGAL_SOURCE,
+  OPERATOR_TRUST,
   FAQ,
   landingJsonLd,
 } from "@/lib/content/landing";
@@ -240,6 +241,19 @@ export default async function HomePage() {
             <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
               {LEGAL_SOURCE.label}
             </a>
+          </p>
+        </section>
+
+        {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-12`}
+          aria-labelledby="operador"
+        >
+          <h2 id="operador" className="text-lg font-bold text-[var(--color-text-muted)]">
+            {OPERATOR_TRUST.heading}
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]" data-testid="operator-trust">
+            {OPERATOR_TRUST.body}
           </p>
         </section>
 

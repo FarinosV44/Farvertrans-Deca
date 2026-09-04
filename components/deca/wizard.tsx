@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Field } from "./field";
 import { step1Schema, step2Schema, step3Schema } from "@/lib/deca/schema";
+import { leadSchema } from "@/lib/deca/lead";
 import { track, getSessionId } from "@/lib/analytics/client";
 import { looksLikeSpanishPlate } from "@/lib/deca/plate";
 import { clientFingerprint, solveChallenge } from "@/lib/abuse/client";
@@ -33,6 +34,9 @@ type FormState = {
   tractorPlate: string;
   trailerPlate: string;
   reference: string;
+  /** Lightweight identity, anonymous first DeCA only (TRUST #42 §3). */
+  leadName: string;
+  leadEmail: string;
 };
 
 const EMPTY: FormState = {
@@ -61,6 +65,8 @@ const EMPTY: FormState = {
   tractorPlate: "",
   trailerPlate: "",
   reference: "",
+  leadName: "",
+  leadEmail: "",
 };
 
 const STORAGE_KEY = "fvd_crear_draft";
@@ -154,6 +160,7 @@ function toPayload(f: FormState) {
     tractorPlate: f.tractorPlate,
     trailerPlate: f.trailerPlate || undefined,
     reference: f.reference || undefined,
+    ...(f.leadName || f.leadEmail ? { leadName: f.leadName, leadEmail: f.leadEmail } : {}),
   };
 }
 
@@ -348,9 +355,14 @@ export function CrearWizard({
       ? "No parece una matrícula española (formato 1234 BCD). Es válida si el vehículo es extranjero."
       : undefined;
 
+  const showLeadGate = !isCorrection && !saved;
+
   function validateStep(): boolean {
     const p = toPayload(form);
-    const schema = [step1Schema, step2Schema, step3Schema][step];
+    const schema =
+      step === 2 && showLeadGate
+        ? step3Schema.merge(leadSchema)
+        : [step1Schema, step2Schema, step3Schema][step];
     const slice =
       step === 0
         ? { shipper: p.shipper, carrier: p.carrier }
@@ -367,6 +379,7 @@ export function CrearWizard({
               tractorPlate: p.tractorPlate,
               trailerPlate: p.trailerPlate,
               reference: p.reference,
+              ...(showLeadGate ? { leadName: form.leadName, leadEmail: form.leadEmail } : {}),
             };
     const r = schema.safeParse(slice);
     if (r.success) {
@@ -967,6 +980,33 @@ export function CrearWizard({
               error={errors.reference}
               required={false}
             />
+            {showLeadGate && (
+              <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+                <legend className="px-1 text-sm font-bold">¿A quién pertenece este DeCA?</legend>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  Solo tu nombre y email — para enviarte el documento y poder guardarlo después. No
+                  hace falta contraseña ni datos de empresa todavía.
+                </p>
+                <Field
+                  id="leadName"
+                  label="Tu nombre"
+                  value={form.leadName}
+                  onChange={set("leadName")}
+                  error={errors.leadName}
+                  autoComplete="name"
+                />
+                <Field
+                  id="leadEmail"
+                  label="Tu email"
+                  type="email"
+                  value={form.leadEmail}
+                  onChange={set("leadEmail")}
+                  error={errors.leadEmail}
+                  autoComplete="email"
+                  hint="Te enviamos aquí el enlace de tu documento."
+                />
+              </fieldset>
+            )}
             {isCorrection && (
               <div className="mt-3">
                 <label htmlFor="reason" className="block text-sm font-medium">

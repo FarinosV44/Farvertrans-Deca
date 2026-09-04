@@ -28,6 +28,11 @@ export default function CookiesPage() {
           nunca se comparte con terceros ni se muestra en el documento generado.
         </li>
         <li>
+          <strong>Primer DeCA</strong>: una cookie propia que marca, sin identificarte, que este
+          navegador ya generó un DeCA sin cuenta — para pedirte que te registres antes del
+          siguiente. No contiene tu nombre ni tu email.
+        </li>
+        <li>
           <strong>Almacenamiento local del navegador</strong>: para guardar un borrador del
           formulario si recargas la página por accidente. No sale de tu navegador.
         </li>

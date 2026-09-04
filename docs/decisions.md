@@ -667,3 +667,107 @@
 - **Not verified in production:** this slice is code-complete and gate-green
   locally; production deployment/verification is blocked on the DNS cutover
   (see PROGRESS.md open items) and is the user's infrastructure task.
+
+## D-043 — Praetoria trust identity, versioned terms, email verification, lightweight identity gate (TRUST #42 + GROWTH #46)
+- Date / phase: 2026-09-04 / launch execution, session 2 (user directive: "go for it" on #42+#46)
+- **Decision — legal/trust identity:** `lib/legal-entity.ts` centralises PRAETORIA,
+  S.L. / CIF B21810452 as the discreet operating/custodian entity — shown in the
+  footer (`data-testid="footer-operator"`), `/aviso-legal` (titularidad),
+  `/privacidad` (new "Responsable del tratamiento" section), and a new
+  `/terminos` page. The real registered address is still a placeholder
+  ("pendiente de publicación") — never fabricated, same pattern as D-041's legal
+  pages. **This explicitly supersedes D-039's "no company attribution
+  anywhere public"** for this one entity: D-039 was about removing
+  *Farvertrans* attribution (kept, unaffected); Praetoria is a deliberate new
+  exception the user asked for by name. Landing gets a subtle "Quién está
+  detrás del servicio" section + hero repositioning (`lib/content/landing.ts`
+  `HERO`/`OPERATOR_TRUST`) — professional-first copy per #42/#46, `GRATIS` now
+  secondary, matching the issue's suggested wording verbatim.
+- **Decision — versioned terms acceptance:** new `TermsAcceptance` model
+  (append-only: userId, companyId, version, acceptedAt) + `signup()` requires
+  `acceptTerms: true` and records it — but **only on the two paths that show
+  the checkbox** (plain registration, prospect-invite onboarding). A TEAM
+  INVITE join is exempt (no separate checkbox shown, matches the client;
+  joining an already-onboarded workspace isn't a new terms event). Checkbox
+  is never pre-checked (`components/auth/register-form.tsx`).
+- **Decision — company signup fields (#46):** added `contactName` (Persona de
+  contacto), `phone` (Teléfono), `profile` (4-card picker: transportista
+  mercancías / empresa cargadora / operador / transportista viajeros — new
+  `CompanyProfile` enum, onboarding/personalisation only, never gates
+  functionality) to `Company` + the registration form + a data-protection
+  info block. **Supersedes D-021's "no lead-qualification fields" for
+  contactName/phone specifically** — #46 names them as required signup
+  fields; `registro.spec.ts`'s "keep signup short" test narrowed its banned-word
+  list accordingly (kept: flota, facturación, empleados, presupuesto, demo,
+  cargo). **Deferred: company logo upload** (#46 lists it "(opcional)") — needs
+  a file-storage decision + UI, same class of work already split into #39 for
+  PDF branding; not built this slice, tracked for a follow-up.
+- **Decision — email verification (soft gate, never a dead end):**
+  `EmailVerificationToken` model (mirrors `PasswordResetToken`, 24h TTL) +
+  `createEmailVerification`/`verifyEmailToken` in `lib/auth`. Registration
+  sends a verification email (`lib/mailer`, same Resend/mailto-fallback
+  pattern as password reset) and the client **always** redirects to
+  `/verificar-email?next=<original target>` after a successful signup —
+  the dedicated confirmation screen (`components/auth/verify-email-screen.tsx`)
+  with the issue's exact copy (icon, destination email, "qué ocurre después",
+  Abrir mi correo / Reenviar correo / Cambiar correo electrónico / Ya he
+  confirmado mi cuenta). **Deliberately a soft gate**: `/panel` and every other
+  route work identically whether or not `emailVerifiedAt` is set — verification
+  is a courtesy loop, never a wall, per the issue's own "do not create
+  unnecessary dead ends." `/verificar-email/[token]` verifies server-side on
+  render (no session required — the click may land in a different browser than
+  the one that registered) and adapts its CTA (Ir a mi panel vs Entrar).
+  `POST /api/auth/verify-email/resend` and `.../change-email` back the
+  confirmation screen's actions, rate-limited via the existing `"auth"` abuse
+  policy. Reused the `FVD_EXPOSE_RESET_TOKEN` test seam for e2e (same flag,
+  new field `verifyTestToken`).
+- **Decision — this changes every UI e2e registration flow (mechanical
+  ripple, ~17 files):** every UI-driven `register-submit` click now needs
+  `accept-terms` checked first (skipped only for team-invite joins) and now
+  lands on `/verificar-email` instead of `/panel` directly — fixed by adding
+  `await page.getByTestId("accept-terms").check()` and
+  `await expect(page).toHaveURL(/\/verificar-email/); await page.goto("/panel")`
+  at each genuine registration call site. Every direct `POST /api/auth/register`
+  in tests now sends `acceptTerms: true`. Login flows (same `register-submit`
+  test id, `mode="login"`) are untouched — verified by checking each call site's
+  preceding fields before editing (a company-creating call always fills
+  `#companyNif` first; a login never does).
+- **Decision — lightweight identity gate (#42 §3/§4), scoped down from the
+  issue's literal "server-side hard block":** the wizard requires `leadName`
+  + `leadEmail` (`lib/deca/lead.ts`) before generating an anonymous first DeCA
+  (shown only when `!isCorrection && !saved`) — stored on new
+  `Deca.creatorName`/`creatorEmail` columns, emailed the claim link
+  (`POST /api/deca` route). On success, a first-party `fvd_lead` cookie
+  (1 year, non-httpOnly, same durability class as `fvd_attr`) is set; `/crear`
+  checks it server-side and — for an anonymous visitor who already has it —
+  shows a "Ya has creado tu primer DeCA" screen with a CTA to `/registro`
+  instead of the wizard. **The API itself does NOT hard-reject a repeat
+  anonymous create or missing lead fields** (tried this first; reverted — it
+  broke `build13.spec.ts`'s and `launch-gate.spec.ts`'s abuse-tolerance tests,
+  which deliberately create 3 anonymous documents from one context to test the
+  soft rate-limit threshold from F16/#29, a feature that predates and is
+  independent of this one). The real user-facing enforcement is entirely the
+  `/crear` page gate, which only a browser (not a raw API script) ever hits;
+  lead capture at the API layer is opportunistic (silently skipped if absent
+  or invalid), and repeat programmatic creates stay governed by the existing
+  `anon_create` abuse policy. This is a deliberate, recorded scope narrowing
+  from the issue's literal wording, not an oversight.
+- **New/changed analytics events:** `company_profile_selected`,
+  `email_verification_sent`, `email_verified`, `lead_identity_captured`
+  (reserved, not yet fired — no code path needed it beyond the funnel names
+  in #46 §Analytics).
+- **New test coverage:** `tests/e2e/trust-registration-v2.spec.ts` (Praetoria
+  identity, terms-required, confirmation-screen + resend/verify round trip,
+  lead-gate happy path) — written fresh rather than folded into existing specs,
+  since these are new, independently meaningful behaviors.
+- Migration `20260904190634_trust_registration_v2` (CompanyProfile enum,
+  `company.contact_name/phone/profile`, `deca.creator_name/creator_email`,
+  `user.email_verified_at`, `email_verification_token`, `terms_acceptance`).
+- **Not done / explicitly deferred:** company logo upload (#46); the
+  `GOODS|PASSENGERS` type enum + company-default transport type + `/crear`
+  type picker (#41, still blocked on passenger legal research); admin filter
+  by transport type (#41 §7, same blocker); a live "unverified email" reminder
+  banner inside `/panel` (the confirmation screen is reachable but not
+  re-surfaced elsewhere — low priority given the soft-gate design).
+- Gate green locally (Docker Postgres — production still blocked on DNS
+  cutover, unrelated to this change): 106 unit + 134 e2e + typecheck + lint.

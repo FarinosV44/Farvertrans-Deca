@@ -110,6 +110,8 @@ test.describe("UX #31 — ultra-simple creation flow", () => {
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
     await page.fill("#tractorPlate", V.tractorPlate);
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
 
     const generate = page.getByTestId("wizard-generate");
     await generate.click();

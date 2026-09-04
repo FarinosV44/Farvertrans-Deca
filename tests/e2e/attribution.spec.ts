@@ -20,8 +20,10 @@ async function registerWith(page: Page, companyNif: string) {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", "Attrib Test SL");
   await page.fill("#companyNif", companyNif);
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
 }
 
 test.describe("BUILD 11 — referral + UTM attribution", () => {

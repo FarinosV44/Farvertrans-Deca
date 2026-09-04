@@ -64,6 +64,11 @@ async function anonCreate(page: Page) {
   await page.fill("#goods", D.goods);
   await page.fill("#weight", D.weight);
   await page.fill("#tractorPlate", D.tractorPlate);
+  // Only the anonymous flow shows the lightweight identity gate (TRUST #42 §3).
+  if (await page.locator("#leadName").count()) {
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
+  }
   await page.getByTestId("wizard-generate").click();
   await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
 }
@@ -166,8 +171,10 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     await page.fill("#password", "supersecret123");
     await page.fill("#companyName", "OPS SL");
     await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page).toHaveURL(/\/verificar-email/);
+    await page.goto("/panel");
     await anonCreate(page);
 
     // go to the owner detail, correct the unload location

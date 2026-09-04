@@ -18,8 +18,10 @@ async function registerAndGenerate(page: Page, ref?: string) {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", "Captada SL");
   await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
   await page.goto("/crear");
   for (const [sel, val] of [
     ["#shipperName", "Cargas SL"],
@@ -71,8 +73,10 @@ test.describe("BUILD 12 — internal operator dashboard", () => {
     await page.fill("#password", "supersecret123");
     await page.fill("#companyName", "Regular SL");
     await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page).toHaveURL(/\/verificar-email/);
+    await page.goto("/panel");
     expect((await page.goto("/operadores"))?.status()).toBe(404);
   });
 

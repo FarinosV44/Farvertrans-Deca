@@ -33,6 +33,11 @@ export const EVENT_NAMES = [
   "anonymous_deca_claimed",
   "login_completed",
   "first_authenticated_deca",
+  // trust + registration v2 (TRUST #42, GROWTH #46)
+  "company_profile_selected",
+  "email_verification_sent",
+  "email_verified",
+  "lead_identity_captured",
   // driver delivery / verification (#26)
   "pdf_opened",
   "pdf_downloaded",

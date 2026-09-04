@@ -129,6 +129,8 @@ test.describe("#29 — DeCA generation reliability", () => {
     await page.fill("#goods", PAYLOAD.goods);
     await page.fill("#weight", PAYLOAD.weight);
     await page.fill("#tractorPlate", PAYLOAD.tractorPlate);
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
 
     const generate = page.getByTestId("wizard-generate");
     await generate.click();
@@ -158,6 +160,8 @@ test.describe("#29 — DeCA generation reliability", () => {
     await page.fill("#goods", PAYLOAD.goods);
     await page.fill("#weight", PAYLOAD.weight);
     await page.fill("#tractorPlate", PAYLOAD.tractorPlate);
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
 
     // Force ONE server failure, exactly as production would surface it.
     let failed = false;

@@ -76,7 +76,14 @@ export function decaReference(id: string): string {
  */
 export async function createDeca(
   validated: ValidatedDeca,
-  opts: { idempotencyKey?: string; createdByUserId?: string; companyId?: string } = {},
+  opts: {
+    idempotencyKey?: string;
+    createdByUserId?: string;
+    companyId?: string;
+    /** Lightweight identity captured before an anonymous first DeCA (TRUST #42 §3). */
+    creatorName?: string;
+    creatorEmail?: string;
+  } = {},
 ): Promise<CreatedDeca> {
   const correlationId = newCorrelationId();
   if (opts.idempotencyKey) {
@@ -133,6 +140,8 @@ export async function createDeca(
           idempotencyKey: opts.idempotencyKey,
           createdByUserId: opts.createdByUserId,
           companyId: opts.companyId,
+          creatorName: opts.creatorName,
+          creatorEmail: opts.creatorEmail,
           serviceStart: new Date(`${validated.data.loadDate}T00:00:00Z`),
           serviceEnd: new Date(`${validated.data.unloadDate}T00:00:00Z`),
         },

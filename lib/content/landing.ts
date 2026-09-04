@@ -1,24 +1,34 @@
 import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
+/** Trust-first positioning (TRUST #42, GROWTH #46) — professional first, free second. */
 export const HERO = {
   eyebrow: "Documento Electrónico de Control",
-  h1: "DeCA GRATIS",
-  subhead: `${BRAND.tagline}`,
+  h1: "DeCA profesional, sencillo y listo para trabajar.",
+  subhead:
+    "Genera, gestiona, custodia y comparte tus Documentos Electrónicos de Control desde una plataforma especializada en transporte.",
   proof:
-    "PDF nativo · QR válido para inspección · URL directa · Sin tarjeta · Sin límite hasta el 31/12/2026",
+    "Mercancías · PDF + QR · Custodia digital · Histórico · Multiusuario · Gratis durante la fase de lanzamiento",
   cta: "CREAR DECA GRATIS",
   ctaSecondary: "ENTRAR",
-  trust: "Sin tarjeta · Sin límite · Gratis hasta el 31/12/2026",
+  trust: "Gratis durante la fase de lanzamiento",
 };
 
 /** Compact trust row under the hero. */
 export const TRUST_ROW = [
   "Sin registro para el primero",
   "PDF + QR",
-  "Listo para inspección",
-  "Conservación online",
+  "Custodia digital",
+  "Histórico",
 ];
+
+/** Discreet operator/legal-backing trust strip (TRUST #42 §2/§2A) — never the primary brand. */
+export const OPERATOR_TRUST = {
+  strip: `PDF + QR · Custodia digital · Histórico · ${LEGAL_ENTITY.operatorLine}`,
+  heading: "Quién está detrás del servicio",
+  body: `${LEGAL_ENTITY.operatorLine}. ${LEGAL_ENTITY.legalBackingLine}`,
+};
 
 /**
  * Who it's for (persona section — #22 / #35). Each card states the concrete
@@ -160,7 +170,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "¿Qué datos debe contener?",
-    a: "Como mínimo: cargador contractual (nombre o razón social, NIF y domicilio), transportista efectivo (nombre o razón social y NIF), origen y destino, naturaleza y peso de la mercancía, fecha del transporte y matrícula del vehículo (tractora y remolque si es un conjunto articulado).",
+    a: "Como mínimo: cargador contractual (nombre o razón social, NIF y domicilio), transportista efectivo (nombre o razón social y NIF), lugar y fecha de carga, lugar y fecha de descarga, naturaleza y peso de la mercancía, y matrícula del vehículo (tractora y remolque si es un conjunto articulado).",
   },
   {
     q: "¿Cómo lo lleva el conductor?",

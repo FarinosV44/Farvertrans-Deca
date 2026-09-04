@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { publicEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -16,12 +17,23 @@ export default function PrivacidadPage() {
         Esta política explica qué datos trata {BRAND.name} y con qué finalidad, conforme al
         Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD.
       </p>
+      <h2>Responsable del tratamiento</h2>
+      <p>
+        <strong>{LEGAL_ENTITY.name}</strong>, CIF {LEGAL_ENTITY.cif}. {LEGAL_ENTITY.address} — se
+        publicará en cuanto esté disponible. Contacto:{" "}
+        <a href={`mailto:${LEGAL_ENTITY.privacyEmail}`}>{LEGAL_ENTITY.privacyEmail}</a>.
+      </p>
       <h2>Qué datos tratamos</h2>
       <ul>
         <li>
           <strong>Datos del DeCA</strong>: los que introduces en el formulario (cargador,
           transportista, ruta, mercancía, matrícula). Se usan únicamente para generar tu documento y
           se conservan el tiempo exigido por la normativa del transporte.
+        </li>
+        <li>
+          <strong>Identidad ligera</strong> (primer DeCA sin cuenta): nombre y email, para poder
+          enviarte el enlace de tu documento y permitirte reclamarlo después. No se pide contraseña
+          ni datos de empresa en este paso.
         </li>
         <li>
           <strong>Cuenta</strong> (si te registras): email y contraseña (cifrada), para guardar tu

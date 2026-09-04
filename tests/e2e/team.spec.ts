@@ -10,8 +10,10 @@ async function registerOwner(page: Page, addr = email()) {
   await page.fill("#password", "supersecret123");
   await page.fill("#companyName", "Agencia Equipo SL");
   await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
-  await expect(page).toHaveURL(/\/panel$/);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
   return addr;
 }
 
@@ -80,7 +82,8 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await member.fill("#email", inviteEmail);
     await member.fill("#password", "supersecret123");
     await member.getByTestId("register-submit").click();
-    await expect(member).toHaveURL(/\/panel$/);
+    await expect(member).toHaveURL(/\/verificar-email/);
+    await member.goto("/panel");
 
     // the colleague sees the SAME company name and the owner's DeCA
     await expect(member.locator("h1")).toContainText("Agencia Equipo SL");
@@ -114,7 +117,8 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await member.fill("#email", email());
     await member.fill("#password", "supersecret123");
     await member.getByTestId("register-submit").click();
-    await expect(member).toHaveURL(/\/panel$/);
+    await expect(member).toHaveURL(/\/verificar-email/);
+    await member.goto("/panel");
 
     await member.goto("/panel/equipo");
     await expect(member.getByTestId("member-list")).toBeVisible();
@@ -140,7 +144,8 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await member.fill("#email", memberEmail);
     await member.fill("#password", "supersecret123");
     await member.getByTestId("register-submit").click();
-    await expect(member).toHaveURL(/\/panel$/);
+    await expect(member).toHaveURL(/\/verificar-email/);
+    await member.goto("/panel");
 
     // owner removes the member
     await owner.goto("/panel/equipo");
@@ -173,7 +178,8 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await member.fill("#email", memberEmail);
     await member.fill("#password", "supersecret123");
     await member.getByTestId("register-submit").click();
-    await expect(member).toHaveURL(/\/panel$/);
+    await expect(member).toHaveURL(/\/verificar-email/);
+    await member.goto("/panel");
 
     // owner promotes the member to Administrador
     await owner.goto("/panel/equipo");
@@ -205,6 +211,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
       data: {
         email: email(),
         password: "supersecret123",
+        acceptTerms: true,
         invite: "totally-invalid-token-000000000000",
       },
     });

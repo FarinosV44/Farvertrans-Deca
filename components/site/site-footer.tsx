@@ -2,6 +2,7 @@ import Link from "next/link";
 import { APP_VERSION } from "@/lib/version";
 import { LEGAL_SOURCE } from "@/lib/content/landing";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
 type FooterLink = { label: string; href: string };
 
@@ -22,6 +23,7 @@ const RESOURCES: FooterLink[] = [
 const LEGAL: FooterLink[] = [
   { label: "Aviso legal", href: "/aviso-legal" },
   { label: "Privacidad", href: "/privacidad" },
+  { label: "Términos", href: "/terminos" },
   { label: "Cookies", href: "/cookies" },
   { label: "Contacto", href: "/contacto" },
 ];
@@ -89,6 +91,9 @@ export function SiteFooter() {
               {BRAND.supportEmail}
             </a>
           </div>
+          <p className="mt-3 text-xs text-[var(--color-text-muted)]" data-testid="footer-operator">
+            {LEGAL_ENTITY.operatorLine}
+          </p>
         </div>
       </div>
     </footer>

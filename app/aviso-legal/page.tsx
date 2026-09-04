@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/site/legal-page";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { publicEnv } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -18,9 +19,10 @@ export default function AvisoLegalPage() {
       </p>
       <h2>Titularidad</h2>
       <p>
-        Los datos identificativos del titular del Servicio (razón social, NIF y domicilio) se
-        publicarán en esta página antes del lanzamiento público, conforme a la Ley 34/2002, de 11 de
-        julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE).
+        El Servicio está operado por <strong>{LEGAL_ENTITY.name}</strong>, con CIF{" "}
+        {LEGAL_ENTITY.cif}, conforme a la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad
+        de la Información y de Comercio Electrónico (LSSI-CE). {LEGAL_ENTITY.address} — se
+        publicará en cuanto esté disponible.
       </p>
       <h2>Objeto</h2>
       <p>
