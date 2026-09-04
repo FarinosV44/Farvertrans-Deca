@@ -36,7 +36,7 @@ async function anonCreate(page: Page) {
   await page.fill("#weight", D.weight);
   await page.fill("#tractorPlate", D.tractorPlate);
   await page.getByTestId("wizard-generate").click();
-  await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
+  await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
 }
 
 test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {

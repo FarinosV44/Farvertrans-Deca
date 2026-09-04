@@ -406,3 +406,23 @@
   DeCA is not that company's (T-1); without `companyId` (anon result) any holder
   of the `id` may view it — the result page has never been secret, the claim
   token is what matters.
+
+## D-034 — Team management: role change + resend + status (TEAM #37)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Context:** #27 already shipped company workspaces, owner/member roles,
+  one-time expiring invitations, immediate revocation, tenant isolation and the
+  per-version author audit (#19). #37's acceptance was therefore mostly already
+  met; the delta built here:
+  - `changeRole()` in `lib/team.ts` + `PATCH /api/team/members/[id]` — an admin
+    promotes/demotes a member (owner-only, not self, the workspace always keeps
+    at least one admin).
+  - `/panel/equipo`: a per-member role `<select>` (Operador / Administrador),
+    the member's join date and an "Activo" status, and a "Reenviar" action on a
+    pending invitation.
+- **Deliberate omission (recorded):** "last activity / login" per member (#37
+  team UI) — there is no `lastActiveAt` column and the issue qualifies it "if
+  safely available". Adding it is a schema migration + a write on every login;
+  deferred until there is a support reason for it. Join date + active status are
+  shown instead.
+- Admin membership inspection for support already exists at `/admin/empresas/[id]`
+  (#33).

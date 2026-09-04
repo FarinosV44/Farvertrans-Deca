@@ -8,7 +8,7 @@ import { QrCard } from "@/components/deca/qr-card";
 import { VersionTimeline } from "@/components/deca/version-timeline";
 import { TrackView } from "@/components/analytics/track-view";
 import { getDecaCockpit } from "@/lib/deca/detail";
-import { qrPngDataUri } from "@/lib/pdf/qr";
+import { qrPngDataUriCached } from "@/lib/pdf/qr";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export default async function ResultPage({
   if (!doc) notFound();
 
   const c = doc.current;
-  const qr = await qrPngDataUri(c.publicUrl);
+  const qr = await qrPngDataUriCached(c.publicUrl);
 
   return (
     <>

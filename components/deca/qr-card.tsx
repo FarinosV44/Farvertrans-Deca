@@ -4,9 +4,9 @@ import { useState } from "react";
 import { track } from "@/lib/analytics/client";
 
 /**
- * The QR / public-inspection card (PRODUCT #36 §3). Shows the REAL current-version
- * QR (rendered server-side from the same URL that goes in the PDF), the exact
- * HTTPS URL, and copy / open / download actions. Never a decorative placeholder.
+ * The QR / public-inspection card (PRODUCT #36 §3). The QR PNG is rendered
+ * server-side (memoized — a token's URL is immutable) and passed in, so the
+ * result page paints it immediately with no client QR library.
  */
 export function QrCard({
   qrDataUri,
@@ -47,6 +47,7 @@ export function QrCard({
         <img
           src={qrDataUri}
           alt={`Código QR de inspección del DeCA, versión ${versionNo}`}
+          data-testid="qr-card-img"
           width={148}
           height={148}
           className="shrink-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-white p-1"

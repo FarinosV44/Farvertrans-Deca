@@ -10,7 +10,7 @@ import { QrCard } from "@/components/deca/qr-card";
 import { VersionTimeline, ChangeList } from "@/components/deca/version-timeline";
 import { getCurrentUser } from "@/lib/auth";
 import { getDecaCockpit } from "@/lib/deca/detail";
-import { qrPngDataUri } from "@/lib/pdf/qr";
+import { qrPngDataUriCached } from "@/lib/pdf/qr";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Documento", robots: { index: false } };
@@ -26,7 +26,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
   if (!doc) notFound();
 
   const c = doc.current;
-  const qr = await qrPngDataUri(c.publicUrl);
+  const qr = await qrPngDataUriCached(c.publicUrl);
 
   return (
     <>

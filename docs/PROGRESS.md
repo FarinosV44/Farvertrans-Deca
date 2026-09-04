@@ -160,7 +160,12 @@
     sectioned data mirroring the PDF, version timeline (badges, per-version PDF link, author in
     workspace), "Qué ha cambiado" field diff for v2+ (`diffVersions` pure + unit-tested),
     technical-details accordion. Gate green: 88 unit + 110 e2e + 8 compliance.
-  - #32, #34, #35, #37, #38: not started. User approved: full DB CMS for #32, #38 without the
+  - **#37 TEAM — role change + resend + status (D-034), on `develop`:** `changeRole()` +
+    `PATCH /api/team/members/[id]` (promote/demote, never drop the last admin), per-member role
+    select on `/panel/equipo`, join date + "Activo" status, "Reenviar" on pending invites. #27
+    already covered most of #37's acceptance. Also folds in a #36 refinement (server QR memoized,
+    `qrPngDataUriCached`). Gate green: 88 unit + 111 e2e + 8 compliance.
+  - #32, #34, #35, #38: not started. User approved: full DB CMS for #32, #38 without the
     OAuth handshake, #34 minus PWA/offline (split to its own issue).
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
