@@ -165,7 +165,12 @@
     select on `/panel/equipo`, join date + "Activo" status, "Reenviar" on pending invites. #27
     already covered most of #37's acceptance. Also folds in a #36 refinement (server QR memoized,
     `qrPngDataUriCached`). Gate green: 88 unit + 111 e2e + 8 compliance.
-  - #32, #34, #35, #38: not started. User approved: full DB CMS for #32, #38 without the
+  - **#35 GROWTH — persona-led landing (D-035), on `develop`:** landing persona section upgraded to
+    4 job-to-be-done cards (autónomo / empresa / agencia / cargador), each CTA → its own persona SEO
+    page (`/deca-autonomos`, `/deca-empresas-transporte`, `/deca-agencias-transporte`,
+    `/deca-cargadores`, auto in sitemap). 4 persona CTA events. No pricing/sales contact. Gate green:
+    114 e2e + 8 compliance. Onboarding adaptation deferred to #38.
+  - #32, #34, #38: not started. User approved: full DB CMS for #32, #38 without the
     OAuth handshake, #34 minus PWA/offline (split to its own issue).
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +

@@ -20,23 +20,59 @@ export const TRUST_ROW = [
   "Conservación online",
 ];
 
-/** Who it's for (persona section — #22). */
+/**
+ * Who it's for (persona section — #22 / #35). Each card states the concrete
+ * job-to-be-done and links to its own persona page; the CTA always leads to
+ * product use, never a contact form.
+ */
 export const PERSONAS = [
   {
-    title: "Agencias de transporte",
-    body: "Emite el DeCA como cargador contractual en cada contratación y consérvalo con toda tu operativa en un mismo sitio.",
+    title: "Transportista autónomo",
+    jobToBeDone: "Genera el DeCA en minutos y llévalo en el móvil.",
+    benefits: [
+      "Primer DeCA sin registro",
+      "Empresa y vehículo guardados tras registrarte",
+      "Duplicado rápido del último documento",
+      "Envío al conductor en un toque",
+    ],
+    slug: "deca-autonomos",
+    event: "persona_autonomo_cta" as const,
   },
   {
-    title: "Transportistas",
-    body: "Genera el documento del servicio en el móvil antes de salir y compártelo con el conductor en un toque.",
+    title: "Empresa de transporte",
+    jobToBeDone: "Un mismo espacio para todos tus operadores y documentos.",
+    benefits: [
+      "Varios usuarios en la misma empresa",
+      "Historial compartido",
+      "Cargadores, vehículos y direcciones guardados",
+      "Auditoría de quién creó o corrigió cada DeCA",
+    ],
+    slug: "deca-empresas-transporte",
+    event: "persona_transport_company_cta" as const,
   },
   {
-    title: "Autónomos",
-    body: "Sin software que instalar ni cuota mensual. Entras, rellenas y descargas. Guarda tus datos para la próxima.",
+    title: "Agencia / operador de transporte",
+    jobToBeDone: "Gestiona el documento como cargador contractual sin depender de terceros.",
+    benefits: [
+      "Varias empresas y transportistas",
+      "Contrapartes reutilizables",
+      "Duplicado rápido",
+      "Espacio de trabajo para el equipo",
+    ],
+    slug: "deca-agencias-transporte",
+    event: "persona_agency_cta" as const,
   },
   {
-    title: "Cargadores",
-    body: "Cumple la obligación de generación y conservación sin montar un proceso nuevo en tu ERP.",
+    title: "Cargador / expedidor",
+    jobToBeDone: "Genera, conserva y comparte tus DeCA desde un único sitio.",
+    benefits: [
+      "Transportistas habituales guardados",
+      "Historial de documentos",
+      "Ruta de inspección directa por QR/PDF",
+      "Sin montar un proceso nuevo en tu ERP",
+    ],
+    slug: "deca-cargadores",
+    event: "persona_shipper_cta" as const,
   },
 ];
 

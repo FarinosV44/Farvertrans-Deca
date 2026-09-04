@@ -426,3 +426,22 @@
   shown instead.
 - Admin membership inspection for support already exists at `/admin/empresas/[id]`
   (#33).
+
+## D-035 — Persona-led landing + persona pages (GROWTH #35)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** the landing's "Hecho para quien mueve mercancía" section (from
+  #22) is upgraded to four job-to-be-done cards — *Transportista autónomo*,
+  *Empresa de transporte*, *Agencia / operador*, *Cargador / expedidor* — each
+  with concrete benefits and a CTA to its own persona page. Four persona SEO
+  pages added to `SEO_PAGES` (`/deca-autonomos`, `/deca-empresas-transporte`,
+  `/deca-agencias-transporte`, `/deca-cargadores`), rendered by the existing
+  `(seo)/[slug]` template and auto-included in the sitemap.
+- **No pricing/plans, no sales contact:** every persona CTA leads to product use
+  (a persona page or `/crear`). The messaging stays "una sola herramienta, todos
+  los perfiles, gratis durante la fase de lanzamiento".
+- **Analytics:** `persona_autonomo_cta`, `persona_transport_company_cta`,
+  `persona_agency_cta`, `persona_shipper_cta` added to the closed event set;
+  fired by a `TrackedLink` on each card, no PII (like every other event).
+- **Onboarding adaptation** (§"Onboarding adaptation") — NOT built: it would tie
+  into #38's progressive onboarding and #30's OAuth flow. Persona pages inform;
+  they never lock functionality. Deferred to #38.
