@@ -4,6 +4,7 @@
  */
 import { scryptSync, randomBytes } from "node:crypto";
 import { PrismaClient } from "./generated/client";
+import { seedContent } from "./content-seed";
 
 const prisma = new PrismaClient();
 
@@ -42,8 +43,10 @@ async function main() {
     });
   }
 
+  const contentCount = await seedContent(prisma);
+
   console.log(
-    `Seeded ${operators.length} operators + 1 internal user (${adminEmail} / admin-dev-only).`,
+    `Seeded ${operators.length} operators + 1 internal user (${adminEmail} / admin-dev-only) + ${contentCount} content item(s).`,
   );
 }
 

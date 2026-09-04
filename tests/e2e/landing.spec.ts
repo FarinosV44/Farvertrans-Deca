@@ -54,17 +54,17 @@ test.describe("BUILD 06 — production landing", () => {
     expect(types).toContain("FAQPage");
   });
 
-  test("#21: the product brand is centralised — header/footer show the brand, not 'Farvertrans DeCA'", async ({
+  test("#21: the product brand is centralised and carries no company attribution", async ({
     page,
   }) => {
     await page.goto("/");
     await expect(page.locator("header")).toContainText(BRAND.name);
     const footer = page.locator("footer");
     await expect(footer).toContainText(BRAND.name);
-    await expect(footer).toContainText(BRAND.attribution); // "Un servicio de Farvertrans S.L."
-    // no bare internal product name anywhere in the visible page
+    // the product stands on its own — nothing links it to a company (decision 2026-09-04)
     const body = (await page.locator("body").innerText()).toLowerCase();
-    expect(body).not.toContain("farvertrans deca");
+    expect(body).not.toContain("farvertrans");
+    expect(body).not.toContain("s.l.");
     // returning-user entry point
     await expect(page.getByTestId("header-login")).toHaveAttribute("href", "/entrar");
   });

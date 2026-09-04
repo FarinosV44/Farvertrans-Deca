@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { getCurrentUser } from "@/lib/auth";
 import { listHistory, listHistoryCarriers } from "@/lib/data/history";
+import { docWorkflowStatus } from "@/lib/deca/export";
 import { publicEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,17 @@ export default async function HistoricoPage({
     listHistoryCarriers(user.companyId),
   ]);
   const active = sp.q || sp.from || sp.to || sp.carrier || sp.plate;
+  const exportQuery = new URLSearchParams(
+    Object.fromEntries(
+      Object.entries({
+        q: sp.q,
+        from: sp.from,
+        to: sp.to,
+        carrier: sp.carrier,
+        plate: sp.plate,
+      }).filter(([, v]) => v),
+    ) as Record<string, string>,
+  ).toString();
 
   return (
     <>
@@ -126,9 +138,20 @@ export default async function HistoricoPage({
           )}
         </form>
 
-        <p className="mt-4 text-sm text-[var(--color-text-muted)]" role="status">
-          {rows.length} {rows.length === 1 ? "documento" : "documentos"}
-        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-[var(--color-text-muted)]" role="status">
+            {rows.length} {rows.length === 1 ? "documento" : "documentos"}
+          </p>
+          {rows.length > 0 && (
+            <a
+              href={`/api/export/history${exportQuery ? `?${exportQuery}` : ""}`}
+              data-testid="export-csv"
+              className="inline-flex min-h-9 items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm font-medium no-underline"
+            >
+              Exportar CSV
+            </a>
+          )}
+        </div>
 
         {/* Desktop table / mobile cards from the same data */}
         <div className="mt-2 overflow-x-auto">
@@ -160,7 +183,7 @@ export default async function HistoricoPage({
                     {r.trailerPlate ? ` + ${r.trailerPlate}` : ""}
                   </td>
                   <td>
-                    {r.status}
+                    {docWorkflowStatus(r)}
                     {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
                   </td>
                   <td className="whitespace-nowrap">
@@ -191,7 +214,7 @@ export default async function HistoricoPage({
                 </p>
                 <p className="text-xs text-[var(--color-text-muted)]">
                   {r.transportDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
-                  {r.tractorPlate} · {r.status}
+                  {r.tractorPlate} · {docWorkflowStatus(r)}
                   {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
                 </p>
                 <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">

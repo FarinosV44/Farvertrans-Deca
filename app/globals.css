@@ -113,3 +113,13 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Calm branded ground for the focused auth screens (AUTH #30). */
+.auth-ground {
+  background: radial-gradient(
+      60% 50% at 50% 0%,
+      color-mix(in srgb, var(--color-primary) 9%, transparent),
+      transparent 70%
+    ),
+    var(--color-surface);
+}

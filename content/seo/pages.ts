@@ -40,7 +40,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Quiero generar un DeCA sin pagar.",
     lastReviewed: REVIEWED,
     intro: [
-      "Con Farvertrans DeCA puedes crear y descargar el Documento Electrónico de Control Administrativo sin coste, sin tarjeta y sin límite de documentos, al menos hasta el 31 de diciembre de 2026.",
+      "Con DeCA Fácil puedes crear y descargar el Documento Electrónico de Control Administrativo sin coste, sin tarjeta y sin límite de documentos, al menos hasta el 31 de diciembre de 2026.",
       "El documento que se genera cumple los requisitos técnicos de la resolución vigente: PDF nativo digital, código QR y una URL única HTTPS que permite la descarga directa del fichero sin registro ni contraseña.",
     ],
     sections: [
@@ -433,7 +433,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Necesito un generador de DeCA.",
     lastReviewed: REVIEWED,
     intro: [
-      "Farvertrans DeCA es un generador online del Documento Electrónico de Control Administrativo. No necesitas instalar nada ni pasar por un comercial.",
+      "DeCA Fácil es un generador online del Documento Electrónico de Control Administrativo. No necesitas instalar nada ni pasar por un comercial.",
       "Introduces los datos del servicio, generas el DeCA y lo compartes con el conductor. El documento cumple los requisitos técnicos de la resolución vigente.",
     ],
     sections: [
@@ -465,6 +465,200 @@ export const SEO_PAGES: SeoPage[] = [
     ],
     sources: [BOE, MIN],
     related: ["deca-gratis", "como-hacer-un-deca", "requisitos-deca"],
+  },
+
+  // --- Persona pages (GROWTH #35) ---
+  {
+    slug: "deca-autonomos",
+    title: "DeCA para transportistas autónomos | Gratis, en el móvil",
+    h1: "DeCA para transportistas autónomos",
+    description:
+      "Genera el DeCA de cada servicio en minutos desde el móvil, sin cuota ni software. Guarda tu empresa y tu vehículo para el siguiente. Gratis durante la fase de lanzamiento.",
+    intent: "Soy transportista autónomo y necesito hacer el DeCA de mis portes.",
+    lastReviewed: REVIEWED,
+    intro: [
+      "Si trabajas por tu cuenta con una o dos cabezas tractoras, el DeCA es una obligación más que resolver antes de salir. Con DeCA Fácil lo generas en el móvil en un par de minutos, sin instalar nada y sin cuota mensual.",
+      "El primer documento no requiere registro. Si te creas una cuenta gratuita, tus datos de empresa y tu vehículo quedan guardados y se autocompletan en el siguiente DeCA.",
+    ],
+    sections: [
+      {
+        h2: "Tu caso: pocos vehículos, muchos servicios distintos",
+        body: [
+          "Cambias de cargador y de ruta a menudo, pero tu empresa y tu vehículo son casi siempre los mismos. La cuenta gratuita guarda esos datos fijos y te deja rellenar solo lo que cambia: cargador, origen, destino, mercancía y fecha.",
+          "Cuando repites un porte parecido, duplicas el DeCA anterior y ajustas lo justo.",
+        ],
+      },
+      {
+        h2: "Del móvil al conductor (o a ti mismo)",
+        body: [
+          "Al generar el DeCA obtienes el PDF nativo, el QR y una URL HTTPS de descarga directa. Lo compartes por WhatsApp, enlace o correo, o lo llevas tú mismo en el teléfono. La URL abre el PDF sin registro ni contraseña para la inspección.",
+        ],
+      },
+      {
+        h2: "¿Estás obligado?",
+        body: [
+          "El transporte público de mercancías por carretera exige DeCA desde el 5 de octubre de 2026, tanto al transportista efectivo como al cargador contractual. Si tienes dudas sobre tu caso concreto, revisa quién está obligado.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "¿Necesito registrarme para el primer DeCA?",
+        a: "No. El primer documento se genera sin cuenta. Registrarte es gratis y solo sirve para guardar y reutilizar tus datos.",
+      },
+      {
+        q: "¿Tiene coste para autónomos?",
+        a: "No. Sin tarjeta y sin límite de documentos durante la fase de lanzamiento, al menos hasta el 31 de diciembre de 2026.",
+      },
+      {
+        q: "¿Vale un NIF/VAT extranjero?",
+        a: "Sí. El formulario acepta identificadores extranjeros para el cargador o el transportista.",
+      },
+    ],
+    sources: [BOE, MIN, CETM],
+    related: ["como-hacer-un-deca", "quien-esta-obligado-deca", "deca-gratis"],
+  },
+  {
+    slug: "deca-empresas-transporte",
+    title: "DeCA para empresas de transporte | Espacio compartido para el equipo",
+    h1: "DeCA para empresas de transporte",
+    description:
+      "Un mismo espacio para todos tus operadores: historial compartido, cargadores, vehículos y direcciones guardados, y auditoría de quién creó o corrigió cada DeCA.",
+    intent:
+      "Somos una empresa de transporte con varios operadores de tráfico y queremos gestionar los DeCA en común.",
+    lastReviewed: REVIEWED,
+    intro: [
+      "En una empresa de transporte, varias personas emiten documentos a lo largo del día. DeCA Fácil da a tu empresa un espacio de trabajo único: todos los operadores comparten el historial, los datos maestros y las plantillas.",
+      "Cada DeCA guarda quién lo generó y quién lo corrigió, con fecha y hora, para que la trazabilidad interna sea clara.",
+    ],
+    sections: [
+      {
+        h2: "Varios usuarios, una sola empresa",
+        body: [
+          "El administrador invita a los operadores por email con un enlace de un solo uso. Al aceptar, se unen a la empresa existente — nunca se crea una empresa duplicada porque otro empleado se registre.",
+          "Los roles son sencillos: administrador (gestiona el equipo y los datos de empresa) y operador (crea, comparte, duplica y corrige documentos).",
+        ],
+      },
+      {
+        h2: "Datos maestros compartidos",
+        body: [
+          "Cargadores habituales, vehículos (tractora y remolque) y direcciones de carga y descarga se guardan a nivel de empresa y se autocompletan para cualquier operador. Editar un dato maestro no altera ningún documento ya generado: los PDF históricos son inmutables.",
+        ],
+      },
+      {
+        h2: "Historial y correcciones",
+        body: [
+          "El historial es común y se filtra por fecha, ruta, matrícula, cargador o referencia. Una corrección genera siempre una versión nueva con su propio QR y URL; la versión anterior se conserva y sigue siendo consultable.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "¿Hay límite de usuarios?",
+        a: "No durante la fase de lanzamiento. Usuarios ilimitados para tu empresa.",
+      },
+      {
+        q: "¿Qué pasa si quito a un empleado?",
+        a: "Pierde el acceso al espacio de trabajo de inmediato. Su cuenta personal se mantiene, sin empresa.",
+      },
+      {
+        q: "¿Se puede ver quién hizo cada documento?",
+        a: "Sí. Cada versión del DeCA registra el usuario que la creó o corrigió, con fecha y hora.",
+      },
+    ],
+    sources: [BOE, MIN, CETM],
+    related: ["deca-agencias-transporte", "requisitos-deca", "como-hacer-un-deca"],
+  },
+  {
+    slug: "deca-agencias-transporte",
+    title: "DeCA para agencias y operadores de transporte | Como cargador contractual",
+    h1: "DeCA para agencias y operadores de transporte",
+    description:
+      "Emite el DeCA como cargador contractual en cada contratación, con varias empresas y transportistas reutilizables y un espacio de trabajo para tu equipo. Sin depender de terceros.",
+    intent:
+      "Soy una agencia de transporte / operador que contrata transporte y tengo que emitir el DeCA como cargador contractual.",
+    lastReviewed: REVIEWED,
+    intro: [
+      "Cuando una agencia u operador de transporte contrata el porte, actúa como cargador contractual y tiene las mismas obligaciones de generación y conservación del DeCA que cualquier otro cargador.",
+      "DeCA Fácil te deja emitir el documento en cada contratación sin montar un proceso nuevo y sin depender de que lo haga el transportista: tú controlas el documento, su conservación y su URL de inspección.",
+    ],
+    sections: [
+      {
+        h2: "Muchas contrapartes, contratación rápida",
+        body: [
+          "Trabajas con carteras amplias de clientes y de transportistas. Guarda unos y otros como datos reutilizables y selecciónalos al crear cada DeCA; duplica un documento anterior cuando la contratación se repite.",
+        ],
+      },
+      {
+        h2: "Tu equipo, un espacio común",
+        body: [
+          "Invita a los operadores de tu agencia al mismo espacio de trabajo. Comparten historial, contrapartes y plantillas, y cada documento queda atribuido a quien lo emitió.",
+        ],
+      },
+      {
+        h2: "Conservación y trazabilidad",
+        body: [
+          "El cargador contractual debe conservar el DeCA al menos un año. El historial mantiene todos tus documentos y versiones, con la fecha de creación y de cada modificación, y la URL pública de cada versión.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "¿Una agencia está obligada a emitir el DeCA?",
+        a: "Sí, cuando actúa como cargador contractual u operador que contrata el transporte, con las mismas obligaciones de generación y conservación.",
+      },
+      {
+        q: "¿Puedo gestionar varias empresas cargadoras?",
+        a: "Sí. Guardas tantas empresas y transportistas como necesites y eliges los que corresponden en cada documento.",
+      },
+    ],
+    sources: [BOE, MIN, ART6],
+    related: ["deca-empresas-transporte", "quien-esta-obligado-deca", "datos-obligatorios-deca"],
+  },
+  {
+    slug: "deca-cargadores",
+    title: "DeCA para cargadores y expedidores | Genera, conserva y comparte",
+    h1: "DeCA para cargadores y expedidores",
+    description:
+      "Cumple la obligación de generación y conservación del DeCA sin montar un proceso nuevo en tu ERP: transportistas habituales guardados, historial y ruta de inspección directa por QR.",
+    intent: "Soy el cargador / expedidor de la mercancía y tengo que cumplir con el DeCA.",
+    lastReviewed: REVIEWED,
+    intro: [
+      "El cargador contractual es uno de los dos obligados a generar y conservar el DeCA. Si eres una empresa industrial o comercial que expide mercancía, necesitas una forma sencilla de cumplir sin cambiar tus sistemas.",
+      "Con DeCA Fácil generas el documento por servicio, lo conservas en el historial durante el plazo legal y lo compartes con el transportista y con el conductor.",
+    ],
+    sections: [
+      {
+        h2: "Sin tocar tu ERP",
+        body: [
+          "No hace falta integrar nada. Entras, rellenas los datos del servicio — con tus transportistas habituales guardados — y descargas el PDF nativo con QR y URL. La conservación de al menos un año la cubre el historial.",
+        ],
+      },
+      {
+        h2: "El transportista lo recibe listo",
+        body: [
+          "Compartes el DeCA por enlace, WhatsApp o email. El conductor lo lleva en el móvil o impreso, y la URL del QR abre el PDF vigente directamente para la inspección, sin registro.",
+        ],
+      },
+      {
+        h2: "Qué datos tienes que aportar",
+        body: [
+          "Como cargador aportas tu razón social, NIF y domicilio, los del transportista efectivo, el origen y destino, la naturaleza y el peso de la mercancía, la fecha y la matrícula. Revisa la lista completa de datos obligatorios.",
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: "¿El cargador también conserva el DeCA?",
+        a: "Sí. La conservación mínima de un año recae tanto sobre el cargador contractual como sobre el transportista.",
+      },
+      {
+        q: "¿Puedo delegar la generación en el transportista?",
+        a: "El transportista efectivo tiene su propia obligación, pero la del cargador contractual no desaparece por ello. Generarlo tú te da el control del documento y de su conservación.",
+      },
+    ],
+    sources: [BOE, MIN, ART6],
+    related: ["datos-obligatorios-deca", "quien-esta-obligado-deca", "deca-agencias-transporte"],
   },
 ];
 

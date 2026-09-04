@@ -25,7 +25,13 @@ export default async function EquipoPage() {
         <h1 className="text-2xl font-bold">Equipo · {user.company?.name}</h1>
         <AppNav current="equipo" />
         <TeamManager
-          members={members}
+          members={members.map((m) => ({
+            id: m.id,
+            email: m.email,
+            companyRole: m.companyRole,
+            isInternal: m.isInternal,
+            joinedAt: m.createdAt.toISOString(),
+          }))}
           invites={invites.map((i) => ({ ...i, expiresAt: i.expiresAt.toISOString() }))}
           isAdmin={user.companyRole === "owner"}
           meId={user.id}

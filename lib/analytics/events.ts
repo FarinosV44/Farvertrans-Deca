@@ -18,6 +18,14 @@ export const EVENT_NAMES = [
   "product_demo_cta",
   "faq_open",
   "final_cta",
+  // persona-led landing + pages (#35)
+  "persona_autonomo_cta",
+  "persona_transport_company_cta",
+  "persona_agency_cta",
+  "persona_shipper_cta",
+  // CMS content (#32)
+  "content_view",
+  "content_cta_click",
   // account (#23)
   "signup_started",
   "signup_completed",

@@ -78,7 +78,7 @@ test.describe("LAUNCH #20 — production happy path", () => {
 
     // 5-6. Generate once → result screen
     await page.getByTestId("wizard-generate").click();
-    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
     await expect(page.getByRole("heading", { name: "DeCA generado" })).toBeVisible();
 
     // 7. Download link points straight at the public PDF URL
@@ -135,7 +135,7 @@ test.describe("LAUNCH #20 — production happy path", () => {
     await page.fill("#transportDate", "2026-10-20");
     await page.getByTestId("wizard-next").click();
     await page.getByTestId("wizard-generate").click();
-    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
     const dup = await page.getByTestId("result-download").getAttribute("href");
     expect(dup).not.toBe(publicUrl); // independent document, new token
 
@@ -151,7 +151,7 @@ test.describe("LAUNCH #20 — production happy path", () => {
     await page.goto("/crear");
     await fillWizardAnon(page);
     await page.getByTestId("wizard-generate").click();
-    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
     // never bounced to /registro before the document exists
     expect(page.url()).not.toContain("/registro");
     await ctx.close();

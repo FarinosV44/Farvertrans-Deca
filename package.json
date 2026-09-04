@@ -24,6 +24,8 @@
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "seed": "tsx prisma/seed.ts",
+    "seed:content": "tsx prisma/content-seed.ts",
+    "diagnose": "node scripts/diagnose.mjs",
     "keel:verify": "node scripts/keel-verify.mjs",
     "keel:doctor": "node scripts/keel-doctor.mjs"
   },

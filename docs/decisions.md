@@ -275,3 +275,278 @@
   hang workaround (Prisma engine download) and the Node 22 recommendation.
 - **Copy:** dropped the hedge "al menos" from the free/unlimited marketing lines — now
   "Sin límite / Gratis **hasta el 31/12/2026**". Legal "conservar **al menos** un año" (R-10) kept.
+
+## D-029 — Generation failures are staged, correlated and recoverable (P0 FIX #29)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3, issues #29–#38)
+- **Problem:** every render/storage/database failure collapsed into one generic 500
+  ("No se pudo generar el DeCA"). Neither the user nor support could tell a missing bucket from a
+  dead database, and diagnosing it needed SSH access to the host's logs.
+- **Decision:**
+  - `lib/deca/generation.ts` (pure) classifies a failure into one of six stages — `validation`,
+    `configuration`, `pdf_render`, `pdf_storage`, `database`, `unknown` — and mints a 6-character
+    correlation code from an unambiguous alphabet (no O/0, no I/1) that the user can read out.
+  - `lib/deca/persist.ts` wraps each pipeline stage; a DB failure AFTER the object upload deletes the
+    stored object best-effort, so unreachable PDFs never accumulate (issue §6).
+  - `lib/deca/failures.ts` logs one structured line and writes a `generation_failure` row
+    (migration `20260904140000`). The row holds the stage, the error class and a **redacted** message —
+    emails and identifier-like runs are stripped — plus runtime metadata. Never the DeCA payload.
+  - The API answers `{ code: "generation_failed", message, correlationId, retryable: true }`; the
+    stage itself is added only when `FVD_DEBUG=1`.
+  - The wizard keeps every field, shows the code and offers `Reintentar generación`, retrying with the
+    SAME idempotency key — a retry can never produce a second document.
+  - `POST /api/deca` resolves the idempotency key BEFORE the anonymous-creation rate limiter: a replay
+    creates nothing, so a user recovering from a transient failure is never answered with a 429.
+  - `lib/diagnostics.ts` + `GET /api/admin/diagnostics` + `npm run diagnose -- <url>` verify a real
+    deployment: env, DB, migrations, PDF render smoke, storage write/read/delete round-trip, public
+    URL (HTTPS in production), providers and the last 24 h of generation health.
+  - `lib/admin/guard.ts` is the single internal-authorization surface (internal-role session or
+    `FVD_ADMIN_TOKEN` header); every internal route answers 404, never 403.
+- **Why:** a failure nobody can diagnose is a failure that repeats. The correlation code turns a
+  support call into a lookup, and the readiness script turns a deploy into a verified deploy.
+- **Not done here (needs the real host — CREDENTIAL):** reproducing the specific production exception,
+  and switching production to persistent storage. `npm run diagnose` is the tool that names it; the
+  `storage_config` check warns explicitly when `FVD_STORAGE=local` runs without `FVD_STORAGE_DIR`.
+
+## D-030 — Admin V2 command center at `/admin` (ADMIN #33)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3, issues #29–#38)
+- **Decision:** a dedicated internal area at `/admin` (persistent desktop sidebar + mobile drawer),
+  gated by `requireInternal()` — 404, never 403, for every non-internal caller (no
+  security-by-hidden-link; `noindex` in the layout metadata + `/admin` added to `robots.txt`).
+  Sections: Resumen (KPIs today/7d/30d + operational alerts), DeCA (cross-tenant searchable table +
+  detail with version history, PDF hash, storage key, public/QR URL — content is summarised, never
+  editable from admin), Empresas (+ detail: members, invites, saved-data counts, acquisition, recent
+  DeCA), Usuarios, Captación (reuses #28 `acquisitionFunnel` + `ProspectManager`), Operadores
+  (reuses #12 `operatorStats`), Contenido, Errores (#29 failures by correlation code + triage:
+  resolve/note), Sistema (`runDiagnostics` report). Global search (`GET /api/admin/search`) across
+  company / user / DeCA reference / correlation code / prospect.
+- **Data models** (`lib/admin/*`) deliberately bypass the company scoping that `lib/data/*` enforces —
+  they are only reachable through `requireInternal()`. No auth secret is ever returned; DeCA payloads
+  are summarised, never dumped.
+- **Deliberate omissions (recorded, not forgotten):**
+  - **Fine-grained internal sub-roles** (`internal_admin` / `internal_operator`, #33 §10) — deferred.
+    The existing `Role.internal` is the single gate; a second tier is a schema + session change worth
+    its own slice once there is a reason for read-limited internal users.
+  - **Editorial content management** (Guías + Blog publishing, #33 §6) — blocked on SEO #32. `/admin/
+    contenido` lists the current static SEO pages and says so.
+  - **axe pass on admin screens** — the automated a11y pass covers public + customer screens; the
+    internal cockpit is out of that sweep for now (keyboard/labels still followed in the markup).
+- **Why:** the product can be operated day-to-day from one place — growth, customers, DeCA activity,
+  failures and system health — without SSH or ad-hoc SQL. The Errores + Sistema screens are the ones
+  D-029 forward-referenced.
+
+## D-031 — Premium auth card, UI-only (AUTH #30, first slice)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3, issues #29–#38)
+- **Decision:** `/entrar` and `/registro` now render a focused centered card on a calm branded
+  ground (`AuthShell`, `.auth-ground`), no site header/footer during auth. Contextual headings
+  ("Bienvenido de nuevo" / "Crea tu cuenta gratis" / "Guarda este DeCA" / "Únete al equipo"),
+  supporting text, a **"Continuar con Google"** button with the official four-colour G mark, an
+  "o continúa con email" divider, email, a password field with a show/hide toggle, a trust line
+  ("Gratis · Sin tarjeta · Tus DeCA en un solo lugar"), and an in-place login ⇆ register switch.
+- **The Google button is present but inert** until `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are
+  set — it renders `disabled` with the caption "Acceso con Google disponible muy pronto." Never a
+  dead-looking control; becomes a real `<a href="/api/auth/google">` when `googleEnabled` is true.
+- **Scope call — UI only, agreed with the user.** The real Google OAuth handshake is a separate
+  slice: it needs an OAuth approach against the custom email+password stack (D-021) — a new
+  dependency + a decision superseding part of D-021 — plus a Google Cloud OAuth client (the user's
+  credential). Account-linking safety (§"Account-linking / identity safety") lands with it.
+- **Progressive company onboarding (§"Registration screen")** — NOT changed here. Five e2e specs
+  fill `#companyName`/`#companyNif` on the first `/registro` render; splitting identity from company
+  into two steps is a flow change, not a restyle, and belongs with the OAuth slice (the Google
+  round-trip is what forces a post-auth onboarding step anyway). The company fieldset stays visible,
+  restyled.
+- **Why:** the auth experience now reads like a mature SaaS product (#21 brand) without touching a
+  line of the auth logic, so it ships with zero regression risk and the OAuth work starts from a
+  finished surface.
+
+## D-032 — Creation flow clarity, kept at 3 steps + review (UX #31)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** `/crear` keeps its **3 input steps + inline review on step 3** rather than splitting
+  into 4 steps + a separate review screen. The issue asks for "at most 4 short steps and a final
+  review" — 3 + review satisfies it, and a 4th step index would have rippled through ~23
+  `wizard-generate` call sites across 13 e2e specs for no user-visible gain over an inline review
+  that is already sectioned and scannable.
+- **What changed (the issue's actual intent):**
+  - Progress indicator now carries a plain-language label — `Paso 1 de 3 · Quién contrata y quién
+    transporta` — not only a number.
+  - Continuing with a gap sends focus straight to the **first field to fix** (the error summary
+    stays for screen-reader users).
+  - The review is grouped into the **PDF's own sections**, each with an `Editar` button that jumps
+    back to the owning step.
+  - A visible **"Estamos generando tu PDF y QR… no cierres esta página"** status with a spinner
+    while the request is in flight; the button locks (double-submit already impossible via #29's
+    idempotency key).
+  - Human microcopy on every block: *¿Quién te ha contratado este transporte?*, *¿Qué empresa
+    realiza físicamente el transporte?*, *Puedes usar un NIF/VAT extranjero*, *Si no hay remolque,
+    déjalo vacío*.
+  - Sticky action bar on mobile.
+- **Not changed:** field order within step 3, and the company fieldset still shows on `/registro`
+  (that is #38's progressive-onboarding work).
+
+## D-033 — Post-generation document cockpit (PRODUCT #36)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** the bare "DeCA generado ✓" success state and the thin
+  `/panel/deca/[id]` are replaced by a real document cockpit, shared by both the
+  anonymous result view and the authenticated workspace view via
+  `lib/deca/detail.ts` (`getDecaCockpit`). Both render from the stored version
+  payload, so the on-screen summary can never diverge from the PDF.
+- **Pieces** (`components/deca/`): `qr-card.tsx` (the REAL current-version QR
+  rendered server-side from the same URL the PDF embeds, + HTTPS URL + Abrir /
+  Copiar / Descargar QR), `doc-summary.tsx` (structured data in the PDF's own
+  sections), `version-timeline.tsx` (`VersionTimeline` — history with
+  current/superseded badges, per-version PDF link, author in the workspace view;
+  `ChangeList` — field-level "Qué ha cambiado" diff for v2+, `diffVersions()` is
+  pure and unit-tested).
+- **Workspace view** additionally shows: reference, "Versión actual: N", public-
+  URL status badge, service date, generation timestamp, a "Detalles técnicos"
+  `<details>` (SHA-256, token), Corregir / Duplicar / guardar plantilla, and the
+  version history even for a single version.
+- **Anonymous view** keeps the "Guardar mis DeCA" conversion CTA and hides the
+  single-version history.
+- **Tenant isolation:** `getDecaCockpit(id, { companyId })` returns null when the
+  DeCA is not that company's (T-1); without `companyId` (anon result) any holder
+  of the `id` may view it — the result page has never been secret, the claim
+  token is what matters.
+
+## D-034 — Team management: role change + resend + status (TEAM #37)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Context:** #27 already shipped company workspaces, owner/member roles,
+  one-time expiring invitations, immediate revocation, tenant isolation and the
+  per-version author audit (#19). #37's acceptance was therefore mostly already
+  met; the delta built here:
+  - `changeRole()` in `lib/team.ts` + `PATCH /api/team/members/[id]` — an admin
+    promotes/demotes a member (owner-only, not self, the workspace always keeps
+    at least one admin).
+  - `/panel/equipo`: a per-member role `<select>` (Operador / Administrador),
+    the member's join date and an "Activo" status, and a "Reenviar" action on a
+    pending invitation.
+- **Deliberate omission (recorded):** "last activity / login" per member (#37
+  team UI) — there is no `lastActiveAt` column and the issue qualifies it "if
+  safely available". Adding it is a schema migration + a write on every login;
+  deferred until there is a support reason for it. Join date + active status are
+  shown instead.
+- Admin membership inspection for support already exists at `/admin/empresas/[id]`
+  (#33).
+
+## D-035 — Persona-led landing + persona pages (GROWTH #35)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** the landing's "Hecho para quien mueve mercancía" section (from
+  #22) is upgraded to four job-to-be-done cards — *Transportista autónomo*,
+  *Empresa de transporte*, *Agencia / operador*, *Cargador / expedidor* — each
+  with concrete benefits and a CTA to its own persona page. Four persona SEO
+  pages added to `SEO_PAGES` (`/deca-autonomos`, `/deca-empresas-transporte`,
+  `/deca-agencias-transporte`, `/deca-cargadores`), rendered by the existing
+  `(seo)/[slug]` template and auto-included in the sitemap.
+- **No pricing/plans, no sales contact:** every persona CTA leads to product use
+  (a persona page or `/crear`). The messaging stays "una sola herramienta, todos
+  los perfiles, gratis durante la fase de lanzamiento".
+- **Analytics:** `persona_autonomo_cta`, `persona_transport_company_cta`,
+  `persona_agency_cta`, `persona_shipper_cta` added to the closed event set;
+  fired by a `TrackedLink` on each card, no PII (like every other event).
+- **Onboarding adaptation** (§"Onboarding adaptation") — NOT built: it would tie
+  into #38's progressive onboarding and #30's OAuth flow. Persona pages inform;
+  they never lock functionality. Deferred to #38.
+
+## D-036 — Competitive feature pack: CSV export + workflow status + integration boundary (PRODUCT #34)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Delivered here:**
+  - **CSV export** — `GET /api/export/history` streams the signed-in company's
+    DeCA history (company-scoped, T-1; honours the `/panel/historico` filters) as
+    UTF-8 CSV with a BOM and the documented columns (referencia, creado,
+    fecha_transporte, cargador, transportista, origen, destino, matrículas,
+    mercancía, versión, estado, url_publica). `historyToCsv()` is pure (RFC 4180
+    quoting) + unit-tested. "Exportar CSV" link on `/panel/historico`.
+  - **Operational workflow status** — `docWorkflowStatus()` maps a history row to
+    a PRODUCT state (`Vigente` / `Corregida` / `No disponible`), deliberately NOT
+    a legal status; shown in the workspace history (table + mobile cards).
+  - **Integration-ready boundary** — the stable typed payload is
+    `DecaPayload` (`lib/deca/schema.ts`, already exported); the create service is
+    `createDeca()` / `correctDeca()` (`lib/deca/persist.ts`) and the export
+    service is `historyToCsv()` (`lib/deca/export.ts`). No public paid API is
+    built; API-key concepts stay behind a future issue.
+- **Split out to their own issues** (same rationale as the user's PWA split):
+  - **#39** — optional company logo on generated PDFs. Touches the compliant
+    PDF; must be guarded by `tests/compliance/`.
+  - **#40** — driver-friendly offline / PWA access. A stale cached document must
+    never look current — needs careful service-worker design.
+- **P2/Later (per the issue):** AI PDF import, S3/SFTP connectors, full ERP/TMS
+  REST API, premium support — not built, not blocking launch.
+
+## D-037 — Business-ready entrypoints, hardened (AUTH #38, minus OAuth)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Context:** most of #38 was already in place — anonymous-first creation, the
+  claim round-trip preserving the exact PDF/QR/URL (#19), team invites joining
+  the existing workspace (#27), prospect invites preserving operator attribution
+  (#28), authed visitors to `/entrar`/`/registro` bounced to `/panel`, the
+  premium auth card (#30), and the persona headings. The hardening built here:
+  - **`safeInternalPath()`** (`lib/auth/safe-redirect.ts`, pure + unit-tested) —
+    the post-auth `next` redirect now rejects `//host`, absolute URLs,
+    backslash/whitespace tricks and any bounce back into an auth screen or the
+    API. Wired into `RegisterForm` (was `next.startsWith("/")` — an open
+    redirect).
+  - **Invalid invite state** — `/registro?invite=<expired|used|unknown>` now
+    shows an "Invitación no válida" card with recovery links (Entrar / crear un
+    DeCA gratis) instead of silently falling through to a new-company form
+    (which #38 forbids: "never create a duplicate company").
+- **Deferred (agreed with the user):** the Google OAuth handshake and the
+  two-step progressive company onboarding (identity → minimum company →
+  `/panel`). The company fieldset stays on the first `/registro` render
+  (D-031/D-032); the OAuth round-trip is what will force a post-auth onboarding
+  step, so both land together in the OAuth slice.
+
+## D-038 — Guides + Blog CMS with admin publishing (SEO #32)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision:** a DB-backed editorial content engine, separate from the core SEO
+  cluster.
+  - **Data:** `ContentItem` (migration `20260904160000_content`) — type
+    (guide|blog), slug (unique), status (draft|published|archived), title,
+    excerpt, markdown body, category, tags, hero image, author, all SEO fields
+    (seoTitle, metaDescription, canonical override, OG, robots index),
+    focusKeyword (editorial guidance only), sources, relatedSlugs, previousSlugs
+    (slug-change redirects), ctaLabel, publishedAt, lastReviewedAt.
+  - **Public:** `/guias/[slug]` + `/blog/[slug]` (SSR, published-only, draft →
+    404 unless `?preview=1` as an internal user), `/guias` + `/blog` indexes.
+    Premium `ArticleLayout` — breadcrumbs, ToC on long guides, autor / última
+    revisión, sources, "sigue leyendo", contextual CTAs. Article/BlogPosting +
+    BreadcrumbList JSON-LD. In the sitemap. A moved slug 301s from the old one.
+  - **Markdown:** an in-house safe renderer (`lib/content/markdown.tsx`) — React
+    elements only, never `dangerouslySetInnerHTML` for body content (T-5) —
+    supporting headings, lists, bold/italic/code/links, blockquote callouts,
+    tables, `::: faq` blocks and the `[[cta]]` token.
+  - **Admin:** `/admin/contenido` (list + type/status filters + the read-only
+    core cluster), `/admin/contenido/nuevo`, `/admin/contenido/[id]`,
+    `/admin/guias` + `/admin/blog` (filtered). `ContentEditor` — a plain
+    markdown textarea (not a page builder), live editorial warnings (missing
+    meta, long title, no CTA, normative claims with no source — heuristics, not
+    a fake score), draft / publish / unpublish / archive, public preview link.
+    `POST /api/admin/contenido` + `PATCH`/`DELETE /api/admin/contenido/[id]` —
+    internal only (404). Archive is soft; never a hard delete.
+  - **Analytics:** `content_view`, `content_cta_click`.
+- **The core SEO cluster stays in code and at root slugs.** The 10
+  `content/seo/pages.ts` pages are not migrated into the CMS — moving them would
+  churn every internal link, the sitemap and the SEO tests for no gain. The CMS
+  is the additive editorial layer; `/admin/contenido` shows the cluster as
+  read-only. Seeded editorial content (`prisma/content-seed.ts`,
+  `npm run seed:content`, idempotent, also run by `prisma/seed.ts`) covers the
+  non-overlapping pieces (cómo corregir, cómo llevarlo el conductor, errores
+  frecuentes, cuenta atrás) so the CMS is never empty.
+
+## D-039 — The product carries no company attribution
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Decision (user request):** remove every user-facing reference that links the
+  product to a company. "DeCA Fácil" stands on its own.
+  - `lib/brand.ts`: `legalName` and `attribution` fields removed.
+  - Footer: "Un servicio de Farvertrans S.L. · vX" → "DeCA Fácil · vX".
+  - Auth card: the "Un servicio de …" line removed.
+  - Generated PDF footer: "Generado por DeCA Fácil · vX" (company dropped).
+  - `lib/i18n/es.ts`: `common.attribution` key removed.
+  - SEO copy: "Con/es Farvertrans DeCA …" → "Con/es DeCA Fácil …".
+  - `lib/growth.ts` comment: "Farvertrans operators" → "internal operators".
+  - `tests/unit/brand.test.ts` + `tests/e2e/landing.spec.ts` now assert the
+    string "farvertrans"/"s.l." appears nowhere on the public surface.
+- **Not changed (mechanical identifiers, not user-facing — flagged to the user):**
+  the git repository name (`FarinosV44/Farvertrans-Deca`), the `FVD_` /
+  `NEXT_PUBLIC_FVD_` environment-variable prefix, the npm package name
+  (`farvertrans-deca`), and the internal `docs/` which still call the project
+  "Farvertrans DeCA". Renaming any of these is a breaking, cross-cutting change
+  (every deploy config, every env var) and none of them is visible to a user or
+  in the product; left for an explicit follow-up if wanted.

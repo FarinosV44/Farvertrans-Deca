@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SiteHeader } from "@/components/site/site-header";
-import { SiteFooter } from "@/components/site/site-footer";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { RegisterForm } from "@/components/auth/register-form";
 import { getCurrentUser } from "@/lib/auth";
 import { getInvitePreview } from "@/lib/team";
@@ -37,22 +37,46 @@ export default async function RegistroPage({
 
   const teamInvite = sp.invite ? await getInvitePreview(sp.invite) : null;
   const prospectInvite = sp.invite && !teamInvite ? await resolveProspectInvite(sp.invite) : null;
+  const googleEnabled = !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+
+  // An invite link that no longer resolves — expired, already used, or unknown.
+  // Never silently fall through to creating a brand-new company (#38).
+  if (sp.invite && !teamInvite && !prospectInvite) {
+    return (
+      <AuthShell>
+        <h1 className="text-2xl font-bold tracking-tight">Invitación no válida</h1>
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+          Este enlace de invitación ha caducado, ya se ha utilizado o no es correcto. Pide a quien
+          te invitó que te envíe uno nuevo.
+        </p>
+        <div className="mt-6 space-y-2 text-sm">
+          <Link
+            href="/entrar"
+            className="block font-medium text-[var(--color-primary)] underline"
+            data-testid="invalid-invite-login"
+          >
+            Ya tengo cuenta · Entrar
+          </Link>
+          <Link href="/crear" className="block font-medium text-[var(--color-primary)] underline">
+            Crear un DeCA gratis sin cuenta
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
-    <>
-      <SiteHeader />
-      <main id="contenido" className="mx-auto max-w-[560px] px-4 py-12 md:px-6">
-        <Suspense fallback={null}>
-          <RegisterForm
-            inviteCompany={teamInvite?.companyName ?? null}
-            inviteEmail={teamInvite?.email ?? null}
-            prospectCompany={
-              prospectInvite ? { name: prospectInvite.name, nif: prospectInvite.nif ?? "" } : null
-            }
-          />
-        </Suspense>
-      </main>
-      <SiteFooter />
-    </>
+    <AuthShell>
+      <Suspense fallback={null}>
+        <RegisterForm
+          inviteCompany={teamInvite?.companyName ?? null}
+          inviteEmail={teamInvite?.email ?? null}
+          prospectCompany={
+            prospectInvite ? { name: prospectInvite.name, nif: prospectInvite.nif ?? "" } : null
+          }
+          googleEnabled={googleEnabled}
+        />
+      </Suspense>
+    </AuthShell>
   );
 }

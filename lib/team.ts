@@ -164,3 +164,33 @@ export async function removeMember(companyId: string, actingUserId: string, targ
     data: { companyId: null, companyRole: "owner" },
   });
 }
+
+/**
+ * Admin changes a member's workspace role (TEAM #37). Owner-only; cannot change
+ * your own role; the workspace must always keep at least one admin.
+ */
+export async function changeRole(
+  companyId: string,
+  actingUserId: string,
+  targetUserId: string,
+  role: "owner" | "member",
+) {
+  const acting = await prisma.user.findUnique({ where: { id: actingUserId } });
+  if (!acting || acting.companyId !== companyId || acting.companyRole !== "owner")
+    throw new TeamError("forbidden", "Solo un administrador puede cambiar roles.");
+  if (actingUserId === targetUserId)
+    throw new TeamError("bad_input", "No puedes cambiar tu propio rol.");
+
+  const target = await prisma.user.findUnique({ where: { id: targetUserId } });
+  if (!target || target.companyId !== companyId)
+    throw new TeamError("not_found", "Miembro no encontrado.");
+  if (target.companyRole === role) return;
+
+  if (target.companyRole === "owner" && role === "member") {
+    const owners = await prisma.user.count({ where: { companyId, companyRole: "owner" } });
+    if (owners <= 1)
+      throw new TeamError("bad_input", "El equipo debe tener al menos un administrador.");
+  }
+
+  await prisma.user.update({ where: { id: targetUserId }, data: { companyRole: role } });
+}

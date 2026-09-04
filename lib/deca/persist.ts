@@ -4,6 +4,7 @@ import { publicEnv } from "@/lib/env";
 import { newClaimToken, newPublicToken } from "./token";
 import { renderDecaPdf } from "@/lib/pdf/render";
 import { getPdfStore, pdfKey, pdfSha256 } from "@/lib/storage";
+import { GenerationError, newCorrelationId } from "./generation";
 import type { ValidatedDeca } from "./validate";
 
 const CLAIM_TTL_DAYS = 30;
@@ -17,6 +18,47 @@ export type CreatedDeca = {
   claimToken: string;
   claimExpiresAt: Date;
 };
+
+/**
+ * Run one generation stage, tagging whatever it throws with that stage and the
+ * call's correlation code (P0 FIX #29). A stage that already failed keeps its
+ * own classification.
+ */
+async function stage<T>(
+  name: "pdf_render" | "pdf_storage" | "database",
+  correlationId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof GenerationError) throw e;
+    throw new GenerationError(name, e, correlationId);
+  }
+}
+
+/**
+ * Run the DB write that follows a successful object upload. If it fails, delete
+ * the stored object best-effort so unreachable PDFs never accumulate (#29 §6),
+ * then rethrow the failure classified as `database`.
+ */
+async function withOrphanCleanup<T>(
+  key: string,
+  correlationId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    try {
+      await getPdfStore().del(key);
+    } catch {
+      // The object stays orphaned; the correlation code in the log identifies it.
+    }
+    if (e instanceof GenerationError) throw e;
+    throw new GenerationError("database", e, correlationId);
+  }
+}
 
 function publicUrlFor(token: string): string {
   return `${publicEnv.baseUrl.replace(/\/$/, "")}/d/${token}`;
@@ -36,14 +78,17 @@ export async function createDeca(
   validated: ValidatedDeca,
   opts: { idempotencyKey?: string; createdByUserId?: string; companyId?: string } = {},
 ): Promise<CreatedDeca> {
+  const correlationId = newCorrelationId();
   if (opts.idempotencyKey) {
-    const existing = await prisma.deca.findUnique({
-      where: { idempotencyKey: opts.idempotencyKey },
-      include: {
-        versions: { orderBy: { versionNo: "asc" }, take: 1 },
-        claimTokens: { take: 1 },
-      },
-    });
+    const existing = await stage("database", correlationId, () =>
+      prisma.deca.findUnique({
+        where: { idempotencyKey: opts.idempotencyKey },
+        include: {
+          versions: { orderBy: { versionNo: "asc" }, take: 1 },
+          claimTokens: { take: 1 },
+        },
+      }),
+    );
     if (existing?.versions[0]) {
       return {
         decaId: existing.id,
@@ -67,46 +112,51 @@ export async function createDeca(
   const reference = `DECA-${token.slice(0, 8).toUpperCase()}`;
 
   // 1. Render (fail closed) and 2. store BEFORE any DB write.
-  const pdf = await renderDecaPdf({
-    data: validated.data,
-    publicUrl: publicUrlFor(token),
-    reference,
-    versionNo: 1,
-    createdAt,
-  });
+  const pdf = await stage("pdf_render", correlationId, () =>
+    renderDecaPdf({
+      data: validated.data,
+      publicUrl: publicUrlFor(token),
+      reference,
+      versionNo: 1,
+      createdAt,
+    }),
+  );
   const sha256 = pdfSha256(pdf);
-  await getPdfStore().put(key, pdf);
+  await stage("pdf_storage", correlationId, () => getPdfStore().put(key, pdf));
 
-  // 3. Persist atomically.
-  const result = await prisma.$transaction(async (tx) => {
-    const deca = await tx.deca.create({
-      data: {
-        idempotencyKey: opts.idempotencyKey,
-        createdByUserId: opts.createdByUserId,
-        companyId: opts.companyId,
-        serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
-      },
-    });
-    const version = await tx.decaVersion.create({
-      data: {
-        decaId: deca.id,
-        versionNo: 1,
-        token,
-        pdfPath: key,
-        pdfSha256: sha256,
-        dataJson: validated.data as unknown as object,
-        createdByUserId: opts.createdByUserId,
-        createdAt,
-      },
-    });
-    await tx.deca.update({ where: { id: deca.id }, data: { currentVersionId: version.id } });
-    if (!opts.createdByUserId) {
-      await tx.claimToken.create({
-        data: { token: claimToken, decaId: deca.id, expiresAt: claimExpiresAt },
+  // 3. Persist atomically. If this fails the object is already stored, so clean
+  //    it up best-effort — an unreachable PDF must never accumulate (#29 §6).
+  const result = await withOrphanCleanup(key, correlationId, () =>
+    prisma.$transaction(async (tx) => {
+      const deca = await tx.deca.create({
+        data: {
+          idempotencyKey: opts.idempotencyKey,
+          createdByUserId: opts.createdByUserId,
+          companyId: opts.companyId,
+          serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
+        },
       });
-    }
-    return { decaId: deca.id, versionId: version.id };
-  });
+      const version = await tx.decaVersion.create({
+        data: {
+          decaId: deca.id,
+          versionNo: 1,
+          token,
+          pdfPath: key,
+          pdfSha256: sha256,
+          dataJson: validated.data as unknown as object,
+          createdByUserId: opts.createdByUserId,
+          createdAt,
+        },
+      });
+      await tx.deca.update({ where: { id: deca.id }, data: { currentVersionId: version.id } });
+      if (!opts.createdByUserId) {
+        await tx.claimToken.create({
+          data: { token: claimToken, decaId: deca.id, expiresAt: claimExpiresAt },
+        });
+      }
+      return { decaId: deca.id, versionId: version.id };
+    }),
+  );
 
   await maybeMarkFirstDeca(opts.companyId);
 
@@ -188,40 +238,45 @@ export async function correctDeca(
   const key = pdfKey(token);
   const reference = `DECA-${token.slice(0, 8).toUpperCase()}`;
 
-  const pdf = await renderDecaPdf({
-    data: validated.data,
-    publicUrl: publicUrlFor(token),
-    reference,
-    versionNo,
-    createdAt: deca.createdAt,
-    modifiedAt,
-  });
+  const correlationId = newCorrelationId();
+  const pdf = await stage("pdf_render", correlationId, () =>
+    renderDecaPdf({
+      data: validated.data,
+      publicUrl: publicUrlFor(token),
+      reference,
+      versionNo,
+      createdAt: deca.createdAt,
+      modifiedAt,
+    }),
+  );
   const sha256 = pdfSha256(pdf);
-  await getPdfStore().put(key, pdf);
+  await stage("pdf_storage", correlationId, () => getPdfStore().put(key, pdf));
 
-  const version = await prisma.$transaction(async (tx) => {
-    const v = await tx.decaVersion.create({
-      data: {
-        decaId,
-        versionNo,
-        token,
-        pdfPath: key,
-        pdfSha256: sha256,
-        dataJson: validated.data as unknown as object,
-        changeReason: reason,
-        createdByUserId: userId,
-        createdAt: modifiedAt,
-      },
-    });
-    await tx.deca.update({
-      where: { id: decaId },
-      data: {
-        currentVersionId: v.id,
-        serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
-      },
-    });
-    return v;
-  });
+  const version = await withOrphanCleanup(key, correlationId, () =>
+    prisma.$transaction(async (tx) => {
+      const v = await tx.decaVersion.create({
+        data: {
+          decaId,
+          versionNo,
+          token,
+          pdfPath: key,
+          pdfSha256: sha256,
+          dataJson: validated.data as unknown as object,
+          changeReason: reason,
+          createdByUserId: userId,
+          createdAt: modifiedAt,
+        },
+      });
+      await tx.deca.update({
+        where: { id: decaId },
+        data: {
+          currentVersionId: v.id,
+          serviceStart: new Date(`${validated.data.transportDate}T00:00:00Z`),
+        },
+      });
+      return v;
+    }),
+  );
 
   return { decaId, versionId: version.id, versionNo, token, pdfSha256: sha256 };
 }

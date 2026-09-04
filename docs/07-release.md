@@ -143,6 +143,7 @@ repo is built to avoid that:
    npm install --omit=optional --foreground-scripts   # or `npm ci` on Node 22
    npx prisma generate
    npx prisma migrate deploy
+   npm run seed:content   # idempotent — seeds the initial CMS guides/blog (#32) if absent
    NEXT_STANDALONE=1 SKIP_BUILD_CHECKS=1 npm run build
    ```
 5. Restart the Node app in hPanel. `https://<domain>/health` must return `{"status":"ok","db":"up"}`.
@@ -221,9 +222,28 @@ to follow it; `docker compose -f docker-compose.prod.yml up -d --build` again to
 deps you don't want, point `DATABASE_URL` at Supabase/Neon, run `prisma migrate deploy` against it
 once, and `docker run -d --name fvd --env-file .env.prod -p 3000:3000 --restart unless-stopped -v fvd-storage:/app/.storage fvd-app`.
 
-### 5. Health & logs
+### 5. Health, deploy verification & logs
 - `GET /health` → `{ "status": "ok", "version": "...", "db": "up" }`. Wire it to Hostinger/uptime monitoring.
-- App logs go to stdout (`docker logs fvd`). No personal data or tokens are logged.
+- **Verify every deploy before announcing it (P0 FIX #29).** Set `FVD_ADMIN_TOKEN` to a long random
+  string in the deployment's environment, then run from anywhere:
+
+  ```bash
+  FVD_ADMIN_TOKEN=<the same value> npm run diagnose -- https://your-domain
+  ```
+
+  It probes env, database, migrations, a real PDF render, a storage write/read/delete round-trip, the
+  public HTTPS base URL, the optional providers and the last 24 h of generation health. It exits
+  non-zero if any critical check fails. The same report is at `/admin/sistema` for an internal user.
+  Nothing in the report is a secret — only whether each dependency answers.
+- **`FVD_STORAGE`:** production MUST use persistent storage. Either `FVD_STORAGE=supabase` with the
+  bucket created, or `FVD_STORAGE=local` with `FVD_STORAGE_DIR` pointing OUTSIDE the deploy tree at a
+  path that survives a redeploy (R-10 requires ≥ 1 year of retention). `npm run diagnose` warns when
+  neither is true.
+- A failed generation shows the user a 6-character code (`Código: ABC234`). Look it up in
+  `/admin/errores` (or `select stage, error_class, message from generation_failure where correlation_id = '…'`)
+  — the exact stage and a redacted error summary are there, no SSH needed.
+- App logs go to stdout (`docker logs fvd`). No personal data or tokens are logged; a generation
+  failure emits one JSON line with `evt: "deca_generation_failed"`.
 
 ### 6. Backups
 - **Bundled stack:** `docker exec fvd-prod-db pg_dump -U <user> <db> | gzip > deca-$(date +%F).sql.gz`

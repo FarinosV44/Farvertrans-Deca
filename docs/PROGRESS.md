@@ -115,6 +115,86 @@
   workspaces + invitations (`/panel/equipo`), and the operator acquisition engine
   (`/operadores/captacion` — prospects, onboarding links, activation funnel). 8 commits on `develop`,
   8 new e2e specs, 4 migrations (`20260904090000`…`_120000`). Merged to `main` — CI status below.
+- **Product V3 — #29–#38 (in progress):**
+  - **#29 P0 FIX — generation reliability + real failure exposure (D-029), on `develop`:** every
+    render/storage/DB failure is now classified into a stage (`validation` / `configuration` /
+    `pdf_render` / `pdf_storage` / `database` / `unknown`) and carries a 6-char correlation code the
+    user reads out. `lib/deca/generation.ts` (pure classification + code + PII redaction),
+    `lib/deca/failures.ts` (structured log line + `generation_failure` row — never the payload),
+    `lib/deca/persist.ts` (per-stage wrappers + orphan-object cleanup when the DB write fails after
+    upload), `lib/diagnostics.ts` + `GET /api/admin/diagnostics` + `npm run diagnose -- <url>`
+    (deploy readiness: env, DB, migrations, PDF render smoke, storage round-trip, HTTPS base URL,
+    providers, 24 h generation health), `lib/admin/guard.ts` (internal session or `FVD_ADMIN_TOKEN`
+    header; 404 never 403). Wizard shows the code and retries with the SAME idempotency key.
+    `POST /api/deca` resolves the idempotency key BEFORE the rate limiter so an idempotent replay is
+    never answered with 429. Migration `20260904140000_generation_failure`. Gate green:
+    79 unit + 95 e2e + 8 compliance + typecheck + lint + format + keel-verify. **Not done (CREDENTIAL):**
+    reproducing the production exception + switching prod to persistent storage — `npm run diagnose`
+    names it.
+  - **#33 ADMIN V2 — internal command center at `/admin` (D-030), on `develop`:** shell (sidebar +
+    mobile drawer, `requireInternal()` → 404, `noindex`, `/admin` in robots.txt) + 11 screens:
+    Resumen (KPIs + operational alerts), DeCA (cross-tenant table + detail), Empresas (+ detail),
+    Usuarios, Captación (reuses #28), Operadores (reuses #12), Contenido (SEO list; editorial CMS
+    blocked on #32), Errores (#29 failures by correlation code + triage), Sistema (`runDiagnostics`).
+    Global search API across company/user/DeCA ref/correlation code/prospect. `lib/admin/*`
+    (metrics, failures, records, search, range, guard). `PATCH /api/admin/failures/[id]` +
+    `GET /api/admin/search`. Gate green: 84 unit + 100 e2e + 8 compliance + typecheck + lint +
+    format + standalone build + keel-verify. Deferred (recorded in D-030): internal sub-roles,
+    editorial content CMS (#32), axe on admin screens.
+  - **#30 AUTH — premium auth card, UI-only (D-031), on `develop`:** `/entrar` + `/registro` now a
+    focused centered card on a branded ground (`AuthShell`), no site chrome. Contextual headings,
+    "Continuar con Google" button (official 4-colour G; **inert** until `GOOGLE_CLIENT_ID`+SECRET
+    set — caption "disponible muy pronto"), "o continúa con email" divider, password show/hide,
+    trust line, in-place login⇆register switch. Auth LOGIC untouched — zero regression.
+    `components/auth/{auth-shell,google-button,password-field}.tsx` + restyled `register-form.tsx`.
+    Gate green: 84 unit + 104 e2e + 8 compliance + build + keel-verify.
+    **Deferred to the OAuth slice (D-031):** the real Google handshake (needs OAuth-lib decision vs
+    D-021 + Google credentials), account-linking safety, progressive company onboarding (2-step).
+  - **#31 UX — creation-flow clarity (D-032), on `develop`:** plain-language progress label
+    (`Paso 1 de 3 · Quién contrata…`), focus jumps to the first field to fix, review grouped into
+    PDF sections each with `Editar`, visible "Estamos generando tu PDF y QR…" status, human
+    microcopy, sticky mobile action bar. Kept at 3 steps + inline review (see D-032). Gate green:
+    84 unit + 108 e2e + 8 compliance.
+  - **#36 PRODUCT — document cockpit (D-033), on `develop`:** `/crear/[id]` + `/panel/deca/[id]`
+    rebuilt via shared `lib/deca/detail.ts` — QR inspection card (real server-rendered QR),
+    sectioned data mirroring the PDF, version timeline (badges, per-version PDF link, author in
+    workspace), "Qué ha cambiado" field diff for v2+ (`diffVersions` pure + unit-tested),
+    technical-details accordion. Gate green: 88 unit + 110 e2e + 8 compliance.
+  - **#37 TEAM — role change + resend + status (D-034), on `develop`:** `changeRole()` +
+    `PATCH /api/team/members/[id]` (promote/demote, never drop the last admin), per-member role
+    select on `/panel/equipo`, join date + "Activo" status, "Reenviar" on pending invites. #27
+    already covered most of #37's acceptance. Also folds in a #36 refinement (server QR memoized,
+    `qrPngDataUriCached`). Gate green: 88 unit + 111 e2e + 8 compliance.
+  - **#35 GROWTH — persona-led landing (D-035), on `develop`:** landing persona section upgraded to
+    4 job-to-be-done cards (autónomo / empresa / agencia / cargador), each CTA → its own persona SEO
+    page (`/deca-autonomos`, `/deca-empresas-transporte`, `/deca-agencias-transporte`,
+    `/deca-cargadores`, auto in sitemap). 4 persona CTA events. No pricing/sales contact. Gate green:
+    114 e2e + 8 compliance. Onboarding adaptation deferred to #38.
+  - **#34 PRODUCT — competitive feature pack (D-036), on `develop`:** history CSV export
+    (`GET /api/export/history`, company-scoped, filter-aware, RFC 4180 + BOM; `historyToCsv` pure +
+    unit-tested; "Exportar CSV" on `/panel/historico`), operational workflow status
+    (`docWorkflowStatus` — Vigente / Corregida / No disponible, a product state not a legal one),
+    integration boundary documented (DecaPayload + createDeca/correctDeca + historyToCsv). **Company
+    logo → new issue #39** (touches the compliant PDF); **PWA/offline → new issue #40**. Also capped
+    local e2e workers at 3 (react-pdf is CPU-bound; 6 starved the loop). Gate green: 94 unit + 117
+    e2e + 8 compliance.
+  - **#38 AUTH — business-ready entrypoints, hardened (D-037), on `develop`:** `safeInternalPath()`
+    (pure + unit-tested) fixes the post-auth `next` open redirect; `/registro?invite=<bad>` now
+    shows an "Invitación no válida" recovery card instead of a new-company form. Most of #38 was
+    already in place (#19/#27/#28/#30). **Deferred with the user: Google OAuth handshake + 2-step
+    progressive onboarding** — land together in the OAuth slice. Gate green: 98 unit + 120 e2e + 8
+    compliance.
+  - **#32 SEO — Guides + Blog CMS (D-038), on `develop`:** `ContentItem` model (migration
+    `20260904160000_content`) + `/guias/[slug]` + `/blog/[slug]` (SSR, published-only, `?preview=1`
+    for internal) + `/guias` + `/blog` indexes + Article/BreadcrumbList JSON-LD + sitemap + slug
+    redirects. Safe in-house markdown renderer (no `dangerouslySetInnerHTML`). Admin:
+    `/admin/contenido` (+ nuevo / [id] / guias / blog), `ContentEditor` with live editorial warnings,
+    draft/publish/unpublish/archive, `POST`+`PATCH`+`DELETE /api/admin/contenido`. Core SEO cluster
+    stays in code (not migrated — churn for no gain). Seed content via `npm run seed:content`
+    (idempotent). Gate green: 105 unit + 125 e2e + 8 compliance.
+  - **All of Product V3 (#29–#38) is on `develop`.** Splits opened: #39 (company logo on PDF), #40
+    (PWA/offline). Deferred to the OAuth slice: Google handshake + 2-step onboarding (part of #30/#38).
+    Nothing on `main` yet — awaits the user's `develop`→`main` merge.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close
@@ -130,10 +210,11 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: nothing pending — everything through #28 merged. `develop` == `main`.
+- Ready for `main`: #29 (D-029) + #33 (D-030) + #30 (D-031, UI-only) on `develop`, gate green — await the user's `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
+  `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V2 (#21–#28) on main; + D-028 (CTA text visibility fix, SKIP_BUILD_CHECKS, copy). develop == main.
+Last updated: 2026-09-04 — Product V3: #29 (D-029) + #33 (D-030, Admin V2) + #30 UI-only (D-031, premium auth card) on `develop`, gate green (84 unit + 104 e2e + 8 compliance). Next: #31. #32/#34–#38 not started.

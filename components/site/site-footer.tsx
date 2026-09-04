@@ -19,7 +19,7 @@ export function SiteFooter() {
           <a href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>
         </p>
         <p className="mt-2 text-xs">
-          {BRAND.attribution} · v{APP_VERSION}
+          {BRAND.name} · v{APP_VERSION}
         </p>
       </div>
     </footer>

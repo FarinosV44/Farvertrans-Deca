@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { MobileCta } from "@/components/site/mobile-cta";
 import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
+import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
@@ -162,10 +163,28 @@ export default async function HomePage() {
             {PERSONAS.map((p) => (
               <div
                 key={p.title}
-                className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
+                className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
               >
                 <h3 className="text-lg font-bold">{p.title}</h3>
-                <p className="mt-1 text-sm text-[var(--color-text-muted)]">{p.body}</p>
+                <p className="mt-1 text-sm font-medium">{p.jobToBeDone}</p>
+                <ul className="mt-3 space-y-1 text-sm text-[var(--color-text-muted)]">
+                  {p.benefits.map((b) => (
+                    <li key={b} className="flex gap-2">
+                      <span aria-hidden className="text-[var(--color-success)]">
+                        ✓
+                      </span>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                <TrackedLink
+                  href={`/${p.slug}`}
+                  event={p.event}
+                  data-testid={`persona-cta-${p.slug}`}
+                  className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
+                >
+                  Cómo funciona para {p.title.toLowerCase()} →
+                </TrackedLink>
               </div>
             ))}
           </div>

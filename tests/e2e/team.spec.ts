@@ -139,6 +139,49 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await memberCtx.close();
   });
 
+  test("TEAM #37: an admin promotes a member to admin, and cannot drop the last admin", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+    await owner.goto("/panel/equipo");
+    const memberEmail = email();
+    await owner.fill('[data-testid="invite-email"]', memberEmail);
+    await owner.getByTestId("invite-submit").click();
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    const memberCtx = await browser.newContext();
+    const member = await memberCtx.newPage();
+    await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await member.fill("#email", memberEmail);
+    await member.fill("#password", "supersecret123");
+    await member.getByTestId("register-submit").click();
+    await expect(member).toHaveURL(/\/panel$/);
+
+    // owner promotes the member to Administrador
+    await owner.goto("/panel/equipo");
+    const memberRow = owner.getByTestId("member-list").locator("li", { hasText: memberEmail });
+    await expect(memberRow).toContainText("Operador");
+    await Promise.all([
+      owner.waitForResponse(
+        (r) =>
+          r.url().includes("/api/team/members/") &&
+          r.request().method() === "PATCH" &&
+          r.status() === 200,
+      ),
+      owner.getByTestId(`role-${memberEmail}`).selectOption("owner"),
+    ]);
+    await expect(memberRow).toContainText("Administrador");
+
+    // the promoted member now sees the invite form (admin-only)
+    await member.goto("/panel/equipo");
+    await expect(member.getByTestId("invite-email")).toBeVisible();
+
+    await ownerCtx.close();
+    await memberCtx.close();
+  });
+
   test("invite token cannot create a second company; an unknown/expired token is rejected", async ({
     request,
   }) => {

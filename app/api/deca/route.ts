@@ -32,8 +32,20 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
+    const { recordGenerationFailure } = await import("@/lib/deca/failures");
+    const recorded = await recordGenerationFailure(e, {
+      route: "POST /api/deca (validation)",
+      authenticated: false,
+    });
     return NextResponse.json(
-      { error: { code: "internal", message: "No se pudo generar el DeCA. Inténtalo de nuevo." } },
+      {
+        error: {
+          code: "generation_failed",
+          message: recorded.message,
+          correlationId: recorded.correlationId,
+          retryable: true,
+        },
+      },
       { status: 500 },
     );
   }
@@ -50,9 +62,22 @@ export async function POST(req: Request) {
     // not authed — anonymous path
   }
 
+  // An idempotent replay (the wizard retries a failed generation with the SAME
+  // key, D-029) must never be rate-limited: it creates nothing, it only returns
+  // the document that already exists. Checking it before the abuse gate means a
+  // user recovering from a transient failure can't be thrown a 429 (#29).
+  let idempotentReplay = false;
+  if (idempotencyKey) {
+    const { prisma } = await import("@/lib/prisma");
+    idempotentReplay = !!(await prisma.deca.findUnique({
+      where: { idempotencyKey },
+      select: { id: true },
+    }));
+  }
+
   // Abuse controls apply to ANONYMOUS creation only — a signed-in company is
   // already accountable. A first-time user never crosses the soft threshold.
-  if (!owner) {
+  if (!owner && !idempotentReplay) {
     const { checkAbuse } = await import("@/lib/abuse");
     const { abuseResponse } = await import("@/lib/abuse/response");
     const decision = await checkAbuse("anon_create", req.headers, {
@@ -79,9 +104,24 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (e) {
-    console.error("[deca] generation failed", e);
+    // Stage-aware failure (#29): the client gets a calm message plus a short
+    // correlation code; the stage itself is exposed only when FVD_DEBUG is on.
+    const { recordGenerationFailure } = await import("@/lib/deca/failures");
+    const recorded = await recordGenerationFailure(e, {
+      route: "POST /api/deca",
+      authenticated: !!owner,
+      companyId: owner?.companyId,
+    });
     return NextResponse.json(
-      { error: { code: "internal", message: "No se pudo generar el DeCA. Inténtalo de nuevo." } },
+      {
+        error: {
+          code: "generation_failed",
+          message: recorded.message,
+          correlationId: recorded.correlationId,
+          retryable: true,
+          ...(process.env.FVD_DEBUG === "1" ? { stage: recorded.stage } : {}),
+        },
+      },
       { status: 500 },
     );
   }

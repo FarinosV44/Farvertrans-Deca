@@ -7,6 +7,7 @@ type Member = {
   email: string;
   companyRole: "owner" | "member";
   isInternal: boolean;
+  joinedAt: string;
 };
 type Invite = { id: string; email: string; role: string; expiresAt: string };
 
@@ -63,6 +64,33 @@ export function TeamManager({
     router.refresh();
   }
 
+  async function setRole(memberId: string, role: "owner" | "member") {
+    setMsg(null);
+    const res = await fetch(`/api/team/members/${memberId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ role }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setMsg(data?.error?.message ?? "No se pudo cambiar el rol.");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function resend(memberEmail: string) {
+    setEmail(memberEmail);
+    await fetch("/api/team/invites", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: memberEmail }),
+    }).catch(() => {});
+    setMsg(`Se ha vuelto a crear la invitación para ${memberEmail}.`);
+    setEmail("");
+    router.refresh();
+  }
+
   return (
     <div className="mt-6 space-y-8">
       <section aria-labelledby="miembros">
@@ -74,23 +102,44 @@ export function TeamManager({
           data-testid="member-list"
         >
           {members.map((m) => (
-            <li key={m.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <span>
+            <li
+              key={m.id}
+              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 text-sm"
+            >
+              <span className="min-w-0">
                 <span className="font-medium">{m.email}</span>
                 {m.id === meId && <span className="text-[var(--color-text-muted)]"> (tú)</span>}
                 <span className="ml-2 rounded-[4px] bg-[var(--color-surface)] px-1.5 py-0.5 text-xs">
                   {m.companyRole === "owner" ? "Administrador" : "Operador"}
                 </span>
+                <span className="ml-2 text-xs text-[var(--color-text-muted)]">
+                  Activo · desde {m.joinedAt.slice(0, 10)}
+                </span>
               </span>
               {isAdmin && m.id !== meId && (
-                <button
-                  type="button"
-                  data-testid={`remove-member-${m.email}`}
-                  onClick={() => del(`/api/team/members/${m.id}`)}
-                  className="text-[var(--color-danger)] underline"
-                >
-                  Quitar
-                </button>
+                <span className="flex items-center gap-3">
+                  <label className="sr-only" htmlFor={`role-${m.id}`}>
+                    Rol de {m.email}
+                  </label>
+                  <select
+                    id={`role-${m.id}`}
+                    data-testid={`role-${m.email}`}
+                    value={m.companyRole}
+                    onChange={(e) => setRole(m.id, e.target.value as "owner" | "member")}
+                    className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-xs"
+                  >
+                    <option value="member">Operador</option>
+                    <option value="owner">Administrador</option>
+                  </select>
+                  <button
+                    type="button"
+                    data-testid={`remove-member-${m.email}`}
+                    onClick={() => del(`/api/team/members/${m.id}`)}
+                    className="text-[var(--color-danger)] underline"
+                  >
+                    Quitar
+                  </button>
+                </span>
               )}
             </li>
           ))}
@@ -145,16 +194,26 @@ export function TeamManager({
                     <span>
                       {i.email}{" "}
                       <span className="text-xs text-[var(--color-text-muted)]">
-                        · caduca {i.expiresAt.slice(0, 10)}
+                        · pendiente · caduca {i.expiresAt.slice(0, 10)}
                       </span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => del(`/api/team/invites/${i.id}`)}
-                      className="text-[var(--color-danger)] underline"
-                    >
-                      Revocar
-                    </button>
+                    <span className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        data-testid={`resend-invite-${i.email}`}
+                        onClick={() => resend(i.email)}
+                        className="underline"
+                      >
+                        Reenviar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => del(`/api/team/invites/${i.id}`)}
+                        className="text-[var(--color-danger)] underline"
+                      >
+                        Revocar
+                      </button>
+                    </span>
                   </li>
                 ))}
               </ul>
