@@ -26,6 +26,24 @@ export default async function AppHome() {
         <h1 className="text-2xl font-bold">{user.company?.name ?? "Mi empresa"}</h1>
         <AppNav current="home" />
 
+        {!user.emailVerifiedAt && (
+          <div
+            role="status"
+            data-testid="panel-verify-email-banner"
+            className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm"
+          >
+            <p>
+              <span aria-hidden>✉️</span> Aún no has confirmado tu correo ({user.email}).
+            </p>
+            <Link
+              href="/verificar-email?next=/panel"
+              className="font-medium text-[var(--color-primary)] underline"
+            >
+              Confirmar ahora
+            </Link>
+          </div>
+        )}
+
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href="/crear"

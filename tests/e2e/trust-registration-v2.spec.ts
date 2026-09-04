@@ -100,6 +100,9 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     await page.getByTestId("verify-email-continue").click();
     await expect(page).toHaveURL(/\/panel$/);
 
+    // unverified accounts see a reminder banner in the panel
+    await expect(page.getByTestId("panel-verify-email-banner")).toBeVisible();
+
     // the emailed link actually verifies the account
     expect(body.verifyTestToken).toBeTruthy();
     await page.goto(`/verificar-email/${body.verifyTestToken}`);
@@ -108,6 +111,9 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     // visiting /verificar-email again now redirects straight past it
     await page.goto("/verificar-email");
     await expect(page).toHaveURL(/\/panel$/);
+
+    // the reminder banner is gone once verified
+    await expect(page.getByTestId("panel-verify-email-banner")).not.toBeVisible();
   });
 
   test("an invalid token shows a clear error, never a crash", async ({ page }) => {
