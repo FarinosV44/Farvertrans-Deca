@@ -178,7 +178,14 @@
     logo → new issue #39** (touches the compliant PDF); **PWA/offline → new issue #40**. Also capped
     local e2e workers at 3 (react-pdf is CPU-bound; 6 starved the loop). Gate green: 94 unit + 117
     e2e + 8 compliance.
-  - #32, #38: not started. User approved: full DB CMS for #32, #38 without the OAuth handshake.
+  - **#38 AUTH — business-ready entrypoints, hardened (D-037), on `develop`:** `safeInternalPath()`
+    (pure + unit-tested) fixes the post-auth `next` open redirect; `/registro?invite=<bad>` now
+    shows an "Invitación no válida" recovery card instead of a new-company form. Most of #38 was
+    already in place (#19/#27/#28/#30). **Deferred with the user: Google OAuth handshake + 2-step
+    progressive onboarding** — land together in the OAuth slice. Gate green: 98 unit + 120 e2e + 8
+    compliance.
+  - **#32 CMS: not started** — the last V3 issue. Full DB-backed Guides + Blog CMS with admin
+    publishing (user's choice). Biggest remaining slice.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close

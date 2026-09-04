@@ -470,3 +470,25 @@
     never look current — needs careful service-worker design.
 - **P2/Later (per the issue):** AI PDF import, S3/SFTP connectors, full ERP/TMS
   REST API, premium support — not built, not blocking launch.
+
+## D-037 — Business-ready entrypoints, hardened (AUTH #38, minus OAuth)
+- Date / phase: 2026-09-04 / Product V3 (sprint 3)
+- **Context:** most of #38 was already in place — anonymous-first creation, the
+  claim round-trip preserving the exact PDF/QR/URL (#19), team invites joining
+  the existing workspace (#27), prospect invites preserving operator attribution
+  (#28), authed visitors to `/entrar`/`/registro` bounced to `/panel`, the
+  premium auth card (#30), and the persona headings. The hardening built here:
+  - **`safeInternalPath()`** (`lib/auth/safe-redirect.ts`, pure + unit-tested) —
+    the post-auth `next` redirect now rejects `//host`, absolute URLs,
+    backslash/whitespace tricks and any bounce back into an auth screen or the
+    API. Wired into `RegisterForm` (was `next.startsWith("/")` — an open
+    redirect).
+  - **Invalid invite state** — `/registro?invite=<expired|used|unknown>` now
+    shows an "Invitación no válida" card with recovery links (Entrar / crear un
+    DeCA gratis) instead of silently falling through to a new-company form
+    (which #38 forbids: "never create a duplicate company").
+- **Deferred (agreed with the user):** the Google OAuth handshake and the
+  two-step progressive company onboarding (identity → minimum company →
+  `/panel`). The company fieldset stays on the first `/registro` render
+  (D-031/D-032); the OAuth round-trip is what will force a post-auth onboarding
+  step, so both land together in the OAuth slice.

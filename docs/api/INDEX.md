@@ -18,6 +18,7 @@
 | signup() / login() / getCurrentUser() / AuthError | fn/class | lib/auth/index.ts | docs/reference/lib.md | v1 own auth (D-021); minimal signup, SSR session |
 | hashPassword() / verifyPassword() / isStrongEnough() | function | lib/auth/password.ts | docs/reference/lib.md | scrypt password hashing (constant-time verify) |
 | signSession() / verifySession() / SESSION_COOKIE | fn/const | lib/auth/session.ts | docs/reference/lib.md | HMAC-signed 30-day session token + cookie options |
+| safeInternalPath() | function | lib/auth/safe-redirect.ts | docs/reference/lib.md | Post-auth `next` redirect safety (#38): only a same-origin path, never an absolute/protocol-relative URL or a bounce back into an auth screen |
 | claimDeca() / ClaimError | fn/class | lib/deca/claim.ts | docs/reference/lib.md | Attach an anonymous DeCA to a company via its one-time claim token (D-016) |
 | GET /api/saved | route | app/api/saved/route.ts | docs/reference/endpoints.md | The current user's saved companies/vehicles/addresses (wizard autofill) |
 | POST /api/saved/[kind] | route | app/api/saved/[kind]/route.ts | docs/reference/endpoints.md | Create a saved company/vehicle/address (scoped to the user); 422 on invalid |

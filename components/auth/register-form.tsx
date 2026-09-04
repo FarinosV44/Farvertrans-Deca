@@ -7,6 +7,7 @@ import { PasswordField } from "@/components/auth/password-field";
 import { GoogleButton } from "@/components/auth/google-button";
 import { track } from "@/lib/analytics/client";
 import { lockAttribution } from "@/lib/attribution/client";
+import { safeInternalPath } from "@/lib/auth/safe-redirect";
 
 export function RegisterForm({
   initialMode = "register",
@@ -25,7 +26,7 @@ export function RegisterForm({
   const params = useSearchParams();
   const claim = params.get("claim") ?? undefined;
   const invite = params.get("invite") ?? undefined;
-  const nextPath = params.get("next") ?? "/panel";
+  const nextPath = safeInternalPath(params.get("next"));
   // A team invite joins an existing workspace (no company fields); a prospect
   // onboarding link still creates a company (fields shown, prefilled — GROWTH #28).
   const joiningTeam = !!invite && !prospectCompany;
@@ -74,7 +75,7 @@ export function RegisterForm({
         track("login_completed");
       }
       if (claim) track("claim_completed");
-      router.push(nextPath.startsWith("/") ? nextPath : "/panel");
+      router.push(nextPath);
     } catch {
       setError("Sin conexión. Inténtalo de nuevo.");
       setBusy(false);
