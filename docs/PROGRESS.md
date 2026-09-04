@@ -220,18 +220,36 @@
   for prospect import (paste-import shipped); eCMR interop feature.
 
 ## Launch execution (2026-09-04, user directive — "ruthless launch sequence" per #44)
-- **Production status: BLOCKED on DNS.** The prior Hostinger URL
-  (`https://linen-mantis-554500.hostingersite.com`) is unreachable (TCP connects
-  then drops — consistent with the app process not running, not a network issue
-  on this end; verified via WebFetch + curl, general internet connectivity
-  confirmed working against github.com). The user explains this is because a new
-  domain (`decaprofesional.es`) is being pointed at Hostinger and DNS is still
-  propagating (`decaprofesional.es` does not resolve yet either). **Not this
-  session's to fix** — parked pending the user confirming DNS/deploy is live, at
-  which point Phase 1 (production stability) + Phase 2 (real generation
-  reproduction) + Phase 4 (QR from a second device) + Phase 9 (real E2E test)
-  resume immediately using `npm run diagnose -- <url>` (#29) and
-  `docs/production-smoke-checklist.md`.
+- **DNS resolved.** `https://decaprofesional.es/` now serves HTTP 200 with a
+  valid cert and the app's own security headers — confirmed via `curl`.
+- **`develop` merged to `main` (fast-forward, `4df23dd`), pushed, CI running.**
+  `main` now includes D-042 (PRODUCT #41 structured goods legal data model) and
+  D-043 (TRUST #42 + GROWTH #46 — Praetoria identity, versioned terms, email
+  verification, lead gate) — merge explicitly authorised by the user this
+  session.
+- **BLOCKED — production DB is down and the live app has not been redeployed
+  with `main`'s latest commit.** Evidence:
+  - `GET /health` on `https://decaprofesional.es/health` → `{"status":"degraded",
+    "version":"0.1.0","db":"down"}`.
+  - The live site is still serving the PRE-D-042/D-043 build: `/terminos` 404s
+    and the homepage carries no Praetoria trust copy, even though that page and
+    copy exist on `main` as of `4df23dd`. Hostinger deploy is a manual SSH/build
+    step (`docs/07-release.md` "Hostinger Cloud Startup") — it does not
+    auto-deploy on `git push`, so the merge above does not reach production by
+    itself.
+  - **CREDENTIAL block — needs the user:** (1) check the Postgres/Supabase
+    project is live and `DATABASE_URL` on Hostinger is correct — DB down means
+    registration, login, DeCA generation, panel/history all fail regardless of
+    which build is deployed; (2) run the redeploy steps in
+    `docs/07-release.md` §"Hostinger Cloud Startup" step 4
+    (`npm ci && npx prisma generate && npx prisma migrate deploy && npm run
+    seed:content && NEXT_STANDALONE=1 npm run build`, then restart the Node app
+    in hPanel) so `main`'s `4df23dd` actually ships.
+  - Once both are done, resume immediately: Phase 1 (production stability) via
+    `npm run diagnose -- https://decaprofesional.es` (#29, needs
+    `FVD_ADMIN_TOKEN` set on the deployment) + Phase 2 (real generation
+    reproduction) + Phase 4 (QR from a second device) + Phase 9 (real E2E test)
+    per `docs/production-smoke-checklist.md`.
 - **D-042 done, on `develop`** (not yet merged/deployed): PRODUCT #41 goods-only
   slice — structured `loadLocation`/`unloadLocation` (name/address/postalCode/
   city/province/country, all required) replace the loose `origin`/`destination`

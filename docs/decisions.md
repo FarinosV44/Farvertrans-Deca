@@ -771,3 +771,19 @@
   re-surfaced elsewhere — low priority given the soft-gate design).
 - Gate green locally (Docker Postgres — production still blocked on DNS
   cutover, unrelated to this change): 106 unit + 134 e2e + typecheck + lint.
+
+## D-044 — Merge `develop` → `main` (D-042 + D-043), explicit user authorization
+- Date: 2026-09-04. DNS for `decaprofesional.es` now resolves and the site
+  answers HTTP 200, so the user asked to switch from product-expansion mode to
+  launch-execution mode and directed work at the production-readiness path.
+- Per the Keel git-flow rule, a `develop`→`main` merge requires an explicit
+  instruction in the conversation — asked via `AskUserQuestion`, user chose
+  "Yes, merge now." Fast-forwarded `main` from `1fd52bc` to `4df23dd`, pushed.
+- This does NOT deploy anything — Hostinger deploy is a manual SSH/build step
+  (`docs/07-release.md`), confirmed by inspecting the repo for any deploy hook
+  (none configured). The live site is still running the pre-merge build.
+- Discovered while verifying: `GET /health` on production reports `db:"down"` —
+  a DB-connectivity blocker independent of the code merge, and it blocks the
+  actual launch-critical path (registration, DeCA generation, panel) regardless
+  of which build is deployed. Recorded as an open item in `docs/PROGRESS.md`;
+  needs the user (CREDENTIAL — Supabase/Postgres + Hostinger env access).
