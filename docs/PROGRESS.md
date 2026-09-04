@@ -192,9 +192,11 @@
     draft/publish/unpublish/archive, `POST`+`PATCH`+`DELETE /api/admin/contenido`. Core SEO cluster
     stays in code (not migrated — churn for no gain). Seed content via `npm run seed:content`
     (idempotent). Gate green: 105 unit + 125 e2e + 8 compliance.
-  - **All of Product V3 (#29–#38) is on `develop`.** Splits opened: #39 (company logo on PDF), #40
-    (PWA/offline). Deferred to the OAuth slice: Google handshake + 2-step onboarding (part of #30/#38).
-    Nothing on `main` yet — awaits the user's `develop`→`main` merge.
+  - **Product V3 (#29–#38) MERGED to `main`** (merge commit `f09dde0`, 2026-09-04) on the user's
+    explicit instruction. `develop` == `main`. CI running on the `main` push. No version tag (not
+    requested). Splits opened: #39 (company logo on PDF), #40 (PWA/offline). Deferred to the OAuth
+    slice: Google handshake + 2-step onboarding (part of #30/#38). D-039: no company attribution
+    anywhere public.
 - **Remaining before public launch (the user's, not code):** RGPD review of anonymous-doc retention
   (D-016); legal/inspection check of a real generated DeCA; provision Postgres/storage + domain +
   Resend + hCaptcha, deploy per `docs/07-release.md`; run `docs/production-smoke-checklist.md`; close
@@ -210,11 +212,11 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: #29 (D-029) + #33 (D-030) + #30 (D-031, UI-only) on `develop`, gate green — await the user's `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
+- Ready for `main`: nothing pending — all of Product V3 (#29–#38) merged to `main` at `f09dde0` on 2026-09-04. `develop` == `main`.
   `develop`→`main` merge (user chose "hold for now"). Everything through #28 already on `main`.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
   for prospect import (paste-import shipped); eCMR interop feature.
 
-Last updated: 2026-09-04 — Product V3: #29 (D-029) + #33 (D-030, Admin V2) + #30 UI-only (D-031, premium auth card) on `develop`, gate green (84 unit + 104 e2e + 8 compliance). Next: #31. #32/#34–#38 not started.
+Last updated: 2026-09-04 — Product V3 (#29–#38) complete and MERGED to `main` (`f09dde0`); D-029…D-039. Splits #39 (PDF logo) / #40 (PWA). Google OAuth deferred. `develop` == `main`. No version tag.

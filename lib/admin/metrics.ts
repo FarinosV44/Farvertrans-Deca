@@ -189,3 +189,16 @@ export async function operationalAlerts(now = new Date()): Promise<Alert[]> {
 
   return alerts;
 }
+
+/** Editorial content counters for the overview (#33 §1 / SEO #32). */
+export async function contentStats() {
+  const [guidesPublished, blogPublished, drafts, contentViews] = await Promise.all([
+    prisma.contentItem.count({ where: { type: "guide", status: "published" } }),
+    prisma.contentItem.count({ where: { type: "blog", status: "published" } }),
+    prisma.contentItem.count({ where: { status: "draft" } }),
+    prisma.event.count({
+      where: { name: "content_cta_click", ts: { gte: windowStart("30d") } },
+    }),
+  ]);
+  return { guidesPublished, blogPublished, drafts, ctaClicks30d: contentViews };
+}
