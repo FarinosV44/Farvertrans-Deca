@@ -10,8 +10,15 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime queries go through Supabase's transaction pooler (port 6543,
+  // `pgbouncer=true`) — it multiplexes many app connections over few Postgres
+  // backends. Migrations/introspection use `directUrl` (session pooler, port
+  // 5432) instead: DDL + advisory locks don't work reliably over a
+  // transaction-mode pooler. Splitting these avoids the session pooler's low
+  // `pool_size` (Supavisor free tier: 15) being exhausted by the running app.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 /// A Farvertrans operator/commercial whose ref_code appears in acquisition links.

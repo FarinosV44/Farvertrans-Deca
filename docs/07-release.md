@@ -124,8 +124,16 @@ repo is built to avoid that:
   `prisma/migrations/` into `.next/standalone/` (Next does not). It no-ops for a non-standalone build.
 
 **Steps:**
-1. **Database:** Supabase / Neon → real `DATABASE_URL` (Cloud Startup has no bundled Postgres). For
-   PDFs, either a Supabase private bucket `deca-pdfs` + `FVD_STORAGE=supabase`, or `FVD_STORAGE=local`
+1. **Database:** Supabase / Neon → **two** connection strings, not one (Cloud Startup has no bundled
+   Postgres, and Supabase's session pooler has a hard low `pool_size` — Supavisor free tier: 15 —
+   shared by the running app AND every migration/tooling connection; a long-running app alone can
+   exhaust it, which then reads as `db: "down"` even though the database is fine):
+   - **`DATABASE_URL`** (runtime) — the **Transaction pooler**, port **6543**, with `?pgbouncer=true`
+     appended. Get it from Supabase project settings → Database → Connection string → "Transaction".
+   - **`DIRECT_URL`** (migrations only) — the **Session pooler**, port **5432**, no extra params.
+     `npx prisma migrate deploy`/`status` need this one — DDL + advisory locks don't work reliably
+     over a transaction-mode pooler.
+   For PDFs, either a Supabase private bucket `deca-pdfs` + `FVD_STORAGE=supabase`, or `FVD_STORAGE=local`
    with a writable `.next/standalone/.storage` (persisted between deploys — confirm with Hostinger).
 2. hPanel → **Advanced → Node.js**:
    - Node version **22** (Node 20 on Hostinger is often 20.18.x; several devDeps want ≥ 20.19 —
@@ -133,11 +141,11 @@ repo is built to avoid that:
    - Application root = the repository root
    - **Application startup file = `server.cjs`**
 3. hPanel → **environment variables** (from `.env.example`): `NEXT_PUBLIC_FVD_BASE_URL=https://<domain>`
-   (must match — it drives every DeCA public URL, R-5/R-6), `DATABASE_URL`, `FVD_HASH_SECRET` (≥ 16
-   chars), `FVD_STORAGE`, `FVD_STORAGE_DIR`, Supabase keys if used, `FVD_DEBUG=0`, and
-   **`SKIP_BUILD_CHECKS=1`** (lint + typecheck are enforced in CI on every push to `main`; skipping
-   them here drops `eslint` / `unrs-resolver` / `typescript` from the build's critical path on a
-   resource-constrained host).
+   (must match — it drives every DeCA public URL, R-5/R-6), `DATABASE_URL` + `DIRECT_URL` (see step 1),
+   `FVD_HASH_SECRET` (≥ 16 chars), `FVD_STORAGE`, `FVD_STORAGE_DIR`, Supabase keys if used,
+   `FVD_DEBUG=0`, and **`SKIP_BUILD_CHECKS=1`** (lint + typecheck are enforced in CI on every push to
+   `main`; skipping them here drops `eslint` / `unrs-resolver` / `typescript` from the build's critical
+   path on a resource-constrained host).
 4. Build (SSH or deploy hook, in the app root):
    ```
    npm install --omit=optional --foreground-scripts   # or `npm ci` on Node 22
@@ -164,7 +172,9 @@ files there. All the compatibility handling lives in the repo (`package.json`, `
 **If it still 503s:**
 - `ERR_REQUIRE_ESM` again → the startup file is not `server.cjs`, or someone re-added `"type": "module"`
   to `package.json` (CI's "Standalone server is CommonJS" step guards this).
-- `/health` says `db: "down"` → bad `DATABASE_URL` or migrations not run.
+- `/health` says `db: "down"` → bad `DATABASE_URL`/`DIRECT_URL`, migrations not run, or (Supabase) the
+  session pooler's connection cap exhausted — check `DATABASE_URL` is the **transaction** pooler
+  (port 6543, `pgbouncer=true`), not the session one.
 - `PrismaClientInitializationError` → `npx prisma generate` must run **on the server**; the schema
   targets `debian-openssl-3.0.x` + `linux-musl-openssl-3.0.x` as well as native.
 - 404s for CSS/JS → `.next/static` did not reach `.next/standalone/.next/static`; re-run
@@ -176,7 +186,9 @@ files there. All the compatibility handling lives in the repo (`package.json`, `
 1. Create a project. Note the project URL, the `anon` key and the `service_role` key.
 2. **Storage:** create a **private** bucket named `deca-pdfs` (no public access). Set
    `FVD_STORAGE=supabase` in `.env` (dev/CI leave it `local`).
-3. **Database:** get the connection string (session pooler) → `DATABASE_URL`.
+3. **Database:** get TWO connection strings (see "Hostinger Cloud Startup" step 1 above for why) —
+   the **transaction pooler** (port 6543, `?pgbouncer=true`) → `DATABASE_URL`; the **session pooler**
+   (port 5432) → `DIRECT_URL`.
 4. RLS: the app talks to the DB only through the server with the service role; the `anon` key has no
    table grants. Leave RLS deny-by-default on any table the client could reach (none in v1).
 
@@ -219,8 +231,9 @@ to follow it; `docker compose -f docker-compose.prod.yml up -d --build` again to
 - Back up both volumes (`fvd-prod-db`, `fvd-prod-storage`) — see §6.
 
 **Alternative — managed Postgres instead of the bundled `db`:** delete the `db` and `migrate` service
-deps you don't want, point `DATABASE_URL` at Supabase/Neon, run `prisma migrate deploy` against it
-once, and `docker run -d --name fvd --env-file .env.prod -p 3000:3000 --restart unless-stopped -v fvd-storage:/app/.storage fvd-app`.
+deps you don't want, point `DATABASE_URL`/`DIRECT_URL` at Supabase/Neon (transaction pooler / session
+pooler respectively — see step 1 above), run `prisma migrate deploy` against `DIRECT_URL` once, and
+`docker run -d --name fvd --env-file .env.prod -p 3000:3000 --restart unless-stopped -v fvd-storage:/app/.storage fvd-app`.
 
 ### 5. Health, deploy verification & logs
 - `GET /health` → `{ "status": "ok", "version": "...", "db": "up" }`. Wire it to Hostinger/uptime monitoring.
