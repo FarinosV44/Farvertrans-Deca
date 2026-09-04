@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 // Mirrors lib/env.ts serverSchema shape for isolated testing of the parsing rules.
@@ -41,5 +41,27 @@ describe("environment parsing rules", () => {
     });
     expect(on.FVD_DEBUG).toBe(true);
     expect(off.FVD_DEBUG).toBe(false);
+  });
+});
+
+describe("publicEnv.baseUrl", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("strips a trailing slash — a hosting panel adding one must not double every URL", async () => {
+    vi.stubEnv("NEXT_PUBLIC_FVD_BASE_URL", "https://decaprofesional.es/");
+    vi.resetModules();
+    const { publicEnv } = await import("@/lib/env");
+    expect(publicEnv.baseUrl).toBe("https://decaprofesional.es");
+    expect(`${publicEnv.baseUrl}/sitemap.xml`).toBe("https://decaprofesional.es/sitemap.xml");
+  });
+
+  it("leaves a URL with no trailing slash untouched", async () => {
+    vi.stubEnv("NEXT_PUBLIC_FVD_BASE_URL", "https://decaprofesional.es");
+    vi.resetModules();
+    const { publicEnv } = await import("@/lib/env");
+    expect(publicEnv.baseUrl).toBe("https://decaprofesional.es");
   });
 });

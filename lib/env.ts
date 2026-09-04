@@ -50,7 +50,10 @@ export function getEnv(): ServerEnv {
 
 /** Values safe to read on the client. */
 export const publicEnv = {
-  baseUrl: process.env.NEXT_PUBLIC_FVD_BASE_URL ?? "http://localhost:3000",
+  // Normalized here, once: every call site builds URLs as `${baseUrl}/path`,
+  // so a trailing slash on the env var (easy to add by accident in a hosting
+  // panel) would double every canonical/OG/sitemap/QR URL in the app.
+  baseUrl: (process.env.NEXT_PUBLIC_FVD_BASE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   hcaptchaSiteKey: process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY ?? "",
