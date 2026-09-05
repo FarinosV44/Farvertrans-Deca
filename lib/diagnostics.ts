@@ -55,7 +55,13 @@ function required(name: string): boolean {
 const REQUIRED_ENV = ["DATABASE_URL", "NEXT_PUBLIC_FVD_BASE_URL", "FVD_HASH_SECRET"];
 
 /** Tables the DeCA pipeline writes on every generation. */
-const REQUIRED_TABLES = ["deca", "deca_version", "generation_failure"];
+const REQUIRED_TABLES = [
+  "deca",
+  "deca_version",
+  "generation_failure",
+  "deca_route_intel",
+  "commercial_consent",
+];
 
 /**
  * Run every readiness probe. Safe to call from an internal route or a CLI
