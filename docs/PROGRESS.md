@@ -427,6 +427,10 @@
   #24 (phase-1 note), #45 and #47 with an explicit "what remains" comment, and to comment
   what-shipped-where on the others without closing them yet pending the outstanding real-UI pass).
 
+**D-051: `develop` (D-047…D-050) merged to `main` at `a34ec6a`, on the user's explicit request.**
+Not yet deployed/migrated on production — see D-051 for what remains (redeploy + `prisma migrate
+deploy`).
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as

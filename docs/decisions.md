@@ -923,3 +923,14 @@
   work end-to-end against a real request/response cycle (not just the unit-mocked Prisma client),
   and the existing e2e suite's own DeCA-creating specs (28 pre-existing `DecaRouteIntel` rows found
   in the same dev DB) exercise the same code path without error.
+
+## D-051 — Merge `develop` → `main` (D-047…D-050), explicit user authorization
+- Date: 2026-09-05. User asked explicitly to push this session's launch-hardening work to `main`.
+- Pre-merge gate (fixed a `format:check` red on 4 files first, then re-ran): typecheck + lint +
+  118 unit + compliance R-1…R-13 (8), all green. Diff scanned for secret-shaped patterns — none
+  found. Fast-forwarded `main` from `92c4e97` to `a34ec6a` (7 commits), pushed.
+- **This does NOT deploy or migrate production.** Hostinger deploy is the existing manual SSH/build
+  step (`docs/07-release.md`); the new `20260905095427_route_intel_and_commercial_consent`
+  migration has NOT been applied to the production database. Until a redeploy + `prisma migrate
+  deploy` run, production keeps serving the pre-this-session build — D-047/048/049/050 exist only
+  in code on `main`, not live on decaprofesional.es.
