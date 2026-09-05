@@ -41,6 +41,11 @@ model Company {
   contactName String?         @map("contact_name")
   phone       String?
   profile     CompanyProfile?
+  /// Optional PDF header logo (PRODUCT #39), stored as a data URI (PNG/JPEG,
+  /// size-capped — see lib/company/logo.ts). Read at DOCUMENT CREATION time
+  /// only: changing or removing it never alters an already-rendered PDF,
+  /// since every version's bytes are already stored and immutable.
+  logoDataUri String?         @map("logo_data_uri")
   createdAt   DateTime        @default(now()) @map("created_at")
 
   users             User[]

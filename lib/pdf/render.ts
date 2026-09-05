@@ -22,6 +22,8 @@ export type RenderInput = {
   versionNo: number;
   createdAt: Date;
   modifiedAt?: Date;
+  /** Baked into this render only (PRODUCT #39) — never re-read for an already-stored PDF. */
+  customerLogoDataUri?: string | null;
 };
 
 /**
@@ -42,6 +44,7 @@ export async function renderDecaPdf(input: RenderInput): Promise<Buffer> {
       createdAt: input.createdAt,
       modifiedAt: input.modifiedAt,
       appVersion: APP_VERSION,
+      customerLogoDataUri: input.customerLogoDataUri,
     }),
   );
   if (buffer.byteLength > MAX_BYTES) {

@@ -1131,3 +1131,63 @@
   `.../change-email`, found while adding the new status endpoint next to them).
 - Gate green: 132 e2e (incl. 8 compliance, +1 new: `master-data.spec.ts`) + 118 unit + typecheck +
   lint + format + keel-verify.
+
+## D-056 — Premium corporate PDF redesign + optional customer logo (PRODUCT HARDENING PRIORITY 3+4, #49/#39)
+- Date / phase: 2026-09-05, same session, owner directive ("implement #49… together with #39").
+- **Decision — full visual redesign of `lib/pdf/deca-document.tsx`, same compliance guarantees:**
+  replaced the single flowed two-column form (`DecaDocument` v1: plain header line + wrapped label/
+  value blocks) with a navy-header corporate layout — brand mark + wordmark + optional customer logo
+  in the header, a document-status pill ("DOCUMENTO VIGENTE"/"DOCUMENTO CORREGIDO"), two-column party
+  cards (cargador contractual / transportista efectivo), two-column route cards with an accent-dot
+  "kind" label and the load/unload date inline, a labeled goods/vehicle grid, and a footer with the
+  public verification URL + QR in a fixed bottom-right zone with generous quiet space. Every field
+  stays a real `<Text>` node — R-3 (native, selectable, never rasterized) is untouched; the 8-test
+  compliance suite (R-3/4/5/6/7/8/11/13 + FIX-18) passed unmodified against the new layout.
+- **Decision — colours/typography stay within the existing brand, no new asset:** navy (#0b1f3a) +
+  the existing brand accent (`BRAND.color` #0b5cff) + the two already-embedded Inter weights
+  (400/700, `lib/pdf/fonts.ts`) — no new font, no new dependency. The owner-supplied reference image
+  was used for structural inspiration only (two-column parties, clear hierarchy, professional QR
+  placement) — no competitor branding, wording or artwork copied, per the issue's explicit
+  instruction.
+- **Decision — `Company.logoDataUri` (nullable, small data URI) over an object-store upload
+  (PRODUCT #39):** the issue itself offered either; a data URI keeps the read path trivial (one
+  Prisma select, no extra fetch/signing at render time) and the size cap (≈512 KB, PNG/JPEG only)
+  keeps the column small. Validated from the DECODED BYTES, never a client-claimed MIME type — hand
+  parses PNG (IHDR) and baseline/progressive JPEG (SOF markers) far enough to read real pixel
+  dimensions and reject anything else (SVG included) — `lib/company/logo.ts`, pure logic, no
+  `server-only`, unit-tested (9 tests: real PNG/JPEG detection, SVG/garbage rejection, size cap,
+  dimension cap, empty buffer).
+- **Decision — read the logo at GENERATION time, not display time (inherent immutability):**
+  `createDeca`/`correctDeca` (`lib/deca/persist.ts`) fetch `company.logoDataUri` once and pass it
+  into `renderDecaPdf` → `DecaDocument`; the rendered bytes are then stored and never re-rendered.
+  Changing or removing the logo afterward therefore cannot touch a stored PDF by construction — no
+  extra guard needed beyond what the architecture already does for every other field. Verified live
+  (not just asserted): generated a DeCA with a logo, removed the company logo, re-downloaded the
+  same document — byte-for-byte identical SHA-256; a DeCA generated with no logo still renders fully
+  professional with no gap or broken layout.
+- **New `/panel/empresa`** (WORKSPACE #24's "Mi empresa" nav slot, not yet built by D-047): company
+  profile summary + `CompanyLogoManager` (upload/preview/remove, owner-only — a member sees the logo
+  read-only with no controls, matching the pattern already used for commercial consent). Client-side
+  MIME/size pre-check for a fast error, but the SERVER validation (real bytes) is authoritative — a
+  spoofed `Content-Type` is still rejected (`type` error code), tested directly against the API.
+- **Real visual verification, not just automated text-extraction (per the issue's own "test with at
+  least one real-looking GOODS DeCA and inspect the actual generated PDF visually"):** registered a
+  real account, generated DeCAs via the live API with realistic Spanish company/address data, and
+  read the rendered PDFs directly (this session's PDF tool renders real pages, not just extracts
+  text). Confirmed: the layout reads as a premium corporate document; a customer logo renders in the
+  header at the correct size/position; long company names/addresses/goods descriptions wrap onto
+  additional lines with no overlap, clipping or shrunk text; a correction (v2) shows "DOCUMENTO
+  CORREGIDO" and the "Modificado el…" timestamp; the QR sits cleanly in its own footer zone. One
+  early test render appeared to have no logo — traced to the synthetic test PNG being filled the
+  exact same navy as the header background (test-data artifact, not a code bug), confirmed by
+  re-rendering with a contrasting colour.
+- **New test:** `tests/e2e/company-logo.spec.ts` (4 tests) — upload → preview → new DeCA differs
+  from a no-logo one → remove → the earlier logo'd document is still byte-identical; invalid-upload
+  message; API-level spoofed-MIME rejection; non-owner read-only view.
+- **Not done / explicitly deferred:** the full `/panel` IA rebuild beyond "Mi empresa" (Configuración
+  and the rest remain D-047's open scope note); admin (#33) surfacing "has a logo" on the company
+  detail page (the issue lists this as a nice-to-have; not done this slice — a one-line addition,
+  left for a dedicated admin-surface pass rather than mixed into the PDF/logo slice).
+- Gate green: 136 e2e (incl. 8 compliance, +4 new: `company-logo.spec.ts`) + 127 unit (+9 new:
+  `company-logo.test.ts`) + typecheck + lint + format + keel-verify. Two isolated re-runs confirmed
+  parallel-worker flake (pre-existing, documented lesson) on 2 unrelated tests, not a regression.

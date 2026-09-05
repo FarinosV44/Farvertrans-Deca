@@ -494,9 +494,36 @@ deploy`).
   exist at all yet (pre-existing Phase 6 gap, not from this slice — `docs/api/INDEX.md` kept current
   instead, including two previously-undocumented endpoints found along the way).
 - **Not yet on `main`** — awaiting the user's explicit merge instruction (this session did not ask).
-- **Next up (continuing automatically per the owner's directive):** PRIORITY 3 (#49 premium PDF
-  redesign), PRIORITY 4 (#39 customer logo), PRIORITY 5 (landing/brand), PRIORITY 6 (consistent
-  product UI).
+
+## Product hardening — PRIORITY 3 + 4 (2026-09-05, same session, owner directive: #49 premium PDF + #39 logo, together)
+- **D-056 done, on `develop`:** `lib/pdf/deca-document.tsx` fully redesigned — navy header with
+  brand mark + optional customer logo + a document-status pill, two-column party cards (cargador
+  contractual / transportista efectivo), two-column route cards with accent-dot kind labels and
+  inline dates, a labeled goods/vehicle grid, and a footer with the verification URL + QR in a fixed
+  bottom-right quiet zone. Every value is still a real `<Text>` node — the 8-test compliance suite
+  (R-3/4/5/6/7/8/11/13 + FIX-18) passed unmodified. Colours stay within the existing brand (navy +
+  `BRAND.color`), no new font or dependency.
+  `Company.logoDataUri` (new nullable column, migration `20260905141620_company_logo`) — optional
+  PDF header logo, validated from the DECODED bytes (`lib/company/logo.ts`: hand-parses real PNG/
+  JPEG headers for dimensions, rejects SVG/anything else, size-capped ≈512 KB), never a client-
+  claimed MIME type. Read once at generation time in `createDeca`/`correctDeca` and baked into that
+  render only — changing/removing the logo later cannot touch a stored PDF, by construction (no
+  extra guard needed). New `/panel/empresa` (owner-only upload/preview/remove; a member sees it
+  read-only) fills WORKSPACE #24's "Mi empresa" nav slot.
+  **Verified with real generated PDFs, not just automated text-extraction** (registered a real
+  account, generated several DeCAs via the live API, read the actual rendered pages): confirmed the
+  premium layout, a customer logo rendering correctly in the header, long values (company names/
+  addresses/goods) wrapping cleanly with no clipping or shrunk text, a correction showing "DOCUMENTO
+  CORREGIDO", and — critically — that removing/changing the company logo left an earlier document's
+  PDF byte-for-byte identical (same SHA-256) while a brand-new document reflected the change.
+  New tests: `tests/e2e/company-logo.spec.ts` (4) + `tests/unit/company-logo.test.ts` (9).
+  Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify.
+- **Not done / deferred:** admin (#33) surfacing "has a logo" on the company detail page (nice-to-
+  have per the issue, left for a dedicated admin pass); the rest of the `/panel` IA (Configuración)
+  beyond the new "Mi empresa" (D-047's existing open scope note).
+- **Not yet on `main`** — awaiting the user's explicit merge instruction.
+- **Next up (continuing automatically per the owner's directive):** PRIORITY 5 (landing/brand),
+  PRIORITY 6 (consistent product UI).
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error

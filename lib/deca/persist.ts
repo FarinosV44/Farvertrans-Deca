@@ -119,6 +119,19 @@ export async function createDeca(
   // We need an id for the reference before the transaction; use a stable slice of the token.
   const reference = `DECA-${token.slice(0, 8).toUpperCase()}`;
 
+  // The company's CURRENT logo, baked into this render only (PRODUCT #39) —
+  // a later upload/removal never touches this stored PDF's bytes.
+  const customerLogoDataUri = opts.companyId
+    ? (
+        await stage("database", correlationId, () =>
+          prisma.company.findUnique({
+            where: { id: opts.companyId },
+            select: { logoDataUri: true },
+          }),
+        )
+      )?.logoDataUri
+    : null;
+
   // 1. Render (fail closed) and 2. store BEFORE any DB write.
   const pdf = await stage("pdf_render", correlationId, () =>
     renderDecaPdf({
@@ -127,6 +140,7 @@ export async function createDeca(
       reference,
       versionNo: 1,
       createdAt,
+      customerLogoDataUri,
     }),
   );
   const sha256 = pdfSha256(pdf);
@@ -269,6 +283,13 @@ export async function correctDeca(
   const reference = `DECA-${token.slice(0, 8).toUpperCase()}`;
 
   const correlationId = newCorrelationId();
+  // The company's CURRENT logo, baked into this correction's render only
+  // (PRODUCT #39) — earlier versions' stored bytes are never touched.
+  const customerLogoDataUri = (
+    await stage("database", correlationId, () =>
+      prisma.company.findUnique({ where: { id: companyId }, select: { logoDataUri: true } }),
+    )
+  )?.logoDataUri;
   const pdf = await stage("pdf_render", correlationId, () =>
     renderDecaPdf({
       data: validated.data,
@@ -277,6 +298,7 @@ export async function correctDeca(
       versionNo,
       createdAt: deca.createdAt,
       modifiedAt,
+      customerLogoDataUri,
     }),
   );
   const sha256 = pdfSha256(pdf);

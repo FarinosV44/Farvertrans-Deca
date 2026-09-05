@@ -5,6 +5,7 @@ import {
   CopyIcon,
   BuildingIcon,
   UsersIcon,
+  GearIcon,
 } from "@/components/panel/icons";
 
 const TABS = [
@@ -13,12 +14,13 @@ const TABS = [
   { key: "plantillas", href: "/panel/plantillas", label: "Plantillas", Icon: CopyIcon },
   { key: "datos", href: "/panel/datos", label: "Datos habituales", Icon: BuildingIcon },
   { key: "equipo", href: "/panel/equipo", label: "Equipo", Icon: UsersIcon },
+  { key: "empresa", href: "/panel/empresa", label: "Mi empresa", Icon: GearIcon },
 ] as const;
 
 export function AppNav({
   current,
 }: {
-  current: "home" | "historico" | "datos" | "plantillas" | "equipo";
+  current: "home" | "historico" | "datos" | "plantillas" | "equipo" | "empresa";
 }) {
   return (
     <nav
