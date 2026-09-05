@@ -58,7 +58,7 @@ export const en = {
     orContinueWithEmail: "or continue with email",
     googleCta: "Continue with Google",
     emailLabel: "Email",
-    passwordHint: "At least 8 characters.",
+    passwordHint: "At least 12 characters, with uppercase, lowercase, a number, and a symbol.",
     company: {
       legend: "Your company",
       name: "Company name",

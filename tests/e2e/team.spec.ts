@@ -7,7 +7,7 @@ function email() {
 async function registerOwner(page: Page, addr = email()) {
   await page.goto("/registro");
   await page.fill("#email", addr);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Agencia Equipo SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -86,7 +86,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await expect(member.getByRole("heading", { name: "Únete al equipo" })).toBeVisible();
     await expect(member.locator("#companyName")).toHaveCount(0);
     await member.fill("#email", inviteEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -121,7 +121,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", email());
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -148,7 +148,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", memberEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -182,7 +182,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", memberEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -216,7 +216,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const r = await request.post("/api/auth/register", {
       data: {
         email: email(),
-        password: "supersecret123",
+        password: "Supersecret123!",
         acceptTerms: true,
         invite: "totally-invalid-token-000000000000",
       },

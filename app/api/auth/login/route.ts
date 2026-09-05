@@ -23,6 +23,18 @@ export async function POST(req: Request) {
   }
   const b = parsed.data;
 
+  // SECURITY #53 P0: login had NO rate limiting at all — brute force was
+  // unbounded. Same shared "auth" policy as register/resend/password-reset
+  // (5 silent/15min, then a challenge, then a temporary block).
+  const abuse = await import("@/lib/abuse");
+  const decision = await abuse.checkAbuse("auth", req.headers, {
+    fingerprint: req.headers.get("x-fvd-fp"),
+    challengeToken: req.headers.get("x-fvd-challenge"),
+  });
+  const { abuseResponse } = await import("@/lib/abuse/response");
+  const blocked = abuseResponse(decision);
+  if (blocked) return blocked;
+
   let user;
   try {
     user = await login(b.email, b.password);

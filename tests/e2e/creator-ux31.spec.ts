@@ -38,7 +38,7 @@ async function registerAndLogin(page: Page) {
   const res = await page.request.post("/api/auth/register", {
     data: {
       email: addr,
-      password: "supersecret123",
+      password: "Supersecret123!",
       companyName: "UX31 SL",
       companyNif: "B12345674",
       acceptTerms: true,

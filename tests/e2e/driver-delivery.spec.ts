@@ -37,7 +37,7 @@ function email() {
 async function register(page: Page) {
   await page.goto("/registro");
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "OPS SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -154,7 +154,7 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     const reg = await request.post("/api/auth/register", {
       data: {
         email: email(),
-        password: "supersecret123",
+        password: "Supersecret123!",
         companyName: "OPS SL",
         companyNif: "B12345674",
         acceptTerms: true,

@@ -27,7 +27,7 @@ test.describe("AUTH #30 — premium auth card", () => {
   test("password show/hide toggles the field type", async ({ page }) => {
     await page.goto("/entrar");
     const pw = page.locator("#password");
-    await pw.fill("supersecret123");
+    await pw.fill("Supersecret123!");
     await expect(pw).toHaveAttribute("type", "password");
     await page.getByTestId("password-toggle").click();
     await expect(pw).toHaveAttribute("type", "text");

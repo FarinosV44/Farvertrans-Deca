@@ -12,7 +12,7 @@ async function register(page: Page): Promise<string> {
   const email = `u${rnd()}@example.com`;
   await page.goto("/registro");
   await page.fill("#email", email);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", `Entrypoints SL ${rnd()}`);
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -39,7 +39,7 @@ test.describe("AUTH #38 — business-ready entrypoints", () => {
     ]);
     await page.goto("/entrar?next=%2Fpanel%2Fhistorico");
     await page.fill("#email", email);
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.getByTestId("register-submit").click();
     await expect(page).toHaveURL(/\/panel\/historico$/);
 
@@ -52,7 +52,7 @@ test.describe("AUTH #38 — business-ready entrypoints", () => {
     ]);
     await page.goto("/entrar?next=https%3A%2F%2Fevil.example.com");
     await page.fill("#email", email);
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.getByTestId("register-submit").click();
     await expect(page).toHaveURL(/\/panel$/);
     expect(page.url()).not.toContain("evil.example.com");

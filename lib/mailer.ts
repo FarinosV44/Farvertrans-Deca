@@ -21,8 +21,27 @@ export async function sendMail(opts: {
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
       body: JSON.stringify({ from, to: opts.to, subject: opts.subject, text: opts.text }),
     });
+    if (!res.ok) {
+      // SECURITY #53 P0: never swallow the provider's own error — this is
+      // what makes "why didn't the email arrive" diagnosable in production.
+      const body = await res.text().catch(() => "");
+      console.error(
+        JSON.stringify({
+          event: "mail_provider_error",
+          status: res.status,
+          body: body.slice(0, 2000),
+          to: opts.to.replace(/^(.).*(@.*)$/, "$1***$2"), // redact the local part only
+        }),
+      );
+    }
     return { sent: res.ok, reason: res.ok ? undefined : "error" };
-  } catch {
+  } catch (e) {
+    console.error(
+      JSON.stringify({
+        event: "mail_provider_exception",
+        error: e instanceof Error ? e.message : String(e),
+      }),
+    );
     return { sent: false, reason: "error" };
   }
 }

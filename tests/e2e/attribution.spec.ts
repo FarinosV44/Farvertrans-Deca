@@ -17,7 +17,7 @@ async function internalStats(request: APIRequestContext) {
 
 async function registerWith(page: Page, companyNif: string) {
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Attrib Test SL");
   await page.fill("#companyNif", companyNif);
   await page.getByTestId("accept-terms").check();

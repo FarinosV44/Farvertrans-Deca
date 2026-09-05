@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { PrismaClient } from "@/prisma/generated/client";
 
 function email() {
   return `acc${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
@@ -7,7 +8,7 @@ function email() {
 async function registerCompany(page: Page, addr = email()) {
   await page.goto("/registro");
   await page.fill("#email", addr);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Cuenta SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -40,7 +41,7 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     await page.getByTestId("header-login").click();
     await expect(page).toHaveURL(/\/entrar$/);
     await page.fill("#email", addr);
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.getByTestId("register-submit").click();
     await expect(page).toHaveURL(/\/panel$/);
   });
@@ -72,17 +73,17 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
 
     // open the link and set a new password
     await page.goto(`/recuperar/${encodeURIComponent(token)}`);
-    await page.fill("#password", "brandnewpass456");
+    await page.fill("#password", "Brandnewpass456!");
     await page.getByTestId("reset-confirm-submit").click();
     await expect(page).toHaveURL(/\/panel$/); // logged straight in
 
     // old password no longer works; new one does
     const bad = await request.post("/api/auth/login", {
-      data: { email: addr, password: "supersecret123" },
+      data: { email: addr, password: "Supersecret123!" },
     });
     expect(bad.status()).toBe(401);
     const good = await request.post("/api/auth/login", {
-      data: { email: addr, password: "brandnewpass456" },
+      data: { email: addr, password: "Brandnewpass456!" },
     });
     expect(good.status()).toBe(200);
   });
@@ -94,7 +95,7 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     const r = await request.post("/api/auth/register", {
       data: {
         email: known,
-        password: "supersecret123",
+        password: "Supersecret123!",
         companyName: "X SL",
         companyNif: "B12345674",
         acceptTerms: true,
@@ -114,7 +115,7 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     await request.post("/api/auth/register", {
       data: {
         email: addr,
-        password: "supersecret123",
+        password: "Supersecret123!",
         companyName: "Y SL",
         companyNif: "B12345674",
         acceptTerms: true,
@@ -125,13 +126,105 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     ).testToken as string;
 
     const first = await request.post("/api/auth/password/reset", {
-      data: { token, password: "firstreset123" },
+      data: { token, password: "Firstreset123!" },
     });
     expect(first.status()).toBe(200);
     const replay = await request.post("/api/auth/password/reset", {
-      data: { token, password: "secondreset123" },
+      data: { token, password: "Secondreset123!" },
     });
     expect(replay.status()).toBe(400);
+  });
+
+  test("an invalid reset token is rejected", async ({ request }) => {
+    const res = await request.post("/api/auth/password/reset", {
+      data: { token: "not-a-real-token-at-all", password: "Whatever123!" },
+    });
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error.code).toBe("invalid");
+  });
+
+  test("an expired reset token is rejected", async ({ request }) => {
+    const addr = email();
+    await request.post("/api/auth/register", {
+      data: {
+        email: addr,
+        password: "Supersecret123!",
+        companyName: "Expira SL",
+        companyNif: "B12345674",
+        acceptTerms: true,
+      },
+    });
+    const token = (
+      await (await request.post("/api/auth/password/request", { data: { email: addr } })).json()
+    ).testToken as string;
+
+    const prisma = new PrismaClient();
+    try {
+      const user = await prisma.user.findFirstOrThrow({ where: { email: addr } });
+      await prisma.passwordResetToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { expiresAt: new Date(Date.now() - 1000) },
+      });
+    } finally {
+      await prisma.$disconnect();
+    }
+
+    const res = await request.post("/api/auth/password/reset", {
+      data: { token, password: "NewStrongPass1!" },
+    });
+    expect(res.status()).toBe(400);
+    expect((await res.json()).error.code).toBe("expired");
+  });
+
+  test("a weak new password is rejected by the reset endpoint itself, not just the form", async ({
+    request,
+  }) => {
+    const addr = email();
+    await request.post("/api/auth/register", {
+      data: {
+        email: addr,
+        password: "Supersecret123!",
+        companyName: "Debil SL",
+        companyNif: "B12345674",
+        acceptTerms: true,
+      },
+    });
+    const token = (
+      await (await request.post("/api/auth/password/request", { data: { email: addr } })).json()
+    ).testToken as string;
+
+    const res = await request.post("/api/auth/password/reset", {
+      data: { token, password: "alllowercase12" }, // no uppercase, no special char
+    });
+    expect(res.status()).toBe(422);
+    expect((await res.json()).error.code).toBe("weak_password");
+  });
+
+  test("resetting the password invalidates a session opened before the reset", async ({
+    browser,
+  }) => {
+    const addr = email();
+    const oldCtx = await browser.newContext();
+    const oldPage = await oldCtx.newPage();
+    await registerCompany(oldPage, addr);
+    await expect(oldPage).toHaveURL(/\/panel$/);
+
+    // reset the password from a completely separate, unauthenticated context
+    const freshCtx = await browser.newContext();
+    const reqRes = await freshCtx.request.post("/api/auth/password/request", {
+      data: { email: addr },
+    });
+    const token = (await reqRes.json()).testToken as string;
+    const resetRes = await freshCtx.request.post("/api/auth/password/reset", {
+      data: { token, password: "BrandNewPass99!" },
+    });
+    expect(resetRes.status()).toBe(200);
+    await freshCtx.close();
+
+    // the OLD browser session (opened before the reset) must no longer work
+    await oldPage.goto("/panel");
+    await expect(oldPage).toHaveURL(/\/registro/);
+    await oldCtx.close();
   });
 
   test("the login form links to password recovery", async ({ page }) => {
@@ -161,7 +254,7 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     // no event body contains the email, password or company NIF
     for (const e of events) {
       expect(e.body).not.toContain(addr);
-      expect(e.body).not.toContain("supersecret123");
+      expect(e.body).not.toContain("Supersecret123!");
       expect(e.body).not.toContain("B12345674");
     }
   });

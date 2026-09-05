@@ -14,7 +14,7 @@ async function loginInternal(request: APIRequestContext) {
 async function registerViaLink(page: Page, link: string, addr: string) {
   await page.goto(link.replace(/^https?:\/\/[^/]+/, ""));
   await page.fill("#email", addr);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   // prospect link → company fields shown (prefilled); fill NIF if empty
   if ((await page.locator("#companyNif").inputValue()) === "") {
     await page.fill("#companyNif", "B12345674");

@@ -1403,3 +1403,59 @@
   the cookie, and the (out-of-scope, correctly-untouched) footer and `DecaPreview` mock staying
   Spanish as expected.
 - Issue #50 left OPEN with this slice's scope as a comment (not closed — most of the epic remains).
+
+## D-063 — SECURITY #53 P0 block 1: auth/session hardening (rate limiting, session invalidation, password policy)
+- Date / phase: 2026-09-05, same session. Owner filed #51-#54 (desktop overhaul, legal/liability
+  framework, security hardening incl. mandatory admin 2FA, Spanish-first multilingual UI) with an
+  explicit 16-step execution order and standing "keep moving, don't ask" instruction. This is the
+  first P0 block: real gaps found by auditing current auth code against the owner's spec (a lot of
+  it — hashed high-entropy single-use tokens, the D-053 hard verification gate, honest `emailSent`
+  state, generic no-enumeration password-reset responses — was ALREADY correct from earlier session
+  work; this decision covers what was actually missing).
+- **Real gaps found and fixed:**
+  - `POST /api/auth/login` and `POST /api/auth/register` had **zero rate limiting** — brute force and
+    mass account creation were unbounded. Both now call the same shared `checkAbuse("auth", ...)`
+    used by resend/password-reset (5 silent/15min with a fingerprint, else a looser 30/15min IP-only
+    policy, then a solvable challenge, then a temporary block).
+  - `lib/mailer.ts` silently discarded the Resend API's own error body on failure. Now logs
+    `mail_provider_error`/`mail_provider_exception` with the exact provider response (redacting only
+    the email's local part) — this is what makes "why didn't it arrive" diagnosable, and immediately
+    surfaced the real cause in this environment: `RESEND_API_KEY` is a placeholder ("API key is
+    invalid") — still the user's infra task to configure a real one.
+  - `requestPasswordReset()` did not invalidate a user's previous active reset token before issuing a
+    new one (email verification already did this) — fixed, same rotate-on-request pattern.
+  - **Sessions had no revocation mechanism at all** (HMAC-signed, stateless, uid+iat only) — a stolen
+    cookie, or any session opened before a password reset, remained valid until its 30-day natural
+    expiry regardless of a password change. Added `User.sessionVersion` (migration
+    `20260905204705_user_session_version`), embedded in the signed session payload; `getCurrentUser()`
+    now rejects a token whose version doesn't match the DB. `resetPassword()` bumps it (invalidates
+    every other session); a new `bumpSessionVersion()` + `POST /api/auth/logout-all` +
+    "Cerrar sesión en todos los dispositivos" button (account menu) do the same on demand.
+  - **Password policy was 8-char-minimum only.** New `lib/auth/password-policy.ts` (isomorphic — no
+    `node:crypto`/`server-only`, so the exact same rules run client-side for live feedback and
+    server-side as the actual enforcement): 12+ chars, upper+lower+digit+special, a small common-
+    password blocklist, reject password == email/company name. Wired into `signup()`, `resetPassword()`
+    (server, source of truth) and `RegisterForm`/`SetNewPasswordForm` (client, same function, pre-flight
+    only — never a substitute for the backend check). `lib/auth/password.ts` now just hashes
+    (scrypt, unchanged) and re-exports the policy for existing server call sites.
+- **Test-suite fallout handled:** the whole e2e suite's shared test password (`supersecret123`, 23
+  files) failed the new policy — bulk-replaced with policy-compliant equivalents
+  (`Supersecret123!` etc.), same across every file. Added `FVD_DISABLE_ABUSE_CHECKS` test seam
+  (`playwright.config.ts`'s `webServer.env`, alongside the existing `FVD_EXPOSE_RESET_TOKEN`) because
+  the suite legitimately creates 50+ accounts from one machine inside one rate-limit window by
+  design — never set in production, checked first-line in `checkAbuse()`.
+- **New tests:** invalid/expired reset token rejection (expiry forced via direct Prisma update,
+  scoped to that test's own user — safe under `--workers=3`), a weak password rejected by the API
+  itself (not just the form), and — the one genuinely new capability — a session opened before a
+  password reset is confirmed dead afterward (`account.spec.ts`).
+- Gate: 141 e2e (`content-cms.spec.ts` reconfirmed as the pre-existing parallel-only flake, passes
+  isolated) + 133 unit + typecheck + lint + format, all green.
+- **Not yet done from the owner's P0 list** (continuing immediately, no pause): mandatory admin
+  TOTP 2FA + recovery codes, admin step-up re-auth for destructive actions, security audit log,
+  backup/recovery review, a security-headers pass (note: HSTS/CSP/X-Content-Type-Options/
+  Referrer-Policy/X-Frame-Options/Permissions-Policy already exist in `middleware.ts` from an earlier
+  session — still needs a fresh review against the fuller P0 list), document hard-delete protection,
+  automatic PoW-challenge solving for the login/register forms specifically (the abuse policy's
+  challenge tier will currently show a real user a "confirm you're not a robot" message with no
+  client-side auto-solve, unlike the DeCA creator's existing flow — low practical risk given the
+  loose IP-only threshold, but worth wiring).

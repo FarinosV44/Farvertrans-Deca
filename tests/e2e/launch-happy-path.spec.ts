@@ -142,7 +142,7 @@ test.describe("LAUNCH #20 — production happy path", () => {
     await page.getByTestId("result-save").click();
     await expect(page).toHaveURL(/\/registro\?claim=/);
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Titular Launch SL");
     await page.fill("#companyNif", DECA.carrierNif);
     await page.getByTestId("accept-terms").check();

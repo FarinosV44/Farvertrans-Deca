@@ -611,6 +611,19 @@ migration. See D-058 for the full pre-merge evidence and what remains.
   screens on the translated path). See `decisions.md` D-062 for the full file list. Issue #50 stays
   OPEN with this slice's scope commented — most of the epic remains for future sessions.
 
+## D-063: SECURITY #53 P0 block 1 — auth/session hardening
+Owner filed #51-#54 (desktop, legal, security incl. mandatory admin 2FA, multilingual UI) with an
+explicit execution order and "keep moving, don't ask" instruction. Working through it in priority
+order, P0 security first. This block: login/register now rate-limited (previously ZERO — real gap),
+mailer logs the real provider error on failure (found the placeholder `RESEND_API_KEY` is why local
+delivery doesn't work), password reset invalidates the prior token, sessions are now revocable
+(`User.sessionVersion`, migration `20260905204705_user_session_version`) — a stolen cookie or a
+session opened before a password reset now actually dies, plus a "log out everywhere" button —
+and the password policy is 12+ chars/complexity/no-common/no-email-or-company-name, enforced
+identically client + server via one isomorphic module. Gate: 141 e2e + 133 unit, all green
+(content-cms.spec.ts reconfirmed as the pre-existing --workers=3-only flake). See `decisions.md`
+D-063. **Continuing immediately** to mandatory admin TOTP 2FA (next P0 item) — not stopping to ask.
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as

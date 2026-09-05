@@ -60,7 +60,7 @@ export const es = {
     orContinueWithEmail: "o continúa con email",
     googleCta: "Continuar con Google",
     emailLabel: "Email",
-    passwordHint: "Al menos 8 caracteres.",
+    passwordHint: "Mínimo 12 caracteres, con mayúsculas, minúsculas, números y un símbolo.",
     company: {
       legend: "Tu empresa",
       name: "Nombre o razón social",

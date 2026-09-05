@@ -63,7 +63,7 @@ test.describe("TRUST #42 §5 — versioned terms acceptance", () => {
   test("registration is blocked until Terms + Privacy are accepted", async ({ page }) => {
     await page.goto("/registro");
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Terminos SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("register-submit").click();
@@ -80,7 +80,7 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
   test("shows the dedicated confirmation screen and a working verify link", async ({ page }) => {
     await page.goto("/registro");
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Confirmacion SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();
@@ -124,7 +124,7 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
   }) => {
     await page.goto("/registro");
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Reverifica SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();
@@ -151,7 +151,7 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
   }) => {
     await page.goto("/registro");
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Sin Verificar SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();
@@ -266,7 +266,7 @@ test.describe("D-060 — lightweight identity gate restored (reverses D-052's ha
   }) => {
     await page.goto("/registro");
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Gate SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();

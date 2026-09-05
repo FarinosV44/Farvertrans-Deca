@@ -10,6 +10,7 @@ import { lockAttribution } from "@/lib/attribution/client";
 import { safeInternalPath } from "@/lib/auth/safe-redirect";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { useT } from "@/lib/i18n/client";
+import { checkPasswordStrength } from "@/lib/auth/password-policy";
 
 const PROFILE_VALUES = ["carrier_goods", "shipper", "operator", "carrier_passengers"] as const;
 const PROFILE_ICONS: Record<(typeof PROFILE_VALUES)[number], string> = {
@@ -64,6 +65,16 @@ export function RegisterForm({
     if (mode === "register" && !joiningTeam && !acceptTerms) {
       setError(t.auth.errors.acceptTerms);
       return;
+    }
+    if (mode === "register") {
+      const strength = checkPasswordStrength(f.password, {
+        email: f.email,
+        companyName: f.companyName,
+      });
+      if (!strength.ok) {
+        setError(strength.reason);
+        return;
+      }
     }
     setBusy(true);
     setError(null);

@@ -14,7 +14,7 @@ async function registerViaApi(request: APIRequestContext) {
   const res = await request.post("/api/auth/register", {
     data: {
       email: email("lg-api"),
-      password: "supersecret123",
+      password: "Supersecret123!",
       companyName: "Launch Gate SL",
       companyNif: "B12345674",
       acceptTerms: true,
@@ -28,7 +28,7 @@ async function registerViaApi(request: APIRequestContext) {
 async function registerCompany(page: Page, name: string) {
   await page.goto("/registro");
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", name);
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();

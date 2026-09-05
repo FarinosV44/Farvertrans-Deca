@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Field } from "@/components/deca/field";
+import { checkPasswordStrength, PASSWORD_REQUIREMENTS_TEXT } from "@/lib/auth/password-policy";
 
 /** Step 1 — ask for the account email. Always confirms the same way. */
 export function RequestResetForm() {
@@ -90,6 +91,11 @@ export function SetNewPasswordForm({ token }: { token: string }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
+    const strength = checkPasswordStrength(password);
+    if (!strength.ok) {
+      setError(strength.reason);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -131,7 +137,7 @@ export function SetNewPasswordForm({ token }: { token: string }) {
           label="Contraseña nueva"
           type="password"
           autoComplete="new-password"
-          hint="Al menos 8 caracteres."
+          hint={PASSWORD_REQUIREMENTS_TEXT}
           value={password}
           onChange={setPassword}
         />

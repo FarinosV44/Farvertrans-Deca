@@ -15,7 +15,7 @@ async function registerAndGenerate(page: Page, ref?: string) {
   await page.goto(ref ? `/?ref=${ref}` : "/");
   await page.goto("/registro");
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Captada SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -76,7 +76,7 @@ test.describe("BUILD 12 — internal operator dashboard", () => {
 
     await page.goto("/registro");
     await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Regular SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();

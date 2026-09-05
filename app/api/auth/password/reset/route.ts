@@ -6,7 +6,10 @@ export const runtime = "nodejs";
 
 const schema = z.object({
   token: z.string().min(16).max(200),
-  password: z.string().min(8).max(200),
+  // Real strength policy is enforced in `resetPassword()` (SECURITY #53) —
+  // this is only a sanity bound, so a too-weak password surfaces its
+  // precise reason, not a generic 422.
+  password: z.string().min(1).max(200),
 });
 
 /** Complete a password reset (ACCOUNT #23). On success the user is logged in. */
@@ -14,7 +17,7 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
-      { error: { code: "bad_input", message: "Revisa la contraseña (mínimo 8 caracteres)." } },
+      { error: { code: "bad_input", message: "Revisa los datos del formulario." } },
       { status: 422 },
     );
   }

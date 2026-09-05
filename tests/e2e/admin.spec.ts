@@ -29,7 +29,7 @@ async function registerAndGenerate(page: Page, company: string) {
   const mail = `u${rnd()}@example.com`;
   await page.goto("/registro");
   await page.fill("#email", mail);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", company);
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -90,7 +90,7 @@ test.describe("ADMIN #33 — internal command center", () => {
 
     await page.goto("/registro");
     await page.fill("#email", `c${rnd()}@example.com`);
-    await page.fill("#password", "supersecret123");
+    await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Cliente Normal SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();

@@ -1,5 +1,14 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 
+export {
+  checkPasswordStrength,
+  isStrongEnough,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REQUIREMENTS_TEXT,
+  type PasswordCheck,
+} from "./password-policy";
+
 const KEYLEN = 64;
 
 /** Hash a password with scrypt. Format: `scrypt$<saltHex>$<hashHex>`. */
@@ -21,8 +30,4 @@ export function verifyPassword(password: string, stored: string): boolean {
   } catch {
     return false;
   }
-}
-
-export function isStrongEnough(password: string): boolean {
-  return typeof password === "string" && password.length >= 8 && password.length <= 200;
 }

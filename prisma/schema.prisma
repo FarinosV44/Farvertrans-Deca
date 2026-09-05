@@ -100,6 +100,11 @@ model User {
   /// I18N: "es" or "en" (lib/i18n/locale.ts). Restored into the `fvd_locale`
   /// cookie on login so the UI comes back in the language they left it in.
   preferredLocale String      @default("es") @map("preferred_locale")
+  /// SECURITY #53: bumped on password change/reset and "log out everywhere".
+  /// A session token embeds the version it was issued at; `getCurrentUser()`
+  /// rejects a token whose version doesn't match this column, since sessions
+  /// are stateless (signed, not stored) and have no other revocation path.
+  sessionVersion  Int         @default(1) @map("session_version")
   createdAt       DateTime    @default(now()) @map("created_at")
 
   company        Company?        @relation(fields: [companyId], references: [id])
