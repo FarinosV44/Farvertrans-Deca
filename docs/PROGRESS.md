@@ -522,8 +522,30 @@ deploy`).
   have per the issue, left for a dedicated admin pass); the rest of the `/panel` IA (Configuración)
   beyond the new "Mi empresa" (D-047's existing open scope note).
 - **Not yet on `main`** — awaiting the user's explicit merge instruction.
-- **Next up (continuing automatically per the owner's directive):** PRIORITY 5 (landing/brand),
-  PRIORITY 6 (consistent product UI).
+
+## Product hardening — PRIORITY 5 (2026-09-05, same session, owner directive: landing/brand polish, #46)
+- **D-057 done, on `develop`:** found and fixed a real accuracy bug — D-052's hard registration
+  gate (PRIORITY 1) made several landing/legal/SEO copy claims false ("sin registro"/"sin cuenta"
+  for DeCA generation, inherited from before that change). Fixed the hero trust row, a step
+  caption, a persona bullet, two SEO FAQ answers, and a registro-page recovery link. **Also fixed
+  `app/privacidad/page.tsx` and `app/cookies/page.tsx`**, which still described the "Identidad
+  ligera"/"Primer DeCA" lead-gate data-collection mechanism that D-052 deleted — a stale privacy/
+  cookie notice describing a removed data practice, not just marketing copy.
+  Added a visual product-features showcase (8 icon cards: Generar DeCA, PDF+QR, Histórico,
+  Duplicar, Vehículos/Empresas/Lugares habituales, Custodia digital) reusing the workspace's own
+  icon set (`components/panel/icons.tsx`, +2 new icons) in place of a plain text checklist —
+  answers the issue's "show visually" list and doubles as PRIORITY 6 progress (shared icon
+  language between landing and product). Confirmed live in a real browser: the hero already
+  matched the owner's exact requested copy word-for-word from earlier work (D-043); the new
+  section renders consistent with the panel's visual style.
+  **Assessed, not rebuilt:** the landing's overall structure/hero/personas/FAQ were already built
+  across #22/#35/#42/#46 in prior sessions and substantially satisfy the issue; a ground-up visual
+  redesign was judged unwarranted — this slice's job was the accuracy sweep + the one genuinely
+  missing visual element.
+  Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify.
+- **Next up:** PRIORITY 6 (consistent product UI) — largely already advanced by this session's own
+  work (D-047's panel icon system now also used on the landing); no further dedicated slice queued
+  before this session ends.
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error

@@ -1191,3 +1191,56 @@
 - Gate green: 136 e2e (incl. 8 compliance, +4 new: `company-logo.spec.ts`) + 127 unit (+9 new:
   `company-logo.test.ts`) + typecheck + lint + format + keel-verify. Two isolated re-runs confirmed
   parallel-worker flake (pre-existing, documented lesson) on 2 unrelated tests, not a regression.
+
+## D-057 — Landing/brand polish (PRODUCT HARDENING PRIORITY 5, #46) — accuracy fix + visual product showcase
+- Date / phase: 2026-09-05, same session, owner directive (corporate B2B SaaS visual bar + exact
+  messaging + "show visually" the product features).
+- **Found and fixed a real accuracy bug, not just polish:** D-052 (PRIORITY 1) made registration a
+  hard gate for every DeCA, but the landing/legal/SEO copy still said the opposite in several
+  places — inherited from before that change and never swept. Fixed every one, verified with a
+  fresh repo-wide grep for the pattern:
+  - Landing hero trust row: "Sin registro para el primero" → "Registro gratuito".
+  - Landing step 2: "Genera el DeCA" copy rewritten to name the account requirement explicitly
+    instead of contradicting it.
+  - Landing persona card + closing paragraph: same "sin registro/sin cuenta" phrasing corrected.
+  - `content/seo/pages.ts`: two FAQ answers ("¿Tengo que registrarme?" / "¿Necesito registrarme
+    para el primer DeCA?") that flatly said "No" — now correctly say registration is required to
+    generate, filling the form is not.
+  - `app/registro/page.tsx`: the invalid-invite recovery link "Crear un DeCA gratis sin cuenta" →
+    "Empezar un DeCA gratis" (doesn't promise what it can't deliver).
+  - **`app/privacidad/page.tsx` and `app/cookies/page.tsx` — a compliance-relevant fix, not just
+    marketing copy:** both described the "Identidad ligera" / "Primer DeCA" lead-gate mechanism
+    (TRUST #42 §3, `lib/deca/lead.ts`) that D-052 deleted outright. A privacy/cookie notice
+    describing a data-collection mechanism the product no longer has is a real accuracy problem —
+    removed the stale bullets, updated the privacy notice's account-data description to reflect
+    the actual current requirement.
+  - Left untouched (still accurate): every claim about the PUBLIC `/d/[token]` download URL needing
+    "sin registro ni contraseña" — that download route is genuinely still unauthenticated (R-7/R-8),
+    unaffected by D-052/D-053.
+- **New visual product showcase**, replacing the plain text checklist under "Por qué usarlo cada
+  día" with 8 icon cards — Generar DeCA, PDF + QR, Histórico, Duplicar, Vehículos guardados,
+  Empresas habituales, Lugares habituales, Custodia digital — using the SAME icon set already built
+  for the workspace (`components/panel/icons.tsx`), adding two new icons (`QrIcon`, `ShieldIcon`)
+  in the same hand-drawn-SVG style rather than pulling in an icon library. Directly answers the
+  issue's "show visually: Generar DeCA, PDF+QR, Histórico, Duplicar, Vehículos guardados, Empresas
+  habituales, Lugares habituales, Custodia digital" and doubles as a PRIORITY 6 (consistent UI)
+  step — the landing now visibly shares the product's own icon language instead of a generic
+  checkmark list. Removed the now-unused `DAILY_USE` text-array export.
+- **Verified live in a real browser** (not just automated assertions): the hero already matched the
+  owner's exact requested copy word-for-word ("DeCA profesional, sencillo y listo para trabajar.",
+  the subhead, "Gratis durante la fase de lanzamiento") from earlier work (D-043) — confirmed
+  on-screen, not just in the content file. The new icon-card section renders as intended: soft
+  blue circular badges, clear label + one-line description per card, consistent with the panel's
+  visual language — reads as a real product feature grid, not a generic checklist.
+- **Assessed against the issue's "avoid" list** (cheap free-tool look, generic startup gradients,
+  stock imagery): the existing landing already avoids all of these — the hero uses a real product
+  mockup (`DecaPreview`, form + generate + QR) instead of a stock photo, no gradients, and the new
+  showcase section reinforces this rather than introducing a generic pattern.
+- **Not done this slice (explicitly out of scope, no full redesign warranted):** the landing's
+  overall structure, hero mockup, personas section, FAQ etc. were already built across #22/#35/#42/
+  #46 in prior sessions and substantially satisfy the issue on their own merits (per this project's
+  own prior assessment) — this slice's job was the accuracy sweep plus the one concretely-missing
+  visual element (the product-features showcase), not a ground-up visual rebuild.
+- Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify. One
+  isolated re-run confirmed parallel-worker flake (pre-existing, documented lesson) on an unrelated
+  content-CMS test, not a regression.

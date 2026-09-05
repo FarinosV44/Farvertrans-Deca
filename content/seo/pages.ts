@@ -449,14 +449,14 @@ export const SEO_PAGES: SeoPage[] = [
       {
         h2: "Empezar",
         body: [
-          "Puedes crear tu primer DeCA sin registrarte. Con una cuenta gratuita guardas el historial y reutilizas tus datos habituales.",
+          "Puedes rellenar tu primer DeCA sin compromiso. Crear una cuenta gratuita es necesario para generarlo, y desde entonces guardas el historial y reutilizas tus datos habituales.",
         ],
       },
     ],
     faq: [
       {
         q: "¿Tengo que registrarme?",
-        a: "No para el primer DeCA. Registrarte es gratis y sirve para guardar y reutilizar.",
+        a: "Para generar el DeCA sí — el registro es gratuito e inmediato. Puedes rellenar el formulario antes de crear la cuenta; nada de lo que escribas se pierde.",
       },
       {
         q: "¿El documento generado es válido para inspección?",
@@ -504,7 +504,7 @@ export const SEO_PAGES: SeoPage[] = [
     faq: [
       {
         q: "¿Necesito registrarme para el primer DeCA?",
-        a: "No. El primer documento se genera sin cuenta. Registrarte es gratis y solo sirve para guardar y reutilizar tus datos.",
+        a: "Sí, para generarlo — el registro es gratuito e inmediato. Puedes rellenar el formulario antes de crear la cuenta; nada de lo que escribas se pierde.",
       },
       {
         q: "¿Tiene coste para autónomos?",

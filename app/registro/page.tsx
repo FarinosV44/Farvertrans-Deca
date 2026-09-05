@@ -58,7 +58,7 @@ export default async function RegistroPage({
             Ya tengo cuenta · Entrar
           </Link>
           <Link href="/crear" className="block font-medium text-[var(--color-primary)] underline">
-            Crear un DeCA gratis sin cuenta
+            Empezar un DeCA gratis
           </Link>
         </div>
       </AuthShell>

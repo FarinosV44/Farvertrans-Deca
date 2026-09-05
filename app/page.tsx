@@ -12,11 +12,21 @@ import { DecaPreview } from "@/components/site/deca-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import {
+  PlusIcon,
+  QrIcon,
+  HistoryIcon,
+  CopyIcon,
+  TruckIcon,
+  BuildingIcon,
+  MapPinIcon,
+  ShieldIcon,
+  IconBadge,
+} from "@/components/panel/icons";
+import {
   HERO,
   TRUST_ROW,
   STEPS,
   PERSONAS,
-  DAILY_USE,
   BENEFITS,
   LEGAL_POINTS,
   LEGAL_SOURCE,
@@ -43,6 +53,18 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const wrap = "mx-auto max-w-[1120px] px-4 md:px-6";
+
+/** Visual product showcase (PRIORITY 5) — the same icon language as the workspace, not text bullets. */
+const PRODUCT_SHOWCASE = [
+  { Icon: PlusIcon, label: "Generar DeCA", body: "Formulario guiado en 3 pasos." },
+  { Icon: QrIcon, label: "PDF + QR", body: "Documento nativo con QR de verificación." },
+  { Icon: HistoryIcon, label: "Histórico", body: "Todos tus documentos, siempre a mano." },
+  { Icon: CopyIcon, label: "Duplicar", body: "Repite un DeCA anterior en segundos." },
+  { Icon: TruckIcon, label: "Vehículos guardados", body: "Tractora y remolque en un clic." },
+  { Icon: BuildingIcon, label: "Empresas habituales", body: "Cargadores y transportistas reutilizables." },
+  { Icon: MapPinIcon, label: "Lugares habituales", body: "Carga y descarga listos para elegir." },
+  { Icon: ShieldIcon, label: "Custodia digital", body: "Conservación conforme a la normativa vigente." },
+] as const;
 
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
@@ -202,19 +224,29 @@ export default async function HomePage() {
           <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
             Por qué usarlo cada día
           </h2>
-          <ul className="mt-6 grid gap-3 md:grid-cols-2">
-            {DAILY_USE.map((d) => (
-              <li key={d} className="flex gap-2 text-sm">
-                <span aria-hidden className="text-[var(--color-primary)]">
-                  ✓
-                </span>
-                <span>{d}</span>
-              </li>
+          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
+            Todo lo que necesitas para no volver a escribir los mismos datos.
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {PRODUCT_SHOWCASE.map(({ Icon, label, body }) => (
+              <div
+                key={label}
+                className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+              >
+                <IconBadge size={44}>
+                  <Icon width={20} height={20} />
+                </IconBadge>
+                <div>
+                  <p className="text-sm font-bold">{label}</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">{body}</p>
+                </div>
+              </div>
             ))}
-          </ul>
-          <p className="mt-5 text-sm text-[var(--color-text-muted)]">
-            La primera vez no necesitas cuenta. Después, <Link href="/entrar">tu empresa</Link>{" "}
-            guarda todo esto para que el siguiente DeCA sea cuestión de segundos.
+          </div>
+          <p className="mt-6 text-sm text-[var(--color-text-muted)]">
+            Empieza a rellenar tu DeCA sin compromiso; solo pedimos crear una cuenta gratuita al
+            final, para generarlo. Desde entonces, <Link href="/entrar">tu empresa</Link> guarda
+            todo esto para que el siguiente DeCA sea cuestión de segundos.
           </p>
         </section>
 

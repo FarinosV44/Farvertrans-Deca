@@ -31,13 +31,9 @@ export default function PrivacidadPage() {
           se conservan el tiempo exigido por la normativa del transporte.
         </li>
         <li>
-          <strong>Identidad ligera</strong> (primer DeCA sin cuenta): nombre y email, para poder
-          enviarte el enlace de tu documento y permitirte reclamarlo después. No se pide contraseña
-          ni datos de empresa en este paso.
-        </li>
-        <li>
-          <strong>Cuenta</strong> (si te registras): email y contraseña (cifrada), para guardar tu
-          historial y tus datos habituales.
+          <strong>Cuenta</strong>: email y contraseña (cifrada). Crear una cuenta gratuita es
+          necesario para generar tu DeCA — puedes rellenar el formulario sin cuenta, pero el
+          documento final requiere registrarte o iniciar sesión.
         </li>
         <li>
           <strong>Uso del sitio</strong>: eventos anónimos de analítica propia (sin cookies de
