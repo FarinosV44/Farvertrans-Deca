@@ -518,9 +518,9 @@ deploy`).
   PDF byte-for-byte identical (same SHA-256) while a brand-new document reflected the change.
   New tests: `tests/e2e/company-logo.spec.ts` (4) + `tests/unit/company-logo.test.ts` (9).
   Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify.
-- **Not done / deferred:** admin (#33) surfacing "has a logo" on the company detail page (nice-to-
-  have per the issue, left for a dedicated admin pass); the rest of the `/panel` IA (Configuración)
-  beyond the new "Mi empresa" (D-047's existing open scope note).
+- **Closed by D-059:** admin (#33) now surfaces "has a logo" on the company detail page.
+- **Still deferred:** the rest of the `/panel` IA (Configuración) beyond the new "Mi empresa"
+  (D-047's existing open scope note).
 - **Not yet on `main`** — awaiting the user's explicit merge instruction.
 
 ## Product hardening — PRIORITY 5 (2026-09-05, same session, owner directive: landing/brand polish, #46)
@@ -563,10 +563,14 @@ migration. See D-058 for the full pre-merge evidence and what remains.
   changes; verify live rather than assuming.
 - **Real Resend delivery is still unconfirmed** — the user said they will configure it (see D-053).
   Do not close out email-verification-as-tested until a real inbox receipt is confirmed.
-- Continuing the owner's PRIORITY list: 1–5 are done (D-052…D-057); PRIORITY 6 (consistent product
-  UI) has no dedicated slice done yet beyond what 1–5 incidentally advanced (shared icon language
-  landing↔panel). The owner's directive says to continue automatically through the list without
-  asking — pick it up there if no new instruction has arrived.
+- **D-059 done, on `develop` (`main` at merge `89e7881` predates it — see below):** closed D-056's
+  deferred admin "has a logo" item, and did a real-browser PRIORITY 6 consistency check across
+  `/panel`, `/panel/empresa`, `/crear` — the whole app already shares one CSS-custom-property design
+  system from before this session, so 1–5's new components were consistent by construction. No
+  further dedicated PRIORITY 6 slice queued.
+- **All 6 owner priorities substantively addressed this session** (D-052…D-059). If resumed: verify
+  nothing new has come in from the owner before assuming the list is closed — Keel decisions are
+  never re-opened on the assistant's own initiative, but a fresh directive supersedes this note.
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error

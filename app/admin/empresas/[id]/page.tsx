@@ -33,6 +33,7 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
             { label: "Contacto", value: c.contactName ?? "—" },
             { label: "Teléfono", value: c.phone ?? "—" },
             { label: "Perfil", value: c.profile ?? "—" },
+            { label: "Logo en PDF", value: c.hasLogo ? "Sí" : "No" },
             { label: "Alta", value: fmt(c.createdAt) },
             { label: "Miembros", value: String(c.members.length) },
             {

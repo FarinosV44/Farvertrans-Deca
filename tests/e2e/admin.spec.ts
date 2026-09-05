@@ -219,6 +219,8 @@ test.describe("ADMIN #33 — internal command center", () => {
       await link.click();
       await expect(page.getByText(mail)).toBeVisible();
       await expect(page.getByText("DeCA recientes")).toBeVisible();
+      // PRODUCT #39: admin sees whether the company has a logo (never the image itself)
+      await expect(page.getByText("Logo en PDF")).toBeVisible();
 
       // Global search reaches the same company.
       await page.goto("/admin");

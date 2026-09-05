@@ -294,6 +294,8 @@ export async function getCompanyAdmin(id: string) {
     contactName: company.contactName,
     phone: company.phone,
     profile: company.profile,
+    /** Never the actual data URI (PRODUCT #39) — admin sees only whether one exists. */
+    hasLogo: !!company.logoDataUri,
     createdAt: company.createdAt,
     totalDeca: company._count.decas,
     decaCounts: { d7: deca7d, d30: deca30d, d90: deca90d },

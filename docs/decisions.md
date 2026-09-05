@@ -1266,3 +1266,23 @@
   deployed; and the previously-known migration `20260905095427_route_intel_and_commercial_consent`
   (D-051) may also still be unapplied — the user should confirm all pending migrations are deployed
   together.
+
+## D-059 — Admin (#33) surfaces "has a logo"; PRIORITY 6 visual-consistency spot check (owner directive: finish remaining items)
+- Date / phase: 2026-09-05, same session, following the user's "finish now the remaining things"
+  after D-058's merge.
+- **Closed D-056's explicitly-deferred item:** `getCompanyAdmin()` (`lib/admin/records.ts`) now
+  returns `hasLogo: boolean` (never the actual data URI — admin needs to know IF one exists, not
+  see it) and the company detail page shows a "Logo en PDF: Sí/No" row. Covered by a one-line
+  addition to the existing admin company-detail e2e test.
+- **PRIORITY 6 (consistent product UI) — assessed via a real browser walk, not rebuilt:** checked
+  `/panel`, `/panel/empresa` (this session's new page), and `/crear` side by side. The whole app
+  already shares one CSS-custom-property design system (`--color-primary`, `--radius-md`,
+  `--color-border`, `--color-surface`, `--color-text-muted`, etc.) from before this session — every
+  component touched this session (wizard, saved-data manager, company-logo manager, admin pages)
+  already used those same tokens, so PRIORITY 1-5's work was consistent with the rest of the
+  product BY CONSTRUCTION, not by a separate consistency pass. D-057's landing icon showcase
+  (reusing `components/panel/icons.tsx`) was this session's one concrete, previously-missing piece
+  of shared visual language between the landing and the workspace. No further dedicated PRIORITY 6
+  slice is queued — the foundation was already unified; this session's additions extended it rather
+  than fragmenting it.
+- Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify.
