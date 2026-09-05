@@ -6,6 +6,7 @@ import { renderDecaPdf } from "@/lib/pdf/render";
 import { getPdfStore, pdfKey, pdfSha256 } from "@/lib/storage";
 import { GenerationError, newCorrelationId } from "./generation";
 import type { ValidatedDeca } from "./validate";
+import { recordRouteIntel } from "./route-intel";
 
 const CLAIM_TTL_DAYS = 30;
 
@@ -169,6 +170,7 @@ export async function createDeca(
   );
 
   await maybeMarkFirstDeca(opts.companyId);
+  await maybeRecordRouteIntel(result.decaId, result.versionId, opts.companyId, validated.data);
 
   // First DeCA for this company by an authenticated user (ACCOUNT #23 milestone).
   let firstForCompany = false;
@@ -201,6 +203,24 @@ async function maybeMarkFirstDeca(companyId?: string) {
     await touchProspectActivity(companyId);
   } catch {
     /* non-critical */
+  }
+}
+
+/**
+ * Derived route intelligence (DATA #45) — best-effort, never blocks
+ * generation/correction. A failure here means one row is missing from a
+ * disposable analytics layer, never a lost or invalid legal document.
+ */
+async function maybeRecordRouteIntel(
+  decaId: string,
+  versionId: string,
+  companyId: string | undefined,
+  data: ValidatedDeca["data"],
+) {
+  try {
+    await recordRouteIntel(decaId, versionId, companyId, data);
+  } catch {
+    /* non-critical — recomputable from dataJson if ever needed */
   }
 }
 
@@ -288,6 +308,8 @@ export async function correctDeca(
       return v;
     }),
   );
+
+  await maybeRecordRouteIntel(decaId, version.id, companyId, validated.data);
 
   return { decaId, versionId: version.id, versionNo, token, pdfSha256: sha256 };
 }

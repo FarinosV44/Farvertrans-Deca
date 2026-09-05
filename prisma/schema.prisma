@@ -43,10 +43,11 @@ model Company {
   profile     CompanyProfile?
   createdAt   DateTime        @default(now()) @map("created_at")
 
-  users       User[]
-  decas       Deca[]
-  acquisition Acquisition?
-  invites     CompanyInvite[]
+  users             User[]
+  decas             Deca[]
+  acquisition       Acquisition?
+  invites           CompanyInvite[]
+  commercialConsent CommercialConsent?
 
   @@map("company")
 }
@@ -58,6 +59,23 @@ enum CompanyProfile {
   shipper
   operator
   carrier_passengers
+}
+
+/// Company-level authorization to analyze route data for commercial matching
+/// (DATA #45 §3). Separate from `TermsAcceptance` — commercial use of route
+/// data is opt-in and revocable, never assumed from ordinary product use.
+model CommercialConsent {
+  id        String    @id @default(cuid())
+  companyId String    @unique @map("company_id")
+  granted   Boolean   @default(false)
+  version   String
+  grantedAt DateTime? @map("granted_at")
+  revokedAt DateTime? @map("revoked_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("commercial_consent")
 }
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.
@@ -156,11 +174,12 @@ model Deca {
   creatorEmail     String?   @map("creator_email")
   createdAt        DateTime  @default(now()) @map("created_at")
 
-  company        Company?      @relation(fields: [companyId], references: [id])
-  createdByUser  User?         @relation("DecaCreatedBy", fields: [createdByUserId], references: [id])
-  currentVersion DecaVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
-  versions       DecaVersion[] @relation("DecaVersions")
+  company        Company?         @relation(fields: [companyId], references: [id])
+  createdByUser  User?            @relation("DecaCreatedBy", fields: [createdByUserId], references: [id])
+  currentVersion DecaVersion?     @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions       DecaVersion[]    @relation("DecaVersions")
   claimTokens    ClaimToken[]
+  routeIntel     DecaRouteIntel[]
 
   @@map("deca")
 }
@@ -178,13 +197,55 @@ model DecaVersion {
   createdByUserId String?  @map("created_by_user_id")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  deca      Deca            @relation("DecaVersions", fields: [decaId], references: [id], onDelete: Cascade)
-  currentOf Deca?           @relation("CurrentVersion")
-  accessLog DecaAccessLog[]
+  deca       Deca            @relation("DecaVersions", fields: [decaId], references: [id], onDelete: Cascade)
+  currentOf  Deca?           @relation("CurrentVersion")
+  accessLog  DecaAccessLog[]
+  routeIntel DecaRouteIntel?
 
   @@unique([decaId, versionNo])
   @@index([decaId])
   @@map("deca_version")
+}
+
+/// Normalized/queryable route data derived from a goods DeCA version (DATA #45).
+/// Kept strictly separate from `DecaVersion.dataJson` — the immutable legal
+/// snapshot used to render the PDF is never rewritten; this row is disposable,
+/// best-effort, derived intelligence that can be recomputed from it at any time.
+/// One row per version (a correction that changes the route gets its own row).
+model DecaRouteIntel {
+  id                String    @id @default(cuid())
+  decaId            String    @map("deca_id")
+  decaVersionId     String    @unique @map("deca_version_id")
+  companyId         String?   @map("company_id")
+  transportType     String    @default("goods") @map("transport_type")
+  carrierName       String?   @map("carrier_name")
+  loadCompanyName   String?   @map("load_company_name")
+  loadCity          String?   @map("load_city")
+  loadProvince      String?   @map("load_province")
+  loadCountry       String?   @map("load_country")
+  loadPostalCode    String?   @map("load_postal_code")
+  unloadCompanyName String?   @map("unload_company_name")
+  unloadCity        String?   @map("unload_city")
+  unloadProvince    String?   @map("unload_province")
+  unloadCountry     String?   @map("unload_country")
+  unloadPostalCode  String?   @map("unload_postal_code")
+  loadDate          DateTime? @map("load_date")
+  unloadDate        DateTime? @map("unload_date")
+  tractorPlate      String?   @map("tractor_plate")
+  trailerPlate      String?   @map("trailer_plate")
+  /// Normalized corridor key, e.g. "ES-VALENCIA__FR-LYON" — city+country only,
+  /// diacritics/case-folded, for cheap recurrence grouping before real geocoding.
+  routeKey          String?   @map("route_key")
+  generatedAt       DateTime  @default(now()) @map("generated_at")
+
+  deca    Deca        @relation(fields: [decaId], references: [id], onDelete: Cascade)
+  version DecaVersion @relation(fields: [decaVersionId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([loadCountry, loadProvince, loadCity])
+  @@index([unloadCountry, unloadProvince, unloadCity])
+  @@index([routeKey])
+  @@map("deca_route_intel")
 }
 
 /// One-time token to attach an anonymous DeCA to an account (30-day TTL, D-016).
