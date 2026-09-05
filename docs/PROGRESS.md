@@ -733,3 +733,13 @@ the full wizard → result screen at 1440px confirming the visual fix. Landing's
 (personas/steps/showcase sections), registration, wizard-step chrome and `/panel` are the rest of #51
 and are NOT done yet — deliberately sequenced behind this concrete, testable slice. See `decisions.md`
 D-069. **Continuing** with the rest of #51 next.
+
+## D-070: DESIGN #51 slice 2 — `/panel` widened to a two-column desktop layout
+`app/panel/page.tsx` widened from a centered 900px single column to a 1200px two-column desktop
+split (quick actions + recent documents left, saved-data summary cards as a sidebar right); mobile
+unchanged. `AppNav`'s horizontal tab bar (shared by every `/panel/*` route) deliberately left as-is —
+a sidebar-nav rework is a separate, larger, higher-risk slice, not silently dropped. Hit and diagnosed
+a false-failure flake: a stray `npm run dev` from the prior manual browser check was still on port
+3000, causing 8 unrelated e2e failures until killed via `netstat`/`taskkill`; re-ran clean, 16/16
+passed incl. the `/panel` a11y check. Verified visually by registering a real throwaway account and
+viewing `/panel` at 1440px. See `decisions.md` D-070. **Continuing** with the rest of #51.

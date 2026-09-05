@@ -1725,3 +1725,33 @@
   the chip row, and a genuinely scannable QR in the sidebar. Screenshots reviewed, not saved (no
   artifact requested).
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068.
+
+## D-070 — DESIGN #51 slice 2: `/panel` widened to a two-column desktop layout
+- Date / phase: 2026-09-06, same session, continuing #51 immediately after D-069.
+- `app/panel/page.tsx` — the registered workspace home — was the same class of issue as the result
+  screen: a single centered `max-w-[900px]` column regardless of viewport width. Widened to
+  `max-w-[1200px]` with a `md:grid-cols-[1fr_300px]` desktop split: quick actions ("Nuevo DeCA" /
+  "Repetir último") + the recent-documents list stay in the main column; the two `SummaryCard`s
+  (companies/vehicles saved-data counts) move to a right-hand sidebar column. Mobile keeps the exact
+  same stacked order (no `md:` classes fire below the breakpoint). `AppNav` (the horizontal tab bar
+  shared by every `/panel/*` route) was deliberately left untouched — restructuring it into a sidebar
+  nav would be a much larger, higher-risk change touching every workspace page at once, which
+  conflicts with the standing "work incrementally, don't rewrite architecture unnecessarily" rule;
+  noted here as a candidate for a later, separately-tested slice if the owner wants it, not silently
+  dropped. No component internals, props, or `data-testid`s changed — layout wrapper only.
+- **Flake investigation, not a code defect:** the first e2e run after this edit showed 8 unrelated
+  failures (email-confirmation, master-data, workspace tests) with timeouts unrelated to `/panel`'s
+  markup. Root cause: a stray `npm run dev` process from the D-069 manual browser walkthrough was
+  still bound to port 3000 (`taskkill`'s Git-Bash `pkill` pattern didn't match the actual Windows node
+  process), so Playwright's own tests were hitting that leftover server instead of its managed one.
+  Killed the stray process (`netstat -ano` → `taskkill //PID`), re-ran the exact same suite clean:
+  16/16 passed including the `/panel` a11y check. Recording this so a future session recognizes the
+  pattern immediately rather than re-diagnosing it: after any manual `npm run dev` on this Windows/
+  Git-Bash setup, verify `netstat -ano | grep :3000` is empty before trusting an e2e run.
+- Verification: `tsc --noEmit` clean, ESLint clean, Prettier clean; `tests/e2e/workspace.spec.ts`,
+  `master-data.spec.ts`, `trust-registration-v2.spec.ts`, `launch-happy-path.spec.ts` (16 tests incl.
+  the `/panel` a11y check) all passed once the stray server was cleared. Also registered a fresh
+  throwaway account through the real UI and visually confirmed the two-column `/panel` layout at
+  1440px, including the pre-verification banner and the PRAETORIA data-protection notice on
+  `/registro` rendering correctly.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068/D-069.
