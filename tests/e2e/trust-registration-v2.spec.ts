@@ -96,11 +96,14 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     ).toBeVisible();
     await expect(page.getByTestId("verify-email-address")).toBeVisible();
 
-    // "Ya he confirmado mi cuenta" never traps the user — it always leaves.
+    // D-053: "Ya he confirmado mi cuenta" is NOT proof — before the real link
+    // is opened it must re-check the server and keep the user right here.
     await page.getByTestId("verify-email-continue").click();
-    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page.getByTestId("verify-email-not-yet")).toBeVisible();
+    await expect(page).toHaveURL(/\/verificar-email/);
 
-    // unverified accounts see a reminder banner in the panel
+    // browsing the workspace is still a soft gate — /panel itself is not blocked
+    await page.goto("/panel");
     await expect(page.getByTestId("panel-verify-email-banner")).toBeVisible();
 
     // the emailed link actually verifies the account
@@ -116,35 +119,178 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     await expect(page.getByTestId("panel-verify-email-banner")).not.toBeVisible();
   });
 
+  test("D-053: 'Ya he confirmado mi cuenta' re-checks the server and proceeds once truly verified", async ({
+    page,
+  }) => {
+    await page.goto("/registro");
+    await page.fill("#email", email());
+    await page.fill("#password", "supersecret123");
+    await page.fill("#companyName", "Reverifica SL");
+    await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
+    const [res] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+      page.getByTestId("register-submit").click(),
+    ]);
+    const body = await res.json();
+    await expect(page).toHaveURL(/\/verificar-email/);
+
+    // verify for real, in a SEPARATE tab (as a real click on an emailed link would be)
+    const other = await page.context().newPage();
+    await other.goto(`/verificar-email/${body.verifyTestToken}`);
+    await expect(other.getByTestId("verify-email-success")).toBeVisible();
+    await other.close();
+
+    // back on the original tab, the button now finds the server-side truth and proceeds
+    await page.getByTestId("verify-email-continue").click();
+    await expect(page).toHaveURL(/\/panel$/);
+  });
+
+  test("D-053 negative case: register, never open the email link, generation stays blocked everywhere", async ({
+    page,
+  }) => {
+    await page.goto("/registro");
+    await page.fill("#email", email());
+    await page.fill("#password", "supersecret123");
+    await page.fill("#companyName", "Sin Verificar SL");
+    await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
+    await page.getByTestId("register-submit").click();
+    await expect(page).toHaveURL(/\/verificar-email/);
+
+    // clicking "Ya he confirmado mi cuenta" without ever opening the real link
+    // must NOT let the user in — it re-checks the server and finds it false.
+    await page.getByTestId("verify-email-continue").click();
+    await expect(page.getByTestId("verify-email-not-yet")).toBeVisible();
+    await expect(page).toHaveURL(/\/verificar-email/);
+
+    // the wizard shows the verification gate, never the generate button
+    await page.goto("/crear");
+    await page.fill("#shipperName", "Sin Verificar SL");
+    await page.fill("#shipperNif", "B96789011");
+    await page.fill("#shipperAddress", "Calle 1, Valencia");
+    await page.fill("#carrierName", "Trans SL");
+    await page.fill("#carrierNif", "B12345674");
+    await page.fill("#carrierAddress", "Calle 5, Paterna");
+    await page.getByTestId("wizard-next").click();
+    for (const [s, v] of [
+      ["#loadLocationName", "Almacén Valencia"],
+      ["#loadLocationAddress", "Calle 1"],
+      ["#loadLocationPostalCode", "46001"],
+      ["#loadLocationCity", "Valencia"],
+      ["#loadLocationProvince", "Valencia"],
+      ["#loadLocationCountry", "España"],
+      ["#loadDate", "2026-10-06"],
+      ["#unloadLocationName", "Almacén Madrid"],
+      ["#unloadLocationAddress", "Av. Central 3"],
+      ["#unloadLocationPostalCode", "28001"],
+      ["#unloadLocationCity", "Madrid"],
+      ["#unloadLocationProvince", "Madrid"],
+      ["#unloadLocationCountry", "España"],
+      ["#unloadDate", "2026-10-06"],
+    ] as const)
+      await page.fill(s, v);
+    await page.getByTestId("wizard-next").click();
+    await page.fill("#goods", "Palés");
+    await page.fill("#weight", "12000 kg");
+    await page.fill("#tractorPlate", "1234 BCD");
+    await expect(page.getByTestId("wizard-generate")).toHaveCount(0);
+    await expect(page.getByTestId("verify-gate")).toBeVisible();
+
+    // defense in depth: the API rejects it too, even with a valid session
+    const apiRes = await page.request.post("/api/deca", {
+      data: {
+        shipper: { name: "Sin Verificar SL", nif: "B96789011", address: "Calle 1, Valencia" },
+        carrier: { name: "Trans SL", nif: "B12345674", address: "Calle 5, Paterna" },
+        loadLocation: {
+          name: "Almacén Valencia",
+          address: "Calle 1",
+          postalCode: "46001",
+          city: "Valencia",
+          province: "Valencia",
+          country: "España",
+        },
+        unloadLocation: {
+          name: "Almacén Madrid",
+          address: "Av. Central 3",
+          postalCode: "28001",
+          city: "Madrid",
+          province: "Madrid",
+          country: "España",
+        },
+        loadDate: "2026-10-06",
+        unloadDate: "2026-10-06",
+        goods: "Palés",
+        weight: "12000 kg",
+        tractorPlate: "1234 BCD",
+      },
+    });
+    expect(apiRes.status()).toBe(403);
+    expect((await apiRes.json()).error.code).toBe("email_not_verified");
+  });
+
   test("an invalid token shows a clear error, never a crash", async ({ page }) => {
     await page.goto("/verificar-email/not-a-real-token");
     await expect(page.getByTestId("verify-email-error")).toBeVisible();
   });
 });
 
-test.describe("TRUST #42 §3/§4 — lightweight identity gate", () => {
-  test("the anonymous wizard asks for name + email before generating, then gates the next DeCA", async ({
+test.describe("PRIORITY 1 — hard registration gate replaces the lightweight identity gate", () => {
+  test("an anonymous visitor cannot generate; registering restores the exact draft with no retyping", async ({
     page,
   }) => {
     await page.goto("/crear");
     await fillWizardThroughStep1(page);
 
-    // cannot generate without the lightweight identity
-    await page.getByTestId("wizard-generate").click();
-    await expect(page.getByTestId("error-summary")).toBeVisible();
-    await expect(page).toHaveURL(/\/crear$/);
-
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
-    await page.getByTestId("wizard-generate").click();
-    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
-
-    // the SAME anonymous browser is sent to registration for the next one
-    await page.goto("/crear");
-    await expect(page.getByRole("heading", { name: "Ya has creado tu primer DeCA" })).toBeVisible();
-    await expect(page.getByTestId("lead-gate-register")).toHaveAttribute(
+    // no generate button at all for an anonymous visitor — the gate replaces it
+    await expect(page.getByTestId("wizard-generate")).toHaveCount(0);
+    await expect(page.getByTestId("auth-gate")).toBeVisible();
+    await expect(page.getByTestId("auth-gate-register")).toHaveAttribute(
       "href",
       "/registro?next=%2Fcrear",
     );
+
+    // register in the SAME tab — the sessionStorage draft must survive
+    await page.getByTestId("auth-gate-register").click();
+    await expect(page).toHaveURL(/\/registro\?next=%2Fcrear/);
+    await page.fill("#email", email());
+    await page.fill("#password", "supersecret123");
+    await page.fill("#companyName", "Gate SL");
+    await page.fill("#companyNif", "B12345674");
+    await page.getByTestId("accept-terms").check();
+    const [res] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+      page.getByTestId("register-submit").click(),
+    ]);
+    const body = await res.json();
+    await expect(page).toHaveURL(/\/verificar-email/);
+
+    // D-053: authenticated but NOT YET email-verified — still cannot generate.
+    // "Ya he confirmado mi cuenta" is not proof; re-checking finds it unverified.
+    await page.getByTestId("verify-email-continue").click();
+    await expect(page.getByTestId("verify-email-not-yet")).toBeVisible();
+
+    // real server-side verification, via the token the email actually carried
+    const other = await page.context().newPage();
+    await other.goto(`/verificar-email/${body.verifyTestToken}`);
+    await expect(other.getByTestId("verify-email-success")).toBeVisible();
+    await other.close();
+
+    // NOW "Ya he confirmado mi cuenta" finds it truly verified and proceeds —
+    // `next` sends it straight back to /crear.
+    await page.getByTestId("verify-email-continue").click();
+    await expect(page).toHaveURL(/\/crear$/);
+
+    // every field from before is restored — nothing retyped
+    await expect(page.locator("#shipperName")).toHaveValue("Cargas SL");
+    await expect(page.locator("#carrierNif")).toHaveValue("B12345674");
+    await page.getByTestId("wizard-next").click();
+    await expect(page.locator("#loadLocationName")).toHaveValue("Almacén Valencia");
+    await page.getByTestId("wizard-next").click();
+    await expect(page.locator("#goods")).toHaveValue("Palés");
+
+    // now authenticated AND verified: the generate button is back, and it works
+    await page.getByTestId("wizard-generate").click();
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
   });
 });

@@ -372,28 +372,52 @@ async function recordTermsAcceptance(userId: string, companyId: string | null) {
 }
 
 // ---------------------------------------------------------------------------
-// Email verification (GROWTH #46) — a courtesy confirmation, not a hard gate:
-// the account and session exist regardless, so nothing about the product is
-// blocked while a verification email is in flight.
+// Email verification (GROWTH #46, hardened by the D-053 product-hardening
+// directive): the account and session exist as soon as signup completes —
+// login, browsing the workspace, saving master data are never blocked — but
+// FINAL DeCA generation is a hard, server-enforced gate on `emailVerifiedAt`
+// (`POST /api/deca`, `lib/auth.isEmailVerified`). "Ya he confirmado mi
+// cuenta" re-checks this column fresh from the database; it never sets it
+// itself — only a verified token click (`verifyEmailToken`) does.
 // ---------------------------------------------------------------------------
 
 const VERIFY_TTL_HOURS = 24;
 
-/** Start (or restart) email verification. Returns the raw token to email. */
+/**
+ * Start (or restart) email verification. Returns the raw token to email.
+ * Invalidates any still-unused token for this user first, so at most one
+ * verification token is ever active at a time — a resend rotates the token,
+ * it never accumulates unlimited live ones.
+ */
 export async function createEmailVerification(
   userId: string,
   email: string,
 ): Promise<{ token: string }> {
   const token = randomBytes(32).toString("base64url");
-  await prisma.emailVerificationToken.create({
-    data: {
-      tokenHash: sha256(token),
-      userId,
-      email: normEmail(email),
-      expiresAt: new Date(Date.now() + VERIFY_TTL_HOURS * 60 * 60 * 1000),
-    },
-  });
+  await prisma.$transaction([
+    prisma.emailVerificationToken.updateMany({
+      where: { userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+    prisma.emailVerificationToken.create({
+      data: {
+        tokenHash: sha256(token),
+        userId,
+        email: normEmail(email),
+        expiresAt: new Date(Date.now() + VERIFY_TTL_HOURS * 60 * 60 * 1000),
+      },
+    }),
+  ]);
   return { token };
+}
+
+/** Fresh, uncached read of whether this user's email is verified right now. */
+export async function isEmailVerified(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { emailVerifiedAt: true },
+  });
+  return !!user?.emailVerifiedAt;
 }
 
 export class EmailVerificationError extends Error {

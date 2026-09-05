@@ -54,8 +54,14 @@ async function register(page: Page, nif = "B12345674") {
   await page.fill("#companyName", "Operador CV2 SL");
   await page.fill("#companyNif", nif);
   await page.getByTestId("accept-terms").check();
-  await page.getByTestId("register-submit").click();
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
   await expect(page).toHaveURL(/\/verificar-email/);
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  const body = await res.json();
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
   await page.goto("/panel");
 }
 
@@ -144,6 +150,7 @@ test.describe("UX #25 — creator V2", () => {
   });
 
   test("a failed generation keeps the entered data (draft not lost)", async ({ page }) => {
+    await register(page);
     await page.goto("/crear");
     await page.route("**/api/deca", (route) =>
       route.fulfill({
@@ -164,8 +171,6 @@ test.describe("UX #25 — creator V2", () => {
     await page.fill("#goods", DECA.goods);
     await page.fill("#weight", DECA.weight);
     await page.fill("#tractorPlate", DECA.tractorPlate);
-    await page.fill("#leadName", "Borrador SL contacto");
-    await page.fill("#leadEmail", "borrador@example.com");
     await page.getByTestId("wizard-generate").click();
 
     await expect(page.getByText(/Fallo simulado|No se pudo generar/)).toBeVisible();

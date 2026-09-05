@@ -16,12 +16,12 @@ export const dynamic = "force-dynamic";
 export default async function VerificarEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; sent?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/registro");
 
-  const { next } = await searchParams;
+  const { next, sent } = await searchParams;
   const nextPath = safeInternalPath(next);
   if (user.emailVerifiedAt) redirect(nextPath);
 
@@ -29,7 +29,7 @@ export default async function VerificarEmailPage({
     <>
       <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[480px] px-4 py-12 md:px-6">
-        <VerifyEmailScreen email={user.email} next={nextPath} />
+        <VerifyEmailScreen email={user.email} next={nextPath} initiallySent={sent !== "0"} />
       </main>
       <SiteFooter />
     </>

@@ -109,15 +109,23 @@ export function RegisterForm({
         lockAttribution(); // first-touch is now permanent
         if (data?.claimedDecaId) track("anonymous_deca_claimed");
         if (claim) track("claim_completed");
-        track("email_verification_sent");
+        if (data?.emailSent) track("email_verification_sent");
         // Every fresh account gets the dedicated confirmation screen (GROWTH #46) —
-        // never a dead end: it hands the user straight back to nextPath.
-        router.push(`/verificar-email?next=${encodeURIComponent(nextPath)}`);
+        // never a dead end: it hands the user straight back to nextPath. `sent`
+        // tells the screen the TRUTH about delivery (D-053) — never claim an
+        // email arrived when the provider call actually failed.
+        router.push(
+          `/verificar-email?next=${encodeURIComponent(nextPath)}&sent=${data?.emailSent ? "1" : "0"}`,
+        );
         return;
       }
       track("login_completed");
       if (claim) track("claim_completed");
+      // `nextPath` may be a page the visitor saw signed-out before logging in
+      // (e.g. `/crear`'s registration gate) — refresh() busts Next's client
+      // router cache so the just-created session is actually reflected there.
       router.push(nextPath);
+      router.refresh();
     } catch {
       setError("Sin conexión. Inténtalo de nuevo.");
       setBusy(false);

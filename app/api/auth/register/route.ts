@@ -60,22 +60,40 @@ export async function POST(req: Request) {
 
   await setSessionCookie(created.userId);
 
-  // Email verification (GROWTH #46) — best-effort, never blocks the account
-  // from existing; the confirmation screen handles an unconfigured provider.
+  // Email verification (D-053): never blocks the ACCOUNT from existing, but
+  // the client must never be told an email was sent when it was not — the
+  // confirmation screen renders a different, honest state per `emailSent`.
   let verifyTestToken: string | undefined;
+  let emailSent = false;
   try {
     const { token } = await createEmailVerification(created.userId, b.email);
     const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/verificar-email/${encodeURIComponent(token)}`;
     const { sendMail } = await import("@/lib/mailer");
-    await sendMail({
+    const mail = await sendMail({
       to: b.email,
       subject: `Confirma tu correo en ${BRAND.name}`,
       text: `Ya casi está. Confirma tu correo para activar tu cuenta de ${BRAND.name}.\n\nAbre este enlace (caduca en 24 horas):\n${link}\n\nSi no has sido tú, ignora este mensaje.`,
     });
+    emailSent = mail.sent;
+    if (!mail.sent) {
+      console.warn(
+        JSON.stringify({
+          event: "verification_email_not_sent",
+          reason: mail.reason,
+          userId: created.userId,
+        }),
+      );
+    }
     // Test seam ONLY (E2E). Never set FVD_EXPOSE_RESET_TOKEN in production.
     if (process.env.FVD_EXPOSE_RESET_TOKEN === "1") verifyTestToken = token;
-  } catch {
-    // never block signup on a mail-provider hiccup
+  } catch (e) {
+    console.error(
+      JSON.stringify({
+        event: "verification_email_pipeline_failed",
+        userId: created.userId,
+        error: e instanceof Error ? e.message : String(e),
+      }),
+    );
   }
 
   // Write acquisition attribution (first + last touch) from the first-party cookie.
@@ -112,13 +130,13 @@ export async function POST(req: Request) {
       claimedDecaId = r.decaId;
     } catch (e) {
       if (e instanceof ClaimError) {
-        return NextResponse.json({ ok: true, claimWarning: e.message }, { status: 201 });
+        return NextResponse.json({ ok: true, claimWarning: e.message, emailSent }, { status: 201 });
       }
     }
   }
 
   return NextResponse.json(
-    { ok: true, claimedDecaId, joinedTeam: created.joinedTeam, verifyTestToken },
+    { ok: true, claimedDecaId, joinedTeam: created.joinedTeam, verifyTestToken, emailSent },
     { status: 201 },
   );
 }

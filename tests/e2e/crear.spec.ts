@@ -53,11 +53,11 @@ async function fillStep2(page: Page) {
 }
 
 test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
-  test("AC-01: an anonymous visitor completes all steps and reaches the result", async ({
+  test("AC-01: an anonymous visitor completes all steps and hits the registration gate, never the result", async ({
     page,
   }) => {
     await page.goto("/crear");
-    await expect(page.getByText("No necesitas registrarte")).toBeVisible();
+    await expect(page.getByText("Completa los datos sin compromiso")).toBeVisible();
 
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
@@ -68,8 +68,6 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
     await page.fill("#tractorPlate", V.tractorPlate);
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
 
     // AC: the review summary shows the exact final data before generating
     const review = page.getByTestId("review-summary");
@@ -78,13 +76,18 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     await expect(review).toContainText(V.shipperName);
     await expect(review).toContainText(V.goods);
 
-    await page.getByTestId("wizard-generate").click();
-
-    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
-    await expect(page.getByRole("heading", { name: "DeCA generado" })).toBeVisible();
-    await expect(
-      page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid"),
-    ).toBeVisible();
+    // PRIORITY 1: a DeCA cannot be finally generated without an account —
+    // the gate replaces the generate button, never a silent anonymous create.
+    await expect(page.getByTestId("wizard-generate")).toHaveCount(0);
+    await expect(page.getByTestId("auth-gate")).toBeVisible();
+    await expect(page.getByTestId("auth-gate-register")).toHaveAttribute(
+      "href",
+      "/registro?next=%2Fcrear",
+    );
+    await expect(page.getByTestId("auth-gate-login")).toHaveAttribute(
+      "href",
+      "/entrar?next=%2Fcrear",
+    );
   });
 
   test("AC-02: a mandatory omission blocks advancing with a Spanish message + error summary", async ({
@@ -121,6 +124,31 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
   });
 });
 
+function apiEmail() {
+  return `crearapi${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
+}
+
+/**
+ * Registers a fresh company (session cookie left on the request context) and
+ * verifies its email for real via the emailed token (D-053: generation is a
+ * hard gate on `emailVerifiedAt`, so tests not exercising that gate itself
+ * need a genuinely verified account).
+ */
+async function registerViaApi(request: import("@playwright/test").APIRequestContext) {
+  const res = await request.post("/api/auth/register", {
+    data: {
+      email: apiEmail(),
+      password: "supersecret123",
+      companyName: "API Creator SL",
+      companyNif: "B12345674",
+      acceptTerms: true,
+    },
+  });
+  expect(res.status()).toBe(201);
+  const body = await res.json();
+  await request.get(`/verificar-email/${body.verifyTestToken}`);
+}
+
 test.describe("POST /api/deca (F1/F2/R-2)", () => {
   const payload = {
     shipper: { name: V.shipperName, nif: V.shipperNif, address: V.shipperAddress },
@@ -148,9 +176,19 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
     tractorPlate: V.tractorPlate,
   };
 
+  test("PRIORITY 1: an unauthenticated caller gets 401 auth_required, never a document", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/deca", { data: payload });
+    expect(res.status()).toBe(401);
+    const body = await res.json();
+    expect(body.error.code).toBe("auth_required");
+  });
+
   test("AC-09: rejects a payload missing a mandatory field with 422 + field errors", async ({
     request,
   }) => {
+    await registerViaApi(request);
     const res = await request.post("/api/deca", {
       data: { ...payload, loadLocation: { ...payload.loadLocation, name: "" } },
     });
@@ -160,16 +198,17 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
     expect(body.error.fields).toHaveProperty(["loadLocation.name"]);
   });
 
-  test("AC-01: accepts a valid payload with 201 + token", async ({ request }) => {
+  test("AC-01: an authenticated caller gets 201 + token", async ({ request }) => {
+    await registerViaApi(request);
     const res = await request.post("/api/deca", { data: payload });
     expect(res.status()).toBe(201);
     const body = await res.json();
     expect(body.decaId).toBeTruthy();
     expect(String(body.token).length).toBeGreaterThan(20);
-    expect(body.claimToken).toBeTruthy(); // anonymous → gets a claim token
   });
 
   test("AC-04b: the same idempotency key never creates a second DeCA", async ({ request }) => {
+    await registerViaApi(request);
     const key = `test-${Date.now()}-${Math.random()}`;
     const a = await request.post("/api/deca", {
       data: payload,
@@ -185,6 +224,7 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
   });
 
   test("a foreign NIF is accepted (warning, not rejection)", async ({ request }) => {
+    await registerViaApi(request);
     const res = await request.post("/api/deca", {
       data: {
         ...payload,

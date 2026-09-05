@@ -16,9 +16,35 @@ export type CommercialConsentState = {
   revokedAt: Date | null;
 };
 
+const EMPTY_CONSENT: CommercialConsentState = {
+  granted: false,
+  version: null,
+  grantedAt: null,
+  revokedAt: null,
+};
+
+/**
+ * Reads never crash the page they back: a schema mismatch (e.g. this
+ * migration not yet applied on a given environment) degrades to the safe
+ * "not granted" default instead of a generic error boundary, matching the
+ * lesson from D-041 (unguarded Prisma calls taking down an entire page). The
+ * real error is still logged so the gap is diagnosable, not silently masked.
+ */
 export async function getCommercialConsent(companyId: string): Promise<CommercialConsentState> {
-  const row = await prisma.commercialConsent.findUnique({ where: { companyId } });
-  if (!row) return { granted: false, version: null, grantedAt: null, revokedAt: null };
+  let row;
+  try {
+    row = await prisma.commercialConsent.findUnique({ where: { companyId } });
+  } catch (e) {
+    console.error(
+      JSON.stringify({
+        event: "commercial_consent_read_failed",
+        companyId,
+        error: e instanceof Error ? e.message : String(e),
+      }),
+    );
+    return EMPTY_CONSENT;
+  }
+  if (!row) return EMPTY_CONSENT;
   return {
     granted: row.granted,
     version: row.version,

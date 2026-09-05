@@ -21,16 +21,19 @@ async function registerWith(page: Page, companyNif: string) {
   await page.fill("#companyName", "Attrib Test SL");
   await page.fill("#companyNif", companyNif);
   await page.getByTestId("accept-terms").check();
-  await page.getByTestId("register-submit").click();
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
   await expect(page).toHaveURL(/\/verificar-email/);
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  const body = await res.json();
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
   await page.goto("/panel");
 }
 
 test.describe("BUILD 11 — referral + UTM attribution", () => {
-  test("AC-18/19: ?ref=adrian then anonymous create then signup is attributed to adrian", async ({
-    page,
-    request,
-  }) => {
+  test("AC-18/19: ?ref=adrian then signup is attributed to adrian", async ({ page, request }) => {
     // arrive via the operator link
     await page.goto(
       "/?ref=adrian&utm_source=whatsapp&utm_medium=direct&utm_campaign=lanzamiento_deca",

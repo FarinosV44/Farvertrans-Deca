@@ -55,11 +55,35 @@ async function fillStep2(page: Page) {
   await page.fill("#unloadDate", PAYLOAD.unloadDate);
 }
 
+/** Registers a fresh company and leaves the request context authenticated. */
+async function registerViaApi(request: import("@playwright/test").APIRequestContext) {
+  const res = await request.post("/api/auth/register", {
+    data: {
+      email: `rel${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`,
+      password: "supersecret123",
+      companyName: "Reliability SL",
+      companyNif: "B12345674",
+      acceptTerms: true,
+    },
+  });
+  expect(res.status()).toBe(201);
+  const body = await res.json();
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real via
+  // the emailed token, since this file isn't testing the verification gate.
+  await request.get(`/verificar-email/${body.verifyTestToken}`);
+}
+
+/** Registers a fresh company via the API and leaves the page's cookie jar authenticated. */
+async function registerAndLogin(page: Page) {
+  await registerViaApi(page.request);
+}
+
 test.describe("#29 — DeCA generation reliability", () => {
   test("a successful create returns a real id, token and PDF hash, immediately fetchable", async ({
     request,
     baseURL,
   }) => {
+    await registerViaApi(request);
     const res = await request.post("/api/deca", {
       headers: { "idempotency-key": `rel-${Date.now()}-${Math.random()}` },
       data: PAYLOAD,
@@ -82,9 +106,9 @@ test.describe("#29 — DeCA generation reliability", () => {
   test("a retry with the same idempotency key cannot create a second document", async ({
     request,
   }) => {
-    // The replay must also be exempt from the anonymous-creation rate limit: it
-    // creates nothing, and a user recovering from a transient failure must never
-    // be answered with a 429 (#29 / D-029).
+    await registerViaApi(request);
+    // A retry must never create a second document — a user recovering from a
+    // transient failure gets back the SAME one, not a duplicate (#29 / D-029).
     const key = `idem-${Date.now()}-${Math.random()}`;
     const first = await request.post("/api/deca", {
       headers: { "idempotency-key": key },
@@ -103,6 +127,7 @@ test.describe("#29 — DeCA generation reliability", () => {
   });
 
   test("an invalid payload is a field-level 422, never a generic failure", async ({ request }) => {
+    await registerViaApi(request);
     const res = await request.post("/api/deca", {
       data: { ...PAYLOAD, carrier: { ...PAYLOAD.carrier, address: "" } },
     });
@@ -116,6 +141,7 @@ test.describe("#29 — DeCA generation reliability", () => {
   test("the wizard cannot double-submit: Generate is disabled while generating", async ({
     page,
   }) => {
+    await registerAndLogin(page);
     await page.goto("/crear");
     await page.fill("#shipperName", PAYLOAD.shipper.name);
     await page.fill("#shipperNif", PAYLOAD.shipper.nif);
@@ -129,8 +155,6 @@ test.describe("#29 — DeCA generation reliability", () => {
     await page.fill("#goods", PAYLOAD.goods);
     await page.fill("#weight", PAYLOAD.weight);
     await page.fill("#tractorPlate", PAYLOAD.tractorPlate);
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
 
     const generate = page.getByTestId("wizard-generate");
     await generate.click();
@@ -147,6 +171,7 @@ test.describe("#29 — DeCA generation reliability", () => {
   });
 
   test("a failed generation keeps the draft, shows a code and offers a retry", async ({ page }) => {
+    await registerAndLogin(page);
     await page.goto("/crear");
     await page.fill("#shipperName", PAYLOAD.shipper.name);
     await page.fill("#shipperNif", PAYLOAD.shipper.nif);
@@ -160,8 +185,6 @@ test.describe("#29 — DeCA generation reliability", () => {
     await page.fill("#goods", PAYLOAD.goods);
     await page.fill("#weight", PAYLOAD.weight);
     await page.fill("#tractorPlate", PAYLOAD.tractorPlate);
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
 
     // Force ONE server failure, exactly as production would surface it.
     let failed = false;

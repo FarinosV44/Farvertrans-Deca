@@ -59,19 +59,31 @@ async function fillWizard(page: Page) {
   await page.fill("#goods", V.goods);
   await page.fill("#weight", V.weight);
   await page.fill("#tractorPlate", V.tractorPlate);
-  // Only the anonymous flow shows the lightweight identity gate (TRUST #42 §3).
-  if (await page.locator("#leadName").count()) {
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
-  }
   await page.getByTestId("wizard-generate").click();
   await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
 }
 
+async function register(page: Page) {
+  await page.goto("/registro");
+  await page.fill("#email", `u${rnd()}@example.com`);
+  await page.fill("#password", "supersecret123");
+  await page.fill("#companyName", `Cockpit SL ${rnd()}`);
+  await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  const body = await res.json();
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
+  await page.goto("/panel");
+}
+
 test.describe("PRODUCT #36 — document cockpit", () => {
-  test("anonymous result: real QR card, HTTPS URL, and the data in PDF sections", async ({
-    page,
-  }) => {
+  test("result: real QR card, HTTPS URL, and the data in PDF sections", async ({ page }) => {
+    await register(page);
     await page.goto("/crear");
     await fillWizard(page);
 
@@ -94,16 +106,7 @@ test.describe("PRODUCT #36 — document cockpit", () => {
   test("workspace: a corrected DeCA shows version history and a 'what changed' diff", async ({
     page,
   }) => {
-    await page.goto("/registro");
-    await page.fill("#email", `u${rnd()}@example.com`);
-    await page.fill("#password", "supersecret123");
-    await page.fill("#companyName", `Cockpit SL ${rnd()}`);
-    await page.fill("#companyNif", "B12345674");
-    await page.getByTestId("accept-terms").check();
-    await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL(/\/verificar-email/);
-    await page.goto("/panel");
-
+    await register(page);
     await page.goto("/crear");
     await fillWizard(page);
     const decaId = page.url().split("/crear/")[1].split("?")[0];

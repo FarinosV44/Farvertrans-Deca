@@ -15,25 +15,71 @@ function webmailUrl(email: string): string | null {
 }
 
 /**
- * The dedicated email-confirmation screen (GROWTH #46) — never a generic auth
- * provider page. Verification is a courtesy, not a hard gate: every action
- * here leaves the user free to continue into the product regardless.
+ * The dedicated email-confirmation screen (GROWTH #46). The account and
+ * session exist regardless of verification, so nothing about SIGNING IN is
+ * blocked here — but per D-053, generating a DeCA is a hard gate elsewhere
+ * (`POST /api/deca`), and this screen never claims verification on its own:
+ * "Ya he confirmado mi cuenta" only asks the server what `emailVerifiedAt`
+ * actually says, right now, and only proceeds if it is set.
  */
-export function VerifyEmailScreen({ email, next }: { email: string; next: string }) {
+export function VerifyEmailScreen({
+  email,
+  next,
+  initiallySent = true,
+}: {
+  email: string;
+  next: string;
+  /** False when the ORIGINAL signup email failed to send (D-053) — never claim it arrived. */
+  initiallySent?: boolean;
+}) {
   const router = useRouter();
   const [currentEmail, setCurrentEmail] = useState(email);
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [changing, setChanging] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [changeError, setChangeError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [notYetVerified, setNotYetVerified] = useState(false);
   const mail = webmailUrl(currentEmail);
+
+  async function checkAndContinue() {
+    if (checking) return;
+    setChecking(true);
+    setNotYetVerified(false);
+    try {
+      const res = await fetch("/api/auth/verify-email/status");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.verified) {
+        // A page seen signed-out before (e.g. `/crear`'s registration gate)
+        // can sit in Next's client router cache with pre-login server data;
+        // refresh() forces a fresh render so the newly-verified state shows.
+        router.push(next);
+        router.refresh();
+      } else {
+        setNotYetVerified(true);
+      }
+    } catch {
+      // fail closed — never let a network hiccup be read as "verified"
+      setNotYetVerified(true);
+    } finally {
+      setChecking(false);
+    }
+  }
 
   async function resend() {
     if (resendState === "sending") return;
     setResendState("sending");
     try {
       const res = await fetch("/api/auth/verify-email/resend", { method: "POST" });
-      setResendState(res.ok ? "sent" : "error");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.delivery === "already_verified") {
+        router.push(next);
+        router.refresh();
+        return;
+      }
+      // `res.ok` only means the request was accepted — `delivery` says whether
+      // the provider actually sent it (D-053: never claim success it didn't have).
+      setResendState(res.ok && data?.delivery === "sent" ? "sent" : "error");
     } catch {
       setResendState("error");
     }
@@ -70,13 +116,27 @@ export function VerifyEmailScreen({ email, next }: { email: string; next: string
         ✉️
       </div>
       <h1 className="mt-5 text-2xl font-bold">Confirma tu correo electrónico</h1>
-      <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-        Ya casi está. Te hemos enviado un correo a{" "}
-        <strong className="text-[var(--color-text)]" data-testid="verify-email-address">
-          {currentEmail}
-        </strong>{" "}
-        para activar tu cuenta y empezar a emitir DeCA.
-      </p>
+      {initiallySent ? (
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+          Ya casi está. Te hemos enviado un correo a{" "}
+          <strong className="text-[var(--color-text)]" data-testid="verify-email-address">
+            {currentEmail}
+          </strong>{" "}
+          para activar tu cuenta y empezar a emitir DeCA.
+        </p>
+      ) : (
+        <div
+          role="alert"
+          data-testid="verify-email-send-failed"
+          className="mt-2 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[color-mix(in_srgb,var(--color-danger)_8%,transparent)] p-3 text-sm"
+        >
+          No hemos podido enviar el correo de confirmación a{" "}
+          <strong className="text-[var(--color-text)]" data-testid="verify-email-address">
+            {currentEmail}
+          </strong>
+          . Pulsa «Reenviar correo» para intentarlo de nuevo.
+        </div>
+      )}
 
       <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-left">
         <h2 className="text-sm font-bold">Qué ocurre después</h2>
@@ -167,11 +227,21 @@ export function VerifyEmailScreen({ email, next }: { email: string; next: string
         <button
           type="button"
           data-testid="verify-email-continue"
-          onClick={() => router.push(next)}
-          className="mt-2 text-sm font-medium text-[var(--color-text-muted)] underline"
+          onClick={() => void checkAndContinue()}
+          disabled={checking}
+          className="mt-2 text-sm font-medium text-[var(--color-text-muted)] underline disabled:opacity-55"
         >
-          Ya he confirmado mi cuenta
+          {checking ? "Comprobando…" : "Ya he confirmado mi cuenta"}
         </button>
+        {notYetVerified && (
+          <p
+            role="alert"
+            data-testid="verify-email-not-yet"
+            className="text-sm text-[var(--color-danger)]"
+          >
+            Tu correo todavía no está verificado. Abre el enlace que te hemos enviado.
+          </p>
+        )}
       </div>
 
       <p className="mt-6 text-xs text-[var(--color-text-muted)]">

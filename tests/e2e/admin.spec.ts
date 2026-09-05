@@ -33,8 +33,14 @@ async function registerAndGenerate(page: Page, company: string) {
   await page.fill("#companyName", company);
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
-  await page.getByTestId("register-submit").click();
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
   await expect(page).toHaveURL(/\/verificar-email/);
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  const body = await res.json();
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
   await page.goto("/panel");
   await page.goto("/crear");
   for (const [sel, val] of [

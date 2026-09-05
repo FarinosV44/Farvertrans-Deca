@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { createHash } from "node:crypto";
 
 /**
  * AUTH #30 (UI) — the premium auth card. The Google handshake is a later slice;
@@ -44,49 +43,5 @@ test.describe("AUTH #30 — premium auth card", () => {
     await expect(page.locator("#companyName")).toBeVisible();
     await page.getByTestId("auth-mode-toggle").click();
     await expect(page.getByRole("heading", { name: "Bienvenido de nuevo" })).toBeVisible();
-  });
-
-  test("the claim headline still becomes 'Guarda este DeCA'", async ({ page, request }) => {
-    const anon = await request
-      .post("/api/deca", {
-        data: {
-          shipper: { name: "Cargas SL", nif: "B96789011", address: "Calle 1, Valencia" },
-          carrier: { name: "Trans SL", nif: "B12345674", address: "Av. Central 3, Madrid" },
-          loadLocation: {
-            name: "Almacén Valencia",
-            address: "Calle 1",
-            postalCode: "46001",
-            city: "Valencia",
-            province: "Valencia",
-            country: "España",
-          },
-          unloadLocation: {
-            name: "Almacén Madrid",
-            address: "Av. Central 3",
-            postalCode: "28001",
-            city: "Madrid",
-            province: "Madrid",
-            country: "España",
-          },
-          loadDate: "2026-10-06",
-          unloadDate: "2026-10-06",
-          goods: "Palés",
-          weight: "12000 kg",
-          tractorPlate: "1234 BCD",
-        },
-      })
-      .then((r) => r.json());
-    expect(anon.claimToken).toBeTruthy();
-    // sanity: the anon PDF is real
-    const pdf = await request.get(`/d/${anon.token}`);
-    expect(
-      createHash("sha256")
-        .update(Buffer.from(await pdf.body()))
-        .digest("hex"),
-    ).toBe(anon.pdfSha256);
-
-    await page.goto(`/registro?claim=${encodeURIComponent(anon.claimToken)}`);
-    await expect(page.getByRole("heading", { name: "Guarda este DeCA" })).toBeVisible();
-    await expect(page.locator("#companyName")).toBeVisible();
   });
 });

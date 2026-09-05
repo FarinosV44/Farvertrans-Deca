@@ -47,8 +47,14 @@ async function registerAndCreate(page: Page): Promise<string> {
   await page.fill("#companyName", "Correcciones SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
-  await page.getByTestId("register-submit").click();
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
   await expect(page).toHaveURL(/\/verificar-email/);
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  const body = await res.json();
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
   await page.goto("/panel");
 
   await page.goto("/crear");
@@ -157,50 +163,34 @@ test.describe("BUILD 13 — driver sharing (F9)", () => {
   });
 });
 
-test.describe("BUILD 13 — abuse controls (F16)", () => {
-  test("a first-time anonymous user is never challenged; the soft threshold then challenges", async ({
-    request,
-  }) => {
-    const headers = { "x-fvd-fp": `fp-${Date.now()}-${Math.random()}` };
-    // soft threshold for anon_create is 3 -> first 3 succeed with no challenge
-    for (let i = 0; i < 3; i++) {
-      const r = await request.post("/api/deca", { data: buildPayload(), headers });
-      expect(r.status(), `create #${i + 1} should succeed`).toBe(201);
-    }
-    // the 4th is challenged
-    const challenged = await request.post("/api/deca", { data: buildPayload(), headers });
-    expect(challenged.status()).toBe(429);
-    const body = await challenged.json();
-    expect(body.error.code).toBe("challenge");
-    expect(body.error.challenge.type).toBe("pow");
-
-    // solve the PoW and retry -> allowed
-    const { prefix, difficulty } = body.error.challenge;
-    let nonce = "";
-    for (let i = 0; i < 8_000_000; i++) {
-      const c = i.toString(36);
-      if (
-        createHash("sha256")
-          .update(`${prefix}:${c}`)
-          .digest("hex")
-          .startsWith("0".repeat(difficulty))
-      ) {
-        nonce = c;
-        break;
-      }
-    }
-    const solved = await request.post("/api/deca", {
-      data: buildPayload(),
-      headers: { ...headers, "x-fvd-challenge": `pow:${prefix}:${nonce}` },
-    });
-    expect(solved.status()).toBe(201);
+/**
+ * The `anon_create` soft-threshold/PoW-challenge abuse policy (F16) applied
+ * only to anonymous creation, which PRIORITY 1 retired entirely — an
+ * unauthenticated `POST /api/deca` now gets 401 `auth_required` before any
+ * abuse check runs, so the challenge flow is unreachable and untested by
+ * design (D-052). `checkAbuse`/`abuseResponse` remain live for "auth" and
+ * "share".
+ */
+async function registerViaApi(request: APIRequestContext) {
+  const res = await request.post("/api/auth/register", {
+    data: {
+      email: email(),
+      password: "supersecret123",
+      companyName: "Abuse SL",
+      companyNif: "B12345674",
+      acceptTerms: true,
+    },
   });
+  expect(res.status()).toBe(201);
+  const body = await res.json();
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  await request.get(`/verificar-email/${body.verifyTestToken}`);
+}
 
+test.describe("BUILD 13 — abuse controls (F16)", () => {
   test("the public inspector URL /d/[token] is never challenged", async ({ request }) => {
-    const create = await request.post("/api/deca", {
-      data: buildPayload(),
-      headers: { "x-fvd-fp": `clean-${Date.now()}` },
-    });
+    await registerViaApi(request);
+    const create = await request.post("/api/deca", { data: buildPayload() });
     const { token } = await create.json();
     // hammer it — never a 429
     for (let i = 0; i < 15; i++) {

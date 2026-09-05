@@ -34,7 +34,25 @@ function email() {
   return `dd${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
 }
 
-async function anonCreate(page: Page) {
+async function register(page: Page) {
+  await page.goto("/registro");
+  await page.fill("#email", email());
+  await page.fill("#password", "supersecret123");
+  await page.fill("#companyName", "OPS SL");
+  await page.fill("#companyNif", "B12345674");
+  await page.getByTestId("accept-terms").check();
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  const body = await res.json();
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
+  await page.goto("/panel");
+}
+
+async function createDeca(page: Page) {
   await page.goto("/crear");
   await page.fill("#shipperName", D.shipperName);
   await page.fill("#shipperNif", D.shipperNif);
@@ -64,11 +82,6 @@ async function anonCreate(page: Page) {
   await page.fill("#goods", D.goods);
   await page.fill("#weight", D.weight);
   await page.fill("#tractorPlate", D.tractorPlate);
-  // Only the anonymous flow shows the lightweight identity gate (TRUST #42 §3).
-  if (await page.locator("#leadName").count()) {
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
-  }
   await page.getByTestId("wizard-generate").click();
   await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
 }
@@ -90,7 +103,8 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     });
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
-    await anonCreate(page);
+    await register(page);
+    await createDeca(page);
     const publicUrl = await page.getByTestId("result-download").getAttribute("href");
     expect(publicUrl).toMatch(/\/d\/[A-Za-z0-9_-]+$/);
 
@@ -134,7 +148,22 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     browser,
     request,
   }) => {
-    // create via API, then hit /d/[token] from a bare context
+    // register (PRIORITY 1: generation requires an account), then hit
+    // /d/[token] from a completely bare, unrelated context — the PUBLIC
+    // download route itself must still need no auth of its own (R-7/R-8).
+    const reg = await request.post("/api/auth/register", {
+      data: {
+        email: email(),
+        password: "supersecret123",
+        companyName: "OPS SL",
+        companyNif: "B12345674",
+        acceptTerms: true,
+      },
+    });
+    expect(reg.status()).toBe(201);
+    // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+    const regBody = await reg.json();
+    await request.get(`/verificar-email/${regBody.verifyTestToken}`);
     const res = await request.post("/api/deca", {
       data: {
         shipper: { name: D.shipperName, nif: D.shipperNif, address: D.shipperAddress },
@@ -166,16 +195,8 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     page,
   }) => {
     // register + create + correct
-    await page.goto("/registro");
-    await page.fill("#email", email());
-    await page.fill("#password", "supersecret123");
-    await page.fill("#companyName", "OPS SL");
-    await page.fill("#companyNif", "B12345674");
-    await page.getByTestId("accept-terms").check();
-    await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL(/\/verificar-email/);
-    await page.goto("/panel");
-    await anonCreate(page);
+    await register(page);
+    await createDeca(page);
 
     // go to the owner detail, correct the unload location
     await page.goto("/panel/historico");

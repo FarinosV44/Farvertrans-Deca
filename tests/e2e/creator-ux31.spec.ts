@@ -32,6 +32,24 @@ const V = {
   tractorPlate: "1234 BCD",
 };
 
+/** Registers a fresh company via the API and leaves the page's cookie jar authenticated. */
+async function registerAndLogin(page: Page) {
+  const addr = `ux31${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
+  const res = await page.request.post("/api/auth/register", {
+    data: {
+      email: addr,
+      password: "supersecret123",
+      companyName: "UX31 SL",
+      companyNif: "B12345674",
+      acceptTerms: true,
+    },
+  });
+  expect(res.status()).toBe(201);
+  const body = await res.json();
+  // D-053: generation is a hard gate on emailVerifiedAt — verify for real.
+  await page.request.get(`/verificar-email/${body.verifyTestToken}`);
+}
+
 async function fillStep1(page: Page) {
   await page.fill("#shipperName", V.shipperName);
   await page.fill("#shipperNif", V.shipperNif);
@@ -102,6 +120,7 @@ test.describe("UX #31 — ultra-simple creation flow", () => {
   test("pressing GENERAR DECA shows a generating state and cannot double-submit", async ({
     page,
   }) => {
+    await registerAndLogin(page);
     await page.goto("/crear");
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
@@ -110,8 +129,6 @@ test.describe("UX #31 — ultra-simple creation flow", () => {
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
     await page.fill("#tractorPlate", V.tractorPlate);
-    await page.fill("#leadName", "Ana García");
-    await page.fill("#leadEmail", "ana@example.com");
 
     const generate = page.getByTestId("wizard-generate");
     await generate.click();
