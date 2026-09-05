@@ -904,3 +904,22 @@
   scoring, churn prediction, monetization dashboards, the customer timeline
   (§9) and admin segmentation (§8) — none of these block launch.
 - Verified: 118 unit + admin e2e (5 tests) + typecheck + lint, green locally.
+
+## D-050 — Real browser verification of D-047/D-048/D-049 on local dev + a found-and-fixed copy bug
+- Date: 2026-09-05. Drove the actual UI (not just automated tests) with a fresh local dev server +
+  seeded Postgres: registered a real company (profile picker, terms checkbox, data-protection
+  notice), landed on `/panel` and `/panel/datos` to see the icon-led nav/cards/sections live,
+  toggled the new commercial-consent checkbox end-to-end (API round trip + persisted refresh),
+  generated a real goods DeCA (Valencia → Lyon corridor) and confirmed a `DecaRouteIntel` row was
+  written with the correct folded `route_key` (`ESPANA-VALENCIA__FRANCIA-LYON`), then used
+  "Repetir / duplicar último DeCA" from the panel and generated a second, independent DeCA changing
+  only the two dates — new id/reference/token/QR, old document untouched, both visible in
+  `/panel/historico` — confirming the #24/#44 "second DeCA is materially faster" requirement with
+  a real timed walkthrough, not code inspection.
+- **Found and fixed live:** the registration screen's data-protection notice rendered
+  "Responsable: PRAETORIA, S.L.." (a double period — `LEGAL_ENTITY.name` already ends in one, and
+  the template appended another). Fixed in `components/auth/register-form.tsx`.
+- Confirms: D-047's icon-led panel renders correctly, D-048's route-intel write and consent toggle
+  work end-to-end against a real request/response cycle (not just the unit-mocked Prisma client),
+  and the existing e2e suite's own DeCA-creating specs (28 pre-existing `DecaRouteIntel` rows found
+  in the same dev DB) exercise the same code path without error.

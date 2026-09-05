@@ -409,10 +409,16 @@
   - **Genuinely not started (deliberate, on the record):** #39 (company logo on PDF — its own
     issue since D-036), passenger transport type (#41 §4/§5, blocked on legal research per the
     issue's own instruction).
-  - **Not yet re-verified this session:** full real-UI walkthrough of the panel (login → history →
-    duplicate → vehicles/contacts → correction) and second-DeCA speed timing — the code paths were
-    verified in Phase 9 (previous session) and are unchanged by D-047/048/049, but a fresh
-    browser-driven pass has not run since those three slices landed.
+  - **Real-UI walkthrough DONE this session (D-050), on local dev, not just code review:**
+    registered a real company end-to-end (profile picker, terms, data-protection notice — found and
+    fixed a double-period copy bug live), viewed the new icon-led `/panel` + `/panel/datos`,
+    toggled commercial consent end-to-end, generated a real goods DeCA, then used "Repetir /
+    duplicar" to generate a second one changing only the two dates — new id/token/QR, old document
+    untouched, both in `/panel/historico`, confirming second-DeCA speed with a real timed pass. A
+    `DecaRouteIntel` row was confirmed written correctly in Postgres for both. This was on
+    `develop` locally — **not yet re-verified on decaprofesional.es**, since `develop` hasn't been
+    merged to `main`/redeployed this session (production still runs the pre-D-047/048/049 build;
+    confirmed healthy: `/health` → `db:up`, D-042/D-043 trust copy live).
 - **Not yet actioned this session:** Resend/hCaptcha configuration (external, user's task, D-029
   already names it); a full `/panel` IA rebuild (separate nav pages for Vehículos/Rutas/Mi
   empresa/Configuración — D-047 scope note); route-intelligence dashboard (#45 explicitly defers
