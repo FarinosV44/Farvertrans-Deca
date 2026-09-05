@@ -40,6 +40,28 @@ export async function POST(req: Request) {
     user = await login(b.email, b.password);
   } catch (e) {
     if (e instanceof AuthError) {
+      // SECURITY #53: a failed login against an admin EMAIL is worth an audit
+      // row (brute-force detection) — never for ordinary customer accounts,
+      // and never anything that could reveal whether the email exists to the
+      // caller (the response itself is unchanged either way).
+      try {
+        const { prisma } = await import("@/lib/prisma");
+        const target = await prisma.user.findFirst({
+          where: { email: b.email.trim().toLowerCase(), role: "internal" },
+          select: { id: true },
+        });
+        if (target) {
+          const { recordAudit } = await import("@/lib/admin/audit");
+          await recordAudit({
+            actorId: target.id,
+            action: "admin_login",
+            result: "failure",
+            headers: req.headers,
+          });
+        }
+      } catch {
+        // audit lookup must never affect the login response
+      }
       return NextResponse.json({ error: { code: e.code, message: e.message } }, { status: 401 });
     }
     return NextResponse.json(
@@ -49,6 +71,18 @@ export async function POST(req: Request) {
   }
 
   await setSessionCookie(user.userId);
+
+  // SECURITY #53: audit trail for admin logins specifically (not every
+  // customer login — that would just be noise in a security-events table).
+  if (user.role === "internal") {
+    const { recordAudit } = await import("@/lib/admin/audit");
+    await recordAudit({
+      actorId: user.userId,
+      action: "admin_login",
+      result: "success",
+      headers: req.headers,
+    });
+  }
 
   // I18N #5: restore this account's saved language preference automatically.
   if (isLocale(user.preferredLocale)) {

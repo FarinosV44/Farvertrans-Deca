@@ -274,13 +274,13 @@ export async function completeCompanyForUser(
 export async function login(
   emailRaw: string,
   password: string,
-): Promise<{ userId: string; preferredLocale: string }> {
+): Promise<{ userId: string; preferredLocale: string; role: string }> {
   const email = normEmail(emailRaw);
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     throw new AuthError("invalid_credentials", "Email o contraseña incorrectos.");
   }
-  return { userId: user.id, preferredLocale: user.preferredLocale };
+  return { userId: user.id, preferredLocale: user.preferredLocale, role: user.role };
 }
 
 export async function setSessionCookie(userId: string) {

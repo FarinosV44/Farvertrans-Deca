@@ -1516,9 +1516,41 @@
   rejected with a clear message, correct code enables 2FA, recovery codes shown once, lands on the
   real `/admin` dashboard) — not just automated coverage.
 - Gate: 148 e2e + 139 unit + typecheck + lint + format, all green.
-- **Not yet done from the owner's P0 list:** audit-log WRITE CALLS are not yet wired into any actual
-  event (`recordAudit()` exists and is called from the 2FA routes themselves, but password
-  change/reset, company/user archive-delete, and other destructive actions the owner listed don't
-  exist as implemented endpoints yet to audit); backup/recovery review; a fresh security-headers
-  pass against the fuller P0 list (existing `middleware.ts` headers predate this directive); document
+- **Not yet done from the owner's P0 list:** backup/recovery review; a fresh security-headers pass
+  against the fuller P0 list (existing `middleware.ts` headers predate this directive); document
   hard-delete protection. Continuing immediately.
+
+## D-065 — SECURITY #53 P0 block 3: audit-log events wired to real actions
+- Date / phase: 2026-09-06, same session, immediately after D-064.
+- Audited what destructive/sensitive admin actions ACTUALLY EXIST in the product before wiring
+  anything, to avoid inventing new admin CRUD features (company/user delete, role changes, security/
+  legal config, bulk export) just to have something to log — none of those exist yet, so
+  `requireStepUp()` (D-064) has no real caller beyond `/api/admin/2fa/regenerate-codes` for now; this
+  is a scope finding, not a gap left unaddressed. What DOES exist and is now audited:
+  - `admin_login` (success AND failure) — only for accounts with `role: "internal"`; a failed login
+    against an ordinary customer email creates no row (avoids both noise and — since a nonexistent
+    vs. wrong-password admin email would otherwise behave identically either way — any account-
+    enumeration signal).
+  - `password_reset` (`POST /api/auth/password/reset`, on success) — every user, not just admins;
+    this event is on the owner's list unconditionally.
+  - `content_published` / `content_draft` / `content_archived` / `content_updated`
+    (`/api/admin/contenido/[id]` PATCH+DELETE) — the closest real analog to "document access/
+    destructive actions" that exists today; the DELETE handler was ALREADY a soft archive, never a
+    hard delete, before this session touched it.
+  - `admin_2fa_enroll`, `admin_2fa_verify`, `admin_recovery_code_use`,
+    `admin_recovery_codes_regenerated` (D-064's own routes).
+  `login()` (`lib/auth/index.ts`) gained a `role` field on its return so the login route can decide
+  whether to audit without a second query.
+- **New test:** `tests/e2e/audit-log.spec.ts` (4) — success/failure admin-login rows, a customer's
+  failed login never becomes an `admin_login` row, password-reset leaves a row, 2FA enroll+verify
+  leave rows.
+- **Own test bug found and fixed:** the audit table is append-only and accumulates across every run
+  (by design), so an initial "row count before < row count after" assertion broke once the total
+  crossed the `take: 5` fetch limit — fixed to check the N most-recent rows by `createdAt`, not a
+  growing total.
+- **New (documented) parallel-only flake:** recovery-code regeneration is genuinely mutable state
+  now, shared by every e2e test via the one seeded admin account — a `--workers=3` race between two
+  tests both calling `/api/admin/2fa/regenerate-codes` can invalidate a code before the test that
+  generated it consumes it. Passes reliably in isolation and at `--workers=1`; `retries: 1` in CI
+  absorbs it, same policy as the pre-existing `content-cms.spec.ts` flake. See `lessons-learned.md`.
+- Gate: 152 e2e + 139 unit + typecheck + lint + format, all green.

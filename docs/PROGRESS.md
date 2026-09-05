@@ -654,3 +654,14 @@ gate they're supposed to satisfy. Gate: 148 e2e + 139 unit, all green — plus a
 enrollment walkthrough (QR, wrong-code rejection, recovery codes, landing on `/admin`). See
 `decisions.md` D-064. **Continuing immediately** to step-up wiring for real destructive actions,
 audit-log event coverage, backup/recovery review, and a security-headers pass.
+
+## D-065: SECURITY #53 P0 block 3 — audit log wired to real events
+Audited what destructive admin actions actually exist before wiring anything (none of
+company/user-delete, role-change, security/legal-config, bulk-export exist yet — not a gap, a scope
+finding; `requireStepUp()` has no real caller beyond 2FA-code regeneration for now). Wired
+`recordAudit()` into what DOES exist: admin login success/failure (admin accounts only), password
+reset, and the content-CMS publish/unpublish/archive actions (already a soft archive, never a hard
+delete). Gate: 152 e2e + 139 unit, all green. One new documented parallel-only flake (recovery-code
+regeneration racing under `--workers=3`, shared seeded admin — passes in isolation, CI's `retries:1`
+absorbs it). See `decisions.md` D-065. **Continuing** to backup/recovery review and a
+security-headers pass, then #51/#52/#54.

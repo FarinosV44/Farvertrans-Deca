@@ -25,6 +25,13 @@ export async function POST(req: Request) {
   try {
     const { userId } = await resetPassword(parsed.data.token, parsed.data.password);
     await setSessionCookie(userId);
+    const { recordAudit } = await import("@/lib/admin/audit");
+    await recordAudit({
+      actorId: userId,
+      action: "password_reset",
+      result: "success",
+      headers: req.headers,
+    });
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e) {
     if (e instanceof ResetError) {
