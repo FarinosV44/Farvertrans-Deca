@@ -268,7 +268,7 @@ export function RegisterForm({
               Información básica sobre protección de datos
             </p>
             <p className="mt-1">
-              <strong>Responsable:</strong> {LEGAL_ENTITY.name}.
+              <strong>Responsable:</strong> {LEGAL_ENTITY.name}
             </p>
             <p className="mt-1">
               <strong>Finalidad:</strong> gestionar el alta y la prestación de la Plataforma DeCA.
