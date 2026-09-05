@@ -388,6 +388,39 @@
   second physical device scanning a live QR against a reachable HTTPS
   URL — that needs the real deployment.
 
+## Launch hardening (2026-09-05, user directive — close remaining launch-relevant gaps per issues #20-#47)
+- **Issue review done** (code-verified, not just forge state — every one of #20-#47 is still OPEN
+  on the forge; none closed yet, pending the closing pass below):
+  - **Substantially complete, verified in production or gate-green locally:** #16-20 (launch happy
+    path), #21 (brand), #22 (landing V2, superseded/extended by #35/#42/#46), #23 (registration),
+    #25 (creator V2 — templates/autofill/autosave), #26 (driver delivery/share/QR verify), #27+#37
+    (team/multi-user), #28 (acquisition engine — prospects/invites/operator dashboard), #29
+    (generation reliability/diagnostics), #30 (auth UI + real Google OAuth, D-046, inert pending
+    credentials), #31 (creator UX), #32 (guides/blog CMS), #33 (admin V2 shell), #34 (CSV export +
+    workflow status + integration boundary), #35 (persona landing), #36 (document cockpit), #38
+    (auth entrypoints hardened), #41 (goods structured locations/dates — passenger split explicitly
+    deferred per the issue's own gate), #42 (Praetoria trust + lightweight lead gate + full onboarding
+    on repeat — verified in production TEST A/B), #44 (launch sequence — Phase 0 blockers all met),
+    #46 (trust landing + signup + email verification, soft gate).
+  - **Gaps found and closed this session:** #24 (panel was plain text/list UI — D-047 icon-led
+    visual layer, phase 1; full IA still open), #45 (route data lived only in a JSON blob, no
+    commercial-consent model — D-048 added `DecaRouteIntel` + `CommercialConsent`), #47 (admin
+    company detail was missing verification/terms/consent/DeCA-rate fields — D-049).
+  - **Genuinely not started (deliberate, on the record):** #39 (company logo on PDF — its own
+    issue since D-036), passenger transport type (#41 §4/§5, blocked on legal research per the
+    issue's own instruction).
+  - **Not yet re-verified this session:** full real-UI walkthrough of the panel (login → history →
+    duplicate → vehicles/contacts → correction) and second-DeCA speed timing — the code paths were
+    verified in Phase 9 (previous session) and are unchanged by D-047/048/049, but a fresh
+    browser-driven pass has not run since those three slices landed.
+- **Not yet actioned this session:** Resend/hCaptcha configuration (external, user's task, D-029
+  already names it); a full `/panel` IA rebuild (separate nav pages for Vehículos/Rutas/Mi
+  empresa/Configuración — D-047 scope note); route-intelligence dashboard (#45 explicitly defers
+  it); closing/commenting the forge issues themselves (queued next — Keel never closes on its own
+  code-reading alone, but D-047/048/049 plus the existing gate-green evidence are enough to close
+  #24 (phase-1 note), #45 and #47 with an explicit "what remains" comment, and to comment
+  what-shipped-where on the others without closing them yet pending the outstanding real-UI pass).
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as

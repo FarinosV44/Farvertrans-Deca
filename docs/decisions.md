@@ -844,3 +844,63 @@
   paths are proven by unit tests on their pure pieces (state CSRF round
   trip/tamper/expiry, the auth-URL builder) plus the existing e2e coverage
   confirming the button stays correctly inert.
+
+## D-047 — Panel icon-led visual layer, phase 1 (WORKSPACE #24, launch-hardening pass)
+- Date: 2026-09-05. Launch-hardening review (issue #44 audit) found `/panel`,
+  its nav and `/panel/datos` were plain text-link/list UI — exactly the "plain
+  admin-table experience" #24 explicitly rejects. `components/panel/icons.tsx`
+  adds a small inline-SVG icon set (no new dependency — matches the existing
+  convention in `components/auth/google-button.tsx`), applied to `AppNav`
+  (icon+label pills), the panel dashboard (icon-fronted action/summary cards,
+  document-icon list rows) and `SavedDataManager`'s section headers.
+- **Deliberately scoped down from #24's full IA** (separate `/panel/vehiculos`,
+  `/panel/rutas`, `/panel/mi-empresa`, `/panel/configuracion` pages, a
+  sidebar/drawer shell): that is a bigger IA change than "small, safe,
+  incremental" allows in one pass, and "Rutas habituales" has no backing data
+  model yet (no saved-route entity exists). This slice is the visual layer
+  only, over the existing routes. Follow-up IA work is a separate slice.
+- Verified: 114 unit + typecheck + lint + workspace/launch-happy-path e2e
+  (7 tests, one pre-existing parallel-worker flake per
+  `[[lessons-learned]]`, passes in isolation) green.
+
+## D-048 — Structured/queryable route intelligence + commercial-offer consent (DATA #45)
+- Date: 2026-09-05. Launch-hardening review found #45's core requirement unmet:
+  load/unload route data lived only inside `DecaVersion.dataJson` (a JSON
+  blob) — not the normalized/queryable layer the issue requires, kept
+  separate from the immutable legal snapshot — and no commercial-consent data
+  model existed at all.
+- **Decision:** new `DecaRouteIntel` model (migration
+  `20260905095427_route_intel_and_commercial_consent`) — one row per goods
+  `DecaVersion`, written by `lib/deca/route-intel.ts`'s `recordRouteIntel()`
+  from the already-structured `loadLocation`/`unloadLocation` (PRODUCT #41):
+  company/address/city/province/country/postal code on both ends, dates,
+  plates, and a folded corridor `route_key` (`routeKeyFor()`, pure + unit
+  tested) for cheap recurrence grouping ahead of real geocoding. Write is
+  best-effort from both `createDeca()` and `correctDeca()` — same pattern as
+  `maybeMarkFirstDeca` — so a failure here can never block or fail generation;
+  the row is disposable/recomputable from `dataJson`, never authoritative.
+- New `CommercialConsent` model (opt-in, not pre-checked, revocable,
+  `granted_at`/`revoked_at` + the copy version shown when granted) —
+  `lib/consent.ts` + owner-only `POST /api/company/consent` +
+  `CommercialConsentToggle` on `/panel/datos`, using the issue's exact copy
+  ("Quiero recibir oportunidades de transporte..."). This slice makes the
+  data model ready and auditable; it does NOT build the route-intelligence
+  dashboard, geocoding, aggregates or freight matching — all explicitly
+  "can wait until after acquisition starts" per the issue.
+- Verified: 118 unit (4 new, `routeKeyFor`) + compliance R-1…R-13 (8) +
+  crear/build13/reliability e2e (19) + typecheck + lint, green locally.
+
+## D-049 — Admin company 360 minimum (PRODUCT #47, launch-minimum scope)
+- Date: 2026-09-05. `/admin/empresas/[id]` (D-030) was missing several fields
+  #47 lists as the launch-minimum customer/company 360: contact/phone/profile,
+  DeCA rate by period, last activity, last-touch attribution, Terms
+  acceptance version/timestamp, per-member email-verification state, and the
+  new D-048 commercial-consent state.
+- **Decision:** extend `getCompanyAdmin()` (`lib/admin/records.ts`) with these
+  fields (3 extra count queries + 1 `TermsAcceptance` lookup, run in parallel
+  with the existing ones) and render them in the company detail's definition
+  list + a new "Email verificado" column on the members table. **Deliberately
+  not built** (per #47 "can come after initial launch traffic"): retention
+  scoring, churn prediction, monetization dashboards, the customer timeline
+  (§9) and admin segmentation (§8) — none of these block launch.
+- Verified: 118 unit + admin e2e (5 tests) + typecheck + lint, green locally.
