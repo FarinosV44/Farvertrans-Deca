@@ -316,7 +316,13 @@ export async function bumpSessionVersion(userId: string, reissueCurrent = true):
   }
 }
 
-export async function getCurrentUser() {
+/**
+ * The full session — user row + the raw signed-session payload (SECURITY
+ * #53 needs `payload.tv`, the last successful admin TOTP check, which isn't
+ * part of the `User` row). `getCurrentUser()` below is a thin wrapper kept
+ * for the ~50 existing call sites that only need the user.
+ */
+export async function getCurrentSession() {
   const store = await cookies();
   const payload = verifySession(store.get(SESSION_COOKIE)?.value);
   if (!payload) return null;
@@ -325,7 +331,30 @@ export async function getCurrentUser() {
     include: { company: true },
   });
   if (!user || user.sessionVersion !== payload.sv) return null;
-  return user;
+  return { user, payload };
+}
+
+export async function getCurrentUser() {
+  const session = await getCurrentSession();
+  return session?.user ?? null;
+}
+
+/**
+ * Mark this browser's session as having just passed an admin TOTP/recovery-
+ * code check (SECURITY #53) — re-issues the cookie with `tv` set to now.
+ * `requireInternal()`/`requireStepUp()` read it back to gate admin access.
+ */
+export async function markTotpVerified(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sessionVersion: true },
+  });
+  const store = await cookies();
+  store.set(
+    SESSION_COOKIE,
+    signSession(userId, user?.sessionVersion ?? 1, Math.floor(Date.now() / 1000)),
+    SESSION_COOKIE_OPTIONS,
+  );
 }
 
 // ---------------------------------------------------------------------------

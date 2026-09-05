@@ -105,16 +105,60 @@ model User {
   /// rejects a token whose version doesn't match this column, since sessions
   /// are stateless (signed, not stored) and have no other revocation path.
   sessionVersion  Int         @default(1) @map("session_version")
+  /// SECURITY #53: mandatory admin 2FA. Base32 TOTP secret, set at enrollment
+  /// and never logged/returned once `totpEnabledAt` is set. Null = not
+  /// enrolled — `requireInternal()` forces enrollment before any admin access.
+  totpSecret      String?     @map("totp_secret")
+  totpEnabledAt   DateTime?   @map("totp_enabled_at")
   createdAt       DateTime    @default(now()) @map("created_at")
 
-  company        Company?        @relation(fields: [companyId], references: [id])
-  createdDecas   Deca[]          @relation("DecaCreatedBy")
+  company        Company?            @relation(fields: [companyId], references: [id])
+  createdDecas   Deca[]              @relation("DecaCreatedBy")
   acquisition    Acquisition?
   savedCompanies SavedCompany[]
   savedVehicles  SavedVehicle[]
   savedLocations SavedLocation[]
+  recoveryCodes  AdminRecoveryCode[]
 
   @@map("user")
+}
+
+/// SECURITY #53: one-time admin 2FA recovery codes, shown once at enrollment
+/// (or regeneration, which requires step-up re-auth). Only the hash is
+/// stored; a code is marked used, never deleted, so a stolen/replayed code
+/// is always rejected rather than silently accepted a second time.
+model AdminRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  codeHash  String    @map("code_hash")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("admin_recovery_code")
+}
+
+/// SECURITY #53: append-only audit trail for sensitive admin/security events.
+/// No update/delete path is exposed anywhere in the product — only inserts
+/// and reads. `actorId` is a plain string (not a relation) so a row survives
+/// even if the actor account is later deleted.
+model SecurityAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  result     String
+  ip         String?
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("security_audit_log")
 }
 
 enum Role {

@@ -640,3 +640,17 @@ production `db: "down"` health check to a Supabase session-pooler connection-lim
 (no `directUrl` split between app runtime and migrations) — fixed in `prisma/schema.prisma` +
 env docs; needs the user to set `DATABASE_URL`(6543,pgbouncer)+`DIRECT_URL`(5432) on Hostinger and
 redeploy. Added an unverified-email reminder banner to `/panel` (`a4a28bb`, on `develop` only).
+
+## D-064: SECURITY #53 P0 block 2 — mandatory admin TOTP 2FA
+Continuing the owner's #51-#54 execution order right after D-063, no pause. Admin `/admin` access
+(pages AND every `/api/admin/*` route) now requires real TOTP 2FA — RFC 6238, no new dependency,
+QR + manual-secret enrollment, one-time recovery codes, step-up re-auth for destructive actions.
+Found and fixed a real gap while wiring it: every existing admin API route only checked the
+`internal` role, never 2FA — a compromised password alone could already reach them. Migration
+`20260905211042_admin_2fa_and_audit_log` (also adds the append-only `SecurityAuditLog` table, not
+yet wired to real events beyond the 2FA routes themselves — follow-up). Moved the existing admin
+pages into an `(protected)` route group (URLs unchanged) so the new 2FA pages don't inherit the
+gate they're supposed to satisfy. Gate: 148 e2e + 139 unit, all green — plus a real-browser
+enrollment walkthrough (QR, wrong-code rejection, recovery codes, landing on `/admin`). See
+`decisions.md` D-064. **Continuing immediately** to step-up wiring for real destructive actions,
+audit-log event coverage, backup/recovery review, and a security-headers pass.

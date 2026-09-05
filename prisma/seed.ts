@@ -5,6 +5,7 @@
 import { scryptSync, randomBytes } from "node:crypto";
 import { PrismaClient } from "./generated/client";
 import { seedContent } from "./content-seed";
+import { ADMIN_TEST_TOTP_SECRET } from "../tests/fixtures/admin-totp-secret";
 
 const prisma = new PrismaClient();
 
@@ -30,6 +31,10 @@ async function main() {
   }
 
   // Internal-role user for the operator dashboard (local dev / tests only).
+  // TOTP is pre-enrolled with a fixed, publicly-known-to-be-a-test secret
+  // (SECURITY #53 mandatory admin 2FA) so e2e can exercise the real
+  // login → TOTP challenge → /admin flow instead of bypassing it — the e2e
+  // helpers compute a live code from this same constant at auth time.
   const adminEmail = "admin@farvertrans.local";
   const existing = await prisma.user.findFirst({ where: { email: adminEmail } });
   if (!existing) {
@@ -39,7 +44,14 @@ async function main() {
         email: adminEmail,
         passwordHash: hashPassword("admin-dev-only"),
         role: "internal",
+        totpSecret: ADMIN_TEST_TOTP_SECRET,
+        totpEnabledAt: new Date(),
       },
+    });
+  } else if (!existing.totpEnabledAt) {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: { totpSecret: ADMIN_TEST_TOTP_SECRET, totpEnabledAt: new Date() },
     });
   }
 

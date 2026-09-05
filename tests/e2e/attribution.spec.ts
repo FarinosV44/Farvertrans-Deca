@@ -1,15 +1,13 @@
 import { test, expect, type Page, type APIRequestContext } from "@playwright/test";
+import { loginAdminApi } from "./helpers/admin-auth";
 
 function email() {
   return `a${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
 }
 
-/** The seeded internal user — the only way to read the operator stats. */
+/** The seeded internal user (past the mandatory TOTP challenge) — the only way to read the operator stats. */
 async function internalStats(request: APIRequestContext) {
-  const login = await request.post("/api/auth/login", {
-    data: { email: "admin@farvertrans.local", password: "admin-dev-only" },
-  });
-  expect(login.status(), "seed the internal user: npm run seed").toBe(200);
+  await loginAdminApi(request);
   const res = await request.get("/api/operadores/stats");
   expect(res.status()).toBe(200);
   return res.json();

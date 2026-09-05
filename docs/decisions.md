@@ -1459,3 +1459,66 @@
   challenge tier will currently show a real user a "confirm you're not a robot" message with no
   client-side auto-solve, unlike the DeCA creator's existing flow — low practical risk given the
   loose IP-only threshold, but worth wiring).
+
+## D-064 — SECURITY #53 P0 block 2: mandatory admin TOTP 2FA + recovery codes + step-up
+- Date / phase: 2026-09-05, same session, continuing the owner's #51-#54 execution order
+  immediately after D-063 (no pause to ask).
+- **New:** `lib/auth/totp.ts` — RFC 6238 TOTP implemented directly on `node:crypto` (base32, HMAC-
+  SHA1, 6 digits, 30s step, ±1 step drift tolerance), no new dependency (D-003 policy, matches
+  scrypt's precedent). `lib/auth/recovery-codes.ts` — 10 one-time `XXXX-XXXX` codes per enrollment,
+  only sha256 hashes stored, regeneration invalidates the old set. `lib/admin/audit.ts` —
+  `recordAudit()`, the one writer to the new append-only `SecurityAuditLog` table (no edit/delete
+  path exists anywhere in the product). Migration `20260905211042_admin_2fa_and_audit_log` adds
+  `User.totpSecret`/`totpEnabledAt`, `AdminRecoveryCode`, `SecurityAuditLog`.
+- **Session payload gained `tv`** (unix seconds of the last successful TOTP check) alongside the
+  existing `sv` (D-063). `lib/auth/index.ts` gained `getCurrentSession()` (user + raw payload,
+  needed for `tv`) and `markTotpVerified()`; `getCurrentUser()` is now a thin wrapper so the ~50
+  existing call sites are unaffected.
+- **`lib/admin/guard.ts` rewritten:** `requireInternal()` (page gate) now redirects an
+  unenrolled internal user to `/admin/2fa/setup` and one with a stale/absent TOTP check (12h admin
+  session window) to `/admin/2fa/verify`, never returning a user until 2FA is genuinely fresh. New
+  `requireStepUp()` (10-minute freshness) for destructive actions, throwing `StepUpRequiredError`
+  rather than redirecting (it gates API routes, not pages).
+- **Real gap this closed, found while wiring it up:** every existing `/api/admin/*` route used
+  `isInternalRequest()`, which checked only the `internal` ROLE — none of them required 2FA at all,
+  so a compromised admin password alone could already reach `/api/admin/search`,
+  `/api/admin/diagnostics`, `/api/admin/contenido` (a write endpoint), etc. Two more routes
+  (`/api/operadores/stats`, `/api/operadores/prospects`) and two pages (`/operadores`,
+  `/operadores/captacion`, both OUTSIDE the `/admin` tree entirely) checked `user.role` directly,
+  bypassing the guard altogether. Fixed by making `isInternalRequest()` itself require the same
+  fresh-TOTP condition as `requireInternal()` (the CI/deploy `FVD_ADMIN_TOKEN` path is exempt by
+  design — no human session involved) and switching all four call sites to the centralized guard.
+- **Route enrollment/challenge:** `POST /api/admin/2fa/enroll` (idempotent — returns the same
+  unconfirmed secret + QR on retry), `POST /api/admin/2fa/enable` (one verified code required before
+  `totpEnabledAt` is ever set; issues recovery codes in the same response), `POST /api/admin/2fa/verify`
+  (TOTP or one recovery code, rate-limited via the shared "auth" abuse policy), `POST
+  /api/admin/2fa/regenerate-codes` (`requireStepUp()`-gated). Pages: `/admin/2fa/setup` (QR +
+  manual-secret fallback + one-time recovery-code display), `/admin/2fa/verify` (challenge screen).
+- **Structural fix required first:** `app/admin/layout.tsx` (now `app/admin/(protected)/layout.tsx`)
+  cascades to every descendant route — putting the new 2FA pages under `app/admin/2fa/...` directly
+  would have made `requireInternal()` redirect to itself (infinite loop). Moved every existing
+  protected admin page into an `(protected)` route group (`git mv`, URLs unchanged) so `/admin/2fa/*`
+  sits as a sibling with its own lighter `getInternalUser()`-only check.
+- **Test-suite fallout:** the seeded local admin (`prisma/seed.ts`) is now pre-enrolled with a fixed,
+  clearly-labeled test-only secret (`tests/fixtures/admin-totp-secret.ts`) so e2e exercises the REAL
+  challenge instead of bypassing it — no blanket "skip 2FA in tests" shortcut. New shared helper
+  `tests/e2e/helpers/admin-auth.ts` (`internalPage()`, `loginAdminApi()`, `adminTotpCode()`) replaced
+  5 files' worth of duplicated inline admin-login logic (`admin.spec.ts`, `attribution.spec.ts`,
+  `content-cms.spec.ts`, `growth.spec.ts`, `operadores.spec.ts`). Renamed `useRecoveryCode` →
+  `consumeRecoveryCode` mid-build — Next's `react-hooks/rules-of-hooks` lint rule matches any
+  `use[A-Z]`-named function regardless of whether it's an actual hook, and failed the production
+  build.
+- **New tests:** `tests/unit/totp.test.ts` (6, incl. fake-timer-verified ±1-step drift tolerance and
+  rejection at ±2 steps) + `tests/e2e/admin-2fa.spec.ts` (7: password-alone-insufficient, wrong/right
+  code, non-internal user blocked from the 2FA API itself, a fresh admin API 404s without TOTP, the
+  full flow via the API helper, step-up positive path, recovery-code single-use). Also manually
+  walked the real enrollment UI in a browser (QR renders, manual-secret fallback, wrong/stale code
+  rejected with a clear message, correct code enables 2FA, recovery codes shown once, lands on the
+  real `/admin` dashboard) — not just automated coverage.
+- Gate: 148 e2e + 139 unit + typecheck + lint + format, all green.
+- **Not yet done from the owner's P0 list:** audit-log WRITE CALLS are not yet wired into any actual
+  event (`recordAudit()` exists and is called from the 2FA routes themselves, but password
+  change/reset, company/user archive-delete, and other destructive actions the owner listed don't
+  exist as implemented endpoints yet to audit); backup/recovery review; a fresh security-headers
+  pass against the fuller P0 list (existing `middleware.ts` headers predate this directive); document
+  hard-delete protection. Continuing immediately.

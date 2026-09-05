@@ -1,29 +1,16 @@
-import { test, expect, type Browser, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { PrismaClient } from "@/prisma/generated/client";
+import { internalPage } from "./helpers/admin-auth";
 
 /**
  * ADMIN #33 — the internal command center. Covers the acceptance checklist:
  * a normal customer cannot reach it, an internal user can operate the product
- * from `/admin`, and a production generation error is locatable by the #29
- * correlation code.
+ * from `/admin` (past the mandatory TOTP 2FA challenge, SECURITY #53), and a
+ * production generation error is locatable by the #29 correlation code.
  */
 
-const ADMIN = { email: "admin@farvertrans.local", password: "admin-dev-only" };
 const rnd = () => `${Date.now()}${Math.floor(Math.random() * 1e5)}`;
 const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
-
-async function internalPage(browser: Browser): Promise<{ page: Page; close: () => Promise<void> }> {
-  const ctx = await browser.newContext({ baseURL });
-  const page = await ctx.newPage();
-  await page.goto("/entrar");
-  await page.fill("#email", ADMIN.email);
-  await page.fill("#password", ADMIN.password);
-  await Promise.all([
-    page.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
-    page.getByTestId("register-submit").click(),
-  ]);
-  return { page, close: () => ctx.close() };
-}
 
 async function registerAndGenerate(page: Page, company: string) {
   const mail = `u${rnd()}@example.com`;

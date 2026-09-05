@@ -1,14 +1,8 @@
-import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+import { internalPage, loginAdminApi } from "./helpers/admin-auth";
 
 function email() {
   return `gr${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
-}
-
-async function loginInternal(request: APIRequestContext) {
-  const r = await request.post("/api/auth/login", {
-    data: { email: "admin@farvertrans.local", password: "admin-dev-only" },
-  });
-  expect(r.status(), "run npm run seed").toBe(200);
 }
 
 async function registerViaLink(page: Page, link: string, addr: string) {
@@ -84,7 +78,7 @@ test.describe("GROWTH #28 — company acquisition engine", () => {
     browser,
     request,
   }) => {
-    await loginInternal(request);
+    await loginAdminApi(request);
     const ref = `op${Date.now() % 100000}`;
 
     // seed a prospect
@@ -120,25 +114,17 @@ test.describe("GROWTH #28 — company acquisition engine", () => {
       stats.unknown.find((o: { refCode: string }) => o.refCode === ref);
     expect(opRow?.firstDeca ?? 0).toBeGreaterThanOrEqual(1); // operator attribution survived to the first DeCA
 
-    const page2Ctx = await browser.newContext();
-    const admin = await page2Ctx.newPage();
-    await admin.goto("/entrar");
-    await admin.fill("#email", "admin@farvertrans.local");
-    await admin.fill("#password", "admin-dev-only");
-    await Promise.all([
-      admin.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
-      admin.getByTestId("register-submit").click(),
-    ]);
+    const { page: admin, close } = await internalPage(browser);
     await admin.goto("/operadores/captacion", { waitUntil: "networkidle" });
     await expect(admin.getByTestId("prospect-table").locator("tr", { hasText: ref })).toContainText(
       "Activado",
     );
     await expect(admin.getByTestId("funnel-table")).toContainText(ref);
-    await page2Ctx.close();
+    await close();
   });
 
   test("bulk import creates prospects and skips obvious duplicates", async ({ request }) => {
-    await loginInternal(request);
+    await loginAdminApi(request);
     const ref = `bulk${Date.now() % 100000}`;
     const text = `Alfa Transportes SL, B11111111, alfa@x.com, ${ref}\nBeta Cargas SL, , , ${ref}\nAlfa Transportes SL, B11111111, alfa@x.com, ${ref}`;
     const res = await request.post("/api/operadores/prospects", {
