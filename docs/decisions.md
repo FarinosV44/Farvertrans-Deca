@@ -1684,3 +1684,44 @@
 - Not committed to `main` — pushed to `develop` only, consistent with D-063 through D-067 (the
   earlier "push to main" authorization was for different, already-completed work and has not been
   re-extended to the #51-#54 directive).
+
+## D-069 — DESIGN #51 slice 1: remove decorative fake-QR artwork; widen the real result screen for desktop
+- Date / phase: 2026-09-06, same session, continuing the owner's execution order into #51 (desktop
+  visual overhaul) immediately after #52 (D-068). Issue #51's full text was fetched via `gh issue
+  view 51` since this summarized session didn't carry its exact acceptance criteria — it asks to
+  remove the fake-QR-style decorative square, redesign desktop with a richer professional B2B visual
+  system without destabilizing mobile, and make the `DeCA generado` result screen feel premium
+  (reference/version/status, professional success state, real QR, clear actions).
+- **Fake QR removed (a literal #51 acceptance item).** `components/site/deca-preview.tsx` — the
+  landing-page hero/product-proof illustration mockup, NOT the real result screen — had a 4×4 grid of
+  pseudo-random filled squares standing in for "the QR on the generated document." Replaced with the
+  existing `DocumentIcon` (`components/panel/icons.tsx`) in a tinted badge — a document glyph, never
+  a grid that could be mistaken for a real code. The actual result screen already renders a real,
+  scannable QR (`lib/pdf/qr.ts` → `QrCard`) — confirmed by re-reading `app/crear/[id]/page.tsx` before
+  touching anything, so this was purely a marketing-illustration fix, not a functional QR being added
+  or removed anywhere real.
+- **Result screen (`app/crear/[id]/page.tsx`) widened for desktop**, the single most sparse screen in
+  the product relative to #51's complaint ("desktop feels...like a stretched mobile page"): container
+  went from a centered `max-w-[680px]` single column to `max-w-[1120px]` with a `md:grid-cols-[1fr_380px]`
+  two-column layout at desktop widths (document data + version history on the left, actions + the
+  real QR card as a sidebar on the right) — mobile keeps the exact same stacked single-column DOM
+  order as before (no `md:` classes fire below the breakpoint, verified in the browser at 375/768/1280
+  widths). Added a reference/version/status chip row under the heading (explicit acceptance item:
+  "document reference/version/status... professional success state") using the existing success-color
+  token, no new colors introduced. No component's internal markup, props, or `data-testid`s changed —
+  only the page's layout wrapper — so this is layout-only risk, not logic risk.
+- **Not done in this slice (large item, deliberately sequenced):** the broader desktop visual richness
+  across landing sections, registration, the wizard steps and `/panel` that #51 also asks for. The
+  landing page had already received a "PRIORITY 5" visual pass in an earlier session (card grids,
+  icon language, `PRODUCT_SHOWCASE`) and isn't as sparse as the result screen was, so it was
+  deprioritized behind the two concrete, testable, high-value fixes above. Continuing to the rest of
+  #51 next.
+- Verification: `tsc --noEmit` clean; ESLint clean on both changed files; Prettier clean; ran the 6 e2e
+  specs that exercise this exact screen and the landing hero (`launch-happy-path`, `driver-delivery`,
+  `doc-cockpit`, `company-logo`, `build13`, `landing` — 29 tests, including the 360/768/1280px
+  no-horizontal-overflow checks) — all passed. Also drove the real `/crear` wizard end-to-end in a
+  local Chrome session (dev server on :3000) to visually confirm: the landing hero shows the new
+  document badge (no grid pattern); the generated-DeCA screen at 1440px shows the two-column layout,
+  the chip row, and a genuinely scannable QR in the sidebar. Screenshots reviewed, not saved (no
+  artifact requested).
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068.

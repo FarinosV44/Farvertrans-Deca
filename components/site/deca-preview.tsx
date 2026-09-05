@@ -1,7 +1,14 @@
+import { DocumentIcon } from "@/components/panel/icons";
+
 /**
  * Non-interactive visual of the real product (the /crear step 1 fields + the
  * generated-document result). This is the hero image — deliberately the interface
  * itself, never a stock truck photo (EPIC 01).
+ *
+ * DESIGN #51: the document badge next to "DeCA generado" is a document+check
+ * glyph, never a decorative pixel grid — a grid like that reads as a QR code
+ * and this illustration has no real one to show (the real, scannable QR only
+ * exists on the actual result screen, see `components/deca/qr-card.tsx`).
  */
 export function DecaPreview() {
   return (
@@ -38,14 +45,12 @@ export function DecaPreview() {
             PDF nativo · QR · URL de descarga directa
           </p>
         </div>
-        <div className="grid h-12 w-12 grid-cols-4 grid-rows-4 gap-[2px] rounded-[4px] bg-white p-1 ring-1 ring-[var(--color-border)]">
-          {Array.from({ length: 16 }).map((_, i) => (
-            <span
-              key={i}
-              className={(i * 7) % 3 === 0 ? "bg-[var(--color-text)]" : "bg-transparent"}
-            />
-          ))}
-        </div>
+        <span
+          aria-hidden
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-[var(--radius-sm)] bg-[color-mix(in_srgb,var(--color-primary)_10%,white)] text-[var(--color-primary)] ring-1 ring-[var(--color-border)]"
+        >
+          <DocumentIcon width={24} height={24} />
+        </span>
       </div>
     </div>
   );

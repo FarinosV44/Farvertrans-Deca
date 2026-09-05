@@ -719,3 +719,17 @@ new GDPR prose made a `trust-registration-v2.spec.ts` `getByText` assertion ambi
 passed + the 2 already-documented parallel-only flakes (unrelated to this change) + the one
 regression above fixed and re-verified. See `decisions.md` D-068. Pushed to `develop` only.
 **Continuing** to #51 (desktop visual overhaul) next, per the owner's execution order.
+
+## D-069: DESIGN #51 slice 1 — fake-QR artwork removed, result screen widened for desktop
+Fetched issue #51's full text via `gh issue view 51` for its exact acceptance criteria.
+`components/site/deca-preview.tsx` (landing hero/product-proof illustration, not the real result
+screen) had its 4×4 fake-QR-style grid replaced with the existing `DocumentIcon` in a tinted badge —
+satisfies the explicit "remove the fake QR square" acceptance item. `app/crear/[id]/page.tsx` (the
+real `DeCA generado` screen) widened from a centered 680px single column to a 1120px two-column
+desktop layout (data + history left, actions + real QR sidebar right, mobile unchanged) with a new
+reference/version/status chip row. Gate: typecheck/lint/prettier clean, the 29 e2e tests covering this
+screen + landing (incl. 360/768/1280px overflow checks) all passed, plus a real Chrome walkthrough of
+the full wizard → result screen at 1440px confirming the visual fix. Landing's broader visual richness
+(personas/steps/showcase sections), registration, wizard-step chrome and `/panel` are the rest of #51
+and are NOT done yet — deliberately sequenced behind this concrete, testable slice. See `decisions.md`
+D-069. **Continuing** with the rest of #51 next.
