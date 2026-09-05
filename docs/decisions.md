@@ -1244,3 +1244,25 @@
 - Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify. One
   isolated re-run confirmed parallel-worker flake (pre-existing, documented lesson) on an unrelated
   content-CMS test, not a regression.
+
+## D-058 — Merge `develop` → `main` (D-052…D-057), explicit user authorization
+- Date / phase: 2026-09-05, same session. The user explicitly asked ("when finish push to main")
+  before leaving — this authorizes the merge per the standing rule that `main` only ever advances on
+  an explicit instruction in the conversation.
+- Pre-merge gate (re-run clean immediately before merging, on `develop`'s final commit): typecheck +
+  lint + prettier format check (fixed one stale-formatting slip from the D-057 edits, `89e7881`) +
+  127 unit + the 8-test compliance suite + the full landing suite, all green. Diff scanned for
+  secret-shaped patterns at every commit this session — none found.
+- Fast-forwarded `main` from `e7f8745` to `89e7881` (6 commits: D-052 hard registration gate, D-053
+  hard email-verification gate, D-054 `/panel/datos` fail-safe fix, D-055 company-scoped saved
+  master data, D-056 premium PDF + customer logo, D-057 landing accuracy fixes + product showcase),
+  pushed.
+- **This does NOT deploy or migrate production.** Two new migrations are on `main` now but not yet
+  applied to the production database: `20260905133820_workspace_saved_master_data` and
+  `20260905141620_company_logo`. Hostinger deploy is still the existing manual SSH/build step
+  (`docs/07-release.md`) — until a redeploy + `prisma migrate deploy` run, production keeps serving
+  the pre-this-session build. **Also unresolved on production, independent of this session's work:**
+  the user reported `/panel/datos` still erroring live — that is D-054's fix, on `main` now but not
+  deployed; and the previously-known migration `20260905095427_route_intel_and_commercial_consent`
+  (D-051) may also still be unapplied — the user should confirm all pending migrations are deployed
+  together.

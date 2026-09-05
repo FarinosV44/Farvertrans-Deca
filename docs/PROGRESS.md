@@ -547,6 +547,27 @@ deploy`).
   work (D-047's panel icon system now also used on the landing); no further dedicated slice queued
   before this session ends.
 
+## D-058: `develop` (D-052…D-057) merged to `main` at `89e7881`, on the user's explicit request ("push to main" before leaving)
+Fast-forwarded from `e7f8745`. Full local gate green immediately before merging (typecheck, lint,
+format, 127 unit, 8 compliance, full landing suite). **Not yet deployed/migrated on production** —
+two new migrations (`20260905133820_workspace_saved_master_data`, `20260905141620_company_logo`)
+need `prisma migrate deploy` on Hostinger after the next redeploy, same as D-051's still-pending
+migration. See D-058 for the full pre-merge evidence and what remains.
+
+### If a session resumes this project — read first
+- **The user's `/panel/datos` production report (D-054) is fixed in code but NOT deployed.** Confirm
+  with the user whether a redeploy + `prisma migrate deploy` has happened since this session; if not,
+  that is the very first thing to raise.
+- **Google OAuth credentials were set on Hostinger by the user this session** (their message, not yet
+  independently verified) — once deployed, the existing D-046 code should activate with no further
+  changes; verify live rather than assuming.
+- **Real Resend delivery is still unconfirmed** — the user said they will configure it (see D-053).
+  Do not close out email-verification-as-tested until a real inbox receipt is confirmed.
+- Continuing the owner's PRIORITY list: 1–5 are done (D-052…D-057); PRIORITY 6 (consistent product
+  UI) has no dedicated slice done yet beyond what 1–5 incidentally advanced (shared icon language
+  landing↔panel). The owner's directive says to continue automatically through the list without
+  asking — pick it up there if no new instruction has arrived.
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as
