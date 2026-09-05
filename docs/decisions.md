@@ -1620,3 +1620,67 @@
   add one without this decision being revisited first.
 - No code changed this block — docs only. Gate unaffected (154 e2e / 139 unit baseline from D-066
   still holds).
+
+## D-068 — LEGAL #52: real legal identity, custody framing, liability limitation, Valencia jurisdiction, GDPR controller/processor split
+- Date / phase: 2026-09-06, same session, continuing the P0-plus queue (LEGAL #52).
+- **Real legal identity replaces placeholders:** `lib/legal-entity.ts`'s `address` field changed from
+  the placeholder `"Domicilio social: pendiente de publicación"` to the real registered address
+  (`Calle Pintor Francisco Ribalta 4A, 46540 El Puig, Valencia, España`); `lib/brand.ts`'s
+  `supportEmail` changed from `hola@decafacil.es` to the dedicated `Deca@praetoriaabogados.es`
+  (per the owner's instruction; this address now also drives `LEGAL_ENTITY.supportEmail`/
+  `privacyEmail`, which re-export it). `app/aviso-legal/page.tsx` and `app/privacidad/page.tsx` had
+  their address sentences reworded (removed the now-false "se publicará en cuanto esté disponible"
+  trailing clause that only made sense while the address was a placeholder).
+- **Fixed a stale accuracy bug found during this sweep:** `app/privacidad/page.tsx`'s "Cuenta" bullet
+  falsely claimed a free account is required to generate ANY DeCA, contradicting the already-shipped
+  D-061 reversal (first DeCA needs only name+email). Corrected to state the actual behaviour.
+- **`app/terminos/page.tsx` rewritten** to add the substantive content the owner's #52 spec required
+  and that was previously missing entirely: a tri-party responsibility section (PRAETORIA = platform/
+  custody; customer = data accuracy/legality; actual transport parties = performance of the transport
+  itself), explicit "custody ≠ certification of truth" framing, a lawful (non-absolute) B2B
+  limitation-of-liability clause enumerating exactly what PRAETORIA does not verify/assume
+  responsibility for (data veracity, dangerous-goods compliance, loading/unloading, route, vehicles,
+  drivers, licences/permits/authorisations/insurance, transport contracts, legality of the operation,
+  third-party performance) while explicitly preserving liability for fraud/wilful misconduct/gross
+  negligence/non-waivable statutory duties; a free-launch-phase clarification (promotional, temporary,
+  no perpetual-free promise, future paid plans possible); a custody/conservation section that never
+  claims "100% secure" or "impossible to lose"; and a Valencia jurisdiction clause for B2B/professional
+  use, explicitly qualified against mandatory/non-waivable rules and consumer-jurisdiction protection
+  (there are no consumer users today, but the clause is written not to overreach if that changes).
+- **`app/privacidad/page.tsx` gained a GDPR controller/processor split section:** PRAETORIA is
+  controller for account/auth/security/administration/billing data, and processor (Art. 28 RGPD) for
+  personal data the user enters INSIDE a DeCA (e.g. driver/employee/third-party data appearing in the
+  document) — with the Art. 28-style processor commitments spelled out (documented instructions only,
+  confidentiality, security measures, no sub-processing without notice, assistance with data-subject
+  requests and security incidents, deletion/return at end of service, ability to demonstrate
+  compliance) and a note that the user remains responsible for having a lawful basis to include
+  third-party personal data in a DeCA.
+- **Checked and left alone (already satisfies the requirement):** `TermsAcceptance` (schema.prisma)
+  is already versioned (`version` = `LEGAL_ENTITY.termsVersion`), timestamped (`acceptedAt`),
+  append-only (no update/delete anywhere in the codebase), and indexed by `userId` — satisfying
+  "terms acceptance stays versioned/timestamped/auditable" as literally stated. No new
+  re-acceptance-on-version-bump gate was built: the owner's #52 text did not ask for one, and adding
+  one now would be unrequested scope — noted here so a future session doesn't have to re-derive
+  whether the gap is real (it's a possible future enhancement, not a #52 requirement).
+- **Checked, no change needed:** the landing page's "Gratis durante la fase de lanzamiento" line
+  (`lib/content/landing.ts`) is already a secondary `proof`/`trust` line, not the primary headline —
+  already satisfies "prominent but not legally dominant." `app/cookies/page.tsx` reviewed in full,
+  already accurate, no #52-related change needed.
+- **Regression found and fixed during the gate, not shipped broken:** adding the "Responsable del
+  tratamiento" / "responsable del tratamiento" phrase inside the new GDPR prose made
+  `tests/e2e/trust-registration-v2.spec.ts`'s `getByText("Responsable del tratamiento")` assertion
+  ambiguous (Playwright's plain-string `getByText` is a case-insensitive substring match, so it now
+  matched both the `<h2>` and the new `<strong>` text — a strict-mode violation). Fixed by scoping
+  that assertion to `getByRole("heading", { name: ... })`, which matches the test's actual intent
+  (assert the section exists) without weakening it.
+- Gate run after all edits: `tsc --noEmit` clean; ESLint clean on changed files; Prettier
+  clean (after auto-formatting `app/terminos/page.tsx`, `app/privacidad/page.tsx`,
+  `tests/e2e/trust-registration-v2.spec.ts`); `vitest run` 139/139 passed; `playwright test
+  --workers=3` 151 passed + the 2 already-documented parallel-only flakes (admin-2fa recovery-code
+  replay race, content-cms preview race — both pre-existing per `docs/lessons-learned.md`, re-verified
+  independent of this change), plus the one real regression above, fixed and re-verified green in
+  isolation. Grepped the whole repo for the old `hola@decafacil.es` address: zero remaining
+  references.
+- Not committed to `main` — pushed to `develop` only, consistent with D-063 through D-067 (the
+  earlier "push to main" authorization was for different, already-completed work and has not been
+  re-extended to the #51-#54 directive).

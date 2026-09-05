@@ -15,8 +15,8 @@ export const BRAND = {
   shortName: "DeCA Fácil",
   /** One-line value proposition. */
   tagline: "Genera tu Documento Electrónico de Control en menos de 2 minutos.",
-  /** Support / operational contact. */
-  supportEmail: "hola@decafacil.es",
+  /** Support / operational contact (LEGAL #52 — PRAETORIA's dedicated DeCA address). */
+  supportEmail: "Deca@praetoriaabogados.es",
   /** Canonical base URL comes from the environment (NEXT_PUBLIC_FVD_BASE_URL). */
   get baseUrl(): string {
     return process.env.NEXT_PUBLIC_FVD_BASE_URL ?? "http://localhost:3000";

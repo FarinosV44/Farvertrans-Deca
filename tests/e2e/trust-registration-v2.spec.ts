@@ -48,7 +48,7 @@ test.describe("TRUST #42 — Praetoria legal identity", () => {
     await expect(page.getByText("B21810452").first()).toBeVisible();
 
     await page.goto("/privacidad");
-    await expect(page.getByText("Responsable del tratamiento")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Responsable del tratamiento" })).toBeVisible();
     await expect(page.getByText("PRAETORIA, S.L.").first()).toBeVisible();
 
     await page.goto("/terminos");

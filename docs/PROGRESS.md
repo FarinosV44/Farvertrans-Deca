@@ -698,3 +698,24 @@ already being append-only, the owner's requirements are satisfied by the absence
 feature, not a gap to close. See `decisions.md` D-067. **Continuing** to #51 (desktop visual
 overhaul), #52 (legal identity/liability), #54 (Spanish-first i18n expansion) per the owner's
 execution order — #55/#56 remain queued after.
+
+## D-068: LEGAL #52 — real legal identity, custody/liability/jurisdiction framework, GDPR controller/processor split
+Real registered address + dedicated support email replace the earlier placeholders in
+`lib/legal-entity.ts`/`lib/brand.ts`; fixed two stale-prose bugs found in the sweep (a placeholder-
+dependent address sentence, and a false "account always required for first DeCA" claim contradicting
+D-061). `app/terminos/page.tsx` rewritten with the substantive content the owner's #52 spec required:
+tri-party responsibility split (PRAETORIA/customer/transport parties), explicit custody ≠
+certification-of-truth framing, a lawful B2B limitation-of-liability clause with the owner's exact
+enumerated non-verified-items list (preserving liability for fraud/gross negligence/non-waivable
+duties), a free-launch-phase caveat (promotional/temporary, no perpetual-free promise), and a
+Valencia jurisdiction clause qualified against mandatory/consumer rules. `app/privacidad/page.tsx`
+gained a GDPR controller (account/auth/security/billing) vs processor (Art. 28, data inside generated
+DeCA documents) section. Checked and confirmed adequate without changes: `TermsAcceptance` already
+versioned/timestamped/append-only; the landing page's free-launch line already secondary, not
+dominant; `app/cookies/page.tsx` accurate as-is. Found and fixed one real regression during the gate:
+new GDPR prose made a `trust-registration-v2.spec.ts` `getByText` assertion ambiguous
+(case-insensitive substring match hit both a heading and new bold text) — fixed by scoping it to
+`getByRole("heading", ...)`. Full gate green: typecheck/lint/prettier clean, 139/139 unit, 151 e2e
+passed + the 2 already-documented parallel-only flakes (unrelated to this change) + the one
+regression above fixed and re-verified. See `decisions.md` D-068. Pushed to `develop` only.
+**Continuing** to #51 (desktop visual overhaul) next, per the owner's execution order.
