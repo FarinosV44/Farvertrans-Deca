@@ -29,7 +29,7 @@ export const LEGAL_ENTITY = {
   custodyLine: "Custodia digital de los documentos gestionada por PRAETORIA, S.L.",
   /** Secondary credibility line — the discreet legal-professional backing (#42 §2A). */
   legalBackingLine:
-    "PRAETORIA, S.L. es un despacho jurídico con experiencia en servicios para el sector del transporte.",
+    "PRAETORIA, S.L. es un despacho jurídico con experiencia en servicios para empresas y profesionales del transporte.",
   /** Current Terms & Conditions / Privacy acceptance version (TRUST #42 §5). */
   termsVersion: "2026-09-04",
 } as const;
