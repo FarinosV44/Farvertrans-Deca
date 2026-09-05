@@ -96,9 +96,29 @@ const FIELD_KEY_MAP: Record<string, keyof FormState> = {
 };
 
 export type SavedData = {
-  companies: { id: string; name: string; nif: string | null; address: string | null }[];
-  vehicles: { id: string; tractorPlate: string; trailerPlate: string | null }[];
-  addresses: { id: string; label: string; address: string }[];
+  companies: {
+    id: string;
+    name: string;
+    nif: string | null;
+    address: string | null;
+    role: "shipper" | "carrier" | "both";
+  }[];
+  vehicles: {
+    id: string;
+    tractorPlate: string;
+    trailerPlate: string | null;
+    alias: string | null;
+  }[];
+  locations: {
+    id: string;
+    name: string;
+    address: string;
+    postalCode: string | null;
+    city: string | null;
+    province: string | null;
+    country: string;
+    type: "load" | "unload" | "both";
+  }[];
 };
 
 type TemplateLocation = {
@@ -312,6 +332,19 @@ export function CrearWizard({
   const [submitError, setSubmitError] = useState<string | null>(null);
   /** A classified generation failure (#29): calm message + correlation code + retry. */
   const [failure, setFailure] = useState<{ message: string; correlationId?: string } | null>(null);
+  /**
+   * Which saved records populated the form right now (WORKSPACE #24) — sent
+   * with the create so the server can bump their "last used" timestamp.
+   * Cleared as soon as the user hand-edits that field again, so a stale pick
+   * never gets credited for data the user actually retyped.
+   */
+  const [picked, setPicked] = useState<{
+    shipperId?: string;
+    carrierId?: string;
+    loadLocationId?: string;
+    unloadLocationId?: string;
+    vehicleId?: string;
+  }>({});
   const idempotencyKey = useMemo(
     () => (typeof crypto !== "undefined" ? crypto.randomUUID() : String(Date.now())),
     [],
@@ -358,6 +391,11 @@ export function CrearWizard({
   }, [step]);
 
   const set = (k: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  /** Same as `set`, but also drops the "picked" credit for that saved record (hand-edited now). */
+  const setAndUnpick = (k: keyof FormState, pickKey: keyof typeof picked) => (v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    setPicked((p) => (p[pickKey] ? { ...p, [pickKey]: undefined } : p));
+  };
 
   const plateHint =
     form.tractorPlate && !looksLikeSpanishPlate(form.tractorPlate)
@@ -426,7 +464,13 @@ export function CrearWizard({
         "x-fvd-fp": clientFingerprint(),
         ...(challenge ? { "x-fvd-challenge": challenge } : {}),
       },
-      body: JSON.stringify(toPayload(form)),
+      body: JSON.stringify({
+        ...toPayload(form),
+        // WORKSPACE #24: which saved records this DeCA actually used, so the
+        // server can bump their "last used" timestamp. Best-effort only —
+        // never validated against the payload, never blocks generation.
+        usedSaved: picked,
+      }),
     });
   }
 
@@ -675,45 +719,49 @@ export function CrearWizard({
                 </button>
               </div>
             )}
-            {saved && saved.companies.length > 0 && (
-              <label className="mt-4 block text-sm">
-                <span className="font-medium">Usar una empresa guardada</span>
-                <select
-                  data-testid="autofill-company"
-                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
-                  defaultValue=""
-                  onChange={(e) => {
-                    const c = saved.companies.find((x) => x.id === e.target.value);
-                    if (c)
-                      setForm((f) => ({
-                        ...f,
-                        carrierName: c.name,
-                        carrierNif: c.nif ?? "",
-                        carrierAddress: c.address ?? f.carrierAddress,
-                      }));
-                    e.currentTarget.value = "";
-                  }}
-                >
-                  <option value="">Rellenar transportista con…</option>
-                  {saved.companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                      {c.nif ? ` — ${c.nif}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="px-1 text-sm font-bold">Empresa que contrata el transporte</legend>
+              <legend className="px-1 text-sm font-bold">Cargador contractual</legend>
               <p className="text-xs text-[var(--color-text-muted)]">
                 ¿Quién te ha contratado este transporte?
               </p>
+              {saved && saved.companies.filter((c) => c.role !== "carrier").length > 0 && (
+                <label className="mt-3 block text-sm">
+                  <span className="font-medium">Buscar o seleccionar empresa habitual</span>
+                  <select
+                    data-testid="autofill-shipper"
+                    className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const c = saved.companies.find((x) => x.id === e.target.value);
+                      if (c) {
+                        setForm((f) => ({
+                          ...f,
+                          shipperName: c.name,
+                          shipperNif: c.nif ?? "",
+                          shipperAddress: c.address ?? f.shipperAddress,
+                        }));
+                        setPicked((p) => ({ ...p, shipperId: c.id }));
+                      }
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="">Introducir uno nuevo…</option>
+                    {saved.companies
+                      .filter((c) => c.role !== "carrier")
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                          {c.nif ? ` — ${c.nif}` : ""}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
               <Field
                 id="shipperName"
                 label="Nombre o razón social"
                 value={form.shipperName}
-                onChange={set("shipperName")}
+                onChange={setAndUnpick("shipperName", "shipperId")}
                 error={errors.shipperName}
                 autoComplete="organization"
               />
@@ -721,7 +769,7 @@ export function CrearWizard({
                 id="shipperNif"
                 label="NIF / VAT"
                 value={form.shipperNif}
-                onChange={set("shipperNif")}
+                onChange={setAndUnpick("shipperNif", "shipperId")}
                 error={errors.shipperNif}
                 hint="Puedes usar un NIF/VAT extranjero."
               />
@@ -729,23 +777,90 @@ export function CrearWizard({
                 id="shipperAddress"
                 label="Domicilio"
                 value={form.shipperAddress}
-                onChange={set("shipperAddress")}
+                onChange={setAndUnpick("shipperAddress", "shipperId")}
                 error={errors.shipperAddress}
                 autoComplete="street-address"
               />
             </fieldset>
+
+            {(form.shipperName || form.carrierName) && (
+              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                <button
+                  type="button"
+                  data-testid="use-same-shipper-as-carrier"
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      carrierName: f.shipperName,
+                      carrierNif: f.shipperNif,
+                      carrierAddress: f.shipperAddress,
+                    }))
+                  }
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                >
+                  El transportista es el mismo que el cargador
+                </button>
+                <button
+                  type="button"
+                  data-testid="use-same-carrier-as-shipper"
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      shipperName: f.carrierName,
+                      shipperNif: f.carrierNif,
+                      shipperAddress: f.carrierAddress,
+                    }))
+                  }
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                >
+                  El cargador es el mismo que el transportista
+                </button>
+              </div>
+            )}
+
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="px-1 text-sm font-bold">
-                Transportista que realiza el transporte
-              </legend>
+              <legend className="px-1 text-sm font-bold">Transportista efectivo</legend>
               <p className="text-xs text-[var(--color-text-muted)]">
                 ¿Qué empresa realiza físicamente el transporte?
               </p>
+              {saved && saved.companies.filter((c) => c.role !== "shipper").length > 0 && (
+                <label className="mt-3 block text-sm">
+                  <span className="font-medium">Buscar o seleccionar transportista habitual</span>
+                  <select
+                    data-testid="autofill-carrier"
+                    className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const c = saved.companies.find((x) => x.id === e.target.value);
+                      if (c) {
+                        setForm((f) => ({
+                          ...f,
+                          carrierName: c.name,
+                          carrierNif: c.nif ?? "",
+                          carrierAddress: c.address ?? f.carrierAddress,
+                        }));
+                        setPicked((p) => ({ ...p, carrierId: c.id }));
+                      }
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="">Introducir uno nuevo…</option>
+                    {saved.companies
+                      .filter((c) => c.role !== "shipper")
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                          {c.nif ? ` — ${c.nif}` : ""}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
               <Field
                 id="carrierName"
                 label="Nombre o razón social"
                 value={form.carrierName}
-                onChange={set("carrierName")}
+                onChange={setAndUnpick("carrierName", "carrierId")}
                 error={errors.carrierName}
                 autoComplete="organization"
               />
@@ -753,7 +868,7 @@ export function CrearWizard({
                 id="carrierNif"
                 label="NIF / VAT"
                 value={form.carrierNif}
-                onChange={set("carrierNif")}
+                onChange={setAndUnpick("carrierNif", "carrierId")}
                 error={errors.carrierNif}
                 hint="Puedes usar un NIF/VAT extranjero."
               />
@@ -761,7 +876,7 @@ export function CrearWizard({
                 id="carrierAddress"
                 label="Domicilio"
                 value={form.carrierAddress}
-                onChange={set("carrierAddress")}
+                onChange={setAndUnpick("carrierAddress", "carrierId")}
                 error={errors.carrierAddress}
                 autoComplete="street-address"
               />
@@ -776,11 +891,47 @@ export function CrearWizard({
               <p className="text-xs text-[var(--color-text-muted)]">
                 Dónde se recoge la mercancía y qué día.
               </p>
+              {saved && saved.locations.filter((l) => l.type !== "unload").length > 0 && (
+                <label className="mt-3 block text-sm">
+                  <span className="font-medium">Buscar o seleccionar lugar habitual</span>
+                  <select
+                    data-testid="autofill-load-location"
+                    className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const l = saved.locations.find((x) => x.id === e.target.value);
+                      if (l) {
+                        setForm((f) => ({
+                          ...f,
+                          loadLocationName: l.name,
+                          loadLocationAddress: l.address,
+                          loadLocationPostalCode: l.postalCode ?? "",
+                          loadLocationCity: l.city ?? "",
+                          loadLocationProvince: l.province ?? "",
+                          loadLocationCountry: l.country || f.loadLocationCountry,
+                        }));
+                        setPicked((p) => ({ ...p, loadLocationId: l.id }));
+                      }
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="">Introducir uno nuevo…</option>
+                    {saved.locations
+                      .filter((l) => l.type !== "unload")
+                      .map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                          {l.city ? ` — ${l.city}` : ""}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
               <Field
                 id="loadLocationName"
                 label="Empresa o establecimiento"
                 value={form.loadLocationName}
-                onChange={set("loadLocationName")}
+                onChange={setAndUnpick("loadLocationName", "loadLocationId")}
                 error={errors.loadLocationName}
                 autoComplete="organization"
               />
@@ -843,11 +994,47 @@ export function CrearWizard({
               <p className="text-xs text-[var(--color-text-muted)]">
                 Dónde se entrega la mercancía y qué día. Puede ser el mismo día que la carga.
               </p>
+              {saved && saved.locations.filter((l) => l.type !== "load").length > 0 && (
+                <label className="mt-3 block text-sm">
+                  <span className="font-medium">Buscar o seleccionar lugar habitual</span>
+                  <select
+                    data-testid="autofill-unload-location"
+                    className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const l = saved.locations.find((x) => x.id === e.target.value);
+                      if (l) {
+                        setForm((f) => ({
+                          ...f,
+                          unloadLocationName: l.name,
+                          unloadLocationAddress: l.address,
+                          unloadLocationPostalCode: l.postalCode ?? "",
+                          unloadLocationCity: l.city ?? "",
+                          unloadLocationProvince: l.province ?? "",
+                          unloadLocationCountry: l.country || f.unloadLocationCountry,
+                        }));
+                        setPicked((p) => ({ ...p, unloadLocationId: l.id }));
+                      }
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="">Introducir uno nuevo…</option>
+                    {saved.locations
+                      .filter((l) => l.type !== "load")
+                      .map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                          {l.city ? ` — ${l.city}` : ""}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              )}
               <Field
                 id="unloadLocationName"
                 label="Empresa o establecimiento"
                 value={form.unloadLocationName}
-                onChange={set("unloadLocationName")}
+                onChange={setAndUnpick("unloadLocationName", "unloadLocationId")}
                 error={errors.unloadLocationName}
                 autoComplete="organization"
               />
@@ -916,26 +1103,28 @@ export function CrearWizard({
             </p>
             {saved && saved.vehicles.length > 0 && (
               <label className="block text-sm">
-                <span className="font-medium">Usar un vehículo guardado</span>
+                <span className="font-medium">Buscar o seleccionar vehículo</span>
                 <select
                   data-testid="autofill-vehicle"
                   className="mt-1 mb-2 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
                   defaultValue=""
                   onChange={(e) => {
                     const v = saved.vehicles.find((x) => x.id === e.target.value);
-                    if (v)
+                    if (v) {
                       setForm((f) => ({
                         ...f,
                         tractorPlate: v.tractorPlate,
                         trailerPlate: v.trailerPlate ?? "",
                       }));
+                      setPicked((p) => ({ ...p, vehicleId: v.id }));
+                    }
                     e.currentTarget.value = "";
                   }}
                 >
-                  <option value="">Rellenar matrículas con…</option>
+                  <option value="">Introducir uno nuevo…</option>
                   {saved.vehicles.map((v) => (
                     <option key={v.id} value={v.id}>
-                      {v.tractorPlate}
+                      {v.alias ? `${v.alias} — ${v.tractorPlate}` : v.tractorPlate}
                       {v.trailerPlate ? ` + ${v.trailerPlate}` : ""}
                     </option>
                   ))}
@@ -961,7 +1150,7 @@ export function CrearWizard({
               id="tractorPlate"
               label="Matrícula de la tractora"
               value={form.tractorPlate}
-              onChange={set("tractorPlate")}
+              onChange={setAndUnpick("tractorPlate", "vehicleId")}
               error={errors.tractorPlate}
               hint={plateHint}
             />
@@ -969,7 +1158,7 @@ export function CrearWizard({
               id="trailerPlate"
               label="Matrícula del remolque / semirremolque"
               value={form.trailerPlate}
-              onChange={set("trailerPlate")}
+              onChange={setAndUnpick("trailerPlate", "vehicleId")}
               error={errors.trailerPlate}
               required={false}
               hint="Si no hay remolque, déjalo vacío."

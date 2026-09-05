@@ -23,7 +23,7 @@ export default async function AppHome() {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro");
 
-  const [rows, saved] = await Promise.all([listHistory(user.companyId), listSaved(user.id)]);
+  const [rows, saved] = await Promise.all([listHistory(user.companyId), listSaved(user.companyId)]);
   const recent = rows.slice(0, 5);
   const last = rows[0];
 

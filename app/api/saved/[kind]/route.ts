@@ -11,13 +11,19 @@ function parseKind(k: string): SavedKind | null {
 
 export async function POST(req: Request, { params }: { params: Promise<{ kind: string }> }) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
+  if (!user?.companyId)
+    return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
 
   const kind = parseKind((await params).kind);
   if (!kind) return NextResponse.json({ error: { code: "bad_kind" } }, { status: 404 });
 
   try {
-    const created = await createSaved(user.id, kind, await req.json().catch(() => ({})));
+    const created = await createSaved(
+      user.id,
+      user.companyId,
+      kind,
+      await req.json().catch(() => ({})),
+    );
     return NextResponse.json({ item: created }, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) {

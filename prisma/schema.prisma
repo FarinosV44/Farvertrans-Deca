@@ -48,6 +48,9 @@ model Company {
   acquisition       Acquisition?
   invites           CompanyInvite[]
   commercialConsent CommercialConsent?
+  savedCompanies    SavedCompany[]
+  savedVehicles     SavedVehicle[]
+  savedLocations    SavedLocation[]
 
   @@map("company")
 }
@@ -91,12 +94,12 @@ model User {
   emailVerifiedAt DateTime?   @map("email_verified_at")
   createdAt       DateTime    @default(now()) @map("created_at")
 
-  company        Company?       @relation(fields: [companyId], references: [id])
-  createdDecas   Deca[]         @relation("DecaCreatedBy")
+  company        Company?        @relation(fields: [companyId], references: [id])
+  createdDecas   Deca[]          @relation("DecaCreatedBy")
   acquisition    Acquisition?
   savedCompanies SavedCompany[]
   savedVehicles  SavedVehicle[]
-  savedAddresses SavedAddress[]
+  savedLocations SavedLocation[]
 
   @@map("user")
 }
@@ -262,44 +265,87 @@ model ClaimToken {
   @@map("claim_token")
 }
 
+/// A saved party's role in a transport (WORKSPACE #24) — "both" fills either
+/// slot in "usar el mismo" when the contractual shipper and effective carrier
+/// are the same legal entity.
+enum SavedPartyRole {
+  shipper
+  carrier
+  both
+}
+
+/// Reusable cargador contractual / transportista efectivo (WORKSPACE #24).
+/// Scoped to the COMPANY (a shared team resource, TEAM #27) — `userId` is
+/// kept only as the creator, for audit. Editing/deleting never touches an
+/// already-generated DeCA — every document holds its own copy of the data.
 model SavedCompany {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  name      String
-  nif       String?
-  address   String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String         @id @default(cuid())
+  userId       String         @map("user_id")
+  companyId    String         @map("company_id")
+  name         String
+  nif          String?
+  address      String?
+  contactName  String?        @map("contact_name")
+  contactPhone String?        @map("contact_phone")
+  contactEmail String?        @map("contact_email")
+  role         SavedPartyRole @default(both)
+  lastUsedAt   DateTime?      @map("last_used_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([companyId])
   @@map("saved_company")
 }
 
+/// Reusable tractor + trailer plate (WORKSPACE #24). Company-scoped like `SavedCompany`.
 model SavedVehicle {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  tractorPlate String   @map("tractor_plate")
-  trailerPlate String?  @map("trailer_plate")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  companyId    String    @map("company_id")
+  tractorPlate String    @map("tractor_plate")
+  trailerPlate String?   @map("trailer_plate")
+  alias        String?
+  lastUsedAt   DateTime? @map("last_used_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([companyId])
   @@map("saved_vehicle")
 }
 
-model SavedAddress {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  label     String
-  address   String
-  createdAt DateTime @default(now()) @map("created_at")
+/// A loading/unloading point can serve — "both" fills either slot.
+enum SavedLocationType {
+  load
+  unload
+  both
+}
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+/// Reusable lugar de carga/descarga (WORKSPACE #24) — replaces the old flat
+/// `SavedAddress`; mirrors the DeCA's own structured location fields
+/// (D-042) so it drops straight into the wizard with no reformatting.
+model SavedLocation {
+  id         String            @id @default(cuid())
+  userId     String            @map("user_id")
+  companyId  String            @map("company_id")
+  name       String
+  address    String
+  postalCode String?           @map("postal_code")
+  city       String?
+  province   String?
+  country    String            @default("España")
+  type       SavedLocationType @default(both)
+  lastUsedAt DateTime?         @map("last_used_at")
+  createdAt  DateTime          @default(now()) @map("created_at")
 
-  @@index([userId])
-  @@map("saved_address")
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("saved_location")
 }
 
 /// First-party analytics event. Never carries PII.

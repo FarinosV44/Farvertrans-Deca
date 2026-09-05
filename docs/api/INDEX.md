@@ -5,7 +5,7 @@
 |---------|------|-----------|-----|--------------------|
 | GET /health | route | app/health/route.ts | docs/reference/endpoints.md | Liveness + DB reachability + app version |
 | POST /api/events | route | app/api/events/route.ts | docs/reference/endpoints.md | First-party analytics ingest; schema-validated, always 204, never 5xx |
-| POST /api/deca | route | app/api/deca/route.ts | docs/reference/endpoints.md | Create a DeCA (F1): validate R-2, render compliant PDF, store it, persist deca+version, return token + pdfSha256 + claim token; 422 on invalid, fails closed |
+| POST /api/deca | route | app/api/deca/route.ts | docs/reference/endpoints.md | Create a DeCA (F1): requires an authenticated, email-verified session (401 `auth_required` / 403 `email_not_verified`, D-052/D-053); validate R-2, render compliant PDF, store it, persist deca+version, bump "last used" on any saved records referenced, return token + pdfSha256; 422 on invalid, fails closed |
 | GET /d/[token] | route | app/d/[token]/route.ts | docs/reference/endpoints.md | Public inspection (F4/R-6..R-9): streams the exact PDF, no auth/cookie/interstitial, noindex; 404 unknown, 410 outside the 7-day window |
 | renderDecaPdf() / PdfRenderError | fn/class | lib/pdf/render.ts | docs/reference/lib.md | Render the compliant text PDF (R-3), embed QR (R-5) + metadata timestamps (R-11), enforce ≤5 MB (R-4) |
 | DecaDocument | component | lib/pdf/deca-document.tsx | docs/reference/lib.md | The @react-pdf document — every field as selectable text, A4, QR + URL footer |
@@ -13,7 +13,10 @@
 | ensureFonts() | function | lib/pdf/fonts.ts | docs/reference/lib.md | Register bundled Inter (OFL) as data URIs for @react-pdf |
 | getPdfStore() / pdfKey() / pdfSha256() / PdfStore / StorageError | fn/type | lib/storage/index.ts | docs/reference/lib.md | Pluggable PDF store: Supabase Storage (prod) or local FS (FVD_STORAGE_DIR persistent path); pdfSha256() is the per-version integrity anchor |
 | isPubliclyAvailable() | function | lib/deca/deactivation.ts | docs/reference/lib.md | R-9 7-day post-service availability window |
-| POST /api/auth/register | route | app/api/auth/register/route.ts | docs/reference/endpoints.md | Create company + user, set session, claim the anonymous DeCA (never orphans it) |
+| POST /api/auth/register | route | app/api/auth/register/route.ts | docs/reference/endpoints.md | Create company + user, set session, send the verification email (returns `emailSent: false` and logs a failure rather than claiming success when the provider call fails, D-053), claim a legacy anonymous DeCA link if present (never orphans it) |
+| GET /api/auth/verify-email/status | route | app/api/auth/verify-email/status/route.ts | docs/reference/endpoints.md | Fresh, uncached read of `emailVerifiedAt` for the current session (D-053) — backs "Ya he confirmado mi cuenta", which never marks the account verified itself |
+| POST /api/auth/verify-email/resend | route | app/api/auth/verify-email/resend/route.ts | docs/reference/endpoints.md | Rotates the verification token (invalidates the previous one) and resends; rate-limited via the "auth" abuse policy; `delivery` in the response is `sent`\|`unconfigured`\|`error`\|`already_verified` — the real outcome, never assumed success |
+| POST /api/auth/verify-email/change-email | route | app/api/auth/verify-email/change-email/route.ts | docs/reference/endpoints.md | Changes the pending email + resends verification to the new address |
 | POST /api/auth/login | route | app/api/auth/login/route.ts | docs/reference/endpoints.md | Email + password login; optional claim on the way in |
 | signup() / login() / getCurrentUser() / AuthError | fn/class | lib/auth/index.ts | docs/reference/lib.md | v1 own auth (D-021); minimal signup, SSR session |
 | hashPassword() / verifyPassword() / isStrongEnough() | function | lib/auth/password.ts | docs/reference/lib.md | scrypt password hashing (constant-time verify) |
@@ -26,9 +29,9 @@
 | Markdown / extractHeadings() / slugifyHeading() | module | lib/content/markdown.tsx (+ markdown-toc.ts) | docs/reference/lib.md | Safe in-house Markdown→React renderer for CMS bodies (#32) — no dangerouslySetInnerHTML; headings/lists/links/callouts/tables/FAQ/[[cta]] |
 | GET/PATCH/DELETE /api/admin/contenido[/[id]] | route | app/api/admin/contenido/ | docs/reference/endpoints.md | CMS create / update+status / soft-archive (#32); internal session or x-fvd-admin-token, 404 otherwise |
 | claimDeca() / ClaimError | fn/class | lib/deca/claim.ts | docs/reference/lib.md | Attach an anonymous DeCA to a company via its one-time claim token (D-016) |
-| GET /api/saved | route | app/api/saved/route.ts | docs/reference/endpoints.md | The current user's saved companies/vehicles/addresses (wizard autofill) |
-| POST /api/saved/[kind] | route | app/api/saved/[kind]/route.ts | docs/reference/endpoints.md | Create a saved company/vehicle/address (scoped to the user); 422 on invalid |
-| DELETE /api/saved/[kind]/[id] | route | app/api/saved/[kind]/[id]/route.ts | docs/reference/endpoints.md | Delete a saved entity (user-scoped); never touches generated DeCA |
+| GET /api/saved | route | app/api/saved/route.ts | docs/reference/endpoints.md | The COMPANY's (WORKSPACE #24, D-052 scope change from per-user) saved companies/vehicles/locations, sorted by last used (wizard autofill dropdowns) |
+| POST /api/saved/[kind] | route | app/api/saved/[kind]/route.ts | docs/reference/endpoints.md | Create a saved company (with role)/vehicle (with alias)/location (structured, load/unload/both), scoped to the company; 422 on invalid |
+| DELETE /api/saved/[kind]/[id] | route | app/api/saved/[kind]/[id]/route.ts | docs/reference/endpoints.md | Delete a saved entity (company-scoped); never touches generated DeCA |
 | listSaved() / createSaved() / deleteSaved() | function | lib/data/saved.ts | docs/reference/lib.md | Saved-entity CRUD, always user-scoped |
 | savedCompany/Vehicle/AddressSchema / savedKinds | const | lib/data/saved-schema.ts | docs/reference/lib.md | zod schemas for saved entities (plate normalisation) |
 | listHistory() / listHistoryCarriers() / getDecaForDuplicate() | function | lib/data/history.ts | docs/reference/lib.md | Company-scoped DeCA history (rows carry shipper/carrier/plates/versionNo) + distinct carriers for the filter + the duplicate-flow source payload |

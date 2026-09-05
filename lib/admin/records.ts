@@ -261,16 +261,16 @@ export async function getCompanyAdmin(id: string) {
   const [
     savedCompanies,
     savedVehicles,
-    savedAddresses,
+    savedLocations,
     recentDeca,
     deca7d,
     deca30d,
     deca90d,
     latestTerms,
   ] = await Promise.all([
-    prisma.savedCompany.count({ where: { user: { companyId: id } } }),
-    prisma.savedVehicle.count({ where: { user: { companyId: id } } }),
-    prisma.savedAddress.count({ where: { user: { companyId: id } } }),
+    prisma.savedCompany.count({ where: { companyId: id } }),
+    prisma.savedVehicle.count({ where: { companyId: id } }),
+    prisma.savedLocation.count({ where: { companyId: id } }),
     prisma.deca.findMany({
       where: { companyId: id },
       include: { currentVersion: { select: { token: true, versionNo: true } } },
@@ -319,7 +319,7 @@ export async function getCompanyAdmin(id: string) {
         createdAt: u.createdAt,
         emailVerifiedAt: u.emailVerifiedAt,
       })),
-    saved: { companies: savedCompanies, vehicles: savedVehicles, addresses: savedAddresses },
+    saved: { companies: savedCompanies, vehicles: savedVehicles, locations: savedLocations },
     acquisition: company.acquisition,
     invites: company.invites,
     recentDeca: recentDeca

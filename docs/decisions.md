@@ -1048,3 +1048,86 @@
 - **User action still required:** confirm `prisma migrate deploy` has run on the production
   database for `20260905095427_route_intel_and_commercial_consent` (and any migration after it) —
   this session has no production DB access this time.
+
+## D-055 — Saved master data becomes a real, company-scoped operational system (PRODUCT HARDENING PRIORITY 2, #24)
+- Date / phase: 2026-09-05, same session, owner directive ("Implement #24 as a real operational
+  master-data system").
+- **Decision — re-scoped from per-USER to per-COMPANY (supersedes the BUILD 10 design):**
+  `SavedCompany`/`SavedVehicle` (and the new `SavedLocation`, replacing `SavedAddress`) were
+  originally scoped to `userId` ("always scoped to the owning user"). The issue explicitly frames
+  these as a shared "daily-use company panel" resource, and TEAM #27 already lets multiple users
+  work one company workspace — a shipper a colleague saved should be visible to everyone on the
+  team, not siloed per login. Added `companyId` to all three models (kept `userId` as the creator,
+  for audit only) and re-scoped every read/write/delete to it. `userId` is never used for
+  authorization on these models again.
+- **Migration `20260905133820_workspace_saved_master_data`, data-preserving:** `company_id` added
+  nullable first, backfilled from each row's creator's current company, then locked `NOT NULL`; a
+  row whose creator has no company (not reachable through the product — `/panel/datos` and the
+  saved-data API both require one) is deleted rather than left orphaned, since the new model has no
+  way to represent it. `SavedAddress`'s flat `label`+`address` rows are copied into the new
+  `SavedLocation` shape (`name`+`address`, other fields defaulted) before the old table is dropped —
+  no existing saved address is lost, though it arrives without postal code/city/province, since the
+  old model never captured them.
+- **New fields, matching the issue exactly:** `SavedCompany` gains `role` (`shipper`/`carrier`/
+  `both`), `contactName`/`contactPhone`/`contactEmail`, `lastUsedAt`. `SavedVehicle` gains `alias`,
+  `lastUsedAt`. `SavedLocation` (new model, replaces `SavedAddress`) mirrors the DeCA's own
+  structured location shape (`lib/deca/location.ts`) exactly — `name`/`address`/`postalCode`/`city`/
+  `province`/`country` + `type` (`load`/`unload`/`both`) — so a saved record drops into the wizard
+  with zero reformatting.
+- **Decision — required fields tightened to match the DeCA's own validation:** `SavedCompany.address`
+  and `SavedLocation.postalCode`/`city`/`province` were optional in the schema and the `/panel/datos`
+  form (labelled "(opcional)"). Since the DeCA itself requires all of these unconditionally
+  (`lib/deca/schema.ts`, `lib/deca/location.ts`), a saved record missing them could be "successfully
+  saved" yet still force the user to type those fields by hand every time — directly undermining the
+  issue's own "second DeCA must be materially faster" bar. Made them required in both the zod schema
+  (`lib/data/saved-schema.ts`) and the save forms, with the same min-lengths the DeCA schema uses.
+- **Decision — searchable dropdowns as native `<select>`, not a custom combobox:** the issue asks for
+  "searchable dropdowns / comboboxes" (mock: `[ Buscar o seleccionar empresa habitual ]`). Built as a
+  `<select>` per field (shipper, carrier, load location, unload location, vehicle) rather than a
+  custom ARIA combobox — native `<select>` is fully accessible and keyboard/type-ahead searchable in
+  every browser with zero custom JS, and matches the existing convention already used for templates
+  and "usar mi empresa" elsewhere in this wizard. Building a bespoke combobox would have added real
+  accessibility risk (this project holds a hard WCAG 2.2 AA bar) for a UX gain the native control
+  already delivers. Each select is filtered by role/type — a shipper-or-both party in the cargador
+  dropdown, a carrier-or-both party in the transportista dropdown, load-or-both / unload-or-both for
+  the two location dropdowns — and selecting one populates every corresponding field immediately
+  (party name+NIF+address; location name+address+postalCode+city+province+country; vehicle
+  plates+alias). "Introducir uno nuevo" is simply the default empty option — no separate UI needed,
+  since the underlying text fields stay fully editable.
+- **"Usar el mismo" (issue's example: shipper == carrier):** two buttons between the two party
+  fieldsets — "El transportista es el mismo que el cargador" and its mirror — copy the CURRENT form
+  values across, independent of whether either came from a saved record. Kept separate from the
+  pre-existing "Mi empresa es el cargador/transportista" buttons (which fill from the LOGGED-IN
+  company specifically); both coexist.
+- **"Last used" tracking:** the wizard tracks which saved record ids populated the CURRENT form
+  (`picked` state) and drops the credit the instant the user hand-edits that field again (never
+  credits a saved record for data the user actually retyped over it). Sent as `usedSaved` in the
+  create payload; `POST /api/deca` bumps `lastUsedAt` best-effort, after the document is already
+  created — a bad/foreign id, or the update itself failing, never blocks or fails generation.
+  `listSaved()` now sorts by `lastUsedAt` (nulls last) so the most relevant records surface first.
+- **Editing/deleting saved master data never mutates a generated DeCA (issue's own requirement, and
+  already the codebase's convention):** unchanged from BUILD 10 — every DeCA holds its own copy of
+  party/location/vehicle data in `dataJson`; no foreign key from `Deca` to any `Saved*` row exists or
+  is added. Verified live in `tests/e2e/master-data.spec.ts` (delete a saved party after generating —
+  the historical document still shows it) and the pre-existing `workspace.spec.ts` test.
+- **Found and fixed along the way:** `SavedDataManager`'s add-forms never reset after a successful
+  save (no bug report — found while writing the new e2e test, where a second add silently reused the
+  first record's stale field values). Fixed with a `formVersion` counter bumped on every save, used
+  as each form's React `key` so it remounts blank — a real UX bug for any user adding two records of
+  the same kind back to back, not just a test artifact.
+- **New test:** `tests/e2e/master-data.spec.ts` — the issue's exact acceptance bar: create one
+  shipper-role party, one carrier-role party, one load location, one unload location, one aliased
+  vehicle; build a DeCA using ONLY the five dropdowns (zero manual party/location/vehicle typing);
+  generate; duplicate; change only the two dates; generate again. "Materially faster" is asserted as
+  a DATA-ENTRY-ACTION count (dropdown selects + manual fills), not wall-clock time — Playwright fills
+  a field instantly regardless of how much a human would have had to type, so timing would not
+  reflect a real user's experience; the duplicate needs only 2 actions (the dates) against 9 for the
+  first document, even though the first was already built entirely from saved records.
+- **Not done / explicitly deferred:** a bespoke "type-ahead as you type" search UX beyond native
+  `<select>` filtering (see the searchable-dropdown decision above); a `docs/reference/endpoints.md`
+  backfill for every endpoint (that file does not exist yet at all — a pre-existing Phase 6 gap, not
+  introduced this slice; `docs/api/INDEX.md` was kept current for everything touched this slice,
+  including two previously-undocumented endpoints, `POST /api/auth/verify-email/resend` and
+  `.../change-email`, found while adding the new status endpoint next to them).
+- Gate green: 132 e2e (incl. 8 compliance, +1 new: `master-data.spec.ts`) + 118 unit + typecheck +
+  lint + format + keel-verify.

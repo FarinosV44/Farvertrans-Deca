@@ -94,6 +94,28 @@ export async function POST(req: Request) {
     const { createDeca } = await import("@/lib/deca/persist");
     const created = await createDeca(validated, { idempotencyKey, ...owner });
 
+    // WORKSPACE #24: bump "last used" on whichever saved records populated
+    // this DeCA. Best-effort and never blocks the response — a bad/foreign
+    // id in `usedSaved` is silently ignored (touchSavedUsage scopes every
+    // update to this company).
+    const usedSaved = (body as { usedSaved?: unknown } | null)?.usedSaved;
+    if (usedSaved && typeof usedSaved === "object") {
+      const u = usedSaved as Record<string, unknown>;
+      const asId = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+      const companyIds = [asId(u.shipperId), asId(u.carrierId)].filter((v): v is string => !!v);
+      const locationIds = [asId(u.loadLocationId), asId(u.unloadLocationId)].filter(
+        (v): v is string => !!v,
+      );
+      const { touchSavedUsage } = await import("@/lib/data/saved");
+      touchSavedUsage(owner.companyId, {
+        companyIds,
+        vehicleId: asId(u.vehicleId),
+        locationIds,
+      }).catch(() => {
+        // never block or fail generation over a "last used" bookkeeping hiccup
+      });
+    }
+
     return NextResponse.json(
       {
         decaId: created.decaId,

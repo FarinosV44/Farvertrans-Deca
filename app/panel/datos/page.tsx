@@ -16,7 +16,7 @@ export default async function DatosPage() {
   if (!user?.companyId) redirect("/registro");
 
   const [saved, consent] = await Promise.all([
-    listSaved(user.id),
+    listSaved(user.companyId),
     getCommercialConsent(user.companyId),
   ]);
 
@@ -33,7 +33,7 @@ export default async function DatosPage() {
         <SavedDataManager
           companies={saved.companies}
           vehicles={saved.vehicles}
-          addresses={saved.addresses}
+          locations={saved.locations}
         />
         <CommercialConsentToggle
           granted={consent.granted}

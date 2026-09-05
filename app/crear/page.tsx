@@ -35,7 +35,7 @@ export default async function CrearPage({
 
   if (user?.companyId) {
     const [s, t, source] = await Promise.all([
-      listSaved(user.id),
+      listSaved(user.companyId),
       listTemplates(user.companyId),
       from ? getDecaForDuplicate(user.companyId, from) : Promise.resolve(null),
     ]);

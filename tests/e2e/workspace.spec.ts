@@ -185,15 +185,13 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     await page.goto("/panel/datos");
     // add a saved company
-    await page.getByText("Empresas / transportistas").scrollIntoViewIfNeeded();
-    await page
-      .locator("section", { hasText: "Empresas / transportistas" })
-      .getByText("Añadir")
-      .click();
+    await page.getByText("Empresas y contactos").scrollIntoViewIfNeeded();
+    await page.locator("section", { hasText: "Empresas y contactos" }).getByText("Añadir").click();
     await page.fill("#c-name", "Habitual Cargas SL");
     await page.fill("#c-nif", "B12345674");
+    await page.fill("#c-address", "Calle Habitual 1, Valencia");
     await page
-      .locator("section", { hasText: "Empresas / transportistas" })
+      .locator("section", { hasText: "Empresas y contactos" })
       .getByRole("button", { name: "Guardar" })
       .click();
     await expect(page.getByText("Habitual Cargas SL")).toBeVisible();
@@ -210,7 +208,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     // autofill in the wizard
     await page.goto("/crear");
     await page
-      .getByTestId("autofill-company")
+      .getByTestId("autofill-carrier")
       .selectOption({ label: "Habitual Cargas SL — B12345674" });
     await expect(page.locator("#carrierName")).toHaveValue("Habitual Cargas SL");
     await page.fill("#shipperName", DECA.shipper.name);

@@ -4,22 +4,59 @@ import { useRouter } from "next/navigation";
 import { Field } from "@/components/deca/field";
 import { BuildingIcon, TruckIcon, MapPinIcon, IconBadge } from "@/components/panel/icons";
 
-type Company = { id: string; name: string; nif: string | null; address: string | null };
-type Vehicle = { id: string; tractorPlate: string; trailerPlate: string | null };
-type Address = { id: string; label: string; address: string };
+type Company = {
+  id: string;
+  name: string;
+  nif: string | null;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  role: "shipper" | "carrier" | "both";
+};
+type Vehicle = {
+  id: string;
+  tractorPlate: string;
+  trailerPlate: string | null;
+  alias: string | null;
+};
+type Location = {
+  id: string;
+  name: string;
+  address: string;
+  postalCode: string | null;
+  city: string | null;
+  province: string | null;
+  country: string;
+  type: "load" | "unload" | "both";
+};
+
+const ROLE_LABEL: Record<Company["role"], string> = {
+  shipper: "Cargador contractual",
+  carrier: "Transportista efectivo",
+  both: "Cargador y transportista",
+};
+const LOCATION_TYPE_LABEL: Record<Location["type"], string> = {
+  load: "Carga",
+  unload: "Descarga",
+  both: "Carga y descarga",
+};
 
 export function SavedDataManager({
   companies,
   vehicles,
-  addresses,
+  locations,
 }: {
   companies: Company[];
   vehicles: Vehicle[];
-  addresses: Address[];
+  locations: Location[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Bumped on every successful add and used as each form's `key`, so it
+  // remounts with blank fields instead of showing the just-saved values.
+  const [formVersion, setFormVersion] = useState(0);
 
   async function add(kind: string, body: Record<string, string>) {
     setBusy(true);
@@ -35,6 +72,7 @@ export function SavedDataManager({
         setBusy(false);
         return;
       }
+      setFormVersion((v) => v + 1);
       router.refresh();
     } catch {
       setError("Sin conexión.");
@@ -58,36 +96,57 @@ export function SavedDataManager({
       )}
 
       <Section
-        title="Empresas / transportistas"
+        title="Empresas y contactos"
         Icon={BuildingIcon}
         items={companies.map((c) => ({
           id: c.id,
           primary: c.name,
-          secondary: `${c.nif}${c.address ? " · " + c.address : ""}`,
+          secondary: [
+            ROLE_LABEL[c.role],
+            c.nif,
+            c.address,
+            c.contactName ? `Contacto: ${c.contactName}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
         }))}
         onRemove={(id) => remove("company", id)}
         busy={busy}
-        form={<CompanyForm onSubmit={(b) => add("company", b)} busy={busy} />}
+        form={<CompanyForm key={formVersion} onSubmit={(b) => add("company", b)} busy={busy} />}
       />
       <Section
         title="Vehículos"
         Icon={TruckIcon}
         items={vehicles.map((v) => ({
           id: v.id,
-          primary: v.tractorPlate,
-          secondary: v.trailerPlate ? `Remolque ${v.trailerPlate}` : "",
+          primary: v.alias || v.tractorPlate,
+          secondary: [
+            v.alias ? v.tractorPlate : null,
+            v.trailerPlate ? `Remolque ${v.trailerPlate}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
         }))}
         onRemove={(id) => remove("vehicle", id)}
         busy={busy}
-        form={<VehicleForm onSubmit={(b) => add("vehicle", b)} busy={busy} />}
+        form={<VehicleForm key={formVersion} onSubmit={(b) => add("vehicle", b)} busy={busy} />}
       />
       <Section
-        title="Direcciones"
+        title="Lugares de carga y descarga"
         Icon={MapPinIcon}
-        items={addresses.map((a) => ({ id: a.id, primary: a.label, secondary: a.address }))}
-        onRemove={(id) => remove("address", id)}
+        items={locations.map((l) => ({
+          id: l.id,
+          primary: l.name,
+          secondary: [
+            LOCATION_TYPE_LABEL[l.type],
+            [l.address, l.postalCode, l.city, l.province, l.country].filter(Boolean).join(", "),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        }))}
+        onRemove={(id) => remove("location", id)}
         busy={busy}
-        form={<AddressForm onSubmit={(b) => add("address", b)} busy={busy} />}
+        form={<LocationForm key={formVersion} onSubmit={(b) => add("location", b)} busy={busy} />}
       />
 
       <p className="text-xs text-[var(--color-text-muted)]">
@@ -165,9 +224,30 @@ function CompanyForm({
   onSubmit: (b: Record<string, string>) => void;
   busy: boolean;
 }) {
-  const [f, setF] = useState({ name: "", nif: "", address: "" });
+  const [f, setF] = useState({
+    name: "",
+    nif: "",
+    address: "",
+    contactName: "",
+    contactPhone: "",
+    contactEmail: "",
+    role: "both",
+  });
   return (
     <FormWrap busy={busy} onSubmit={() => onSubmit(f)}>
+      <label className="mt-3 block text-sm">
+        <span className="font-medium">Rol habitual</span>
+        <select
+          data-testid="c-role"
+          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+          value={f.role}
+          onChange={(e) => setF((s) => ({ ...s, role: e.target.value }))}
+        >
+          <option value="both">Cargador y transportista</option>
+          <option value="shipper">Cargador contractual</option>
+          <option value="carrier">Transportista efectivo</option>
+        </select>
+      </label>
       <Field
         id="c-name"
         label="Nombre o razón social"
@@ -182,10 +262,31 @@ function CompanyForm({
       />
       <Field
         id="c-address"
-        label="Domicilio (opcional)"
-        required={false}
+        label="Domicilio"
         value={f.address}
         onChange={(v) => setF((s) => ({ ...s, address: v }))}
+      />
+      <Field
+        id="c-contact-name"
+        label="Persona de contacto (opcional)"
+        required={false}
+        value={f.contactName}
+        onChange={(v) => setF((s) => ({ ...s, contactName: v }))}
+      />
+      <Field
+        id="c-contact-phone"
+        label="Teléfono de contacto (opcional)"
+        required={false}
+        value={f.contactPhone}
+        onChange={(v) => setF((s) => ({ ...s, contactPhone: v }))}
+      />
+      <Field
+        id="c-contact-email"
+        label="Email de contacto (opcional)"
+        required={false}
+        type="email"
+        value={f.contactEmail}
+        onChange={(v) => setF((s) => ({ ...s, contactEmail: v }))}
       />
     </FormWrap>
   );
@@ -197,9 +298,16 @@ function VehicleForm({
   onSubmit: (b: Record<string, string>) => void;
   busy: boolean;
 }) {
-  const [f, setF] = useState({ tractorPlate: "", trailerPlate: "" });
+  const [f, setF] = useState({ tractorPlate: "", trailerPlate: "", alias: "" });
   return (
     <FormWrap busy={busy} onSubmit={() => onSubmit(f)}>
+      <Field
+        id="v-alias"
+        label="Alias (opcional, p. ej. «Camión 1»)"
+        required={false}
+        value={f.alias}
+        onChange={(v) => setF((s) => ({ ...s, alias: v }))}
+      />
       <Field
         id="v-tractor"
         label="Matrícula tractora"
@@ -216,27 +324,72 @@ function VehicleForm({
     </FormWrap>
   );
 }
-function AddressForm({
+function LocationForm({
   onSubmit,
   busy,
 }: {
   onSubmit: (b: Record<string, string>) => void;
   busy: boolean;
 }) {
-  const [f, setF] = useState({ label: "", address: "" });
+  const [f, setF] = useState({
+    name: "",
+    address: "",
+    postalCode: "",
+    city: "",
+    province: "",
+    country: "España",
+    type: "both",
+  });
   return (
     <FormWrap busy={busy} onSubmit={() => onSubmit(f)}>
+      <label className="mt-3 block text-sm">
+        <span className="font-medium">Uso habitual</span>
+        <select
+          data-testid="l-type"
+          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+          value={f.type}
+          onChange={(e) => setF((s) => ({ ...s, type: e.target.value }))}
+        >
+          <option value="both">Carga y descarga</option>
+          <option value="load">Solo carga</option>
+          <option value="unload">Solo descarga</option>
+        </select>
+      </label>
       <Field
-        id="a-label"
-        label="Etiqueta (p. ej. «Almacén Valencia»)"
-        value={f.label}
-        onChange={(v) => setF((s) => ({ ...s, label: v }))}
+        id="l-name"
+        label="Empresa / establecimiento"
+        value={f.name}
+        onChange={(v) => setF((s) => ({ ...s, name: v }))}
       />
       <Field
-        id="a-address"
+        id="l-address"
         label="Dirección"
         value={f.address}
         onChange={(v) => setF((s) => ({ ...s, address: v }))}
+      />
+      <Field
+        id="l-postal-code"
+        label="Código postal"
+        value={f.postalCode}
+        onChange={(v) => setF((s) => ({ ...s, postalCode: v }))}
+      />
+      <Field
+        id="l-city"
+        label="Localidad"
+        value={f.city}
+        onChange={(v) => setF((s) => ({ ...s, city: v }))}
+      />
+      <Field
+        id="l-province"
+        label="Provincia"
+        value={f.province}
+        onChange={(v) => setF((s) => ({ ...s, province: v }))}
+      />
+      <Field
+        id="l-country"
+        label="País"
+        value={f.country}
+        onChange={(v) => setF((s) => ({ ...s, country: v }))}
       />
     </FormWrap>
   );

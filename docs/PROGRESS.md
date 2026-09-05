@@ -465,10 +465,38 @@ deploy`).
   a crash either way, but the toggle won't persist until the table exists.
 - Gate green: 131 e2e (incl. 8 compliance) + 118 unit + typecheck + lint + format + keel-verify.
   ~20 e2e spec files updated for the new hard gates. Pushed to `origin/develop`.
+
+## Product hardening — PRIORITY 2 (2026-09-05, same session, owner directive: #24 real master-data system)
+- **D-055 done, on `develop`:** `SavedCompany`/`SavedVehicle` re-scoped from per-user to
+  per-COMPANY (shared team resource, TEAM #27) — migration `20260905133820_workspace_saved_master_data`,
+  data-preserving (backfills `company_id` from each row's creator, no data lost). `SavedAddress`
+  replaced by `SavedLocation` (structured: name/address/postalCode/city/province/country + load|
+  unload|both type, matching the DeCA's own location shape exactly) — existing addresses migrated in.
+  `SavedCompany` gains `role` (shipper|carrier|both), contact fields, `lastUsedAt`. `SavedVehicle`
+  gains `alias`, `lastUsedAt`. Required fields tightened to match the DeCA's own validation (a saved
+  record missing postal code/city/province/address could "save" yet still force manual retyping —
+  defeats the point).
+  Wizard: role/type-filtered `<select>` dropdowns for cargador contractual, transportista efectivo,
+  lugar de carga, lugar de descarga, vehículo (native, accessible, matches existing convention) —
+  selecting one populates every field immediately; "usar el mismo" quick actions copy shipper⇄carrier;
+  "last used" tracked server-side (`usedSaved` in the create payload, best-effort bump, never blocks
+  generation). `/panel/datos` UI (`SavedDataManager`) rebuilt for the new fields; also fixed a found
+  bug where its add-forms never reset after a successful save.
+  Editing/deleting saved data still never mutates a generated DeCA (unchanged BUILD 10 guarantee,
+  DeCAs hold their own data copy).
+  New `tests/e2e/master-data.spec.ts`: the issue's exact acceptance bar — create records, build a
+  DeCA from ONLY the dropdowns, generate, duplicate, change only dates, generate again; "materially
+  faster" asserted as a data-entry-action count (2 vs 9), not wall-clock (Playwright fills instantly
+  regardless of field count, so timing isn't a meaningful proxy for human typing effort).
+  Gate green: 132 e2e (incl. 8 compliance) + 118 unit + typecheck + lint + format + keel-verify.
+- **Not done / deferred:** a bespoke type-ahead combobox beyond native `<select>` filtering
+  (accessibility risk vs. UX gain judged not worth it — D-055); `docs/reference/endpoints.md` doesn't
+  exist at all yet (pre-existing Phase 6 gap, not from this slice — `docs/api/INDEX.md` kept current
+  instead, including two previously-undocumented endpoints found along the way).
 - **Not yet on `main`** — awaiting the user's explicit merge instruction (this session did not ask).
-- **Next up (continuing automatically per the owner's directive):** PRIORITY 2 (#24 saved
-  master-data system + searchable dropdowns in the creator), PRIORITY 3 (#49 premium PDF redesign),
-  PRIORITY 4 (#39 customer logo), PRIORITY 5 (landing/brand), PRIORITY 6 (consistent product UI).
+- **Next up (continuing automatically per the owner's directive):** PRIORITY 3 (#49 premium PDF
+  redesign), PRIORITY 4 (#39 customer logo), PRIORITY 5 (landing/brand), PRIORITY 6 (consistent
+  product UI).
 
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error

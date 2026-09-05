@@ -42,7 +42,7 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
             { label: "Última actividad", value: fmt(c.lastDecaAt) },
             {
               label: "Datos guardados",
-              value: `${c.saved.companies} cargadores · ${c.saved.vehicles} vehículos · ${c.saved.addresses} direcciones`,
+              value: `${c.saved.companies} cargadores · ${c.saved.vehicles} vehículos · ${c.saved.locations} lugares`,
             },
             { label: "Primer DeCA", value: fmt(c.acquisition?.firstDecaAt) },
             { label: "Operador (first-touch)", value: c.acquisition?.firstRefCode ?? "—" },
