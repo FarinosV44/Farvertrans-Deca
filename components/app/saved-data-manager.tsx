@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Field } from "@/components/deca/field";
+import { BuildingIcon, TruckIcon, MapPinIcon, IconBadge } from "@/components/panel/icons";
 
 type Company = { id: string; name: string; nif: string | null; address: string | null };
 type Vehicle = { id: string; tractorPlate: string; trailerPlate: string | null };
@@ -58,6 +59,7 @@ export function SavedDataManager({
 
       <Section
         title="Empresas / transportistas"
+        Icon={BuildingIcon}
         items={companies.map((c) => ({
           id: c.id,
           primary: c.name,
@@ -69,6 +71,7 @@ export function SavedDataManager({
       />
       <Section
         title="Vehículos"
+        Icon={TruckIcon}
         items={vehicles.map((v) => ({
           id: v.id,
           primary: v.tractorPlate,
@@ -80,6 +83,7 @@ export function SavedDataManager({
       />
       <Section
         title="Direcciones"
+        Icon={MapPinIcon}
         items={addresses.map((a) => ({ id: a.id, primary: a.label, secondary: a.address }))}
         onRemove={(id) => remove("address", id)}
         busy={busy}
@@ -96,12 +100,14 @@ export function SavedDataManager({
 
 function Section({
   title,
+  Icon,
   items,
   onRemove,
   busy,
   form,
 }: {
   title: string;
+  Icon: (props: { width?: number; height?: number }) => React.JSX.Element;
   items: { id: string; primary: string; secondary: string }[];
   onRemove: (id: string) => void;
   busy: boolean;
@@ -109,13 +115,19 @@ function Section({
 }) {
   return (
     <section aria-labelledby={`sec-${title}`}>
-      <h2 id={`sec-${title}`} className="text-lg font-bold">
+      <h2 id={`sec-${title}`} className="flex items-center gap-2 text-lg font-bold">
+        <IconBadge size={32}>
+          <Icon width={16} height={16} />
+        </IconBadge>
         {title}
       </h2>
       {items.length > 0 ? (
-        <ul className="mt-2 divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]">
+        <ul className="mt-3 space-y-2">
           {items.map((it) => (
-            <li key={it.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+            <li
+              key={it.id}
+              className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
+            >
               <span>
                 <span className="font-medium">{it.primary}</span>
                 {it.secondary && (
