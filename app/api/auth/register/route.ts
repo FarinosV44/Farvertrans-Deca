@@ -60,6 +60,17 @@ export async function POST(req: Request) {
 
   await setSessionCookie(created.userId);
 
+  // I18N #5: persist the browser's current locale as this account's
+  // preference, so it comes back automatically on the next login.
+  const { getLocale, getDictionary } = await import("@/lib/i18n/server");
+  const locale = await getLocale();
+  try {
+    const { prisma } = await import("@/lib/prisma");
+    await prisma.user.update({ where: { id: created.userId }, data: { preferredLocale: locale } });
+  } catch {
+    // best-effort — never blocks registration
+  }
+
   // Email verification (D-053): never blocks the ACCOUNT from existing, but
   // the client must never be told an email was sent when it was not — the
   // confirmation screen renders a different, honest state per `emailSent`.
@@ -69,10 +80,11 @@ export async function POST(req: Request) {
     const { token } = await createEmailVerification(created.userId, b.email);
     const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/verificar-email/${encodeURIComponent(token)}`;
     const { sendMail } = await import("@/lib/mailer");
+    const dict = await getDictionary(locale);
     const mail = await sendMail({
       to: b.email,
-      subject: `Confirma tu correo en ${BRAND.name}`,
-      text: `Ya casi está. Confirma tu correo para activar tu cuenta de ${BRAND.name}.\n\nAbre este enlace (caduca en 24 horas):\n${link}\n\nSi no has sido tú, ignora este mensaje.`,
+      subject: dict.emails.verifySubject(BRAND.name),
+      text: dict.emails.verifyTextInitial(BRAND.name, link),
     });
     emailSent = mail.sent;
     if (!mail.sent) {

@@ -268,13 +268,16 @@ export async function completeCompanyForUser(
   return result;
 }
 
-export async function login(emailRaw: string, password: string): Promise<{ userId: string }> {
+export async function login(
+  emailRaw: string,
+  password: string,
+): Promise<{ userId: string; preferredLocale: string }> {
   const email = normEmail(emailRaw);
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     throw new AuthError("invalid_credentials", "Email o contraseña incorrectos.");
   }
-  return { userId: user.id };
+  return { userId: user.id, preferredLocale: user.preferredLocale };
 }
 
 export async function setSessionCookie(userId: string) {

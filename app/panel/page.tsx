@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { listHistory } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
 import { publicEnv } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/server";
 import {
   PlusIcon,
   CopyIcon,
@@ -26,12 +27,13 @@ export default async function AppHome() {
   const [rows, saved] = await Promise.all([listHistory(user.companyId), listSaved(user.companyId)]);
   const recent = rows.slice(0, 5);
   const last = rows[0];
+  const t = await getDictionary();
 
   return (
     <>
       <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[900px] px-4 py-8 md:px-6">
-        <h1 className="text-2xl font-bold">{user.company?.name ?? "Mi empresa"}</h1>
+        <h1 className="text-2xl font-bold">{user.company?.name ?? t.panel.myCompanyFallback}</h1>
         <AppNav current="home" />
 
         {!user.emailVerifiedAt && (
@@ -41,13 +43,13 @@ export default async function AppHome() {
             className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm"
           >
             <p>
-              <span aria-hidden>✉️</span> Aún no has confirmado tu correo ({user.email}).
+              <span aria-hidden>✉️</span> {t.panel.verifyBanner.text(user.email)}
             </p>
             <Link
               href="/verificar-email?next=/panel"
               className="font-medium text-[var(--color-primary)] underline"
             >
-              Confirmar ahora
+              {t.panel.verifyBanner.cta}
             </Link>
           </div>
         )}
@@ -59,7 +61,7 @@ export default async function AppHome() {
             className="flex min-h-16 items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--color-primary)] px-5 py-4 font-medium text-[var(--color-primary-contrast)] no-underline"
           >
             <PlusIcon />
-            Nuevo DeCA
+            {t.panel.newDeca}
           </Link>
           {last && (
             <Link
@@ -70,7 +72,7 @@ export default async function AppHome() {
               <IconBadge>
                 <CopyIcon />
               </IconBadge>
-              Repetir / duplicar último DeCA
+              {t.panel.duplicateLast}
             </Link>
           )}
         </div>
@@ -78,17 +80,17 @@ export default async function AppHome() {
         <section className="mt-8" aria-labelledby="ultimos">
           <div className="flex items-center justify-between">
             <h2 id="ultimos" className="text-lg font-bold">
-              Últimos documentos
+              {t.panel.lastDocuments}
             </h2>
             {rows.length > 5 && (
               <Link href="/panel/historico" className="text-sm">
-                Ver todo el historial
+                {t.panel.viewAllHistory}
               </Link>
             )}
           </div>
           {recent.length === 0 ? (
             <p className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]">
-              Aún no tienes documentos. <Link href="/crear">Crea tu primer DeCA</Link>.
+              {t.panel.noDocumentsYet} <Link href="/crear">{t.panel.createFirst}</Link>.
             </p>
           ) : (
             <ul className="mt-3 space-y-2">
@@ -110,14 +112,14 @@ export default async function AppHome() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-3 text-xs">
-                    <Link href={`/panel/deca/${r.id}`}>Detalle</Link>
-                    <Link href={`/crear?from=${r.id}`}>Duplicar</Link>
+                    <Link href={`/panel/deca/${r.id}`}>{t.panel.detail}</Link>
+                    <Link href={`/crear?from=${r.id}`}>{t.panel.duplicate}</Link>
                     <a
                       href={`${publicEnv.baseUrl}/d/${r.token}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      PDF
+                      {t.panel.pdf}
                     </a>
                   </div>
                 </li>
@@ -128,13 +130,15 @@ export default async function AppHome() {
 
         <section className="mt-8 grid gap-4 md:grid-cols-2">
           <SummaryCard
-            title="Empresas / transportistas habituales"
+            title={t.panel.companiesCard}
+            manageLabel={t.panel.manageData}
             count={saved.companies.length}
             href="/panel/datos"
             Icon={BuildingIcon}
           />
           <SummaryCard
-            title="Vehículos habituales"
+            title={t.panel.vehiclesCard}
+            manageLabel={t.panel.manageData}
             count={saved.vehicles.length}
             href="/panel/datos"
             Icon={TruckIcon}
@@ -148,11 +152,13 @@ export default async function AppHome() {
 
 function SummaryCard({
   title,
+  manageLabel,
   count,
   href,
   Icon,
 }: {
   title: string;
+  manageLabel: string;
   count: number;
   href: string;
   Icon: (props: { width?: number; height?: number }) => React.JSX.Element;
@@ -168,7 +174,7 @@ function SummaryCard({
       <div>
         <p className="text-sm font-medium text-[var(--color-text)]">{title}</p>
         <p className="mt-1 text-2xl font-bold">{count}</p>
-        <p className="mt-1 text-xs text-[var(--color-text-muted)]">Gestionar datos habituales →</p>
+        <p className="mt-1 text-xs text-[var(--color-text-muted)]">{manageLabel}</p>
       </div>
     </Link>
   );

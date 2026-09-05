@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { TrackView } from "@/components/analytics/track-view";
 import { EmailVerificationError, getCurrentUser, verifyEmailToken } from "@/lib/auth";
+import { getDictionary } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: "Confirma tu correo",
@@ -12,18 +13,13 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const ERROR_COPY: Record<string, string> = {
-  invalid: "Este enlace de confirmación no es válido.",
-  used: "Este enlace ya se ha utilizado. Tu correo ya podría estar confirmado.",
-  expired: "El enlace de confirmación ha caducado. Pide uno nuevo desde tu cuenta.",
-};
-
 export default async function VerifyEmailTokenPage({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const t = await getDictionary();
 
   let ok = false;
   let errorCode: string | null = null;
@@ -33,6 +29,12 @@ export default async function VerifyEmailTokenPage({
   } catch (e) {
     errorCode = e instanceof EmailVerificationError ? e.code : "invalid";
   }
+
+  const errorCopy: Record<string, string> = {
+    invalid: t.auth.verifyToken.errorInvalid,
+    used: t.auth.verifyToken.errorUsed,
+    expired: t.auth.verifyToken.errorExpired,
+  };
 
   // The click may land in a different session than the one that registered.
   const user = await getCurrentUser().catch(() => null);
@@ -51,16 +53,16 @@ export default async function VerifyEmailTokenPage({
               ✓
             </div>
             <h1 className="mt-5 text-2xl font-bold" data-testid="verify-email-success">
-              Correo confirmado
+              {t.auth.verifyToken.successHeading}
             </h1>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-              Tu cuenta está activa. Ya puedes emitir DeCA sin límites.
+              {t.auth.verifyToken.successBody}
             </p>
             <Link
               href={user ? "/panel" : "/entrar"}
               className="mt-6 inline-flex min-h-12 items-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 font-medium text-[var(--color-primary-contrast)] no-underline"
             >
-              {user ? "Ir a mi panel" : "Entrar"}
+              {user ? t.auth.verifyToken.successCtaAuthed : t.auth.verifyToken.successCtaAnon}
             </Link>
           </>
         ) : (
@@ -72,16 +74,16 @@ export default async function VerifyEmailTokenPage({
               ⚠️
             </div>
             <h1 className="mt-5 text-2xl font-bold" data-testid="verify-email-error">
-              No hemos podido confirmar tu correo
+              {t.auth.verifyToken.errorHeading}
             </h1>
             <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-              {(errorCode && ERROR_COPY[errorCode]) ?? ERROR_COPY.invalid}
+              {(errorCode && errorCopy[errorCode]) ?? errorCopy.invalid}
             </p>
             <Link
               href={user ? "/verificar-email" : "/entrar"}
               className="mt-6 inline-flex min-h-12 items-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-6 font-medium text-[var(--color-primary)] no-underline"
             >
-              {user ? "Pedir un enlace nuevo" : "Entrar"}
+              {user ? t.auth.verifyToken.errorCtaAuthed : t.auth.verifyToken.errorCtaAnon}
             </Link>
           </>
         )}

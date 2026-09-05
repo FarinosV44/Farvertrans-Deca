@@ -1345,3 +1345,61 @@
 - Gate green: 137 e2e (`content-cms.spec.ts` reconfirmed as the pre-existing `--workers=3`-only flake,
   documented in `lessons-learned.md`, passes in isolation) + 127 unit + typecheck + lint + format.
 - No GitHub issue tracks this — it is a direct owner instruction mid-session, not a forge item.
+
+## D-062 — I18N #50 slice 1: core architecture + critical-path translation (ES/EN)
+- Date / phase: 2026-09-05, same session. Owner filed GitHub issue #50 (full product i18n, FR/IT/DE
+  extensible, locale-aware URLs, PDF bilingual consideration) then asked to start on it, explicitly
+  accepting a scoped first slice over attempting the whole epic in one pass (owner chose "Foundation +
+  critical path first" when asked to confirm scope).
+- **Architecture decision:** cookie-based locale (`fvd_locale`), NOT URL-prefixed routing (`/en/...`).
+  Chosen because URL-prefixed routing requires either a `[locale]` segment wrapping every existing
+  route (large mechanical risk to a live, launched product) or generating parallel content per path —
+  and a same-URL/cookie-switch approach has zero duplicate-content SEO exposure by construction (one
+  canonical URL per page, always), which was explicitly a requirement (#50 point 6). Locale-prefixed
+  URLs remain a valid future upgrade, tracked as follow-up, not ruled out.
+- **Core engine (new):** `lib/i18n/locale.ts` (`LOCALES`, `DEFAULT_LOCALE="es"`, `LOCALE_COOKIE`),
+  `lib/i18n/dictionaries/{es,en}.ts` (the `es.ts` "es-ES string catalog" from D-002 was tiny — 9 keys —
+  and effectively unused outside `site-header`/`layout`/`not-found`/`error`; both dictionaries are now
+  ~250 keys, `en.ts` typed as `satisfies Messages` against `es.ts`'s shape so a key added to one and
+  forgotten in the other is a compile error), `lib/i18n/server.ts` (`getLocale()`/`getDictionary()`,
+  server-only), `lib/i18n/client.tsx` (`LocaleProvider`/`useT()`/`useLocale()`, mounted once in
+  `app/layout.tsx` so every client component gets the server-resolved locale with no prop drilling
+  and no second lookup), `components/i18n/language-switcher.tsx` (ES/EN toggle, POSTs
+  `/api/i18n/locale` then `router.refresh()` — no navigation needed since there's no URL change).
+- **Persistence (I18N #5):** `User.preferredLocale` (new column, default `"es"`,
+  `20260905190509_user_preferred_locale`). Set on registration from the current cookie, updated by
+  the switcher when signed in, restored into the `fvd_locale` cookie on email/password login (Google
+  OAuth login does NOT yet restore it — follow-up).
+- **Translated this slice** (the exact critical-path flow #50 asked to QA): `SiteHeader` (nav +
+  switcher, present on effectively every page — satisfies #50's placement list for free), landing
+  hero + trust row only (`app/page.tsx`, locale-branched against the existing `HERO`/`TRUST_ROW`
+  constants — the rest of the landing, and every OTHER consumer of `lib/content/landing.ts`, is
+  untouched), `RegisterForm` (shared register+login), `VerifyEmailScreen` + both
+  `/verificar-email` pages, `app/crear/page.tsx`'s repeat-anonymous gate, the full `CrearWizard`
+  (steps, every field/hint/legend, lead-gate, verify-gate, review summary, buttons, failure/retry
+  copy), the result screen (`app/crear/[id]/page.tsx` + `ResultActions`, including the WhatsApp/
+  mailto share text), panel shell (`AppNav`, `app/panel/page.tsx`), `app/panel/historico/page.tsx`
+  (`docWorkflowStatus()`'s Spanish/CSV-shared status word is translated for DISPLAY only via a local
+  `statusLabel()` map — the CSV export and `export-csv.spec.ts` are untouched), and the registration +
+  resend + change-email verification emails (subject/body chosen by the recipient's locale — the
+  cookie at request time for registration, `user.preferredLocale` for the two already-authenticated
+  endpoints).
+- **Explicitly deferred to follow-up on #50** (documented, not silently dropped): saved-data
+  management screens (`/panel/datos`), document cockpit/detail, admin, blog/guías, legal pages,
+  company settings deep screens beyond the panel shell, the DeCA PDF itself (needs the owner's
+  explicit sign-off on legal terminology per #50 point 4 before touching), locale-prefixed URLs,
+  zod validation-error messages (`lib/deca/schema.ts` etc. — static Spanish, would need schema
+  factories to parameterize), Google OAuth login's locale restoration, and the default
+  `loadLocationCountry`/`unloadLocationCountry` form pre-fill (`"España"`, editable, left as a data
+  default not a UI label).
+- **Bug caught and fixed mid-slice:** the locale resolver's initial `Accept-Language` fallback broke
+  29 previously-green e2e tests because headless Chromium defaults to `Accept-Language: en-US` —
+  removed entirely; see `lessons-learned.md`. Default is now unconditionally Spanish unless the
+  cookie says otherwise.
+- **Tested:** 137 e2e + 127 unit + typecheck + lint + format, all green after the fix. Additionally
+  verified live in a real browser (dev server): landing hero + nav + switcher, the full 3-step wizard,
+  panel shell, history table, and the verify-email screen, switching ES→EN→ES and confirming no
+  mixed-language screens on the translated critical path, correct persistence across navigation via
+  the cookie, and the (out-of-scope, correctly-untouched) footer and `DecaPreview` mock staying
+  Spanish as expected.
+- Issue #50 left OPEN with this slice's scope as a comment (not closed — most of the epic remains).

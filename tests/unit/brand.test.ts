@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BRAND, titleTemplate } from "@/lib/brand";
-import { es } from "@/lib/i18n/es";
+import { es } from "@/lib/i18n/dictionaries/es";
 
 describe("BRAND (#21 — centralised product brand)", () => {
   it("exposes every field the UI, PDF, email and SEO layers need", () => {

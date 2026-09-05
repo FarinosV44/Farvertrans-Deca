@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { es } from "@/lib/i18n/es";
+import { es } from "@/lib/i18n/dictionaries/es";
 
 export default function NotFound() {
   return (

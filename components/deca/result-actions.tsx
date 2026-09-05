@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics/client";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * Driver-delivery actions (OPS #26), in priority order: open/download PDF →
@@ -21,6 +22,7 @@ export function ResultActions({
   pdfSha256?: string;
   correctedReminder?: boolean;
 }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
@@ -34,11 +36,9 @@ export function ResultActions({
   }, []);
 
   const token = publicUrl.split("/d/")[1] ?? "";
-  const shareText = `Documento de control (DeCA) del transporte: ${publicUrl}`;
+  const shareText = `${t.result.shareTextPrefix} ${publicUrl}`;
   const waHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-  const mailtoHref = `mailto:?subject=${encodeURIComponent("DeCA del transporte")}&body=${encodeURIComponent(
-    `Documento de control (DeCA): ${publicUrl}`,
-  )}`;
+  const mailtoHref = `mailto:?subject=${encodeURIComponent(t.result.shareTitle)}&body=${encodeURIComponent(shareText)}`;
 
   async function copy() {
     try {
@@ -53,7 +53,7 @@ export function ResultActions({
 
   async function nativeShare() {
     try {
-      await navigator.share({ title: "DeCA del transporte", text: shareText, url: publicUrl });
+      await navigator.share({ title: t.result.shareTitle, text: shareText, url: publicUrl });
       track("share_native");
     } catch {
       /* user cancelled — no-op */
@@ -74,15 +74,15 @@ export function ResultActions({
       const data = await res.json().catch(() => ({}));
       if (data.sent) {
         track("deca_shared");
-        setEmailMsg("Enviado.");
+        setEmailMsg(t.result.sent);
       } else if (data.mailtoFallback) {
-        setEmailMsg("El envío por email no está configurado. Abriendo tu cliente de correo…");
+        setEmailMsg(t.result.emailFallback);
         window.location.href = mailtoHref;
       } else {
-        setEmailMsg("No se pudo enviar. Usa el enlace o WhatsApp.");
+        setEmailMsg(t.result.emailFailed);
       }
     } catch {
-      setEmailMsg("Sin conexión.");
+      setEmailMsg(t.result.emailNoConnection);
     }
     setSending(false);
   }
@@ -95,8 +95,7 @@ export function ResultActions({
           data-testid="reshare-reminder"
           className="rounded-[var(--radius-md)] border border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)] p-3 text-sm font-medium"
         >
-          Este DeCA se ha corregido. Reenvía al conductor la versión actual — la anterior queda como
-          histórico y sigue accesible por su URL.
+          {t.result.correctedReminder}
         </p>
       )}
 
@@ -108,7 +107,7 @@ export function ResultActions({
         onClick={() => track("pdf_opened")}
         className="flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] font-medium text-[var(--color-primary-contrast)] no-underline hover:bg-[var(--color-primary-hover)]"
       >
-        Abrir / descargar PDF
+        {t.result.downloadPdf}
       </a>
 
       <button
@@ -121,7 +120,7 @@ export function ResultActions({
         data-testid="result-share-toggle"
         className="flex min-h-12 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-primary)] font-medium text-[var(--color-primary)]"
       >
-        Enviar al conductor
+        {t.result.sendToDriver}
       </button>
       {shareOpen && (
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
@@ -132,7 +131,7 @@ export function ResultActions({
               data-testid="share-native"
               className="block w-full py-2 text-left"
             >
-              Compartir…
+              {t.result.share}
             </button>
           )}
           <a
@@ -146,11 +145,11 @@ export function ResultActions({
               track("deca_shared");
             }}
           >
-            Enviar por WhatsApp
+            {t.result.whatsapp}
           </a>
           <form onSubmit={sendEmail} className="mt-1 flex flex-wrap items-end gap-2">
             <label className="flex-1">
-              <span className="block text-sm font-medium">Email del conductor</span>
+              <span className="block text-sm font-medium">{t.result.driverEmailLabel}</span>
               <input
                 type="email"
                 value={emailTo}
@@ -163,7 +162,7 @@ export function ResultActions({
               disabled={sending}
               className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
             >
-              Enviar
+              {t.result.send}
             </button>
           </form>
           {emailMsg && <p className="mt-1 text-sm text-[var(--color-text-muted)]">{emailMsg}</p>}
@@ -177,7 +176,7 @@ export function ResultActions({
           data-testid="result-copy"
           className="flex min-h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] font-medium"
         >
-          {copied ? "Enlace copiado" : "Copiar enlace"}
+          {copied ? t.result.linkCopied : t.result.copyLink}
         </button>
         <a
           href={publicUrl}
@@ -187,7 +186,7 @@ export function ResultActions({
           onClick={() => track("print_clicked")}
           className="flex min-h-12 flex-1 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-border)] font-medium no-underline"
         >
-          Imprimir
+          {t.result.print}
         </a>
       </div>
 
@@ -201,17 +200,17 @@ export function ResultActions({
         data-testid="qr-verify-toggle"
         className="text-sm underline"
       >
-        Comprobar QR
+        {t.result.checkQr}
       </button>
       {verifyOpen && (
         <div
           data-testid="qr-verify-panel"
           className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm"
         >
-          <p className="font-medium">Este es el enlace que lleva el QR del PDF:</p>
+          <p className="font-medium">{t.result.qrLinkLabel}</p>
           <p className="mt-1 break-all font-mono text-xs">{publicUrl}</p>
           <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-            Versión {versionNo}
+            {t.result.version} {versionNo}
             {pdfSha256 ? ` · SHA-256 ${pdfSha256.slice(0, 16)}…` : ""}
           </p>
           <a
@@ -220,11 +219,9 @@ export function ResultActions({
             rel="noopener noreferrer"
             className="mt-2 inline-block"
           >
-            Abrir el enlace de inspección en una pestaña nueva
+            {t.result.openInspectionLink}
           </a>
-          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-            Para la comprobación real, escanea el QR con otro móvil.
-          </p>
+          <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t.result.verifyHint}</p>
         </div>
       )}
 
@@ -234,15 +231,10 @@ export function ResultActions({
           data-testid="result-save"
           className="flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface)] font-medium no-underline"
         >
-          Guardar mis DeCA creando una cuenta
+          {t.result.save}
         </Link>
       )}
-      {claimToken && (
-        <p className="text-xs text-[var(--color-text-muted)]">
-          Crear la cuenta guarda tus documentos y tus datos habituales. No es un formulario
-          comercial.
-        </p>
-      )}
+      {claimToken && <p className="text-xs text-[var(--color-text-muted)]">{t.result.saveHint}</p>}
     </div>
   );
 }

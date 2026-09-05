@@ -14,6 +14,7 @@ import { getDecaForDuplicate } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
 import { listTemplates } from "@/lib/data/templates";
 import { LEAD_COOKIE } from "@/lib/deca/lead";
+import { getDictionary } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
   title: "Crear DeCA gratis",
@@ -38,24 +39,22 @@ export default async function CrearPage({
   if (!user?.companyId) {
     const store = await cookies();
     if (store.get(LEAD_COOKIE)) {
+      const t = await getDictionary();
       return (
         <>
           <SiteHeader />
           <main id="contenido" className="mx-auto max-w-[480px] px-4 py-16 text-center md:px-6">
-            <h1 className="text-2xl font-bold">Ya has creado tu primer DeCA</h1>
-            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
-              Regístrate gratis para crear el siguiente — reutilizas tus datos y es mucho más
-              rápido.
-            </p>
+            <h1 className="text-2xl font-bold">{t.crear.repeatGate.title}</h1>
+            <p className="mt-3 text-sm text-[var(--color-text-muted)]">{t.crear.repeatGate.body}</p>
             <Link
               href="/registro?next=%2Fcrear"
               data-testid="lead-gate-register"
               className="mt-6 inline-flex min-h-12 items-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 font-medium text-[var(--color-primary-contrast)] no-underline"
             >
-              Crear cuenta gratis
+              {t.crear.repeatGate.cta}
             </Link>
             <p className="mt-4 text-sm">
-              <Link href="/entrar">¿Ya tienes cuenta? Entra</Link>
+              <Link href="/entrar">{t.crear.repeatGate.loginPrompt}</Link>
             </p>
           </main>
           <SiteFooter />

@@ -33,10 +33,15 @@ export async function POST(req: Request) {
     const { token } = await createEmailVerification(user.id, user.email);
     const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/verificar-email/${encodeURIComponent(token)}`;
     const { sendMail } = await import("@/lib/mailer");
+    const { getDictionary } = await import("@/lib/i18n/server");
+    const { isLocale, DEFAULT_LOCALE } = await import("@/lib/i18n/locale");
+    const dict = await getDictionary(
+      isLocale(user.preferredLocale) ? user.preferredLocale : DEFAULT_LOCALE,
+    );
     const mail = await sendMail({
       to: user.email,
-      subject: `Confirma tu correo en ${BRAND.name}`,
-      text: `Confirma tu correo para activar tu cuenta de ${BRAND.name}.\n\nAbre este enlace (caduca en 24 horas):\n${link}\n\nSi no has sido tú, ignora este mensaje.`,
+      subject: dict.emails.verifySubject(BRAND.name),
+      text: dict.emails.verifyTextResend(BRAND.name, link),
     });
     delivery = mail.sent ? "sent" : (mail.reason ?? "unconfigured");
     if (!mail.sent) {

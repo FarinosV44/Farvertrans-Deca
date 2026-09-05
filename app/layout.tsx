@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Inter } from "next/font/google";
-import { es } from "@/lib/i18n/es";
+import { getLocale, getDictionary } from "@/lib/i18n/server";
+import { LocaleProvider } from "@/lib/i18n/client";
 import { publicEnv } from "@/lib/env";
 import { titleTemplate } from "@/lib/brand";
 import { AttributionCapture } from "@/components/analytics/attribution-capture";
@@ -24,17 +25,21 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang={locale} className={inter.variable}>
       <body>
-        <a href="#contenido" className="skip-link">
-          {es.common.skipToContent}
-        </a>
-        <Suspense fallback={null}>
-          <AttributionCapture />
-        </Suspense>
-        {children}
+        <LocaleProvider locale={locale}>
+          <a href="#contenido" className="skip-link">
+            {dict.common.skipToContent}
+          </a>
+          <Suspense fallback={null}>
+            <AttributionCapture />
+          </Suspense>
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

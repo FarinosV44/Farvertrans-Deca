@@ -7,21 +7,31 @@ import {
   UsersIcon,
   GearIcon,
 } from "@/components/panel/icons";
+import { getDictionary } from "@/lib/i18n/server";
 
-const TABS = [
-  { key: "home", href: "/panel", label: "Mis DeCA", Icon: DocumentIcon },
-  { key: "historico", href: "/panel/historico", label: "Historial", Icon: HistoryIcon },
-  { key: "plantillas", href: "/panel/plantillas", label: "Plantillas", Icon: CopyIcon },
-  { key: "datos", href: "/panel/datos", label: "Datos habituales", Icon: BuildingIcon },
-  { key: "equipo", href: "/panel/equipo", label: "Equipo", Icon: UsersIcon },
-  { key: "empresa", href: "/panel/empresa", label: "Mi empresa", Icon: GearIcon },
-] as const;
+const TAB_KEYS = ["home", "historico", "plantillas", "datos", "equipo", "empresa"] as const;
+const TAB_META: Record<
+  (typeof TAB_KEYS)[number],
+  {
+    href: string;
+    Icon: (props: { width?: number; height?: number; strokeWidth?: number }) => React.JSX.Element;
+  }
+> = {
+  home: { href: "/panel", Icon: DocumentIcon },
+  historico: { href: "/panel/historico", Icon: HistoryIcon },
+  plantillas: { href: "/panel/plantillas", Icon: CopyIcon },
+  datos: { href: "/panel/datos", Icon: BuildingIcon },
+  equipo: { href: "/panel/equipo", Icon: UsersIcon },
+  empresa: { href: "/panel/empresa", Icon: GearIcon },
+};
 
-export function AppNav({
+export async function AppNav({
   current,
 }: {
   current: "home" | "historico" | "datos" | "plantillas" | "equipo" | "empresa";
 }) {
+  const t = await getDictionary();
+  const TABS = TAB_KEYS.map((key) => ({ key, ...TAB_META[key], label: t.panel.nav[key] }));
   return (
     <nav
       aria-label="Secciones de la cuenta"

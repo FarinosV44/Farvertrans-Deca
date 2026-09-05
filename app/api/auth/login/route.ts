@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { AuthError, login, setSessionCookie } from "@/lib/auth";
 import { claimDeca, ClaimError } from "@/lib/deca/claim";
+import { LOCALE_COOKIE, isLocale } from "@/lib/i18n/locale";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,18 @@ export async function POST(req: Request) {
   }
 
   await setSessionCookie(user.userId);
+
+  // I18N #5: restore this account's saved language preference automatically.
+  if (isLocale(user.preferredLocale)) {
+    const { cookies } = await import("next/headers");
+    const store = await cookies();
+    store.set(LOCALE_COOKIE, user.preferredLocale, {
+      httpOnly: false,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+    });
+  }
 
   let joinedTeam = false;
   if (b.invite) {

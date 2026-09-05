@@ -10,6 +10,7 @@ import { TrackView } from "@/components/analytics/track-view";
 import { getDecaCockpit } from "@/lib/deca/detail";
 import { qrPngDataUriCached } from "@/lib/pdf/qr";
 import { formatLocationShort } from "@/lib/deca/location";
+import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function ResultPage({
 
   const c = doc.current;
   const qr = await qrPngDataUriCached(c.publicUrl);
+  const t = await getDictionary();
 
   return (
     <>
@@ -41,7 +43,7 @@ export default async function ResultPage({
             ✓
           </span>
           <div>
-            <h1 className="text-2xl font-bold">DeCA generado</h1>
+            <h1 className="text-2xl font-bold">{t.result.heading}</h1>
             <p className="text-sm text-[var(--color-text-muted)]">
               {formatLocationShort(c.data.loadLocation)} →{" "}
               {formatLocationShort(c.data.unloadLocation)} · {doc.reference}
@@ -50,7 +52,7 @@ export default async function ResultPage({
         </div>
 
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-          Versión {c.versionNo} · generado {fmt(doc.createdAt)}
+          {t.result.versionGenerated(c.versionNo, fmt(doc.createdAt))}
         </p>
 
         <ResultActions
@@ -65,7 +67,7 @@ export default async function ResultPage({
 
           <section aria-labelledby="datos-h">
             <h2 id="datos-h" className="mb-3 text-base font-bold">
-              Datos del documento
+              {t.result.documentData}
             </h2>
             <DocSummary data={c.data} />
           </section>
@@ -73,12 +75,9 @@ export default async function ResultPage({
           <VersionTimeline versions={doc.versions} />
         </div>
 
-        <p className="mt-8 text-xs text-[var(--color-text-muted)]">
-          Documento conservado durante al menos 1 año. La URL pública permite la descarga directa
-          del PDF sin registro, conforme a la resolución vigente.
-        </p>
+        <p className="mt-8 text-xs text-[var(--color-text-muted)]">{t.result.retentionNotice}</p>
         <p className="mt-4 text-sm">
-          <Link href="/crear">Crear otro DeCA</Link>
+          <Link href="/crear">{t.result.createAnother}</Link>
         </p>
       </main>
       <SiteFooter />

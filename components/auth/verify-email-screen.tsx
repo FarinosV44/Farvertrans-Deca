@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 /** Best-effort webmail inbox link, by common provider domain — opens the inbox, never a compose window. */
 function webmailUrl(email: string): string | null {
@@ -32,6 +33,7 @@ export function VerifyEmailScreen({
   /** False when the ORIGINAL signup email failed to send (D-053) — never claim it arrived. */
   initiallySent?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [currentEmail, setCurrentEmail] = useState(email);
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -96,14 +98,14 @@ export function VerifyEmailScreen({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setChangeError(data?.error?.message ?? "No se pudo cambiar el correo.");
+        setChangeError(data?.error?.message ?? t.auth.verify.changeEmail.error);
         return;
       }
       setCurrentEmail(data.email);
       setChanging(false);
       setResendState("sent");
     } catch {
-      setChangeError("Sin conexión. Inténtalo de nuevo.");
+      setChangeError(t.auth.errors.noConnection);
     }
   }
 
@@ -115,14 +117,14 @@ export function VerifyEmailScreen({
       >
         ✉️
       </div>
-      <h1 className="mt-5 text-2xl font-bold">Confirma tu correo electrónico</h1>
+      <h1 className="mt-5 text-2xl font-bold">{t.auth.verify.title}</h1>
       {initiallySent ? (
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          Ya casi está. Te hemos enviado un correo a{" "}
+          {t.auth.verify.sentPrefix}{" "}
           <strong className="text-[var(--color-text)]" data-testid="verify-email-address">
             {currentEmail}
           </strong>{" "}
-          para activar tu cuenta y empezar a emitir DeCA.
+          {t.auth.verify.sentSuffix}
         </p>
       ) : (
         <div
@@ -130,20 +132,20 @@ export function VerifyEmailScreen({
           data-testid="verify-email-send-failed"
           className="mt-2 rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[color-mix(in_srgb,var(--color-danger)_8%,transparent)] p-3 text-sm"
         >
-          No hemos podido enviar el correo de confirmación a{" "}
+          {t.auth.verify.failedPrefix}{" "}
           <strong className="text-[var(--color-text)]" data-testid="verify-email-address">
             {currentEmail}
           </strong>
-          . Pulsa «Reenviar correo» para intentarlo de nuevo.
+          . {t.auth.verify.failedSuffix}
         </div>
       )}
 
       <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 text-left">
-        <h2 className="text-sm font-bold">Qué ocurre después</h2>
+        <h2 className="text-sm font-bold">{t.auth.verify.whatNext.title}</h2>
         <ol className="mt-2 space-y-1 text-sm text-[var(--color-text-muted)]">
-          <li>1. Confirmas tu email</li>
-          <li>2. Accedes a tu cuenta</li>
-          <li>3. Empiezas a emitir DeCA</li>
+          <li>{t.auth.verify.whatNext.step1}</li>
+          <li>{t.auth.verify.whatNext.step2}</li>
+          <li>{t.auth.verify.whatNext.step3}</li>
         </ol>
       </div>
 
@@ -155,7 +157,7 @@ export function VerifyEmailScreen({
             rel="noopener noreferrer"
             className="min-h-12 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 py-3 font-medium text-[var(--color-primary-contrast)] no-underline"
           >
-            Abrir mi correo
+            {t.auth.verify.openMail}
           </a>
         )}
         <button
@@ -165,16 +167,16 @@ export function VerifyEmailScreen({
           disabled={resendState === "sending"}
           className="min-h-12 rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 py-3 font-medium disabled:opacity-55"
         >
-          {resendState === "sending" ? "Enviando…" : "Reenviar correo"}
+          {resendState === "sending" ? t.auth.verify.resendSending : t.auth.verify.resend}
         </button>
         {resendState === "sent" && (
           <p role="status" className="text-sm text-[var(--color-success)]">
-            Correo reenviado. Revisa tu bandeja de entrada.
+            {t.auth.verify.resendSent}
           </p>
         )}
         {resendState === "error" && (
           <p role="alert" className="text-sm text-[var(--color-danger)]">
-            No se pudo reenviar. Inténtalo de nuevo en unos minutos.
+            {t.auth.verify.resendError}
           </p>
         )}
 
@@ -185,12 +187,12 @@ export function VerifyEmailScreen({
             onClick={() => setChanging(true)}
             className="text-sm font-medium text-[var(--color-primary)] underline"
           >
-            Cambiar correo electrónico
+            {t.auth.verify.changeEmail.open}
           </button>
         ) : (
           <form onSubmit={changeEmail} className="mt-1 flex flex-col gap-2 text-left">
             <label htmlFor="new-email" className="text-sm font-medium">
-              Nuevo correo electrónico
+              {t.auth.verify.changeEmail.label}
             </label>
             <input
               id="new-email"
@@ -211,14 +213,14 @@ export function VerifyEmailScreen({
                 data-testid="verify-email-change-submit"
                 className="min-h-11 flex-1 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)]"
               >
-                Guardar y reenviar
+                {t.auth.verify.changeEmail.save}
               </button>
               <button
                 type="button"
                 onClick={() => setChanging(false)}
                 className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 font-medium"
               >
-                Cancelar
+                {t.auth.verify.changeEmail.cancel}
               </button>
             </div>
           </form>
@@ -231,7 +233,7 @@ export function VerifyEmailScreen({
           disabled={checking}
           className="mt-2 text-sm font-medium text-[var(--color-text-muted)] underline disabled:opacity-55"
         >
-          {checking ? "Comprobando…" : "Ya he confirmado mi cuenta"}
+          {checking ? t.auth.verify.continueChecking : t.auth.verify.continueLabel}
         </button>
         {notYetVerified && (
           <p
@@ -239,14 +241,12 @@ export function VerifyEmailScreen({
             data-testid="verify-email-not-yet"
             className="text-sm text-[var(--color-danger)]"
           >
-            Tu correo todavía no está verificado. Abre el enlace que te hemos enviado.
+            {t.auth.verify.notYetVerified}
           </p>
         )}
       </div>
 
-      <p className="mt-6 text-xs text-[var(--color-text-muted)]">
-        Si no encuentras el mensaje, revisa tu carpeta de spam o promociones.
-      </p>
+      <p className="mt-6 text-xs text-[var(--color-text-muted)]">{t.auth.verify.spamHint}</p>
     </div>
   );
 }

@@ -29,3 +29,18 @@
 - **Cause:** contention on the single server + Postgres, not a correctness bug.
 - **Fix / mitigation:** `retries: 1` in CI absorbs it; add a `waitForResponse` before navigating off
   a page whose POST must land first (login, register). Do not "fix" by loosening assertions.
+
+## I18N: never default server-side locale from `Accept-Language`
+
+- **Symptom:** adding `lib/i18n/server.ts`'s locale resolver with an `Accept-Language`-based
+  fallback (`if header starts with "en" → English`) broke 29 previously-green e2e specs across the
+  whole suite — headings, buttons and table columns all came back in English where Spanish was
+  expected.
+- **Cause:** headless Chromium (Playwright's default) sends `Accept-Language: en-US` regardless of
+  the intended test locale, so *every* request without an explicit `fvd_locale` cookie silently
+  resolved to English. The same failure mode would hit a real Spanish visitor whose OS/browser is
+  set to English — exactly the audience this Spanish-market product should default to Spanish for.
+- **Fix:** `getLocale()` never reads `Accept-Language`. It reads only the explicit `fvd_locale`
+  cookie (set by the switcher, or restored from `User.preferredLocale` on login) and falls back to
+  the hardcoded default locale (`es`) otherwise. English is opt-in only, never inferred from browser
+  headers. See D-062.

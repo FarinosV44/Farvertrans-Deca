@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { es } from "@/lib/i18n/es";
+import { es } from "@/lib/i18n/dictionaries/es";
 
 export default function GlobalError({
   error,

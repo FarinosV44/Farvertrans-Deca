@@ -9,33 +9,15 @@ import { track } from "@/lib/analytics/client";
 import { lockAttribution } from "@/lib/attribution/client";
 import { safeInternalPath } from "@/lib/auth/safe-redirect";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { useT } from "@/lib/i18n/client";
 
-const PROFILES = [
-  {
-    value: "carrier_goods",
-    icon: "🚚",
-    title: "Transportista de mercancías",
-    body: "Realizas el transporte de mercancías por cuenta ajena.",
-  },
-  {
-    value: "shipper",
-    icon: "📦",
-    title: "Empresa cargadora",
-    body: "Contratas transporte para tus propios envíos de mercancías.",
-  },
-  {
-    value: "operator",
-    icon: "🔗",
-    title: "Operador de transporte",
-    body: "Organizas transportes de mercancías (operador logístico o agencia).",
-  },
-  {
-    value: "carrier_passengers",
-    icon: "🚌",
-    title: "Transportista de viajeros",
-    body: "Realizas transporte de viajeros por carretera.",
-  },
-] as const;
+const PROFILE_VALUES = ["carrier_goods", "shipper", "operator", "carrier_passengers"] as const;
+const PROFILE_ICONS: Record<(typeof PROFILE_VALUES)[number], string> = {
+  carrier_goods: "🚚",
+  shipper: "📦",
+  operator: "🔗",
+  carrier_passengers: "🚌",
+};
 
 export function RegisterForm({
   initialMode = "register",
@@ -50,6 +32,7 @@ export function RegisterForm({
   prospectCompany?: { name: string; nif: string } | null;
   googleEnabled?: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const params = useSearchParams();
   const claim = params.get("claim") ?? undefined;
@@ -67,7 +50,7 @@ export function RegisterForm({
     companyAddress: "",
     companyContactName: "",
     companyPhone: "",
-    companyProfile: "" as "" | (typeof PROFILES)[number]["value"],
+    companyProfile: "" as "" | (typeof PROFILE_VALUES)[number],
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [mode, setMode] = useState<"register" | "login">(initialMode);
@@ -79,7 +62,7 @@ export function RegisterForm({
     e.preventDefault();
     if (busy) return;
     if (mode === "register" && !joiningTeam && !acceptTerms) {
-      setError("Debes aceptar los Términos y Condiciones y la Política de Privacidad.");
+      setError(t.auth.errors.acceptTerms);
       return;
     }
     setBusy(true);
@@ -98,7 +81,7 @@ export function RegisterForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error?.message ?? "No se pudo completar. Inténtalo de nuevo.");
+        setError(data?.error?.message ?? t.auth.errors.generic);
         setBusy(false);
         return;
       }
@@ -127,26 +110,26 @@ export function RegisterForm({
       router.push(nextPath);
       router.refresh();
     } catch {
-      setError("Sin conexión. Inténtalo de nuevo.");
+      setError(t.auth.errors.noConnection);
       setBusy(false);
     }
   }
 
   const heading = joiningTeam
-    ? "Únete al equipo"
+    ? t.auth.heading.joinTeam
     : claim
-      ? "Guarda este DeCA"
+      ? t.auth.heading.claim
       : mode === "register"
-        ? "Crea tu cuenta gratis"
-        : "Bienvenido de nuevo";
+        ? t.auth.heading.register
+        : t.auth.heading.login;
 
   const subhead = joiningTeam
-    ? `${inviteCompany ? `${inviteCompany} te ha invitado. ` : ""}Crea tu acceso y compartirás sus DeCA y datos habituales. No hace falta dar de alta otra empresa.`
+    ? `${inviteCompany ? t.auth.subhead.joinTeamInvitedBy(inviteCompany) : ""}${t.auth.subhead.joinTeamSuffix}`
     : claim
-      ? "Crea una cuenta gratuita para guardar este documento y reutilizar tus datos. No es un formulario comercial."
+      ? t.auth.subhead.claim
       : mode === "register"
-        ? "Guarda tus DeCA, reutiliza tus datos habituales y genera documentos nuevos más rápido."
-        : "Entra para ver tus DeCA, reutilizar tus datos y generar nuevos documentos más rápido.";
+        ? t.auth.subhead.register
+        : t.auth.subhead.login;
 
   return (
     <div>
@@ -158,7 +141,7 @@ export function RegisterForm({
       <div className="mt-6">
         <GoogleButton
           enabled={googleEnabled}
-          label="Continuar con Google"
+          label={t.auth.googleCta}
           href={
             invite ? `/api/auth/google?invite=${encodeURIComponent(invite)}` : "/api/auth/google"
           }
@@ -167,7 +150,7 @@ export function RegisterForm({
 
       <div className="my-5 flex items-center gap-3" aria-hidden>
         <span className="h-px flex-1 bg-[var(--color-border)]" />
-        <span className="text-xs text-[var(--color-text-muted)]">o continúa con email</span>
+        <span className="text-xs text-[var(--color-text-muted)]">{t.auth.orContinueWithEmail}</span>
         <span className="h-px flex-1 bg-[var(--color-border)]" />
       </div>
 
@@ -180,7 +163,7 @@ export function RegisterForm({
       <form onSubmit={submit} noValidate>
         <Field
           id="email"
-          label="Email"
+          label={t.auth.emailLabel}
           type="email"
           autoComplete="email"
           value={f.email}
@@ -190,27 +173,27 @@ export function RegisterForm({
           value={f.password}
           onChange={set("password")}
           autoComplete={mode === "register" ? "new-password" : "current-password"}
-          hint={mode === "register" ? "Al menos 8 caracteres." : undefined}
+          hint={mode === "register" ? t.auth.passwordHint : undefined}
         />
         {mode === "register" && !joiningTeam && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <legend className="px-1 text-sm font-bold">Tu empresa</legend>
+            <legend className="px-1 text-sm font-bold">{t.auth.company.legend}</legend>
             <Field
               id="companyName"
-              label="Nombre o razón social"
+              label={t.auth.company.name}
               autoComplete="organization"
               value={f.companyName}
               onChange={set("companyName")}
             />
             <Field
               id="companyNif"
-              label="CIF / NIF"
+              label={t.auth.company.nif}
               value={f.companyNif}
               onChange={set("companyNif")}
             />
             <Field
               id="companyContactName"
-              label="Persona de contacto (opcional)"
+              label={t.auth.company.contactName}
               required={false}
               autoComplete="name"
               value={f.companyContactName}
@@ -218,7 +201,7 @@ export function RegisterForm({
             />
             <Field
               id="companyPhone"
-              label="Teléfono (opcional)"
+              label={t.auth.company.phone}
               type="tel"
               required={false}
               autoComplete="tel"
@@ -227,7 +210,7 @@ export function RegisterForm({
             />
             <Field
               id="companyAddress"
-              label="Domicilio (opcional)"
+              label={t.auth.company.address}
               required={false}
               autoComplete="street-address"
               value={f.companyAddress}
@@ -239,30 +222,33 @@ export function RegisterForm({
         {mode === "register" && !joiningTeam && (
           <fieldset className="mt-4">
             <legend className="px-1 text-sm font-bold">
-              ¿Cómo utilizarás principalmente la plataforma? <span aria-hidden>*</span>
+              {t.auth.profile.legend} <span aria-hidden>*</span>
             </legend>
             <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup">
-              {PROFILES.map((p) => (
-                <button
-                  key={p.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={f.companyProfile === p.value}
-                  data-testid={`profile-${p.value}`}
-                  onClick={() => setF((s) => ({ ...s, companyProfile: p.value }))}
-                  className={`flex min-h-24 flex-col items-start gap-1 rounded-[var(--radius-md)] border p-4 text-left ${
-                    f.companyProfile === p.value
-                      ? "border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)]"
-                      : "border-[var(--color-border)]"
-                  }`}
-                >
-                  <span aria-hidden className="text-2xl">
-                    {p.icon}
-                  </span>
-                  <span className="text-sm font-bold">{p.title}</span>
-                  <span className="text-xs text-[var(--color-text-muted)]">{p.body}</span>
-                </button>
-              ))}
+              {PROFILE_VALUES.map((value) => {
+                const p = t.auth.profile.items[value];
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={f.companyProfile === value}
+                    data-testid={`profile-${value}`}
+                    onClick={() => setF((s) => ({ ...s, companyProfile: value }))}
+                    className={`flex min-h-24 flex-col items-start gap-1 rounded-[var(--radius-md)] border p-4 text-left ${
+                      f.companyProfile === value
+                        ? "border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_6%,transparent)]"
+                        : "border-[var(--color-border)]"
+                    }`}
+                  >
+                    <span aria-hidden className="text-2xl">
+                      {PROFILE_ICONS[value]}
+                    </span>
+                    <span className="text-sm font-bold">{p.title}</span>
+                    <span className="text-xs text-[var(--color-text-muted)]">{p.body}</span>
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
         )}
@@ -272,19 +258,17 @@ export function RegisterForm({
             className="mt-4 rounded-[var(--radius-md)] bg-[var(--color-surface)] p-4 text-xs text-[var(--color-text-muted)]"
             data-testid="data-protection-notice"
           >
-            <p className="font-bold text-[var(--color-text)]">
-              Información básica sobre protección de datos
+            <p className="font-bold text-[var(--color-text)]">{t.auth.dataProtection.title}</p>
+            <p className="mt-1">
+              <strong>{t.auth.dataProtection.responsible}</strong> {LEGAL_ENTITY.name}
             </p>
             <p className="mt-1">
-              <strong>Responsable:</strong> {LEGAL_ENTITY.name}
+              <strong>{t.auth.dataProtection.purpose}</strong> {t.auth.dataProtection.purposeBody}
             </p>
             <p className="mt-1">
-              <strong>Finalidad:</strong> gestionar el alta y la prestación de la Plataforma DeCA.
-            </p>
-            <p className="mt-1">
-              Más información en nuestra{" "}
+              {t.auth.dataProtection.moreInfoPrefix}{" "}
               <Link href={LEGAL_ENTITY.privacyUrl} className="underline">
-                Política de Privacidad
+                {t.auth.dataProtection.privacyPolicy}
               </Link>
               .
             </p>
@@ -301,13 +285,13 @@ export function RegisterForm({
               className="mt-0.5 h-4 w-4 shrink-0"
             />
             <span>
-              He leído la{" "}
+              {t.auth.terms.readPrefix}{" "}
               <Link href={LEGAL_ENTITY.privacyUrl} className="underline">
-                Política de Privacidad
+                {t.auth.terms.privacyPolicy}
               </Link>{" "}
-              y acepto los{" "}
+              {t.auth.terms.andAccept}{" "}
               <Link href={LEGAL_ENTITY.termsUrl} className="underline">
-                Términos y Condiciones
+                {t.auth.terms.termsAndConditions}
               </Link>
               .
             </span>
@@ -320,20 +304,24 @@ export function RegisterForm({
           data-testid="register-submit"
           className="mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)] disabled:opacity-55"
         >
-          {busy ? "Un momento…" : mode === "register" ? "Crear cuenta gratis" : "Entrar"}
+          {busy
+            ? t.auth.submit.busy
+            : mode === "register"
+              ? t.auth.submit.register
+              : t.auth.submit.login}
         </button>
       </form>
 
       {mode === "login" && (
         <p className="mt-3 text-sm">
           <Link href="/recuperar" data-testid="forgot-password">
-            ¿Has olvidado tu contraseña?
+            {t.auth.forgotPassword}
           </Link>
         </p>
       )}
 
       <p className="mt-5 border-t border-[var(--color-border)] pt-4 text-sm text-[var(--color-text-muted)]">
-        {mode === "register" ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? "}
+        {mode === "register" ? t.auth.switchPrompt.toLogin : t.auth.switchPrompt.toRegister}
         <button
           type="button"
           data-testid="auth-mode-toggle"
@@ -343,13 +331,11 @@ export function RegisterForm({
           }}
           className="font-medium text-[var(--color-primary)] underline"
         >
-          {mode === "register" ? "Inicia sesión" : "Crea tu cuenta gratis"}
+          {mode === "register" ? t.auth.switchCta.toLogin : t.auth.switchCta.toRegister}
         </button>
       </p>
 
-      <p className="mt-4 text-center text-xs text-[var(--color-text-muted)]">
-        Gratis · Sin tarjeta · Tus DeCA en un solo lugar
-      </p>
+      <p className="mt-4 text-center text-xs text-[var(--color-text-muted)]">{t.auth.footNote}</p>
     </div>
   );
 }

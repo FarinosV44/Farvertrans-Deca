@@ -11,6 +11,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
+import { getLocale, getDictionary } from "@/lib/i18n/server";
 import {
   PlusIcon,
   QrIcon,
@@ -78,6 +79,15 @@ export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
   const authed = !!user?.companyId;
 
+  // I18N: only the hero + trust row are locale-branched in this slice — the
+  // rest of the landing (steps, personas, FAQ...) stays Spanish-only for now
+  // (tracked as follow-up on #50), so `HERO`/`TRUST_ROW` remain the default
+  // for `es` and every OTHER consumer of `lib/content/landing.ts` is untouched.
+  const locale = await getLocale();
+  const dict = await getDictionary(locale);
+  const hero = locale === "en" ? dict.landing.hero : HERO;
+  const trustRow = locale === "en" ? dict.landing.trustRow : TRUST_ROW;
+
   return (
     <>
       <TrackView event="landing_view" />
@@ -93,22 +103,22 @@ export default async function HomePage() {
           <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-14">
             <div>
               <p className="text-sm font-semibold tracking-wide text-[var(--color-primary)]">
-                {HERO.eyebrow}
+                {hero.eyebrow}
               </p>
               <h1 className="mt-3 text-[2.5rem] leading-[1.05] font-extrabold tracking-tight sm:text-[3rem] md:text-[4.25rem]">
-                {HERO.h1}
+                {hero.h1}
               </h1>
               <p className="mt-5 max-w-xl text-lg text-[var(--color-text-muted)] md:text-xl">
-                {HERO.subhead}
+                {hero.subhead}
               </p>
-              <p className="mt-3 max-w-xl text-sm text-[var(--color-text-muted)]">{HERO.proof}</p>
+              <p className="mt-3 max-w-xl text-sm text-[var(--color-text-muted)]">{hero.proof}</p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <CtaButton
                   event="hero_cta"
                   testId="cta-hero"
                   className="text-base shadow-[0_8px_24px_rgba(11,92,255,0.28)]"
                 >
-                  {HERO.cta}
+                  {hero.cta}
                 </CtaButton>
                 {!authed && (
                   <Link
@@ -116,12 +126,12 @@ export default async function HomePage() {
                     data-testid="hero-login"
                     className="inline-flex min-h-12 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium no-underline hover:border-[var(--color-primary)]"
                   >
-                    {HERO.ctaSecondary}
+                    {hero.ctaSecondary}
                   </Link>
                 )}
               </div>
               <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-muted)]">
-                {TRUST_ROW.map((t) => (
+                {trustRow.map((t) => (
                   <li key={t} className="flex items-center gap-1.5">
                     <span aria-hidden className="text-[var(--color-success)]">
                       ✓

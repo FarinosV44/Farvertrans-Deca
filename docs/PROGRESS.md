@@ -592,6 +592,25 @@ migration. See D-058 for the full pre-merge evidence and what remains.
   (deployment-state only), but D-061 IS a real code change and DOES need a `main` merge + redeploy to
   reach production.
 
+## D-062: I18N #50 slice 1 — core i18n architecture + ES/EN translation of the critical path
+- Owner filed GitHub issue #50 (full product internationalization) then asked to start on it. Scoped
+  to a first slice (owner's explicit choice when asked): build the real i18n engine + language
+  switcher + `User.preferredLocale` persistence + locale-aware verification emails, and translate
+  exactly the critical QA flow #50 named — landing header/hero, signup/login, email verification,
+  panel shell, the full DeCA creator (all fields/gates/result), and history. New migration
+  `20260905190509_user_preferred_locale`. Deliberately deferred (documented on the issue, not
+  silently dropped): saved-data management screens, document cockpit, admin, blog/guías, legal
+  pages, the PDF itself (needs the owner's sign-off on legal terminology first), locale-prefixed
+  URLs, and zod validation-error messages.
+  Architecture: cookie-based (`fvd_locale`), not URL-prefixed — avoids duplicate-content SEO risk
+  and the large mechanical risk of wrapping every route in a `[locale]` segment on a live product.
+  Caught and fixed a real bug mid-slice: the locale resolver's `Accept-Language` fallback defaulted
+  to English under headless Chromium (and would for a real Spanish user with an English OS), broke
+  29 e2e tests; removed — Spanish is now the unconditional default absent an explicit cookie. Gate:
+  137 e2e + 127 unit + typecheck + lint + format, plus a real-browser walk (ES→EN→ES, no mixed
+  screens on the translated path). See `decisions.md` D-062 for the full file list. Issue #50 stays
+  OPEN with this slice's scope commented — most of the epic remains for future sessions.
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as
