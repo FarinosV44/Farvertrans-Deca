@@ -30,16 +30,36 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
           items={[
             { label: "NIF", value: c.nif ?? "—" },
             { label: "Dirección", value: c.address ?? "—" },
+            { label: "Contacto", value: c.contactName ?? "—" },
+            { label: "Teléfono", value: c.phone ?? "—" },
+            { label: "Perfil", value: c.profile ?? "—" },
             { label: "Alta", value: fmt(c.createdAt) },
             { label: "Miembros", value: String(c.members.length) },
-            { label: "DeCA totales", value: String(c.totalDeca) },
+            {
+              label: "DeCA",
+              value: `${c.totalDeca} totales · ${c.decaCounts.d7} (7d) · ${c.decaCounts.d30} (30d) · ${c.decaCounts.d90} (90d)`,
+            },
+            { label: "Última actividad", value: fmt(c.lastDecaAt) },
             {
               label: "Datos guardados",
               value: `${c.saved.companies} cargadores · ${c.saved.vehicles} vehículos · ${c.saved.addresses} direcciones`,
             },
             { label: "Primer DeCA", value: fmt(c.acquisition?.firstDecaAt) },
             { label: "Operador (first-touch)", value: c.acquisition?.firstRefCode ?? "—" },
+            { label: "Operador (last-touch)", value: c.acquisition?.lastRefCode ?? "—" },
             { label: "Fuente (UTM)", value: c.acquisition?.firstUtmSource ?? "—" },
+            {
+              label: "Términos aceptados",
+              value: c.terms ? `v${c.terms.version} · ${fmt(c.terms.acceptedAt)}` : "—",
+            },
+            {
+              label: "Consentimiento comercial",
+              value: c.commercialConsent
+                ? c.commercialConsent.granted
+                  ? `Autorizado (v${c.commercialConsent.version} · ${fmt(c.commercialConsent.grantedAt)})`
+                  : `Revocado (${fmt(c.commercialConsent.revokedAt)})`
+                : "No solicitado",
+            },
           ]}
         />
       </div>
@@ -48,7 +68,7 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
         <h2 id="mem" className="mb-2 text-sm font-bold">
           Miembros
         </h2>
-        <Table head={["Email", "Proveedor", "Rol workspace", "Rol", "Alta"]}>
+        <Table head={["Email", "Proveedor", "Rol workspace", "Rol", "Email verificado", "Alta"]}>
           {c.members.map((m) => (
             <Row key={m.id}>
               <Cell>
@@ -64,6 +84,13 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
               </Cell>
               <Cell>{m.companyRole === "owner" ? "administrador" : "miembro"}</Cell>
               <Cell>{m.role}</Cell>
+              <Cell>
+                {m.emailVerifiedAt ? (
+                  <Badge tone="green">verificado</Badge>
+                ) : (
+                  <Badge tone="muted">pendiente</Badge>
+                )}
+              </Cell>
               <Cell mono>{fmt(m.createdAt)}</Cell>
             </Row>
           ))}

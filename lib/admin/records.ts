@@ -234,8 +234,18 @@ export async function getCompanyAdmin(id: string) {
   const company = await prisma.company.findUnique({
     where: { id },
     include: {
-      users: { select: { id: true, email: true, role: true, companyRole: true, createdAt: true } },
+      users: {
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          companyRole: true,
+          createdAt: true,
+          emailVerifiedAt: true,
+        },
+      },
       acquisition: true,
+      commercialConsent: true,
       invites: {
         orderBy: { createdAt: "desc" },
         select: { email: true, role: true, acceptedAt: true, expiresAt: true, createdAt: true },
@@ -245,7 +255,19 @@ export async function getCompanyAdmin(id: string) {
   });
   if (!company) return null;
 
-  const [savedCompanies, savedVehicles, savedAddresses, recentDeca] = await Promise.all([
+  const now = new Date();
+  const since = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+  const [
+    savedCompanies,
+    savedVehicles,
+    savedAddresses,
+    recentDeca,
+    deca7d,
+    deca30d,
+    deca90d,
+    latestTerms,
+  ] = await Promise.all([
     prisma.savedCompany.count({ where: { user: { companyId: id } } }),
     prisma.savedVehicle.count({ where: { user: { companyId: id } } }),
     prisma.savedAddress.count({ where: { user: { companyId: id } } }),
@@ -255,6 +277,13 @@ export async function getCompanyAdmin(id: string) {
       orderBy: { createdAt: "desc" },
       take: 20,
     }),
+    prisma.deca.count({ where: { companyId: id, createdAt: { gte: since(7) } } }),
+    prisma.deca.count({ where: { companyId: id, createdAt: { gte: since(30) } } }),
+    prisma.deca.count({ where: { companyId: id, createdAt: { gte: since(90) } } }),
+    prisma.termsAcceptance.findFirst({
+      where: { companyId: id },
+      orderBy: { acceptedAt: "desc" },
+    }),
   ]);
 
   return {
@@ -262,8 +291,22 @@ export async function getCompanyAdmin(id: string) {
     name: company.name,
     nif: company.nif,
     address: company.address,
+    contactName: company.contactName,
+    phone: company.phone,
+    profile: company.profile,
     createdAt: company.createdAt,
     totalDeca: company._count.decas,
+    decaCounts: { d7: deca7d, d30: deca30d, d90: deca90d },
+    lastDecaAt: recentDeca[0]?.createdAt ?? null,
+    terms: latestTerms ? { version: latestTerms.version, acceptedAt: latestTerms.acceptedAt } : null,
+    commercialConsent: company.commercialConsent
+      ? {
+          granted: company.commercialConsent.granted,
+          version: company.commercialConsent.version,
+          grantedAt: company.commercialConsent.grantedAt,
+          revokedAt: company.commercialConsent.revokedAt,
+        }
+      : null,
     members: company.users
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
       .map((u) => ({
@@ -272,6 +315,7 @@ export async function getCompanyAdmin(id: string) {
         role: u.role,
         companyRole: u.companyRole,
         createdAt: u.createdAt,
+        emailVerifiedAt: u.emailVerifiedAt,
       })),
     saved: { companies: savedCompanies, vehicles: savedVehicles, addresses: savedAddresses },
     acquisition: company.acquisition,
