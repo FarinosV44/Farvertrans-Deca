@@ -572,6 +572,26 @@ migration. See D-058 for the full pre-merge evidence and what remains.
   nothing new has come in from the owner before assuming the list is closed — Keel decisions are
   never re-opened on the assistant's own initiative, but a fresh directive supersedes this note.
 
+## D-060: production migration gap fixed live; D-061: lightweight lead gate restored (owner reversal)
+- **D-060 — production incident, RESOLVED.** All 3 pending migrations
+  (`20260905095427_route_intel_and_commercial_consent`, `20260905133820_workspace_saved_master_data`,
+  `20260905141620_company_logo`) are now applied to production — the user ran their DDL directly via
+  the Supabase SQL Editor (session-mode pooler was exhausted, blocking `prisma migrate deploy`), this
+  session reconciled `_prisma_migrations`. Live "Entrar" and "Crear DeCA" confirmed working again by
+  the user. The stale warnings above about undeployed migrations are now HISTORICAL — do not re-raise
+  them without checking current production state first.
+- **D-061 — owner directive, reverses part of D-052/PRIORITY 1:** a DeCA can once again be generated
+  by an anonymous visitor with just a name + email (lightweight lead gate); only a SECOND anonymous
+  DeCA from the same browser requires full registration. Authenticated users still need a verified
+  email (D-053, unchanged). Implemented in `app/api/deca/route.ts`, `app/crear/page.tsx`,
+  `components/deca/wizard.tsx`, `lib/deca/lead.ts` (recreated). Full test suite updated to match
+  (see D-061 in `decisions.md` for the file list). Gate green: 137 e2e + 127 unit + typecheck + lint +
+  format. Not yet merged to `main` as of this note — see next action.
+- **Next action:** merge `develop` → `main` and push once the owner confirms, per standing "push to
+  main" authorization pattern this session — then no further code deploy step is needed for D-060
+  (deployment-state only), but D-061 IS a real code change and DOES need a `main` merge + redeploy to
+  reach production.
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as

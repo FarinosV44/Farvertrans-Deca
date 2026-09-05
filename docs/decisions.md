@@ -1286,3 +1286,62 @@
   slice is queued — the foundation was already unified; this session's additions extended it rather
   than fragmenting it.
 - Gate green: 136 e2e (incl. 8 compliance) + 127 unit + typecheck + lint + format + keel-verify.
+
+## D-060 — Production incident: deployed code outran deployed migrations; applied the 3 pending migrations live
+- Date / phase: 2026-09-05, same session. User reported live errors on "Entrar" and "Crear DeCA"
+  right after this session's `main` push, with other pages working.
+- **Root cause:** `getCurrentUser()` (`lib/auth/index.ts`) does `include: { company: true }`; the
+  Prisma client generated from the new schema selects `Company.logo_data_uri`, a column that did not
+  exist yet in production — every authenticated page render threw. This confirmed the hand-off note
+  in the prior continuation prompt ("Production is NOT deployed with this session's work").
+- Three migrations were unapplied: `20260905095427_route_intel_and_commercial_consent` (D-051, a
+  pre-existing gap), `20260905133820_workspace_saved_master_data`, `20260905141620_company_logo`.
+  Confirmed unapplied by reading production's `_prisma_migrations` table directly (the user ran
+  `SELECT migration_name FROM _prisma_migrations ORDER BY started_at` in the Supabase SQL Editor).
+- `prisma migrate deploy`/`migrate status` against production failed 3× (immediate, +5s, +15s) with
+  `FATAL: (EMAXCONNSESSION) max clients reached in session mode - max clients are limited to
+  pool_size: 15` — the session-mode pooler (`DIRECT_URL`, port 5432, required for the migration
+  engine's advisory locks) was exhausted, the same class of issue as D-051's history.
+- **Resolution, with the user's explicit authorization to use production DB credentials for this
+  one-off fix:** the user ran the 3 migrations' DDL directly in the Supabase SQL Editor (their own
+  trusted tool, their own action), then this session reconciled Prisma's `_prisma_migrations` ledger
+  by having the user INSERT the 3 rows with sha256 checksums computed from the actual migration.sql
+  files — a metadata bookkeeping write, not schema-altering DDL, matching the D-051 precedent
+  (`prisma migrate resolve` does not work reliably over the pgbouncer transaction-mode pool either).
+  The production DB credentials shared by the user for this operation were used only as transient
+  values and never written to any file, log, or commit.
+- Verified: user confirmed live "Entrar" and "Crear DeCA" both work again after the fix.
+- No code changed — this is a deployment-state fix only. Nothing to merge; `main` already had the
+  correct migrations, production just hadn't applied them yet.
+
+## D-061 — Restore the lightweight lead gate: first DeCA needs only name + email, not a full account
+- Date / phase: 2026-09-05, same session. Explicit owner directive, a deliberate REVERSAL of part of
+  D-052/PRIORITY 1: "y tiene que dejar generar un deca solo con nombre y mail y ya para el siguiente
+  si que tienes que darte de alta completa en la plataforma" — the first DeCA must be generatable
+  with just a name + email; only the SECOND DeCA from that browser requires full registration.
+- **What changed:**
+  - `lib/deca/lead.ts` recreated (`LEAD_COOKIE = "fvd_lead"`, `leadSchema` for `leadName`/`leadEmail`)
+    — D-052 had deleted it.
+  - `app/api/deca/route.ts`: an authenticated caller still needs `emailVerifiedAt` (D-053, UNCHANGED).
+    An unauthenticated caller is no longer rejected with 401 — it opportunistically captures
+    `leadName`/`leadEmail` from the body (never required at this layer, since this route is also the
+    abuse-control tests' entry point for several anonymous documents on purpose), generates the
+    document, sets the `fvd_lead` cookie, and best-effort emails the claim link. `createDeca()`
+    (`lib/deca/persist.ts`) already supported this path unmodified — its `creatorName`/`creatorEmail`/
+    claim-token logic was deliberately never removed in D-052.
+  - `app/crear/page.tsx`: restored the page-level gate — an anonymous visitor whose browser already
+    carries `fvd_lead` sees "Ya has creado tu primer DeCA" and a link to `/registro`, instead of the
+    wizard, before ever reaching the form.
+  - `components/deca/wizard.tsx`: `needsAuth` (blocked anonymous submission entirely) replaced by
+    `showLeadGate` (renders `leadName`/`leadEmail` fields in place of the old account-creation CTA,
+    validated client-side via `leadSchema` on submit; server-enforced independently). `needsVerification`
+    (D-053, authenticated-but-unverified) is UNCHANGED and orthogonal — it still blocks the button.
+- **Tests updated** to match the restored product behaviour (the hard-gate tests they replace were
+  written for D-052/PRIORITY 1, which this decision partially reverses): `crear.spec.ts`,
+  `trust-registration-v2.spec.ts`, `launch-happy-path.spec.ts` rewritten around the lead-gate + claim
+  flow; `launch-gate.spec.ts` malformed-anonymous-input expectation changed from 401 to 422; stale
+  "PRIORITY 1" comments corrected in `build13.spec.ts`, `registro.spec.ts`, `driver-delivery.spec.ts`,
+  `compliance.spec.ts` (no behavior change in those four — comment-only).
+- Gate green: 137 e2e (`content-cms.spec.ts` reconfirmed as the pre-existing `--workers=3`-only flake,
+  documented in `lessons-learned.md`, passes in isolation) + 127 unit + typecheck + lint + format.
+- No GitHub issue tracks this — it is a direct owner instruction mid-session, not a forge item.

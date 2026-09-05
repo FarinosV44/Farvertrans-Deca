@@ -235,62 +235,49 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
   });
 });
 
-test.describe("PRIORITY 1 — hard registration gate replaces the lightweight identity gate", () => {
-  test("an anonymous visitor cannot generate; registering restores the exact draft with no retyping", async ({
+test.describe("D-060 — lightweight identity gate restored (reverses D-052's hard account requirement)", () => {
+  test("the anonymous wizard asks for name + email before generating, then gates the next DeCA", async ({
     page,
   }) => {
     await page.goto("/crear");
     await fillWizardThroughStep1(page);
 
-    // no generate button at all for an anonymous visitor — the gate replaces it
-    await expect(page.getByTestId("wizard-generate")).toHaveCount(0);
-    await expect(page.getByTestId("auth-gate")).toBeVisible();
-    await expect(page.getByTestId("auth-gate-register")).toHaveAttribute(
+    // cannot generate without the lightweight identity
+    await page.getByTestId("wizard-generate").click();
+    await expect(page.getByTestId("error-summary")).toBeVisible();
+    await expect(page).toHaveURL(/\/crear$/);
+
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
+    await page.getByTestId("wizard-generate").click();
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
+
+    // the SAME anonymous browser is sent to registration for the next one
+    await page.goto("/crear");
+    await expect(page.getByRole("heading", { name: "Ya has creado tu primer DeCA" })).toBeVisible();
+    await expect(page.getByTestId("lead-gate-register")).toHaveAttribute(
       "href",
       "/registro?next=%2Fcrear",
     );
+  });
 
-    // register in the SAME tab — the sessionStorage draft must survive
-    await page.getByTestId("auth-gate-register").click();
-    await expect(page).toHaveURL(/\/registro\?next=%2Fcrear/);
+  test("an authenticated caller is unaffected by the lead gate but still needs a verified email (D-053)", async ({
+    page,
+  }) => {
+    await page.goto("/registro");
     await page.fill("#email", email());
     await page.fill("#password", "supersecret123");
     await page.fill("#companyName", "Gate SL");
     await page.fill("#companyNif", "B12345674");
     await page.getByTestId("accept-terms").check();
-    const [res] = await Promise.all([
-      page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
-      page.getByTestId("register-submit").click(),
-    ]);
-    const body = await res.json();
+    await page.getByTestId("register-submit").click();
     await expect(page).toHaveURL(/\/verificar-email/);
 
-    // D-053: authenticated but NOT YET email-verified — still cannot generate.
-    // "Ya he confirmado mi cuenta" is not proof; re-checking finds it unverified.
-    await page.getByTestId("verify-email-continue").click();
-    await expect(page.getByTestId("verify-email-not-yet")).toBeVisible();
-
-    // real server-side verification, via the token the email actually carried
-    const other = await page.context().newPage();
-    await other.goto(`/verificar-email/${body.verifyTestToken}`);
-    await expect(other.getByTestId("verify-email-success")).toBeVisible();
-    await other.close();
-
-    // NOW "Ya he confirmado mi cuenta" finds it truly verified and proceeds —
-    // `next` sends it straight back to /crear.
-    await page.getByTestId("verify-email-continue").click();
-    await expect(page).toHaveURL(/\/crear$/);
-
-    // every field from before is restored — nothing retyped
-    await expect(page.locator("#shipperName")).toHaveValue("Cargas SL");
-    await expect(page.locator("#carrierNif")).toHaveValue("B12345674");
-    await page.getByTestId("wizard-next").click();
-    await expect(page.locator("#loadLocationName")).toHaveValue("Almacén Valencia");
-    await page.getByTestId("wizard-next").click();
-    await expect(page.locator("#goods")).toHaveValue("Palés");
-
-    // now authenticated AND verified: the generate button is back, and it works
-    await page.getByTestId("wizard-generate").click();
-    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
+    await page.goto("/crear");
+    await fillWizardThroughStep1(page);
+    // no lead-gate fields for an authenticated caller — the verify gate instead
+    await expect(page.getByTestId("lead-gate")).toHaveCount(0);
+    await expect(page.getByTestId("wizard-generate")).toHaveCount(0);
+    await expect(page.getByTestId("verify-gate")).toBeVisible();
   });
 });

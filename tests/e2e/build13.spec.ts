@@ -164,12 +164,11 @@ test.describe("BUILD 13 — driver sharing (F9)", () => {
 });
 
 /**
- * The `anon_create` soft-threshold/PoW-challenge abuse policy (F16) applied
- * only to anonymous creation, which PRIORITY 1 retired entirely — an
- * unauthenticated `POST /api/deca` now gets 401 `auth_required` before any
- * abuse check runs, so the challenge flow is unreachable and untested by
- * design (D-052). `checkAbuse`/`abuseResponse` remain live for "auth" and
- * "share".
+ * The `anon_create` soft-threshold/PoW-challenge abuse policy (F16) applies
+ * only to anonymous creation (`app/api/deca/route.ts`). D-060 restored the
+ * lightweight anonymous-with-lead-capture path, so that policy is reachable
+ * again in principle — this suite just authenticates first because these
+ * particular tests (public inspector rate limiting) don't exercise it.
  */
 async function registerViaApi(request: APIRequestContext) {
   const res = await request.post("/api/auth/register", {

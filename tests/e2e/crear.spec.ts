@@ -53,7 +53,7 @@ async function fillStep2(page: Page) {
 }
 
 test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
-  test("AC-01: an anonymous visitor completes all steps and hits the registration gate, never the result", async ({
+  test("AC-01: an anonymous visitor completes all steps and reaches the result with just name + email (D-060)", async ({
     page,
   }) => {
     await page.goto("/crear");
@@ -68,6 +68,8 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     await page.fill("#goods", V.goods);
     await page.fill("#weight", V.weight);
     await page.fill("#tractorPlate", V.tractorPlate);
+    await page.fill("#leadName", "Ana García");
+    await page.fill("#leadEmail", "ana@example.com");
 
     // AC: the review summary shows the exact final data before generating
     const review = page.getByTestId("review-summary");
@@ -76,18 +78,8 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     await expect(review).toContainText(V.shipperName);
     await expect(review).toContainText(V.goods);
 
-    // PRIORITY 1: a DeCA cannot be finally generated without an account —
-    // the gate replaces the generate button, never a silent anonymous create.
-    await expect(page.getByTestId("wizard-generate")).toHaveCount(0);
-    await expect(page.getByTestId("auth-gate")).toBeVisible();
-    await expect(page.getByTestId("auth-gate-register")).toHaveAttribute(
-      "href",
-      "/registro?next=%2Fcrear",
-    );
-    await expect(page.getByTestId("auth-gate-login")).toHaveAttribute(
-      "href",
-      "/entrar?next=%2Fcrear",
-    );
+    await page.getByTestId("wizard-generate").click();
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
   });
 
   test("AC-02: a mandatory omission blocks advancing with a Spanish message + error summary", async ({
@@ -176,13 +168,17 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
     tractorPlate: V.tractorPlate,
   };
 
-  test("PRIORITY 1: an unauthenticated caller gets 401 auth_required, never a document", async ({
+  test("D-060: an unauthenticated caller still gets 201 + a claim token (lightweight lead gate)", async ({
     request,
   }) => {
-    const res = await request.post("/api/deca", { data: payload });
-    expect(res.status()).toBe(401);
+    const res = await request.post("/api/deca", {
+      data: { ...payload, leadName: "Ana García", leadEmail: "ana@example.com" },
+    });
+    expect(res.status()).toBe(201);
     const body = await res.json();
-    expect(body.error.code).toBe("auth_required");
+    expect(body.decaId).toBeTruthy();
+    expect(String(body.token).length).toBeGreaterThan(20);
+    expect(body.claimToken).toBeTruthy();
   });
 
   test("AC-09: rejects a payload missing a mandatory field with 422 + field errors", async ({

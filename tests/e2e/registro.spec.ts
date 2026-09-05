@@ -2,12 +2,11 @@ import { test, expect } from "@playwright/test";
 
 /**
  * The "generate first, register second" anonymous-claim flow (BUILD 09) was
- * retired by PRIORITY 1 (product hardening directive): a DeCA can no longer
- * be generated anonymously at all, so there is nothing left to claim on a NEW
- * signup. `/registro?claim=<token>` still exists server-side purely to honor
- * claim links already emailed to real users before this change (D-052) — that
- * legacy path is not covered here since it can no longer be produced by the
- * product and is exercised only by historical data, not new behavior.
+ * briefly retired by D-052/PRIORITY 1, then restored by D-060 (owner
+ * directive): an anonymous visitor generates their first DeCA with just a
+ * name + email, and `/registro?claim=<token>` converts that document into a
+ * real account's — covered end to end in `launch-happy-path.spec.ts` and
+ * `trust-registration-v2.spec.ts`, not duplicated here.
  */
 
 test.describe("BUILD 09 / GROWTH #46 — registration form", () => {

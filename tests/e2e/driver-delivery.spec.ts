@@ -148,8 +148,8 @@ test.describe("OPS #26 — driver delivery, sharing, QR verification", () => {
     browser,
     request,
   }) => {
-    // register (PRIORITY 1: generation requires an account), then hit
-    // /d/[token] from a completely bare, unrelated context — the PUBLIC
+    // register an authenticated company (simplest way to generate here), then
+    // hit /d/[token] from a completely bare, unrelated context — the PUBLIC
     // download route itself must still need no auth of its own (R-7/R-8).
     const reg = await request.post("/api/auth/register", {
       data: {
