@@ -665,3 +665,19 @@ delete). Gate: 152 e2e + 139 unit, all green. One new documented parallel-only f
 regeneration racing under `--workers=3`, shared seeded admin — passes in isolation, CI's `retries:1`
 absorbs it). See `decisions.md` D-065. **Continuing** to backup/recovery review and a
 security-headers pass, then #51/#52/#54.
+
+## D-066: SECURITY #53 P0 block 4 — re-authentication required to change primary email
+Found and fixed: the email-change endpoint changed the account's email with only an active
+session, no password check. Now requires `currentPassword` (constant-time verified), and an
+internal-role caller additionally needs a fresh TOTP check (step-up, D-064) — the first real
+caller of `requireStepUp()` outside the 2FA routes themselves. Zero prior test coverage on this
+flow; added it. Also fixed a genuine flake in D-065's own new admin-login-audit test (rescoped to
+the actor's own id instead of an unscoped "2 most recent rows", which another concurrent test could
+occupy under `--workers=3`). Gate: 154 e2e (2 pre-existing documented parallel-only flakes,
+unrelated) + 139 unit, all green. Session/authorization hardening (owner's P0 item 7) is now
+substantively complete — see `decisions.md` D-066 for exactly what remains not applicable (no
+idle-timeout distinct from the TOTP-freshness window; no admin-2FA-reset feature exists to
+invalidate sessions after). Owner sent #55 (premium product system) + #56 (multi-level control
+center: super-admin/company-admin/operator/read-only roles, invitations, route intelligence) —
+explicitly queued by the owner for AFTER the current security/legal/auth work; noted, continuing
+the P0 queue first per their own stated order.

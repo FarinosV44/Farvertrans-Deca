@@ -150,6 +150,7 @@ export const es = {
       changeEmail: {
         open: "Cambiar correo electrónico",
         label: "Nuevo correo electrónico",
+        currentPasswordLabel: "Tu contraseña actual",
         save: "Guardar y reenviar",
         cancel: "Cancelar",
         error: "No se pudo cambiar el correo.",

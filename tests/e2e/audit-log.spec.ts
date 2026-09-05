@@ -16,25 +16,28 @@ function email() {
 
 test.describe("SECURITY #53 — security audit log", () => {
   test("a successful and a failed admin login both leave an audit row", async ({ request }) => {
-    // The table is append-only and accumulates across every run, so this
-    // checks the two rows THIS test just created (by timestamp, most recent
-    // first) rather than a total count, which only ever grows.
-    const bad = await request.post("/api/auth/login", {
-      data: { email: ADMIN.email, password: "wrong-password-entirely" },
-    });
-    expect(bad.status()).toBe(401);
-
-    const good = await request.post("/api/auth/login", { data: ADMIN });
-    expect(good.status()).toBe(200);
-
+    // The table is append-only and accumulates across every run (and other
+    // e2e files log in as this same seeded admin concurrently under
+    // --workers>1), so this scopes to the admin's own actorId and looks at a
+    // small recent window rather than an exact count or unscoped top-N —
+    // only THIS test ever produces a FAILURE row for this account.
     const prisma = new PrismaClient();
     try {
-      const rows = await prisma.securityAuditLog.findMany({
-        where: { action: "admin_login" },
-        orderBy: { createdAt: "desc" },
-        take: 2,
+      const adminUser = await prisma.user.findFirstOrThrow({ where: { email: ADMIN.email } });
+
+      const bad = await request.post("/api/auth/login", {
+        data: { email: ADMIN.email, password: "wrong-password-entirely" },
       });
-      expect(rows).toHaveLength(2);
+      expect(bad.status()).toBe(401);
+
+      const good = await request.post("/api/auth/login", { data: ADMIN });
+      expect(good.status()).toBe(200);
+
+      const rows = await prisma.securityAuditLog.findMany({
+        where: { action: "admin_login", actorId: adminUser.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
       expect(rows.some((r) => r.result === "success")).toBe(true);
       expect(rows.some((r) => r.result === "failure")).toBe(true);
     } finally {

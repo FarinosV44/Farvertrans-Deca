@@ -1554,3 +1554,34 @@
   generated it consumes it. Passes reliably in isolation and at `--workers=1`; `retries: 1` in CI
   absorbs it, same policy as the pre-existing `content-cms.spec.ts` flake. See `lessons-learned.md`.
 - Gate: 152 e2e + 139 unit + typecheck + lint + format, all green.
+
+## D-066 — SECURITY #53 P0 block 4: re-authentication required to change primary email
+- Date / phase: 2026-09-06, same session, continuing immediately.
+- **Real gap found:** `POST /api/auth/verify-email/change-email` changed the account's email with
+  only an active session — no password confirmation. It's used today from the pre-verification
+  "Cambiar correo electrónico" correction flow (`verify-email-screen.tsx`), reachable seconds after
+  registration, but the endpoint itself has no way to know it's only ever called that early, and the
+  owner's requirement ("changing primary email requires re-authentication... admin change
+  additionally requires 2FA") is unconditional.
+- **Fix:** the route now requires `currentPassword` in the body, verified with the existing
+  constant-time `verifyPassword()` before anything changes; an `internal`-role caller additionally
+  goes through `requireStepUp()` (fresh TOTP, D-064) — the first real caller of that function beyond
+  2FA's own routes. `verify-email-screen.tsx` gained a password field in the same form.
+- **New tests** (this flow had ZERO prior coverage): `account.spec.ts` — wrong current password
+  rejected (both via the UI and directly at the API with a valid session), correct password
+  succeeds and the new email shows immediately.
+- **Fixed a genuine flake in D-065's own new test** while re-running the full suite here: "a
+  successful and a failed admin login both leave an audit row" checked the 2 most-recent
+  `admin_login` rows UNSCOPED — under `--workers=3`, another spec file's concurrent admin login
+  could occupy one of those 2 slots. Rescoped to the admin's own `actorId` with a wider (10-row)
+  window; only this test ever produces a FAILURE row for that account, so scoping by actor alone
+  makes concurrent SUCCESSFUL logins from other tests harmless noise instead of a collision.
+- Gate: 154 e2e (2 pre-existing/documented parallel-only flakes, `content-cms.spec.ts` and the
+  recovery-code-replay test, both unrelated to this change and confirmed to pass in isolation) + 139
+  unit + typecheck + lint + format.
+- Session/authorization hardening (owner's P0 item 7) is now substantively complete: rate limiting
+  (D-063), revocable sessions + logout-everywhere (D-063), mandatory admin 2FA (D-064), audit log for
+  real events (D-065), and re-auth-gated email changes (this decision). Explicitly NOT done, because
+  no such feature exists in the product to harden: true idle-timeout (as distinct from the 12h admin
+  TOTP-freshness window), and "invalidate privileged sessions after 2FA reset" (no admin-resets-
+  another-admin's-2FA feature exists).

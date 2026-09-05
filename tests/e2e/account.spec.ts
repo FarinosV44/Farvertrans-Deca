@@ -232,6 +232,45 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     await expect(page.getByTestId("forgot-password")).toHaveAttribute("href", "/recuperar");
   });
 
+  test("changing email before verification requires the current password (SECURITY #53)", async ({
+    page,
+  }) => {
+    const addr = email();
+    await registerCompany(page, addr);
+    await page.goto("/verificar-email");
+    await page.getByTestId("verify-email-change-open").click();
+    await page.fill("#new-email", email());
+    await page.fill("#current-password-for-email-change", "wrong-password-entirely");
+    await page.getByTestId("verify-email-change-submit").click();
+    await expect(page.getByRole("alert")).toBeVisible();
+
+    // the correct current password succeeds
+    const newAddr = email();
+    await page.fill("#new-email", newAddr);
+    await page.fill("#current-password-for-email-change", "Supersecret123!");
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes("/api/auth/verify-email/change-email") && r.status() === 200,
+      ),
+      page.getByTestId("verify-email-change-submit").click(),
+    ]);
+    await expect(page.getByTestId("verify-email-address")).toHaveText(newAddr);
+  });
+
+  test("the change-email API rejects a wrong current password even with a valid session", async ({
+    page,
+  }) => {
+    const addr = email();
+    await registerCompany(page, addr);
+    // page.request shares the browser context's cookies; the bare `request`
+    // fixture does not (project convention — see lessons-learned.md).
+    const res = await page.request.post("/api/auth/verify-email/change-email", {
+      data: { email: email(), currentPassword: "definitely-not-it" },
+    });
+    expect(res.status()).toBe(401);
+    expect((await res.json()).error.code).toBe("invalid_password");
+  });
+
   test("account/growth events fire once, with no PII in the payload", async ({ page }) => {
     const events: { name: string; body: string }[] = [];
     await page.route("**/api/events", async (route) => {

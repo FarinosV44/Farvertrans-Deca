@@ -39,6 +39,7 @@ export function VerifyEmailScreen({
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [changing, setChanging] = useState(false);
   const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [changeError, setChangeError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [notYetVerified, setNotYetVerified] = useState(false);
@@ -94,7 +95,7 @@ export function VerifyEmailScreen({
       const res = await fetch("/api/auth/verify-email/change-email", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: newEmail }),
+        body: JSON.stringify({ email: newEmail, currentPassword }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -200,6 +201,18 @@ export function VerifyEmailScreen({
               required
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
+              className="min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+            />
+            <label htmlFor="current-password-for-email-change" className="text-sm font-medium">
+              {t.auth.verify.changeEmail.currentPasswordLabel}
+            </label>
+            <input
+              id="current-password-for-email-change"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
               className="min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
             />
             {changeError && (
