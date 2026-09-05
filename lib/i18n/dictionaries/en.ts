@@ -38,6 +38,160 @@ export const en = {
       ctaSecondary: "LOG IN",
     },
     trustRow: ["No sign-up for your first DeCA", "PDF + QR", "Digital custody", "History"],
+    stepsHeading: "Create your DeCA in 3 steps",
+    steps: [
+      {
+        title: "Enter the details",
+        body: "Shipper, carrier, origin, destination, goods and plate. No commitment.",
+      },
+      {
+        title: "Create your account and generate",
+        body: "Free sign-up in seconds — we build the native PDF with a QR and a unique direct-download URL. Nothing you already typed is lost.",
+      },
+      {
+        title: "Share it with the driver",
+        body: "Link, WhatsApp, email or a printed copy. Ready for inspection.",
+      },
+    ],
+    productHeading: "From the form to a PDF with QR, with no extra steps",
+    benefits: [
+      {
+        title: "Free",
+        body: "No limit on DeCA documents during the launch phase. No card, no payment plan.",
+      },
+      {
+        title: "Fast",
+        body: "Reuse your regular data and duplicate a previous document in one tap.",
+      },
+      {
+        title: "Inspection-ready",
+        body: "Native PDF, QR and a direct HTTPS URL, compliant with the current resolution.",
+      },
+    ],
+    personasHeading: "Built for whoever moves goods",
+    personas: [
+      {
+        title: "Independent carrier",
+        jobToBeDone: "Generate the DeCA in minutes and carry it on your phone.",
+        benefits: [
+          "Free sign-up in seconds",
+          "Company and vehicle saved once you register",
+          "Fast duplicate of your last document",
+          "Send to the driver in one tap",
+        ],
+      },
+      {
+        title: "Transport company",
+        jobToBeDone: "One shared space for all your operators and documents.",
+        benefits: [
+          "Multiple users in the same company",
+          "Shared history",
+          "Saved shippers, vehicles and addresses",
+          "Audit trail of who created or corrected each DeCA",
+        ],
+      },
+      {
+        title: "Transport agency / operator",
+        jobToBeDone:
+          "Manage the document as the contracting shipper without depending on third parties.",
+        benefits: [
+          "Multiple companies and carriers",
+          "Reusable counterparties",
+          "Fast duplication",
+          "A shared workspace for the team",
+        ],
+      },
+      {
+        title: "Shipper",
+        jobToBeDone: "Generate, keep and share your DeCA documents from one place.",
+        benefits: [
+          "Regular carriers saved",
+          "Document history",
+          "Direct inspection route via QR/PDF",
+          "No new process to set up in your ERP",
+        ],
+      },
+    ],
+    personaCtaPrefix: "How it works for",
+    dailyUseHeading: "Why use it every day",
+    dailyUseSubhead: "Everything you need so you never type the same data twice.",
+    dailyUseFooter:
+      "Start filling in your DeCA with no commitment; we only ask you to create a free account at the end, to generate it.",
+    dailyUseFooterLink: "your company",
+    dailyUseFooterAfterLink: "saves all of this so the next DeCA takes just seconds.",
+    dailyUse: [
+      { label: "Generate DeCA", body: "A guided 3-step form." },
+      { label: "PDF + QR", body: "Native document with a verification QR." },
+      { label: "History", body: "All your documents, always at hand." },
+      { label: "Duplicate", body: "Repeat a previous DeCA in seconds." },
+      { label: "Saved vehicles", body: "Tractor unit and trailer in one click." },
+      {
+        label: "Regular companies",
+        body: "Reusable shippers and carriers.",
+      },
+      { label: "Regular places", body: "Loading and unloading ready to pick." },
+      {
+        label: "Digital custody",
+        body: "Retention in line with the current regulation.",
+      },
+    ],
+    regulationHeading: "What the regulation requires",
+    legalPoints: [
+      "Mandatory from 5 October 2026 for domestic road freight transport.",
+      "The file is a native digital PDF, generated from structured data — a scan does not count.",
+      "Maximum size 5 MB.",
+      "Includes a QR code with a unique URL starting with https://",
+      "The URL allows direct download of the PDF, with no sign-up and no password.",
+      "The date and time of creation and of any change are recorded.",
+      "Minimum retention of 1 year by both the shipper and the carrier.",
+    ],
+    legalSourceLabel: "Source:",
+    operatorTrustHeading: "Who is behind the service",
+    faqHeading: "Frequently asked questions",
+    faq: [
+      {
+        q: "What is the DeCA?",
+        a: "The Electronic Administrative Control Document is the mandatory digital version of the road-freight control document. It replaces the paper document.",
+      },
+      {
+        q: "When does it become mandatory?",
+        a: "From 5 October 2026 for domestic transport. There is no extension or transitional period: paper is no longer accepted.",
+      },
+      {
+        q: "Who has to issue it?",
+        a: "The contracting shipper and the actual carrier of the public road freight transport, under the terms of the applicable regulation.",
+      },
+      {
+        q: "Is it mandatory for transport agencies?",
+        a: "Yes, when they act as the contracting shipper or as the operator contracting the transport, with the same generation and retention obligations.",
+      },
+      {
+        q: "Does a scanned PDF work?",
+        a: "No. The file must be a native digital PDF generated from structured data. A scan or a digitised image is not valid.",
+      },
+      {
+        q: "Does it need to be signed?",
+        a: "The resolution does not require an electronic signature. It does require a native PDF, a QR code, a direct-download HTTPS URL, and a record of creation and changes.",
+      },
+      {
+        q: "What data must it contain?",
+        a: "At minimum: the contracting shipper (name, tax ID and address), the actual carrier (name and tax ID), the loading place and date, the unloading place and date, the nature and weight of the goods, and the vehicle's plate (tractor unit and trailer if it's an articulated combination).",
+      },
+      {
+        q: "How does the driver carry it?",
+        a: "Before the service starts, as a visible electronic copy on the phone or as a printed copy, always with the QR available.",
+      },
+      {
+        q: `Is ${BRAND.name} free?`,
+        a: "Yes. You can create and download documents with no card and no limit until 31 December 2026.",
+      },
+      {
+        q: "Can I generate as many documents as I want?",
+        a: "Yes. There is no monthly limit. We only apply automated controls against abusive use that don't affect normal use or inspection.",
+      },
+    ],
+    finalCtaHeading: "Create your first DeCA for free",
+    finalCtaSubhead: "No demo. No sales call. No card.",
   },
   auth: {
     heading: {

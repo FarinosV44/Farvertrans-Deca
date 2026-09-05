@@ -743,3 +743,21 @@ a false-failure flake: a stray `npm run dev` from the prior manual browser check
 3000, causing 8 unrelated e2e failures until killed via `netstat`/`taskkill`; re-ran clean, 16/16
 passed incl. the `/panel` a11y check. Verified visually by registering a real throwaway account and
 viewing `/panel` at 1440px. See `decisions.md` D-070. **Continuing** with the rest of #51.
+
+## D-071: I18N #54 slice 1 — full English coverage of the landing page
+Moved from #51 to #54 after #51's objective/checkable acceptance items were met — its remaining scope
+is open-ended aesthetic polish rather than bounded fixes. Closed D-062's named follow-up: translated
+every remaining landing section (3 steps, product benefits, all 4 personas, the 8-item daily-use grid,
+7 regulation points, all 10 FAQ entries, every heading/CTA) into `lib/i18n/dictionaries/en.ts`,
+key-parity enforced by `satisfies Messages` against `es.ts`. Deliberately left untranslated (and
+explained inline): PRAETORIA's own legal-identity sentence (`OPERATOR_TRUST.body`) — translating a
+legal entity's own wording is legal-review territory, not a landing-copy task — plus the footer and
+page metadata (no `generateMetadata` wiring yet). Fixed two real locale bugs found while wiring this:
+two CTA buttons were hardcoded to the Spanish `HERO.cta` regardless of locale. Gate: typecheck (the
+`satisfies Messages` parity check), lint, prettier, `vitest run` 139/139, and the Spanish-path e2e
+specs (`landing.spec.ts`, `auth-entrypoints.spec.ts`, `creator-ux31.spec.ts`) all green and unchanged.
+No e2e coverage exists yet for the English locale at all (noted as a gap, not fixed here) — verified
+instead by a full manual Chrome walkthrough of the entire English landing page section by section.
+See `decisions.md` D-071. **Next:** further #54 language expansion (CA/EU/GL, then FR/DE/IT) is a
+much larger and higher-risk effort, especially translating the legal pages accurately — flagged to
+the owner rather than started speculatively.

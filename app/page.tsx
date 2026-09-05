@@ -79,14 +79,27 @@ export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
   const authed = !!user?.companyId;
 
-  // I18N: only the hero + trust row are locale-branched in this slice — the
-  // rest of the landing (steps, personas, FAQ...) stays Spanish-only for now
-  // (tracked as follow-up on #50), so `HERO`/`TRUST_ROW` remain the default
-  // for `es` and every OTHER consumer of `lib/content/landing.ts` is untouched.
+  // I18N #54: the whole landing is now locale-branched — `en` reads every
+  // section from the dictionary, `es` keeps the original `lib/content/landing.ts`
+  // constants (still the source of truth for non-translatable bits: persona
+  // slugs/tracking events, the legal source URL, JSON-LD). Legal-entity trust
+  // copy (`OPERATOR_TRUST.body`) is deliberately NOT translated here — it's
+  // PRAETORIA's own legal-identity wording, translating it is #52/legal-review
+  // territory, not a landing-copy task.
   const locale = await getLocale();
   const dict = await getDictionary(locale);
-  const hero = locale === "en" ? dict.landing.hero : HERO;
-  const trustRow = locale === "en" ? dict.landing.trustRow : TRUST_ROW;
+  const isEn = locale === "en";
+  const hero = isEn ? dict.landing.hero : HERO;
+  const trustRow = isEn ? dict.landing.trustRow : TRUST_ROW;
+  const steps = isEn ? STEPS.map((s, i) => ({ ...s, ...dict.landing.steps[i] })) : STEPS;
+  const benefits = isEn
+    ? BENEFITS.map((b, i) => ({ ...b, ...dict.landing.benefits[i] }))
+    : BENEFITS;
+  const personas = isEn
+    ? PERSONAS.map((p, i) => ({ ...p, ...dict.landing.personas[i] }))
+    : PERSONAS;
+  const legalPoints = isEn ? dict.landing.legalPoints : LEGAL_POINTS;
+  const faq = isEn ? dict.landing.faq : FAQ;
 
   return (
     <>
@@ -151,10 +164,10 @@ export default async function HomePage() {
           aria-labelledby="pasos"
         >
           <h2 id="pasos" className="text-2xl font-bold md:text-3xl">
-            Crea tu DeCA en 3 pasos
+            {isEn ? dict.landing.stepsHeading : "Crea tu DeCA en 3 pasos"}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {STEPS.map((s) => (
+            {steps.map((s) => (
               <div key={s.n} className="relative">
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
                   {s.n}
@@ -174,10 +187,12 @@ export default async function HomePage() {
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
               <h2 id="producto" className="text-2xl font-bold md:text-3xl">
-                Del formulario al PDF con QR, sin pasos de más
+                {isEn
+                  ? dict.landing.productHeading
+                  : "Del formulario al PDF con QR, sin pasos de más"}
               </h2>
               <ul className="mt-5 space-y-3 text-sm">
-                {BENEFITS.map((b) => (
+                {benefits.map((b) => (
                   <li key={b.title}>
                     <span className="font-bold">{b.title}. </span>
                     <span className="text-[var(--color-text-muted)]">{b.body}</span>
@@ -185,7 +200,7 @@ export default async function HomePage() {
                 ))}
               </ul>
               <div className="mt-7">
-                <CtaButton event="product_demo_cta">{HERO.cta}</CtaButton>
+                <CtaButton event="product_demo_cta">{hero.cta}</CtaButton>
               </div>
             </div>
             <DecaPreview />
@@ -198,10 +213,10 @@ export default async function HomePage() {
           aria-labelledby="para-quien"
         >
           <h2 id="para-quien" className="text-2xl font-bold md:text-3xl">
-            Hecho para quien mueve mercancía
+            {isEn ? dict.landing.personasHeading : "Hecho para quien mueve mercancía"}
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {PERSONAS.map((p) => (
+            {personas.map((p) => (
               <div
                 key={p.title}
                 className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
@@ -224,13 +239,14 @@ export default async function HomePage() {
                   data-testid={`persona-cta-${p.slug}`}
                   className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
                 >
-                  Cómo funciona para {p.title.toLowerCase()} →
+                  {isEn ? dict.landing.personaCtaPrefix : "Cómo funciona para"}{" "}
+                  {p.title.toLowerCase()} →
                 </TrackedLink>
               </div>
             ))}
           </div>
           <div className="mt-8">
-            <CtaButton event="persona_section_cta">{HERO.cta}</CtaButton>
+            <CtaButton event="persona_section_cta">{hero.cta}</CtaButton>
           </div>
         </section>
 
@@ -240,31 +256,46 @@ export default async function HomePage() {
           aria-labelledby="cada-dia"
         >
           <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
-            Por qué usarlo cada día
+            {isEn ? dict.landing.dailyUseHeading : "Por qué usarlo cada día"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
-            Todo lo que necesitas para no volver a escribir los mismos datos.
+            {isEn
+              ? dict.landing.dailyUseSubhead
+              : "Todo lo que necesitas para no volver a escribir los mismos datos."}
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PRODUCT_SHOWCASE.map(({ Icon, label, body }) => (
-              <div
-                key={label}
-                className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
-              >
-                <IconBadge size={44}>
-                  <Icon width={20} height={20} />
-                </IconBadge>
-                <div>
-                  <p className="text-sm font-bold">{label}</p>
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">{body}</p>
+            {PRODUCT_SHOWCASE.map(({ Icon, label, body }, i) => {
+              const item = isEn ? dict.landing.dailyUse[i] : { label, body };
+              return (
+                <div
+                  key={label}
+                  className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+                >
+                  <IconBadge size={44}>
+                    <Icon width={20} height={20} />
+                  </IconBadge>
+                  <div>
+                    <p className="text-sm font-bold">{item.label}</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{item.body}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <p className="mt-6 text-sm text-[var(--color-text-muted)]">
-            Empieza a rellenar tu DeCA sin compromiso; solo pedimos crear una cuenta gratuita al
-            final, para generarlo. Desde entonces, <Link href="/entrar">tu empresa</Link> guarda
-            todo esto para que el siguiente DeCA sea cuestión de segundos.
+            {isEn ? (
+              <>
+                {dict.landing.dailyUseFooter}{" "}
+                <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
+                {dict.landing.dailyUseFooterAfterLink}
+              </>
+            ) : (
+              <>
+                Empieza a rellenar tu DeCA sin compromiso; solo pedimos crear una cuenta gratuita al
+                final, para generarlo. Desde entonces, <Link href="/entrar">tu empresa</Link> guarda
+                todo esto para que el siguiente DeCA sea cuestión de segundos.
+              </>
+            )}
           </p>
         </section>
 
@@ -274,10 +305,10 @@ export default async function HomePage() {
           aria-labelledby="normativa"
         >
           <h2 id="normativa" className="text-2xl font-bold md:text-3xl">
-            Qué exige la normativa
+            {isEn ? dict.landing.regulationHeading : "Qué exige la normativa"}
           </h2>
           <ul className="mt-6 grid gap-2 md:grid-cols-2">
-            {LEGAL_POINTS.map((p) => (
+            {legalPoints.map((p) => (
               <li key={p} className="flex gap-2 text-sm">
                 <span aria-hidden className="text-[var(--color-success)]">
                   ✓
@@ -287,20 +318,22 @@ export default async function HomePage() {
             ))}
           </ul>
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">
-            Fuente:{" "}
+            {isEn ? dict.landing.legalSourceLabel : "Fuente:"}{" "}
             <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
               {LEGAL_SOURCE.label}
             </a>
           </p>
         </section>
 
-        {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) */}
+        {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) — body is
+            PRAETORIA's own legal-identity wording and is intentionally NOT translated
+            here (see the i18n note above the locale branches). */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-12`}
           aria-labelledby="operador"
         >
           <h2 id="operador" className="text-lg font-bold text-[var(--color-text-muted)]">
-            {OPERATOR_TRUST.heading}
+            {isEn ? dict.landing.operatorTrustHeading : OPERATOR_TRUST.heading}
           </h2>
           <p
             className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]"
@@ -316,16 +349,20 @@ export default async function HomePage() {
           aria-labelledby="faq"
         >
           <h2 id="faq" className="text-2xl font-bold md:text-3xl">
-            Preguntas frecuentes
+            {isEn ? dict.landing.faqHeading : "Preguntas frecuentes"}
           </h2>
-          <FaqAccordion items={FAQ} />
+          <FaqAccordion items={faq} />
         </section>
 
         {/* Final CTA */}
         <section className="bg-[var(--color-primary)]">
           <div className={`${wrap} py-16 text-center`}>
-            <h2 className="text-2xl font-bold text-white md:text-3xl">Haz tu primer DeCA gratis</h2>
-            <p className="mt-2 text-white/90">Sin demo. Sin comercial. Sin tarjeta.</p>
+            <h2 className="text-2xl font-bold text-white md:text-3xl">
+              {isEn ? dict.landing.finalCtaHeading : "Haz tu primer DeCA gratis"}
+            </h2>
+            <p className="mt-2 text-white/90">
+              {isEn ? dict.landing.finalCtaSubhead : "Sin demo. Sin comercial. Sin tarjeta."}
+            </p>
             <div className="mt-7">
               <CtaButton
                 event="final_cta"
@@ -333,7 +370,7 @@ export default async function HomePage() {
                 variant="inverse"
                 className="text-base"
               >
-                {HERO.cta}
+                {hero.cta}
               </CtaButton>
             </div>
           </div>

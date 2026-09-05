@@ -1755,3 +1755,49 @@
   1440px, including the pre-verification banner and the PRAETORIA data-protection notice on
   `/registro` rendering correctly.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068/D-069.
+
+## D-071 — I18N #54 slice 1: full English coverage of the landing page
+- Date / phase: 2026-09-06, same session. Moved from #51 to #54 after #51's objective/checkable
+  acceptance items were substantively met (see D-069/D-070) and its remaining scope became open-ended
+  aesthetic judgment rather than bounded fixes. D-062 (i18n foundation) had deliberately scoped English
+  translation to only the hero + trust row on the landing, explicitly deferring "steps, personas,
+  FAQ..." as a named follow-up — this closes that follow-up for the landing page specifically.
+- **Scope, deliberately bounded:** translated the remaining landing sections — 3-step "how it works",
+  product-proof benefits, all 4 personas (title/job-to-be-done/benefit bullets), the 8-item daily-use
+  showcase, the 7 regulation bullet points, all 10 FAQ entries, and every section heading/CTA string —
+  into `lib/i18n/dictionaries/en.ts` under the existing `landing` namespace, key-for-key with a
+  matching `es.ts` addition. `app/page.tsx` now branches every one of these sections on `locale`,
+  the same pattern already established for `hero`/`trustRow`.
+- **Deliberately NOT translated, and explained inline in a new code comment:** `OPERATOR_TRUST.body`
+  (the PRAETORIA legal-identity/legal-backing sentence) stays Spanish on the English page. That string
+  is legal-identity wording, not landing copy — translating a legal entity's own description is #52/
+  legal-review territory, and mistranslating it carries real risk for a product this session was just
+  asked to make legally precise. Only the section's plain heading ("Who is behind the service") was
+  translated. The footer, `DecaPreview`'s static product-mockup labels, and the page's `<Metadata>`
+  title/description (no `generateMetadata` wiring exists yet) also stay Spanish-only — out of scope
+  for this slice, not silently dropped.
+- **Two real bugs found and fixed while wiring this, unrelated to translation content:** the
+  "Product proof" and "Personas" section CTA buttons (`product_demo_cta`, `persona_section_cta`)
+  were hardcoded to `HERO.cta` (the Spanish constant) regardless of locale — on the English page they
+  would have shown "CREAR DECA GRATIS" mid-English-page. Fixed to read the already-locale-resolved
+  `hero.cta` local, matching what the hero section itself already did correctly.
+- Verification: `tsc --noEmit` clean (the `en.ts satisfies Messages` constraint enforces structural
+  parity with `es.ts` — a key added to one and forgotten in the other is a type error, confirmed by
+  intentionally checking it passes only after both files were complete); ESLint clean; Prettier clean.
+  `tests/e2e/landing.spec.ts` (21 tests, Spanish default path) plus `auth-entrypoints.spec.ts` and
+  `creator-ux31.spec.ts` all passed unchanged — the Spanish branch reuses the exact same
+  `lib/content/landing.ts` constants as before, so ES rendering is provably untouched. `vitest run`
+  139/139. No existing e2e coverage exercises the English locale at all (grepped for
+  `language-switcher|fvd_locale` in `tests/e2e/` — none found), so this slice was verified by a full
+  manual walkthrough in a real Chrome session: toggled EN in the header, then scrolled through every
+  section (hero, 3-steps, product proof, all 4 personas, daily-use grid, regulation list, operator
+  trust, all 10 FAQ entries, final CTA) confirming correct English strings and confirming the
+  `OPERATOR_TRUST.body` and footer intentionally stayed Spanish. Two screenshots showed a blank page
+  immediately after a scroll — traced to Next.js dev-mode Fast Refresh repainting, not a real defect
+  (console showed only `[Fast Refresh] rebuilding` messages, no errors); the very next screenshot in
+  both cases showed the section rendering correctly.
+- **Gap noted, not fixed here:** there is still no automated e2e coverage for the language switcher
+  or any English-locale rendering, for the whole i18n feature (D-062 through this entry). Flagging
+  for a future slice — this session did not add one to keep this slice bounded to content, matching
+  the "test after every meaningful block" spirit via the manual walkthrough instead.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-070.
