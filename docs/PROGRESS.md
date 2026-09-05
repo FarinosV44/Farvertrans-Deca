@@ -431,6 +431,45 @@
 Not yet deployed/migrated on production — see D-051 for what remains (redeploy + `prisma migrate
 deploy`).
 
+## Product hardening — PRIORITY 1 (2026-09-05, owner directive: registration gate + email verification)
+- **D-052 done, on `develop` (`a21252b`):** `POST /api/deca` now requires an authenticated session
+  before validation runs (401 `auth_required`) — a DeCA can no longer be generated anonymously at
+  all, superseding D-042/D-043's lightweight anonymous-first design. The wizard still lets a visitor
+  fill all 3 steps anonymously (`sessionStorage` draft unchanged); only the final step replaces
+  "GENERAR DECA" with an inline auth-gate (`auth-gate` testid) linking to `/registro?next=%2Fcrear` /
+  `/entrar?next=%2Fcrear` — same-tab navigation, so the draft survives with zero extra plumbing.
+  Removed the superseded one-time lead-gate (`lib/deca/lead.ts` deleted).
+- **D-053 done, on `develop` (`a21252b`):** email verification is now ALSO a hard gate on generation
+  (403 `email_not_verified`, checked fresh from Postgres every call) — supersedes D-043's "soft
+  gate" framing for generation specifically (login/browsing stay unaffected). Fixed the real bug the
+  owner reported: "Ya he confirmado mi cuenta" used to navigate unconditionally with no server check
+  — it now calls a new `GET /api/auth/verify-email/status` and only proceeds if truly verified,
+  else shows "Tu correo todavía no está verificado…" and stays put (negative case has its own e2e
+  test, UI + API both asserted blocked). Registration/resend no longer claim an email sent when the
+  provider actually failed (both surface real `sent`/`delivery` state now; confirmed the bug is real
+  — this session's own e2e runs log `verification_email_not_sent` on every registration, since local
+  `.env`'s Resend key/domain are placeholders). Each new verification token invalidates the previous
+  one (no unlimited active tokens). Found and fixed a related Next.js client-router-cache staleness
+  bug along the way (`router.refresh()` now pairs with every post-auth `router.push(next)`).
+  **Blocked on a real credential (not code):** actually receiving the email in a real inbox needs a
+  real Resend API key + verified sending domain — production's Resend status is unconfirmed this
+  session (ask the user to confirm/provide it; local dev already exercises resend/cooldown/expired/
+  used/invalid-token via the `FVD_EXPOSE_RESET_TOKEN` test seam, just not real delivery).
+- **D-054 done, on `develop` (`a21252b`):** investigated the user's report that every `/panel/*`
+  screen works in production except `/panel/datos`. Root cause: `getCommercialConsent()` (D-048)
+  queries a table from migration `20260905095427_route_intel_and_commercial_consent`, which D-051
+  explicitly recorded as NOT YET applied to production while the calling code is live — an unguarded
+  query crashing the whole page (the same class D-041 already fixed once for /blog+/guias). Fixed to
+  fail safe (logs + returns "not granted") instead of crashing. **Still needs**: the user to confirm
+  `prisma migrate deploy` has actually run on production for that migration — the code fix prevents
+  a crash either way, but the toggle won't persist until the table exists.
+- Gate green: 131 e2e (incl. 8 compliance) + 118 unit + typecheck + lint + format + keel-verify.
+  ~20 e2e spec files updated for the new hard gates. Pushed to `origin/develop`.
+- **Not yet on `main`** — awaiting the user's explicit merge instruction (this session did not ask).
+- **Next up (continuing automatically per the owner's directive):** PRIORITY 2 (#24 saved
+  master-data system + searchable dropdowns in the creator), PRIORITY 3 (#49 premium PDF redesign),
+  PRIORITY 4 (#39 customer logo), PRIORITY 5 (landing/brand), PRIORITY 6 (consistent product UI).
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as
