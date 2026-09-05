@@ -86,7 +86,6 @@ export const PERSONAS = [
   },
 ];
 
-
 export const STEPS = [
   {
     n: 1,

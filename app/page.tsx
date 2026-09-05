@@ -61,9 +61,17 @@ const PRODUCT_SHOWCASE = [
   { Icon: HistoryIcon, label: "Histórico", body: "Todos tus documentos, siempre a mano." },
   { Icon: CopyIcon, label: "Duplicar", body: "Repite un DeCA anterior en segundos." },
   { Icon: TruckIcon, label: "Vehículos guardados", body: "Tractora y remolque en un clic." },
-  { Icon: BuildingIcon, label: "Empresas habituales", body: "Cargadores y transportistas reutilizables." },
+  {
+    Icon: BuildingIcon,
+    label: "Empresas habituales",
+    body: "Cargadores y transportistas reutilizables.",
+  },
   { Icon: MapPinIcon, label: "Lugares habituales", body: "Carga y descarga listos para elegir." },
-  { Icon: ShieldIcon, label: "Custodia digital", body: "Conservación conforme a la normativa vigente." },
+  {
+    Icon: ShieldIcon,
+    label: "Custodia digital",
+    body: "Conservación conforme a la normativa vigente.",
+  },
 ] as const;
 
 export default async function HomePage() {
