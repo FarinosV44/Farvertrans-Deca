@@ -121,13 +121,7 @@ export function HistoryIcon(props: IconProps) {
 }
 
 /** Soft brand-tinted circular badge behind a panel icon. */
-export function IconBadge({
-  children,
-  size = 40,
-}: {
-  children: React.ReactNode;
-  size?: number;
-}) {
+export function IconBadge({ children, size = 40 }: { children: React.ReactNode; size?: number }) {
   return (
     <span
       className="inline-flex shrink-0 items-center justify-center rounded-full text-[var(--color-primary)]"

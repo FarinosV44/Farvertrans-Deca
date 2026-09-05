@@ -13,13 +13,13 @@ const bodySchema = z.object({ granted: z.boolean() });
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user?.companyId) return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
+  if (!user?.companyId)
+    return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
   if (user.companyRole !== "owner")
     return NextResponse.json({ error: { code: "forbidden" } }, { status: 403 });
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success)
-    return NextResponse.json({ error: { code: "validation" } }, { status: 422 });
+  if (!parsed.success) return NextResponse.json({ error: { code: "validation" } }, { status: 422 });
 
   const state = await setCommercialConsent(user.companyId, parsed.data.granted);
   return NextResponse.json({ consent: state });

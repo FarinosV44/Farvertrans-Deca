@@ -14,11 +14,7 @@ import type { ValidatedDeca } from "./validate";
 
 function foldKey(s: string | undefined): string {
   if (!s) return "";
-  return s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim()
-    .toUpperCase();
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toUpperCase();
 }
 
 /** e.g. loadCity="Valencia", loadCountry="España", unloadCity="Lyon", unloadCountry="Francia" -> "ESPAÑA-VALENCIA__FRANCIA-LYON" (folded). */

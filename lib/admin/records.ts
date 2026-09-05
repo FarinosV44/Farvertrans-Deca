@@ -298,7 +298,9 @@ export async function getCompanyAdmin(id: string) {
     totalDeca: company._count.decas,
     decaCounts: { d7: deca7d, d30: deca30d, d90: deca90d },
     lastDecaAt: recentDeca[0]?.createdAt ?? null,
-    terms: latestTerms ? { version: latestTerms.version, acceptedAt: latestTerms.acceptedAt } : null,
+    terms: latestTerms
+      ? { version: latestTerms.version, acceptedAt: latestTerms.acceptedAt }
+      : null,
     commercialConsent: company.commercialConsent
       ? {
           granted: company.commercialConsent.granted,
