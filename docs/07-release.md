@@ -258,12 +258,70 @@ pooler respectively — see step 1 above), run `prisma migrate deploy` against `
 - App logs go to stdout (`docker logs fvd`). No personal data or tokens are logged; a generation
   failure emits one JSON line with `evt: "deca_generation_failed"`.
 
-### 6. Backups
-- **Bundled stack:** `docker exec fvd-prod-db pg_dump -U <user> <db> | gzip > deca-$(date +%F).sql.gz`
-  on a cron, off the box; and archive the `fvd-prod-storage` volume
-  (`docker run --rm -v fvd-prod-storage:/s -v $PWD:/out alpine tar czf /out/storage-$(date +%F).tgz -C /s .`).
-- **Managed Postgres:** Supabase/Neon provide automated backups; enable point-in-time recovery.
-- Test a restore before relying on it.
+### 6. Backups (SECURITY #53 — reviewed 2026-09-06, see D-067)
+
+**Honesty rule for this section (owner's explicit requirement):** never write "backups are
+configured" or "PITR is enabled" here unless it has been checked in the actual Supabase dashboard
+AND a real restore has been test-run and dated below. Until then, treat every claim in this section
+as "needs verification," not "done."
+
+**What Claude Code cannot verify from this repository:** Supabase's plan tier, whether Point-In-Time
+Recovery (PITR) is enabled, the daily-backup retention window, and whether the storage bucket has
+object versioning — these are dashboard/billing settings on the user's Supabase project, invisible
+from code and never guessed at here.
+
+**What to check in the Supabase dashboard (Project → Database → Backups):**
+1. Confirm the plan tier. Supabase's Free tier has NO PITR and only a few days of daily backups; PITR
+   requires a paid add-on. If still on Free, database loss beyond that short window is unrecoverable
+   through Supabase itself.
+2. If PITR matters (it does — this product custodies legally-retained documents), enable it and note
+   the retention window here with the date enabled.
+3. Project → Storage → the `deca-pdfs` bucket (or `FVD_PDF_BUCKET`): check whether object versioning
+   is enabled. It is NOT enabled by default. Without it, an overwritten or deleted object has no
+   built-in undo — `lib/storage/index.ts`'s `SupabaseStore.put()` uses `upsert: true`, so a key
+   collision silently overwrites (public tokens are ≥128-bit random, so a real collision is not a
+   practical risk — this matters for accidental re-use of a key, e.g. a bug, not an attacker).
+
+**Independent recovery path that already exists, by construction:** a `deca_version` row stores the
+full structured `dataJson` used to render its PDF (`lib/deca/persist.ts`), not just the rendered
+bytes. If the PDF object store were lost but the Postgres data survived, every document could be
+RE-RENDERED from `dataJson` via `renderDecaPdf()` — this is a genuine second recovery path, not
+reliant on Supabase Storage backup/versioning at all. Caveat: a re-render is only guaranteed
+byte-identical to the original (matching the `pdfSha256` on record) if the PDF template code hasn't
+changed since — after a template change (e.g. D-056's redesign), a re-render is content-faithful but
+not byte-identical, so a stored `pdfSha256` mismatch after a template change is EXPECTED for a
+restored-and-rerendered document, not evidence of tampering. Restoring the original bytes from a
+storage backup (or Postgres backup, since Supabase's local-fs fallback isn't used in production) is
+still strictly better than a re-render when available.
+
+**Manual DB dump (works regardless of plan tier, run periodically, store off-Supabase):**
+```bash
+pg_dump "$DIRECT_URL" --format=custom --file="deca-$(date +%F).dump"
+# restore into a scratch DB to verify before ever restoring over production:
+createdb deca_restore_test
+pg_restore --dbname=deca_restore_test deca-$(date +%F).dump
+```
+
+**Bundled/self-hosted stack (Docker, if ever used instead of Supabase):**
+`docker exec fvd-prod-db pg_dump -U <user> <db> | gzip > deca-$(date +%F).sql.gz` on a cron, off the
+box; archive the storage volume:
+`docker run --rm -v fvd-prod-storage:/s -v $PWD:/out alpine tar czf /out/storage-$(date +%F).tgz -C /s .`
+
+**Restore procedure (documented, not yet test-run — see the log below):**
+1. Provision a fresh/scratch Postgres instance (Supabase project or local), never restore directly
+   over a live production database as the first attempt.
+2. `pg_restore --dbname=<scratch> <dump file>` (or Supabase's dashboard PITR restore flow).
+3. Point a local `.env`'s `DATABASE_URL`/`DIRECT_URL` at the scratch instance, run
+   `npx prisma migrate status` to confirm the ledger matches, then spot-check: log in as a seeded
+   user, open a `/panel/historico` row, download its PDF, confirm the `pdfSha256` matches what's on
+   record for a document created BEFORE any PDF-template change.
+4. Record the outcome (date, what was restored, what was verified, any gaps found) in the log below.
+   An untested restore procedure is not considered sufficient (owner's explicit requirement) — this
+   step is not optional.
+
+**Restoration-test log** (append an entry every time a real restore is tested — empty means never
+tested, which is the current, honest state as of this section's last edit):
+- *(none yet)*
 
 ## Merge to `main`
 

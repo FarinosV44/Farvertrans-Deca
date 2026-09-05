@@ -681,3 +681,20 @@ invalidate sessions after). Owner sent #55 (premium product system) + #56 (multi
 center: super-admin/company-admin/operator/read-only roles, invitations, route intelligence) —
 explicitly queued by the owner for AFTER the current security/legal/auth work; noted, continuing
 the P0 queue first per their own stated order.
+
+## D-067: SECURITY #53 P0 blocks 5+6 — backup/recovery, security headers, document-loss protection
+All three turned out to be audit findings, not code changes. Backup/recovery: wrote an honest
+runbook in `docs/07-release.md` §6 stating plainly what can't be verified from code (Supabase's
+actual plan tier / PITR / bucket-versioning settings — dashboard-only, never guessed at), a genuine
+independent recovery path that already exists (DeCA PDFs are re-renderable from the `dataJson`
+stored alongside them, not just the rendered bytes), a restore procedure, and an explicitly-empty
+"restoration-test log" — no claim of a tested backup exists because none has been tested. Security
+headers: already solid from an earlier session (CSP/HSTS/Permissions-Policy on pages via
+`middleware.ts`, X-Content-Type-Options/Referrer-Policy/X-Frame-Options on EVERY route including
+API/PDF via `next.config.ts`, no permissive CORS anywhere) — reviewed against the fuller P0 list,
+no gaps found, no changes made. Document-loss protection: grepped the whole API surface for any
+delete touching `deca`/`deca_version`/`company`/`user` — none exist; combined with `deca_version`
+already being append-only, the owner's requirements are satisfied by the absence of any such
+feature, not a gap to close. See `decisions.md` D-067. **Continuing** to #51 (desktop visual
+overhaul), #52 (legal identity/liability), #54 (Spanish-first i18n expansion) per the owner's
+execution order — #55/#56 remain queued after.

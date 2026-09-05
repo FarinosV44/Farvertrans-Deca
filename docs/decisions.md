@@ -1585,3 +1585,38 @@
   no such feature exists in the product to harden: true idle-timeout (as distinct from the 12h admin
   TOTP-freshness window), and "invalidate privileged sessions after 2FA reset" (no admin-resets-
   another-admin's-2FA feature exists).
+
+## D-067 — SECURITY #53 P0 blocks 5+6: backup/recovery review, security headers, document-loss protection
+- Date / phase: 2026-09-06, same session, continuing immediately. These three P0 items turned out to
+  be audit findings rather than code changes — recorded here instead of invented busywork.
+- **Backup/recovery:** expanded `docs/07-release.md` §6 into an honest runbook. Explicitly stated
+  what this session CANNOT verify from code (Supabase plan tier, whether PITR/object-versioning are
+  actually enabled — dashboard/billing settings, never guessed at) versus what to check and how.
+  Documented a genuine independent recovery path that already exists by construction: `deca_version`
+  stores the full `dataJson`, not just rendered PDF bytes, so a lost PDF object store is recoverable
+  by re-rendering from Postgres data alone — with the caveat that a re-render only matches the
+  original `pdfSha256` if the PDF template hasn't changed since (a mismatch after a template change
+  is expected, not evidence of tampering). Added a restore procedure and a "restoration-test log"
+  that is explicitly empty right now — per the owner's own rule, an untested restore procedure is
+  not claimed as sufficient, and this file says so in its own words rather than overclaiming.
+- **Security headers:** already substantially complete from an earlier session, reviewed now against
+  the owner's fuller list. `middleware.ts` sets CSP/Permissions-Policy/HSTS(prod)/X-Frame-Options/
+  Referrer-Policy on HTML page routes; `next.config.ts`'s global `headers()` separately applies
+  X-Content-Type-Options/Referrer-Policy/X-Frame-Options to EVERY route including `/api/*` and `/d/*`
+  (which `middleware.ts`'s matcher deliberately excludes) — so API/PDF responses aren't fully
+  unheadered, just missing the page-only headers (CSP, Permissions-Policy) that don't apply to a
+  bare JSON/PDF response anyway. No CORS headers are set anywhere, which — for a first-party app
+  with no public API meant for cross-origin browser `fetch`/XHR — is the correct, most restrictive
+  default (absence of `Access-Control-Allow-Origin` blocks cross-origin access; no code change
+  needed). `launch-gate.spec.ts` already asserts the HTML-route headers and passes. No changes made.
+- **Document-loss protection:** grepped the entire `app/api` + `lib` tree for any delete/deleteMany
+  touching `deca`, `deca_version`, `company`, or `user` — none exist. Combined with `deca_version`
+  already being append-only by construction (never mutated after creation; a correction adds a new
+  version and repoints `currentVersionId`, D-classified elsewhere), the owner's requirements
+  (immutable historical versions, no casual hard delete, no unprotected bulk deletion, a compromised
+  admin can't easily wipe the archive) are satisfied by the ABSENCE of any such capability — not a
+  gap to close, a property to preserve. Explicitly noting this so a future session doesn't build a
+  delete feature and then have to re-litigate whether it needs protecting: it doesn't exist, so don't
+  add one without this decision being revisited first.
+- No code changed this block — docs only. Gate unaffected (154 e2e / 139 unit baseline from D-066
+  still holds).
