@@ -240,7 +240,10 @@ export default async function HomePage() {
           </ul>
         </section>
 
-        {/* Product proof */}
+        {/* Product proof — DESIGN #55 §15: benefits list now uses the same
+            success-check visual language as the free-value/normativa sections
+            (was plain "Title. body" text, the one remaining spot that read as
+            flatter than the rest of the redesigned page). */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="producto"
@@ -250,15 +253,22 @@ export default async function HomePage() {
               <h2 id="producto" className="text-2xl font-bold md:text-3xl">
                 {dict.landing.productHeading}
               </h2>
-              <ul className="mt-5 space-y-3 text-sm">
+              <ul className="mt-6 space-y-3 text-sm">
                 {benefits.map((b) => (
-                  <li key={b.title}>
-                    <span className="font-bold">{b.title}. </span>
-                    <span className="text-[var(--color-text-muted)]">{b.body}</span>
+                  <li key={b.title} className="flex items-start gap-3">
+                    <CheckIcon
+                      width={16}
+                      height={16}
+                      className="mt-0.5 shrink-0 text-[var(--color-success)]"
+                    />
+                    <span>
+                      <span className="font-bold">{b.title}. </span>
+                      <span className="text-[var(--color-text-muted)]">{b.body}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-7">
+              <div className="mt-8">
                 <CtaButton event="product_demo_cta">{hero.cta}</CtaButton>
               </div>
             </div>

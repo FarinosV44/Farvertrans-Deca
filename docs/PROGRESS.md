@@ -1024,3 +1024,17 @@ clean, 139/139 unit, 18/18 targeted landing+a11y e2e, 10-width overflow script a
 suite 156/157 (1 pre-existing flake, reconfirmed unrelated). Manually verified in a real browser at
 1440px. See `decisions.md` D-089. **This closes DESIGN #55 except §15** (an overall density pass,
 non-blocking final polish).
+
+## D-090: DESIGN #55 §15 (density/hierarchy pass) — closes issue #55
+Full-page audit of `app/page.tsx` for cross-section spacing/visual-hierarchy consistency. Found one
+real gap: the "Product proof" benefits list was still plain text, the one section that hadn't gotten
+the success-check visual language used everywhere else (free-value, normativa). Fixed with the same
+`CheckIcon` treatment + normalized spacing to match sibling sections. Everything else audited was
+already consistent. **This is the last open #55 item — issue #55 (DESIGN landing overhaul) is now
+complete.** Gate: typecheck, lint, prettier clean, 139/139 unit, 18/18 targeted landing+a11y e2e,
+full suite 156/157 (1 pre-existing flake, reconfirmed unrelated). See `decisions.md` D-090.
+Also diagnosed (no code change) the user's live Google OAuth `redirect_uri_mismatch`: confirmed via
+direct request that the app sends the correct `.../api/auth/google/callback` URI; the user's Google
+Cloud Console had the segments swapped (`.../api/auth/callback/google`, a NextAuth.js-style path this
+app's hand-rolled OAuth client doesn't use). Told the user the exact fix — external account setting,
+not a code issue.

@@ -2543,3 +2543,37 @@
 - **Scope note:** this closes ALL of DESIGN #55 except §15 (an overall density/hierarchy pass across
   the whole landing, which was never blocking — it's a final polish pass, not a missing feature).
 - Not committed to `main` yet at the time of writing — see the next entry for the follow-up merge.
+
+## D-090 — DESIGN #55 §15 (final item): density/hierarchy pass, closes issue #55; also documents the Google OAuth `redirect_uri_mismatch` root cause
+- Date / phase: 2026-09-06, same session, immediately after D-089, on the user's explicit "done
+  complete issue 55 and push to main" instruction.
+- **Audit method:** read the full `app/page.tsx` end to end (not per-section, since a density/
+  hierarchy pass is specifically about cross-section consistency that per-section review misses) —
+  checked vertical rhythm (`py-16`/`py-12` usage), heading-to-content spacing, CTA-button spacing,
+  and visual-list styling for consistency across all 10 landing sections.
+- **Found and fixed the one real inconsistency**: the "Product proof" section's benefits list (3
+  items: Gratis / Rápido / Preparado para inspección) was still plain "Title. body" text with no
+  icon — the one section that hadn't received the success-check visual language already established
+  everywhere else on the page (free-value D-083, normativa D-086). Added the same `CheckIcon` +
+  success-color treatment; bumped its heading-to-list spacing (`mt-5`→`mt-6`) and CTA-button spacing
+  (`mt-7`→`mt-8`) to match the equivalent spacing used in the neighbouring "3 steps"/"Personas"
+  sections. Everything else audited (section padding, heading sizes, card border-radius/shadow
+  tokens, icon-badge sizing) was already consistent — the deliberately smaller `py-12` and smaller
+  text on the operator-trust section (D-086) is an intentional exception (secondary/muted by design,
+  per the owner's own "not law-firm-like" instruction), not an inconsistency to fix.
+- **This is the last open item in DESIGN #55 — the issue is now complete.**
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139.
+  `playwright test tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed. Full
+  `playwright test --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-
+  documented parallel-only flake, reconfirmed passing with `--workers=1`. Manually verified in a real
+  browser at 1440px: the Product-proof checklist now visually matches the rest of the page.
+- **Separately this session (not a code change): diagnosed the user's live "Continuar con Google" →
+  `Error 400: redirect_uri_mismatch`.** Confirmed via a direct request against
+  `https://decaprofesional.es/api/auth/google` that the app correctly sends
+  `redirect_uri=https://decaprofesional.es/api/auth/google/callback` (matches `googleRedirectUri()`
+  in `lib/auth/google.ts` and the `.env.example` comment exactly — no code bug). The user's Google
+  Cloud Console OAuth client had `.../api/auth/callback/google` registered instead (segments
+  swapped — a common NextAuth.js convention this app doesn't use, since it has its own hand-rolled
+  OAuth client per D-046). Told the user the exact string to correct in the Google Cloud Console
+  "Authorized redirect URIs" field; this is an external account setting only the user can change —
+  no code or documentation change was needed or made.
