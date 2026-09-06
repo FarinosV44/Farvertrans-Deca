@@ -140,8 +140,8 @@ export const ca = {
       },
     ],
     personaCtaPrefix: "Com funciona per a",
-    dailyUseHeading: "Per què fer-lo servir cada dia",
-    dailyUseSubhead: "Tot el que necessites per no tornar a escriure les mateixes dades.",
+    dailyUseHeading: "Cada DeCA et costa menys temps que l'anterior.",
+    dailyUseSubhead: "Desa-ho un cop. Reutilitza-ho sempre.",
     dailyUseFooter:
       "Comença a omplir el teu DeCA sense compromís; només et demanem crear un compte gratuït al final, per generar-lo.",
     dailyUseFooterLink: "la teva empresa",
@@ -217,8 +217,10 @@ export const ca = {
         a: "Sí. No hi ha límit mensual. Només apliquem controls automàtics contra usos abusius que no afecten l'ús normal ni la inspecció.",
       },
     ],
-    finalCtaHeading: "Fes el teu primer DeCA gratis",
-    finalCtaSubhead: "Sense demo. Sense comercial. Sense targeta.",
+    finalCtaHeading: "Comença ara. Sense targeta.",
+    finalCtaSubhead:
+      "Crea el teu DeCA, desa les teves dades habituals i comença a treballar des d'un únic espai.",
+    finalCtaMicrocopy: "Gratis durant la fase de llançament · Sense targeta",
   },
   auth: {
     heading: {

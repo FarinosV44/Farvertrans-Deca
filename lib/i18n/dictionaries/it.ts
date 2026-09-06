@@ -140,8 +140,8 @@ export const it = {
       },
     ],
     personaCtaPrefix: "Come funziona per",
-    dailyUseHeading: "Perché usarlo ogni giorno",
-    dailyUseSubhead: "Tutto ciò che serve per non riscrivere mai più gli stessi dati.",
+    dailyUseHeading: "Ogni DeCA ti costa meno tempo del precedente.",
+    dailyUseSubhead: "Salva una volta. Riutilizza sempre.",
     dailyUseFooter:
       "Inizia a compilare il tuo DeCA senza impegno; ti chiediamo solo di creare un account gratuito alla fine, per generarlo.",
     dailyUseFooterLink: "la tua azienda",
@@ -218,8 +218,10 @@ export const it = {
         a: "Sì. Non c'è un limite mensile. Applichiamo solo controlli automatici contro usi abusivi che non influiscono sull'uso normale né sull'ispezione.",
       },
     ],
-    finalCtaHeading: "Crea il tuo primo DeCA gratis",
-    finalCtaSubhead: "Niente demo. Niente commerciale. Niente carta.",
+    finalCtaHeading: "Inizia ora. Senza carta.",
+    finalCtaSubhead:
+      "Crea il tuo DeCA, salva i tuoi dati abituali e inizia a lavorare da un unico spazio.",
+    finalCtaMicrocopy: "Gratis durante la fase di lancio · Senza carta",
   },
   auth: {
     heading: {

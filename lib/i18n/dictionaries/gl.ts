@@ -140,8 +140,8 @@ export const gl = {
       },
     ],
     personaCtaPrefix: "Como funciona para",
-    dailyUseHeading: "Por que usalo cada día",
-    dailyUseSubhead: "Todo o que necesitas para non volver escribir os mesmos datos.",
+    dailyUseHeading: "Cada DeCA cústache menos tempo có anterior.",
+    dailyUseSubhead: "Garda unha vez. Reutiliza sempre.",
     dailyUseFooter:
       "Comeza a encher o teu DeCA sen compromiso; só che pedimos crear unha conta gratuíta ao final, para xeralo.",
     dailyUseFooterLink: "a túa empresa",
@@ -217,8 +217,10 @@ export const gl = {
         a: "Si. Non hai límite mensual. Só aplicamos controis automáticos fronte a usos abusivos que non afectan o uso normal nin a inspección.",
       },
     ],
-    finalCtaHeading: "Fai o teu primeiro DeCA gratis",
-    finalCtaSubhead: "Sen demo. Sen comercial. Sen tarxeta.",
+    finalCtaHeading: "Comeza agora. Sen tarxeta.",
+    finalCtaSubhead:
+      "Crea o teu DeCA, garda os teus datos habituais e comeza a traballar desde un único espazo.",
+    finalCtaMicrocopy: "Gratis durante a fase de lanzamento · Sen tarxeta",
   },
   auth: {
     heading: {

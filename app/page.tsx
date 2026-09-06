@@ -401,6 +401,7 @@ export default async function HomePage() {
                 {hero.cta}
               </CtaButton>
             </div>
+            <p className="mt-4 text-sm text-white/90">{dict.landing.finalCtaMicrocopy}</p>
           </div>
         </section>
       </main>

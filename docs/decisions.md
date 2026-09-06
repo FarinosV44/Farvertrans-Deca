@@ -2310,3 +2310,39 @@
   polish §6, the "por qué usarlo cada día" reframe §7, trust/regulation/FAQ/final-CTA polish §8–§11,
   micro-interactions §14, overall density pass §15) continue in subsequent slices.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-082.
+
+## D-084 — DESIGN #55 slice 4: "por qué usarlo cada día" reframed (§7); final CTA rebuilt (§11)
+- Date / phase: 2026-09-06, same session, immediately after D-083. Two copy-focused sections from the
+  #55 directive, done together since both are value-copy changes to existing sections rather than new
+  UI, using the owner's own suggested wording near-verbatim.
+- **§7 — reframed as the product's strongest differentiator**, per the owner's explicit instruction
+  ("this is strategically important... one of our strongest differentiators"): heading changed from
+  the generic "Por qué usarlo cada día" to the owner's suggested "Cada DeCA te cuesta menos tiempo que
+  el anterior.", subhead to "Guarda una vez. Reutiliza siempre." — updated `dailyUseHeading`/
+  `dailyUseSubhead` VALUES only (no new keys, no `satisfies Messages` parity risk) across all 8
+  dictionaries. The section's existing feature-tile content (saved companies/vehicles/locations,
+  duplicate, history) is unchanged — only the framing copy around it changed, as directed.
+- **§11 — final CTA rebuilt** using the owner's exact suggested structure: heading "Empieza ahora. Sin
+  tarjeta." (was the flatter "Haz tu primer DeCA gratis"), subhead "Crea tu DeCA, guarda tus datos
+  habituales y empieza a trabajar desde un único espacio.", and a NEW microcopy line under the button
+  — "Gratis durante la fase de lanzamiento · Sin tarjeta" (`finalCtaMicrocopy`, a new key, added to all
+  8 dictionaries). The primary CTA button text itself is intentionally unchanged (still "CREAR DECA
+  GRATIS" via `hero.cta`), matching the owner's own spec ("Primary CTA: CREAR DECA GRATIS").
+- **Two real regressions found and fixed, not shipped broken:** (1) `tests/e2e/landing.spec.ts` had a
+  test hardcoding the OLD "Por qué usarlo cada día" heading text — this is a legitimate content-change
+  test update (the heading intentionally changed), not a weakened assertion; updated to assert the new
+  heading instead. (2) The new final-CTA microcopy at `text-white/80` on the primary-blue background
+  failed axe's `color-contrast` check (again — the third contrast-on-tinted/translucent-background
+  regression this session, after D-082's badge and none before that were caught pre-emptively); fixed
+  by matching the EXISTING subhead's already-passing opacity (`text-white/90`) rather than re-deriving
+  a new one — noting for future landing work that this codebase's blue-background text should default
+  to `/90` opacity or full white, not `/80`, unless contrast is separately verified.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139.
+  `playwright test tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed, including both
+  the updated heading-text assertion and the color-contrast check that had failed before the `/90`
+  fix. Full `playwright test --workers=3` — 155/157 passed, the 2 failures being the same already-
+  documented parallel-only flakes (`admin-2fa`, `content-cms`), unrelated.
+- **Scope note:** #55 §5 (visual storytelling across daily-use/panel-preview/inspection/teamwork),
+  §6 (persona card polish), §8 (trust section), §9 (regulation section), §10 (FAQ), §14
+  (micro-interactions), §15 (density/hierarchy pass) remain, tracked as further slices.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-083.

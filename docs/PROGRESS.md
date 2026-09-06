@@ -938,3 +938,16 @@ re-verified across the same 10 widths (375–1920px), zero overflow. Gate: typec
 clean, 139/139 unit, 156/157 e2e (1 pre-existing flake). See `decisions.md` D-083. **Continuing**
 with the remaining #55 sections (visual storytelling, persona/trust/regulation/FAQ/final-CTA polish)
 next.
+
+## D-084: DESIGN #55 slice 4 — "por qué usarlo cada día" reframed; final CTA rebuilt
+Two copy-focused sections using the owner's own suggested wording near-verbatim, across all 8
+dictionaries. §7: heading → "Cada DeCA te cuesta menos tiempo que el anterior.", subhead → "Guarda
+una vez. Reutiliza siempre." (value copy only — the section's existing feature-tile content
+unchanged). §11: final CTA rebuilt with "Empieza ahora. Sin tarjeta." + a new supporting subhead + a
+new microcopy line under the button ("Gratis durante la fase de lanzamiento · Sin tarjeta").
+Found and fixed two real regressions: an e2e test hardcoding the old heading text (legitimate update,
+not a weakened assertion), and a third contrast-on-translucent-background failure this session — fixed
+by matching the already-passing `/90` opacity instead of the new `/80`. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 155/157 e2e (2 pre-existing flakes). See `decisions.md` D-084. **Remaining #55**:
+visual storytelling (§5), persona cards (§6), trust/regulation/FAQ polish (§8-§10), micro-interactions
+and density pass (§14-§15).

@@ -148,8 +148,8 @@ export const eu = {
       },
     ],
     personaCtaPrefix: "Nola funtzionatzen duen",
-    dailyUseHeading: "Zergatik erabili egunero",
-    dailyUseSubhead: "Datu berak berriz idatzi behar ez izateko behar duzun guztia.",
+    dailyUseHeading: "DeCA bakoitzak aurrekoak baino denbora gutxiago behar du.",
+    dailyUseSubhead: "Gorde behin. Berrerabili beti.",
     dailyUseFooter:
       "Hasi zure DeCA betetzen konpromisorik gabe; azkenean kontu doako bat sortzea baino ez dizugu eskatzen, sortzeko.",
     dailyUseFooterLink: "zure enpresak",
@@ -225,8 +225,10 @@ export const eu = {
         a: "Bai. Ez dago hileroko muga. Erabilera normala edo ikuskapena eragozten ez duten erabilera abusiboen aurkako kontrol automatikoak baino ez ditugu aplikatzen.",
       },
     ],
-    finalCtaHeading: "Sortu zure lehen DeCA doan",
-    finalCtaSubhead: "Demorik ez. Salmenta-deirik ez. Txartelik ez.",
+    finalCtaHeading: "Hasi orain. Txartelik gabe.",
+    finalCtaSubhead:
+      "Sortu zure DeCA, gorde zure ohiko datuak eta hasi lanean espazio bakar batetik.",
+    finalCtaMicrocopy: "Doan abiaraztearen fasean · Txartelik gabe",
   },
   auth: {
     heading: {

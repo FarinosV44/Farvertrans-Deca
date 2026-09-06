@@ -132,8 +132,8 @@ export const en = {
       },
     ],
     personaCtaPrefix: "How it works for",
-    dailyUseHeading: "Why use it every day",
-    dailyUseSubhead: "Everything you need so you never type the same data twice.",
+    dailyUseHeading: "Every DeCA costs you less time than the last one.",
+    dailyUseSubhead: "Save it once. Reuse it every time.",
     dailyUseFooter:
       "Start filling in your DeCA with no commitment; we only ask you to create a free account at the end, to generate it.",
     dailyUseFooterLink: "your company",
@@ -209,8 +209,10 @@ export const en = {
         a: "Yes. There is no monthly limit. We only apply automated controls against abusive use that don't affect normal use or inspection.",
       },
     ],
-    finalCtaHeading: "Create your first DeCA for free",
-    finalCtaSubhead: "No demo. No sales call. No card.",
+    finalCtaHeading: "Start now. No card.",
+    finalCtaSubhead:
+      "Create your DeCA, save your regular data and start working from a single space.",
+    finalCtaMicrocopy: "Free during the launch phase · No card",
   },
   auth: {
     heading: {
