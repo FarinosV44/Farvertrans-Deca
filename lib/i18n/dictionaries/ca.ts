@@ -63,6 +63,24 @@ export const ca = {
         body: "Enllaç, WhatsApp, correu o còpia impresa. Llest per a la inspecció.",
       },
     ],
+    freeValueHeading: "Tot inclòs durant el llançament.",
+    freeValueSubhead:
+      "Multiusuari, historial, custòdia i reutilització de dades inclosos sense cost durant la fase de llançament — funcions que altres plataformes de DeCA cobren a part.",
+    freeValueComingSoon: "Properament",
+    freeValueItems: [
+      { label: "Generar DeCA" },
+      { label: "PDF natiu + QR" },
+      { label: "Historial" },
+      { label: "Custòdia digital" },
+      { label: "Multiusuari" },
+      { label: "Empreses habituals" },
+      { label: "Vehicles desats" },
+      { label: "Llocs habituals" },
+      { label: "Duplicat ràpid" },
+      { label: "Rutes freqüents" },
+      { label: "Mode inspecció" },
+      { label: "Accés API / ERP" },
+    ],
     productHeading: "Del formulari al PDF amb QR, sense passos de més",
     benefits: [
       {

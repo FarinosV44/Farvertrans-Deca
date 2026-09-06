@@ -54,6 +54,24 @@ export const en = {
         body: "Link, WhatsApp, email or a printed copy. Ready for inspection.",
       },
     ],
+    freeValueHeading: "Everything included during the launch.",
+    freeValueSubhead:
+      "Multi-user, history, custody and data reuse included at no cost during the launch phase — features other DeCA platforms charge extra for.",
+    freeValueComingSoon: "Coming soon",
+    freeValueItems: [
+      { label: "Generate DeCA" },
+      { label: "Native PDF + QR" },
+      { label: "History" },
+      { label: "Digital custody" },
+      { label: "Multi-user" },
+      { label: "Regular companies" },
+      { label: "Saved vehicles" },
+      { label: "Regular places" },
+      { label: "Fast duplication" },
+      { label: "Frequent routes" },
+      { label: "Inspection mode" },
+      { label: "API / ERP access" },
+    ],
     productHeading: "From the form to a PDF with QR, with no extra steps",
     benefits: [
       {

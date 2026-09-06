@@ -63,6 +63,24 @@ export const de = {
         body: "Link, WhatsApp, E-Mail oder Ausdruck. Bereit für die Kontrolle.",
       },
     ],
+    freeValueHeading: "Alles inklusive während der Startphase.",
+    freeValueSubhead:
+      "Mehrbenutzerbetrieb, Verlauf, Aufbewahrung und Datenwiederverwendung während der Startphase kostenlos inbegriffen — Funktionen, für die andere DeCA-Plattformen extra berechnen.",
+    freeValueComingSoon: "Demnächst",
+    freeValueItems: [
+      { label: "DeCA erstellen" },
+      { label: "Natives PDF + QR" },
+      { label: "Verlauf" },
+      { label: "Digitale Aufbewahrung" },
+      { label: "Mehrbenutzerbetrieb" },
+      { label: "Übliche Unternehmen" },
+      { label: "Gespeicherte Fahrzeuge" },
+      { label: "Übliche Orte" },
+      { label: "Schnelle Duplizierung" },
+      { label: "Häufige Routen" },
+      { label: "Kontrollmodus" },
+      { label: "API-/ERP-Zugriff" },
+    ],
     productHeading: "Vom Formular zum PDF mit QR-Code, ohne unnötige Schritte",
     benefits: [
       {

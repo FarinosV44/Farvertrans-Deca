@@ -925,3 +925,16 @@ across all ten widths the owner's directive listed (375–1920px). Gate: typeche
 139/139 unit, 155/157 e2e (2 pre-existing flakes, unrelated). See `decisions.md` D-082. **Remaining
 #55 work** (free-value section, visual storytelling sections, persona/trust/regulation/FAQ/final-CTA
 polish) continues in subsequent slices — not attempted in one block.
+
+## D-083: DESIGN #55 slice 3 — "Todo incluido durante el lanzamiento" free-value section
+New section right after the "3 steps" section: a checklist grid of 12 features, 10 marked available
+(including "Rutas frecuentes", the #56 feature shipped earlier this session) with a green check, 2
+explicitly marked "Próximamente" (Modo inspección, Acceso API/ERP) with a dashed/empty-circle
+treatment — never presented as if live, per the owner's hard constraint against advertising
+unshipped features. `available` is a fact in `lib/content/landing.ts`, never localized; labels come
+from a new `freeValueItems` dictionary key across all 8 locales. Hit and fixed the same class of
+flex-overflow regression as D-082 (a `flex-1` label needing `min-w-0` to shrink under a badge) —
+re-verified across the same 10 widths (375–1920px), zero overflow. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 156/157 e2e (1 pre-existing flake). See `decisions.md` D-083. **Continuing**
+with the remaining #55 sections (visual storytelling, persona/trust/regulation/FAQ/final-CTA polish)
+next.

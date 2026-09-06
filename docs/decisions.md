@@ -2270,3 +2270,43 @@
   grouping/polish), §11 (final CTA composition), §14 (micro-interactions), §15 (overall density/
   hierarchy pass). Continuing in subsequent slices, not attempted in one block.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-081.
+
+## D-083 — DESIGN #55 slice 3: "Todo incluido durante el lanzamiento" free-value section
+- Date / phase: 2026-09-06, same session, immediately after D-082. Implements #55 §3 explicitly:
+  communicate that features other DeCA platforms often paywall (multi-user, extended custody,
+  inspection mode, API/ERP access, company workspace, advanced history) are included free during this
+  product's launch phase — using the owner's own suggested title ("Todo incluido durante el
+  lanzamiento.") and near-verbatim suggested subhead wording.
+- **New non-translatable fact table**: `lib/content/landing.ts`'s `FREE_VALUE_ITEMS` — 12 entries,
+  each an `available: boolean` (a FACT about what's actually shipped, never localized) paired
+  positionally with a translated label from a new `dict.landing.freeValueItems[i]` — the same
+  merge pattern already established for `STEPS`/`BENEFITS`/`PERSONAS`. 10 of the 12 are marked
+  available (Generar DeCA, PDF nativo+QR, Histórico, Custodia digital, Multiusuario, Empresas
+  habituales, Vehículos guardados, Lugares habituales, Duplicado rápido, **Rutas frecuentes** — the
+  #56 feature shipped earlier this session, included here since it's now genuinely live); 2 are
+  explicitly marked NOT available (Modo inspección, Acceso API/ERP) per the owner's own hard
+  constraint ("Only claim features already implemented or clearly mark unavailable/future features
+  appropriately. Never advertise something as available if it is not actually live.") — rendered with
+  a dashed border, an empty circle instead of a checkmark, and a "Próximamente"/"Coming soon" label
+  translated into all 8 locales, never presented the same way as a live feature.
+- **New section in `app/page.tsx`**, placed right after the "3 steps" section and before "product
+  proof" — a checklist grid (`sm:grid-cols-2 lg:grid-cols-3`) using the existing `CheckIcon` (added in
+  D-081 for the language dropdown, reused here rather than adding a second checkmark icon).
+- **Same class of regression as D-082, caught and fixed the same way, before shipping:** the new
+  grid's flex rows (icon + label + optional "Próximamente" badge) overflowed at 360px — a label span
+  with `flex-1` but no `min-w-0` couldn't shrink below its own text's intrinsic width once the
+  "Próximamente" badge was also present in the row. Fixed with the same single-property fix as
+  D-082's grid overflow (`min-w-0` on the flex-1 label span), then re-verified with the same
+  ten-width Playwright measurement script (375–1920px) rather than trusting the two widths the
+  automated suite happens to check — zero overflow at all ten.
+- Verification: `tsc --noEmit` clean (8-locale `freeValueItems` parity confirmed by `satisfies
+  Messages`); ESLint clean; Prettier clean; `vitest run` 139/139. `playwright test
+  tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed including the 360px overflow check
+  that had failed before the fix. Full `playwright test --workers=3` — 156/157 passed, the 1 failure
+  being the same already-documented `content-cms` parallel-only flake. Manually verified in a real
+  Chrome session at 1440px: all 10 live features show a green check, both unavailable features show
+  the dashed/circle treatment with a visible "Próximamente" label — never presented as if live.
+- **Scope note, same as D-081/D-082:** remaining #55 items (visual storytelling sections §5, persona
+  polish §6, the "por qué usarlo cada día" reframe §7, trust/regulation/FAQ/final-CTA polish §8–§11,
+  micro-interactions §14, overall density pass §15) continue in subsequent slices.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-082.

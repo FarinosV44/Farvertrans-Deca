@@ -70,6 +70,24 @@ export const eu = {
         body: "Esteka, WhatsApp, posta elektronikoa edo kopia inprimatua. Ikuskapenerako prest.",
       },
     ],
+    freeValueHeading: "Guztia barne abioaldian.",
+    freeValueSubhead:
+      "Erabiltzaile anitz, historiala, zaintza eta datuen berrerabilera kostu gabe abioaldian — beste DeCA plataformek aparte kobratzen dituzten funtzioak.",
+    freeValueComingSoon: "Laster",
+    freeValueItems: [
+      { label: "Sortu DeCA" },
+      { label: "PDF natiboa + QR" },
+      { label: "Historiala" },
+      { label: "Zaintza digitala" },
+      { label: "Erabiltzaile anitz" },
+      { label: "Ohiko enpresak" },
+      { label: "Gordetako ibilgailuak" },
+      { label: "Ohiko lekuak" },
+      { label: "Bikoizte azkarra" },
+      { label: "Ohiko ibilbideak" },
+      { label: "Ikuskapen modua" },
+      { label: "API / ERP sarbidea" },
+    ],
     productHeading: "Formulariotik QR duen PDFra, urrats gehiagorik gabe",
     benefits: [
       {

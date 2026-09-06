@@ -23,6 +23,7 @@ import {
   MapPinIcon,
   ShieldIcon,
   IconBadge,
+  CheckIcon,
 } from "@/components/panel/icons";
 import {
   STEPS,
@@ -30,6 +31,7 @@ import {
   BENEFITS,
   LEGAL_SOURCE,
   OPERATOR_TRUST,
+  FREE_VALUE_ITEMS,
   landingJsonLd,
 } from "@/lib/content/landing";
 
@@ -92,6 +94,10 @@ export default async function HomePage() {
   const steps = STEPS.map((s, i) => ({ ...s, ...dict.landing.steps[i] }));
   const benefits = BENEFITS.map((b, i) => ({ ...b, ...dict.landing.benefits[i] }));
   const personas = PERSONAS.map((p, i) => ({ ...p, ...dict.landing.personas[i] }));
+  const freeValueItems = FREE_VALUE_ITEMS.map((item, i) => ({
+    ...item,
+    ...dict.landing.freeValueItems[i],
+  }));
   const legalPoints = dict.landing.legalPoints;
   const faq = dict.landing.faq;
 
@@ -174,6 +180,48 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Free value — what competitors often paywall, included during launch */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="incluido"
+        >
+          <h2 id="incluido" className="text-2xl font-bold md:text-3xl">
+            {dict.landing.freeValueHeading}
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
+            {dict.landing.freeValueSubhead}
+          </p>
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {freeValueItems.map((item) => (
+              <li
+                key={item.label}
+                className={`flex items-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${
+                  item.available
+                    ? "border-[var(--color-border)] bg-[var(--color-surface)]"
+                    : "border-dashed border-[var(--color-border)] text-[var(--color-text-muted)]"
+                }`}
+              >
+                {item.available ? (
+                  <CheckIcon
+                    width={16}
+                    height={16}
+                    className="shrink-0 text-[var(--color-success)]"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="h-4 w-4 shrink-0 rounded-full border border-[var(--color-border)]"
+                  />
+                )}
+                <span className="min-w-0 flex-1">{item.label}</span>
+                {!item.available && (
+                  <span className="shrink-0 text-xs">{dict.landing.freeValueComingSoon}</span>
+                )}
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* Product proof */}

@@ -54,6 +54,24 @@ export const es = {
         body: "Enlace, WhatsApp, email o copia impresa. Listo para inspección.",
       },
     ],
+    freeValueHeading: "Todo incluido durante el lanzamiento.",
+    freeValueSubhead:
+      "Multiusuario, histórico, custodia y reutilización de datos incluidos sin coste durante la fase de lanzamiento — funciones que otras plataformas de DeCA cobran aparte.",
+    freeValueComingSoon: "Próximamente",
+    freeValueItems: [
+      { label: "Generar DeCA" },
+      { label: "PDF nativo + QR" },
+      { label: "Histórico" },
+      { label: "Custodia digital" },
+      { label: "Multiusuario" },
+      { label: "Empresas habituales" },
+      { label: "Vehículos guardados" },
+      { label: "Lugares habituales" },
+      { label: "Duplicado rápido" },
+      { label: "Rutas frecuentes" },
+      { label: "Modo inspección" },
+      { label: "Acceso API / ERP" },
+    ],
     productHeading: "Del formulario al PDF con QR, sin pasos de más",
     benefits: [
       {

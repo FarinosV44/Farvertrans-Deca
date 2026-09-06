@@ -16,6 +16,29 @@ export const HERO = {
 };
 
 /**
+ * "Todo incluido durante el lanzamiento" (DESIGN #55 §3) — the features
+ * competitors often paywall, offered free during acquisition. `available`
+ * is NOT translated (it's a fact, not copy) and is the single source of
+ * truth for what's actually live — never advertise something as available
+ * that isn't. Labels come from `dict.landing.freeValueItems[i]`, same
+ * positional-merge pattern as `STEPS`/`BENEFITS`/`PERSONAS`.
+ */
+export const FREE_VALUE_ITEMS = [
+  { key: "generar", available: true },
+  { key: "pdfQr", available: true },
+  { key: "historico", available: true },
+  { key: "custodia", available: true },
+  { key: "multiusuario", available: true },
+  { key: "empresas", available: true },
+  { key: "vehiculos", available: true },
+  { key: "lugares", available: true },
+  { key: "duplicar", available: true },
+  { key: "rutas", available: true },
+  { key: "inspeccion", available: false },
+  { key: "api", available: false },
+] as const;
+
+/**
  * Compact trust row under the hero. D-060 restored the lightweight lead gate
  * (name + email only) for the first DeCA, so "sin registro" is accurate again
  * for that first document — only a SECOND anonymous DeCA needs an account.

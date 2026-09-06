@@ -63,6 +63,24 @@ export const it = {
         body: "Link, WhatsApp, e-mail o copia stampata. Pronto per l'ispezione.",
       },
     ],
+    freeValueHeading: "Tutto incluso durante il lancio.",
+    freeValueSubhead:
+      "Multiutente, cronologia, conservazione e riutilizzo dei dati inclusi senza costi durante la fase di lancio — funzioni che altre piattaforme DeCA fanno pagare a parte.",
+    freeValueComingSoon: "Prossimamente",
+    freeValueItems: [
+      { label: "Genera DeCA" },
+      { label: "PDF nativo + QR" },
+      { label: "Cronologia" },
+      { label: "Conservazione digitale" },
+      { label: "Multiutente" },
+      { label: "Aziende abituali" },
+      { label: "Veicoli salvati" },
+      { label: "Luoghi abituali" },
+      { label: "Duplicazione rapida" },
+      { label: "Percorsi frequenti" },
+      { label: "Modalità ispezione" },
+      { label: "Accesso API / ERP" },
+    ],
     productHeading: "Dal modulo al PDF con QR, senza passaggi superflui",
     benefits: [
       {
