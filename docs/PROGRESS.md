@@ -995,3 +995,18 @@ Gate: typecheck, lint, prettier clean, 139/139 unit, 18/18 targeted landing+a11y
 reconfirmed unrelated). Manually verified in a real browser at 1440px. See `decisions.md` D-087.
 **Remaining #55**: §10 (FAQ grouping), §15 (density/hierarchy pass) — #55 is substantially complete
 otherwise.
+
+## D-088: `develop` (D-063…D-087) merged to `main` at `d7792d6`, on the user's explicit request ("push all... to main")
+Pre-merge gate re-verified on `develop` itself (not just trusting each slice's own prior gate):
+typecheck, `npm run lint` (project's real lint script — 2 pre-existing unrelated `<img>` warnings
+only), `prettier --check .` repo-wide, 139/139 unit, all clean. `--no-ff` merge, no conflicts, 138
+files changed. Brings `main` current with SECURITY #53 (2FA, session revocation, rate limiting,
+password policy, audit log), LEGAL #52/#54 (Praetoria identity, custody/liability/GDPR, Spanish-only
+legal pages + disclaimer), I18N #54 (8 locales), PRODUCT #56 slices 1-3 (read_only role, search
+palette, route intel), DESIGN #51/#55 (landing overhaul). Pushed to `origin/main`. **3 new
+migrations on `main` NOT yet applied to production**
+(`20260905204705_user_session_version`, `20260905211042_admin_2fa_and_audit_log`,
+`20260906094103_company_role_read_only`) — a redeploy + `prisma migrate deploy` is needed before any
+of this session's security/role work is live. See `decisions.md` D-088.
+**Continuing** with the remaining #55 items (§10, §15) and any other open issues next, per the
+user's "keep going on closing and finishing all the remaining issues" instruction.

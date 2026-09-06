@@ -2463,3 +2463,36 @@
   here) and §15 (an overall density/hierarchy pass across the whole landing) remain. This closes out
   the visual-storytelling item; #55 is now substantially complete bar those two.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-086.
+
+## D-088 — `develop` (D-063…D-087) merged to `main`, on the user's explicit request ("push all what is done... to main")
+- Date / phase: 2026-09-06, same session, immediately after D-087. Merge commit `d7792d6`
+  (fast-forward not possible — `main` had diverged since D-058 with unrelated hotfix commits merged
+  directly there in an earlier session), `--no-ff` merge from `develop` at `1360d0e`. Pushed to
+  `origin/main` at `f3e9cc9..d7792d6`. 138 files changed, no conflicts.
+- **Brings `main` up to date with everything from D-063 through D-087**: SECURITY #53 (rate limiting,
+  mandatory admin TOTP 2FA + recovery codes, revocable sessions, password policy, audit log), LEGAL
+  #52 (Praetoria legal identity, custody/liability/jurisdiction framework, GDPR split) + LEGAL #54
+  (legal pages stay Spanish-only, translated disclaimer for other locales), I18N #54 (full 8-locale
+  translation: es/ca/eu/gl/en/fr/de/it), PRODUCT #56 slices 1-3 (`read_only` company role, global
+  search + Cmd/Ctrl+K palette, route-intelligence "Rutas frecuentes"), and DESIGN #51 slice
+  1-2/DESIGN #55 (landing overhaul: brand renamed to "DeCA Profesional", language switcher redesigned
+  as a globe dropdown, real-QR hero visual, free-value section, copy reframe, normative/trust/persona
+  card polish, visual storytelling).
+- **Pre-merge verification, on `develop` before merging** (not just re-trusting each slice's own
+  gate): `tsc --noEmit` clean; `npm run lint` (the project's actual lint script, `next lint`) clean —
+  only 2 pre-existing `<img>` LCP warnings, unrelated to this session's work; `prettier --check .`
+  clean repo-wide; `vitest run` 139/139. Full e2e (`playwright test --workers=3`) had already been
+  run immediately after D-087 (155/157, 2 pre-existing parallel-only flakes reconfirmed unrelated) —
+  not re-run a second time since no code changed between that run and the merge.
+- **3 new Prisma migrations are on `main` now but NOT yet applied to production**:
+  `20260905204705_user_session_version`, `20260905211042_admin_2fa_and_audit_log`,
+  `20260906094103_company_role_read_only`. Per the project's own repeated incident history this
+  session (D-051, D-054, D-060), pushing to `main` is a GIT-level action only — it does not deploy or
+  migrate the live database. **Before any of D-063's security work (2FA, session revocation) or
+  D-071's read_only role is live on decaprofesional.es, the user needs to redeploy AND run `prisma
+  migrate deploy` against production** — flagged here explicitly rather than assumed.
+- CI triggered on the `main` push (run queued at push time — see the Actions tab for the result;
+  not blocked on here since Keel never merges/tags/releases beyond what was explicitly asked, and
+  the push itself was the explicit ask).
+- **Scope note — this is a code merge, not a production deploy.** No redeploy, no `prisma migrate
+  deploy`, and no DNS/infra action was taken as part of this decision.
