@@ -12,6 +12,7 @@ export const ADMIN_SECTIONS: { href: string; label: string }[] = [
   { href: "/admin/usuarios", label: "Usuarios" },
   { href: "/admin/captacion", label: "Captación" },
   { href: "/admin/operadores", label: "Operadores" },
+  { href: "/admin/inteligencia-rutas", label: "Rutas" },
   { href: "/admin/contenido", label: "Contenido" },
   { href: "/admin/errores", label: "Errores" },
   { href: "/admin/auditoria", label: "Auditoría" },
