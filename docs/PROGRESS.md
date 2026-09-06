@@ -1116,5 +1116,7 @@ caught next time instead of the schema check falsely reporting "ok" — this is 
 missing-migration incident has happened (D-054, D-060, this one). Added a `REQUIRED_COLUMNS` check
 alongside the existing table check, and added the 2 SECURITY #53 tables that were never in
 `REQUIRED_TABLES`. Gate: typecheck, lint, prettier clean, 139/139 unit, full suite 159/159 (zero
-flakes). See `decisions.md` D-096. Pushing to `main` immediately per the user's request so the
-hardened diagnostics are live for them to use once they redeploy + migrate.
+flakes). See `decisions.md` D-096. Merged to `main` at `da868ca` immediately per the user's request
+so the hardened diagnostics are live once they redeploy + migrate. **#56 resumes once the user
+confirms production auth is restored** — paused per their explicit "push it to main so i can try
+before finishing issue 56."

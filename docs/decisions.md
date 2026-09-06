@@ -2750,5 +2750,9 @@
   `playwright test --workers=3` — **159/159 passed, zero flakes this run** (including "internal user
   gets the shell, overview KPIs and system health", which exercises the `/admin/sistema` page this
   check feeds).
-- **Not committed to `main` yet at the time of writing** — this is a `develop`-only diagnostics
-  improvement so far; will merge once verified against the fixed production database.
+- **Merged to `main` at `da868ca`, on the user's explicit request** ("when finish this fix push it
+  to main so i can try before finishing issue 56") — pushed immediately so the hardened diagnostics
+  are live for the user to run (`npm run diagnose` or `/admin/sistema`) once they redeploy and apply
+  the pending migrations. No new Prisma migrations in this merge — the diagnostics fix is pure code,
+  the actual database fix is the user's action described above. #56 resumes once the user confirms
+  production auth is restored.
