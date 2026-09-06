@@ -29,15 +29,22 @@ export const metadata: Metadata = {
 /**
  * Site-wide Organization JSON-LD (SEO task #6/#3). Built ONLY from the
  * already-vetted `LEGAL_ENTITY`/`BRAND` copy — no new claims invented.
+ *
+ * PRAETORIA, S.L. is the legal operator, with its own corporate site
+ * (`LEGAL_ENTITY.corporateUrl`); DeCA Profesional is its product brand, with
+ * the product's own domain (`publicEnv.baseUrl`) under `brand.url`. Never
+ * the reverse — corrected in the 2026-09 legal-content pass after the first
+ * version of this block set `url` to the DeCA Profesional domain instead of
+ * PRAETORIA's own (docs/decisions.md D-108).
  */
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: LEGAL_ENTITY.name,
-  url: publicEnv.baseUrl,
+  url: LEGAL_ENTITY.corporateUrl,
   email: LEGAL_ENTITY.supportEmail,
-  brand: { "@type": "Brand", name: BRAND.name },
   address: { "@type": "PostalAddress", streetAddress: LEGAL_ENTITY.address },
+  brand: { "@type": "Brand", name: BRAND.name, url: publicEnv.baseUrl },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

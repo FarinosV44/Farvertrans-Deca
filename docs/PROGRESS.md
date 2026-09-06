@@ -1245,3 +1245,19 @@ need to run in CI or the user's normal environment before merge. See `decisions.
 **Still not merged to `main`, not deployed** — the user explicitly said not to yet. Still on
 `seo/technical-audit-2026-09`, still unpushed to origin (D-106's git-proxy authorization issue,
 unchanged on retry).
+
+## D-108: Structured-data correction — reviewer Person schema, Organization/Brand separation
+User-required correction before deployment: the reviewer's `reviewedBy` JSON-LD had the full
+"Name — credential, firm" string jammed into `Person.name`; and the site-wide `Organization`
+(added in D-105) had DeCA Profesional's own domain as PRAETORIA's `url` instead of PRAETORIA's real
+corporate site. Fixed both: new `lib/content/legal-reviewer.ts` splits the reviewer into
+name/jobTitle/identifier/memberOf/url (visible credit line unchanged — same combined string, now
+sourced from one shared constant instead of repeated literals), applied to the SEO template, the CMS
+Article/BlogPosting schema, and a new standalone entity on `/revision-legal`. Added
+`LEGAL_ENTITY.corporateUrl` (`https://praetoriaabogados.es/`, PRAETORIA's real site — already
+established fact from the paused Praetoria Ads campaign, not invented) and corrected every operator
+`Organization` (`app/layout.tsx`, the SEO template's `publisher`, the CMS `publisher`,
+`/revision-legal`'s `publisher`) to `{name, url: corporateUrl, brand: {name: BRAND.name, url:
+publicEnv.baseUrl}}`. Gate: `tsc --noEmit` unchanged (86 pre-existing, none new), lint/prettier
+clean, `vitest run` 139/139. See `decisions.md` D-108. Still not merged/deployed; same sandbox
+network limitation blocks `next build`/`test:e2e` here (D-105/D-106/D-107).

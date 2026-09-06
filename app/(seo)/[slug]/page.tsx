@@ -9,6 +9,8 @@ import { TrackView } from "@/components/analytics/track-view";
 import { publicEnv } from "@/lib/env";
 import { HERO } from "@/lib/content/landing";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { reviewerPersonJsonLd } from "@/lib/content/legal-reviewer";
 import { SEO_PAGES, getSeoPage } from "@/content/seo/pages";
 
 export const dynamicParams = false; // only the 10 known slugs render; anything else 404s
@@ -76,10 +78,21 @@ export default async function SeoPageView({ params }: { params: Promise<{ slug: 
       description: p.description,
       dateModified: p.lastReviewed,
       author: { "@type": "Organization", name: BRAND.name },
-      publisher: { "@type": "Organization", name: BRAND.name },
+      // PRAETORIA, S.L. is the legal operator/publisher; DeCA Profesional is
+      // its product brand (2026-09 legal-content pass, docs/decisions.md
+      // D-108) — never the reverse, and never DeCA Profesional's own domain
+      // as PRAETORIA's `url`.
+      publisher: {
+        "@type": "Organization",
+        name: LEGAL_ENTITY.name,
+        url: LEGAL_ENTITY.corporateUrl,
+        brand: { "@type": "Brand", name: BRAND.name, url: publicEnv.baseUrl },
+      },
       // Optional named legal reviewer credit — only present when the page's
-      // content has `legalReviewer` explicitly set; never invented.
-      ...(p.legalReviewer ? { reviewedBy: { "@type": "Person", name: p.legalReviewer } } : {}),
+      // content has `legalReviewer` explicitly set; never invented. Uses
+      // structured Person properties (name/jobTitle/identifier/memberOf),
+      // never the combined display string as `Person.name`.
+      ...(p.legalReviewer ? { reviewedBy: reviewerPersonJsonLd(p.legalReviewer) } : {}),
       mainEntityOfPage: url,
     },
     {

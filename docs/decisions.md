@@ -3171,3 +3171,43 @@ remaining scope.
   branch (off `develop`), which per D-106 could not be pushed from this sandbox either (git proxy:
   "repository not in this session's authorized set") — a patch file was exported again as a safety
   net.
+
+## D-108 — Structured-data correction: reviewer Person schema, Organization/Brand separation
+- Date / phase: 2026-09-06, requested directly by the user as a required correction before
+  deployment, following review of D-105's `reviewedBy`/`Organization` JSON-LD.
+- **Reviewer `Person` schema**: the combined display string
+  ("Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA") was being placed whole into
+  `Person.name` in every `reviewedBy` block. Created `lib/content/legal-reviewer.ts` as the single
+  place that splits it into schema-correct, semantically separated properties: `name` ("Juan José
+  Farinós Ibáñez" only), `jobTitle` ("Abogado"), `identifier` ("ICAV 13.981"), `memberOf` (an
+  Organization for PRAETORIA, S.L. with its own `url`), and `url` (the reviewer's own page,
+  `/revision-legal`). `PRAETORIA_REVIEWER_DISPLAY` is the one place the combined string is now
+  defined; `content/seo/pages.ts`'s 5 `legalReviewer` entries and `/revision-legal`'s visible credit
+  line all reference it instead of repeating the literal string, so the visible text and the
+  structured data can never drift independently. Applied to every `reviewedBy` site: the SEO cluster
+  template (`app/(seo)/[slug]/page.tsx`), the CMS Article/BlogPosting schema
+  (`lib/content/public-page.tsx`), and added a standalone `Person` entity (same helper) to
+  `/revision-legal`'s own JSON-LD, since that page didn't carry any structured reviewer data before.
+  An unrecognized display string falls back to putting all of it in `name` rather than crashing —
+  flagged in the helper's own doc comment as "not corrected data, add an entry instead."
+- **Organization vs. Brand**: the site-wide `Organization` JSON-LD (`app/layout.tsx`, added in
+  D-105) had set `url` to the DeCA Profesional domain — wrong, since PRAETORIA, S.L. is the actual
+  legal operator, not a legal entity whose "URL" is a product's marketing site. Added
+  `LEGAL_ENTITY.corporateUrl` (`https://praetoriaabogados.es/`) to `lib/legal-entity.ts` — this is
+  PRAETORIA's own real corporate site, already established as fact in this account's records (the
+  paused Google Ads campaign for "Praetoria División Jurídica" targets this same domain), not an
+  invented credential. `Organization.url` now points there; `brand.url` now correctly points at
+  `publicEnv.baseUrl` (the DeCA Profesional product domain) instead of being unset. Applied the same
+  corrected `{name, url, brand: {name, url}}` shape everywhere an operator-level `Organization`
+  appears as `publisher` — the SEO cluster template, the CMS Article/BlogPosting schema, and
+  `/revision-legal`'s `AboutPage.publisher` — so the site no longer emits two different unreconciled
+  claims about who "the Organization" is depending on which page a crawler reads. `author` fields
+  (the "Equipo DeCA Profesional" byline, a distinct concept from the operator/publisher) were left
+  unchanged — they correctly describe who wrote the content, not who legally operates the site.
+- **No new claims invented**: `corporateUrl` is a previously-established real fact (see above), the
+  reviewer's jobTitle/identifier/memberOf are exactly what the user specified and what was already
+  approved in D-105, and no address/CIF/credential text changed.
+- Verification: `tsc --noEmit` unchanged (86 pre-existing errors, none new); `eslint` and
+  `prettier --check` clean on every touched file; `vitest run` 139/139, unchanged. Same sandbox
+  network limitation as D-105/D-106/D-107 (`binaries.prisma.sh`, `fonts.googleapis.com` blocked) —
+  `next build`/`test:e2e`/a rendered JSON-LD crawl still cannot run in this sandbox.

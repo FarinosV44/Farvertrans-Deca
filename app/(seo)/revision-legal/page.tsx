@@ -6,6 +6,7 @@ import { MobileCta } from "@/components/site/mobile-cta";
 import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { PRAETORIA_REVIEWER_DISPLAY, reviewerPersonJsonLd } from "@/lib/content/legal-reviewer";
 
 /**
  * Public author/reviewer page (SEO task #3/#6): explains, using ONLY the
@@ -18,8 +19,6 @@ import { LEGAL_ENTITY } from "@/lib/legal-entity";
  */
 
 const CANONICAL = `${publicEnv.baseUrl}/revision-legal`;
-const REVIEWER_NAME = "Juan José Farinós Ibáñez";
-const REVIEWER_CREDENTIAL = "Abogado ICAV 13.981, PRAETORIA";
 
 export const metadata: Metadata = {
   title: "Autoría y revisión legal de los contenidos",
@@ -45,7 +44,15 @@ export default function RevisionLegalPage() {
       name: "Autoría y revisión legal de los contenidos",
       url: CANONICAL,
       description: metadata.description,
-      publisher: { "@type": "Organization", name: LEGAL_ENTITY.name },
+      // PRAETORIA, S.L. is the legal operator/publisher; DeCA Profesional is
+      // its product brand (2026-09 legal-content pass, docs/decisions.md
+      // D-108).
+      publisher: {
+        "@type": "Organization",
+        name: LEGAL_ENTITY.name,
+        url: LEGAL_ENTITY.corporateUrl,
+        brand: { "@type": "Brand", name: BRAND.name, url: publicEnv.baseUrl },
+      },
     },
     {
       "@context": "https://schema.org",
@@ -55,6 +62,11 @@ export default function RevisionLegalPage() {
         { "@type": "ListItem", position: 2, name: "Autoría y revisión legal", item: CANONICAL },
       ],
     },
+    // The named legal reviewer, as a standalone structured entity on the
+    // page that is literally about them — structured properties
+    // (name/jobTitle/identifier/memberOf), never the combined display
+    // string as `Person.name`. See lib/content/legal-reviewer.ts.
+    { "@context": "https://schema.org", ...reviewerPersonJsonLd(PRAETORIA_REVIEWER_DISPLAY) },
   ];
 
   return (
@@ -85,11 +97,8 @@ export default function RevisionLegalPage() {
           </p>
           <p>
             Algunas guías incluyen además una revisión legal a cargo de{" "}
-            <strong>
-              {REVIEWER_NAME} — {REVIEWER_CREDENTIAL}
-            </strong>
-            . Esa página lo indica explícitamente en su cabecera, junto a la fecha de última
-            revisión normativa.
+            <strong>{PRAETORIA_REVIEWER_DISPLAY}</strong>. Esa página lo indica explícitamente en su
+            cabecera, junto a la fecha de última revisión normativa.
           </p>
           <h2 className="text-lg font-bold">Relación con PRAETORIA</h2>
           <p>{LEGAL_ENTITY.legalBackingLine}</p>

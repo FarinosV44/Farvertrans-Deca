@@ -1,4 +1,5 @@
 import { LEGAL_SOURCE } from "@/lib/content/landing";
+import { PRAETORIA_REVIEWER_DISPLAY } from "@/lib/content/legal-reviewer";
 
 export type SeoSection = { h2: string; body: string[] };
 export type SeoPage = {
@@ -91,7 +92,7 @@ export const SEO_PAGES: SeoPage[] = [
       "El DeCA es la versión digital obligatoria del documento de control del transporte de mercancías por carretera. Qué es, para qué sirve y desde cuándo es obligatorio.",
     intent: "Qué es exactamente el DeCA.",
     lastReviewed: REVIEWED,
-    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
+    legalReviewer: PRAETORIA_REVIEWER_DISPLAY,
     intro: [
       "El DeCA (Documento Electrónico de Control Administrativo) es la versión digital del documento de control que ampara el transporte público de mercancías por carretera. Sustituye al documento en papel.",
       "Se genera a partir de datos estructurados, incorpora un código QR y una URL única, y debe conservarse al menos un año.",
@@ -133,7 +134,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Desde el 5 de octubre de 2026 el documento de control del transporte interior de mercancías por carretera debe ser electrónico (DeCA). Sin prórroga ni periodo transitorio.",
     intent: "Desde cuándo es obligatorio el DeCA.",
     lastReviewed: REVIEWED,
-    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
+    legalReviewer: PRAETORIA_REVIEWER_DISPLAY,
     intro: [
       "El 5 de octubre de 2026 entra en vigor la obligación de que el documento de control administrativo del transporte interior de mercancías por carretera se genere en formato electrónico desde el origen.",
       "No hay prórroga ni periodo transitorio. El conductor puede seguir llevando el documento en copia electrónica en el móvil o en copia impresa con el código QR; lo que deja de admitirse es originar el documento en papel y escanearlo después.",
@@ -223,7 +224,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Requisitos que debe cumplir el DeCA según la resolución vigente: PDF nativo, tamaño máximo 5 MB, QR, URL HTTPS de descarga directa, registro de cambios y conservación mínima de 1 año.",
     intent: "Qué requisitos debe cumplir el DeCA.",
     lastReviewed: REVIEWED,
-    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
+    legalReviewer: PRAETORIA_REVIEWER_DISPLAY,
     intro: [
       "Estos son los requisitos técnicos exigibles al DeCA para el transporte interior de mercancías.",
     ],
@@ -273,7 +274,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Datos mínimos que debe contener el DeCA según el artículo 6 de la Orden FOM/2861/2012: cargador, transportista, origen y destino, mercancía y peso, fecha y matrículas.",
     intent: "Qué datos lleva un DeCA.",
     lastReviewed: REVIEWED,
-    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
+    legalReviewer: PRAETORIA_REVIEWER_DISPLAY,
     intro: [
       "El DeCA debe contener, como mínimo, los datos del artículo 6 de la Orden FOM/2861/2012.",
     ],
@@ -357,7 +358,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Quién debe generar y conservar el DeCA en el transporte público de mercancías por carretera: cargador contractual y transportista efectivo, con excepciones.",
     intent: "Si estoy obligado a hacer el DeCA.",
     lastReviewed: REVIEWED,
-    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
+    legalReviewer: PRAETORIA_REVIEWER_DISPLAY,
     intro: [
       "La obligación recae sobre el cargador contractual y el transportista efectivo del transporte público de mercancías por carretera, en los términos de la normativa aplicable.",
       "Ambos deben conservar el fichero al menos un año.",
