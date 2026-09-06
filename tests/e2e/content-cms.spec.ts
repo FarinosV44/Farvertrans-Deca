@@ -33,7 +33,11 @@ test.describe("SEO #32 — content CMS", () => {
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
     await expect(page.getByTestId("cta-crear").first()).toHaveAttribute("href", "/crear");
-    const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
+    // The page now also carries a site-wide Organization JSON-LD (app/layout.tsx,
+    // D-105), so locate the page's own Article/BreadcrumbList script by content
+    // instead of assuming it's the first ld+json tag in the DOM.
+    const ldBlocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+    const ld = ldBlocks.find((block) => block.includes('"Article"'));
     expect(ld).toContain('"Article"');
     expect(ld).toContain('"BreadcrumbList"');
     await ctx.close();
