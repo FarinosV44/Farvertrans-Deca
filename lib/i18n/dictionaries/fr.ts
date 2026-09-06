@@ -186,7 +186,7 @@ export const fr = {
           },
           {
             q: "Quand devient-il obligatoire ?",
-            a: "À partir du 5 octobre 2026 pour le transport intérieur. Il n'y a ni prorogation ni période transitoire : le papier ne sera plus accepté.",
+            a: "À partir du 5 octobre 2026 pour le transport intérieur, sans prorogation ni période transitoire : le DeCA doit être généré au format électronique dès l'origine. Le conducteur peut le présenter en copie électronique sur mobile ou en copie imprimée avec le code QR ; un document créé à l'origine sur papier puis numérisé n'est pas un DeCA électronique valide.",
           },
           {
             q: "Qui doit l'établir ?",

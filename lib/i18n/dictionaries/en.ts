@@ -177,7 +177,7 @@ export const en = {
           },
           {
             q: "When does it become mandatory?",
-            a: "From 5 October 2026 for domestic transport. There is no extension or transitional period: paper is no longer accepted.",
+            a: "From 5 October 2026 for domestic transport, with no extension or transitional period: the DeCA must be generated electronically from the outset. The driver may carry it as an electronic copy on a mobile device or as a printed copy showing the QR code; a document originally created on paper and scanned afterwards is not a valid electronic DeCA.",
           },
           {
             q: "Who has to issue it?",

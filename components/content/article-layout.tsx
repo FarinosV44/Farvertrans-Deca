@@ -29,10 +29,19 @@ export function ArticleLayout({
   const sources = (item.sources as unknown as Source[]) ?? [];
   const reviewed = item.lastReviewedAt ? item.lastReviewedAt.toISOString().slice(0, 10) : null;
 
+  // Cornerstone guides (task: strengthen internal linking): always offer a
+  // path to them from every article, using varied Spanish anchor text, but
+  // never link an article to itself or duplicate an already-related slug.
+  const cornerstones: { slug: string; anchor: string }[] = [
+    { slug: "que-es-el-deca", anchor: "Qué es el DeCA y para qué sirve" },
+    { slug: "deca-obligatorio-2026", anchor: "Por qué el DeCA es obligatorio desde 2026" },
+    { slug: "como-hacer-un-deca", anchor: "Cómo hacer un DeCA paso a paso" },
+  ].filter((c) => c.slug !== item.slug && !related.some((r) => r.href === `/${c.slug}`));
+
   return (
     <>
       {!preview && <TrackView event="content_view" />}
-      <SiteHeader />
+      <SiteHeader nav />
 
       {preview && (
         <div className="bg-[var(--color-primary)] px-4 py-2 text-center text-sm font-medium text-[var(--color-primary-contrast)]">
@@ -58,6 +67,14 @@ export function ArticleLayout({
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--color-text-muted)]">
           {item.authorName && <span>Por {item.authorName}</span>}
+          {item.legalReviewerName && (
+            <span>
+              Revisión legal:{" "}
+              <Link href="/revision-legal" className="underline">
+                {item.legalReviewerName}
+              </Link>
+            </span>
+          )}
           {reviewed && <span>Última revisión: {reviewed}</span>}
           {item.category && <span>{item.category}</span>}
         </div>
@@ -124,6 +141,19 @@ export function ArticleLayout({
               <li>
                 <Link href="/soy-obligado">¿Estoy obligado a hacer el DeCA?</Link>
               </li>
+            </ul>
+          </section>
+        )}
+
+        {cornerstones.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-lg font-bold">Guías relacionadas</h2>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              {cornerstones.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/${c.slug}`}>{c.anchor}</Link>
+                </li>
+              ))}
             </ul>
           </section>
         )}

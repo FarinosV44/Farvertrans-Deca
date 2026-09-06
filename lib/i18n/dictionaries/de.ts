@@ -187,7 +187,7 @@ export const de = {
           },
           {
             q: "Wann wird es verpflichtend?",
-            a: "Ab dem 5. Oktober 2026 für den innerstaatlichen Verkehr. Es gibt weder eine Verlängerung noch eine Übergangsfrist: Papier wird nicht mehr akzeptiert.",
+            a: "Ab dem 5. Oktober 2026 für den innerstaatlichen Verkehr, ohne Verlängerung oder Übergangsfrist: Das DeCA muss von Anfang an elektronisch erstellt werden. Der Fahrer kann es als elektronische Kopie auf dem Mobiltelefon oder als ausgedruckte Kopie mit QR-Code mitführen; ein ursprünglich auf Papier erstelltes und anschließend gescanntes Dokument ist kein gültiges elektronisches DeCA.",
           },
           {
             q: "Wer muss es ausstellen?",

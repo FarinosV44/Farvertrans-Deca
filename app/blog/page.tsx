@@ -53,7 +53,7 @@ export default async function BlogIndex() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
         />
       )}
-      <SiteHeader />
+      <SiteHeader nav />
       <main id="contenido" className="mx-auto max-w-[1000px] px-4 pb-24 pt-10 md:px-6 md:pb-12">
         <h1 className="text-3xl font-bold md:text-4xl">Blog</h1>
         <p className="mt-2 max-w-2xl text-lg text-[var(--color-text-muted)]">

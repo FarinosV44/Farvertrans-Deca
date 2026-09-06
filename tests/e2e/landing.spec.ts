@@ -35,7 +35,10 @@ test.describe("BUILD 06 — production landing", () => {
     const cta = page.getByTestId("cta-crear").first();
     await expect(cta).toHaveAttribute("href", "/crear");
 
-    await expect(page).toHaveTitle(/DeCA Gratis/i);
+    // D-105/D-106 (SEO audit): the homepage title was deliberately changed away
+    // from "DeCA Gratis" to resolve a title/description cannibalisation with
+    // /deca-gratis — this now asserts the homepage's own distinct intent.
+    await expect(page).toHaveTitle(/DeCA Profesional/i);
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
     await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
     await expect(page.locator('meta[name="description"]')).toHaveCount(1);
@@ -216,7 +219,11 @@ test.describe("BUILD 06 — production landing", () => {
     expect(robots).toMatch(/Disallow: \/api/);
     expect(robots).toMatch(/Disallow: \/d\//);
     const sitemap = await (await request.get("/sitemap.xml")).text();
-    expect(sitemap).toContain("/crear");
+    // D-105/D-106 (SEO audit): /crear is a form screen (noindex, follow), not
+    // a landing page — deliberately excluded; /generador-deca is its
+    // indexable equivalent and stays listed.
+    expect(sitemap).not.toContain("<loc>http://localhost:3000/crear</loc>");
+    expect(sitemap).toContain("/generador-deca");
     expect(sitemap).not.toContain("/api");
   });
 

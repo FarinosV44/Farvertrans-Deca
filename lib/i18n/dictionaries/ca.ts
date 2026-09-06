@@ -185,7 +185,7 @@ export const ca = {
           },
           {
             q: "Quan és obligatori?",
-            a: "Des del 5 d'octubre de 2026 per al transport interior. No hi ha pròrroga ni període transitori: el paper deixa d'admetre's.",
+            a: "Des del 5 d'octubre de 2026 per al transport interior, sense pròrroga ni període transitori: el DeCA s'ha de generar en format electrònic des de l'origen. El conductor el pot portar en còpia electrònica al mòbil o en còpia impresa amb el codi QR; un document creat originalment en paper i escanejat després no és un DeCA electrònic vàlid.",
           },
           {
             q: "Qui l'ha de fer?",

@@ -33,7 +33,11 @@ test.describe("SEO #32 — content CMS", () => {
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
     await expect(page.getByTestId("cta-crear").first()).toHaveAttribute("href", "/crear");
-    const ld = await page.locator('script[type="application/ld+json"]').first().textContent();
+    // D-108 (SEO audit) added a site-wide Organization JSON-LD block to the
+    // root layout, which now renders before the page's own Article schema —
+    // check across every ld+json block rather than assuming `.first()`.
+    const ldBlocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+    const ld = ldBlocks.join("\n");
     expect(ld).toContain('"Article"');
     expect(ld).toContain('"BreadcrumbList"');
     await ctx.close();

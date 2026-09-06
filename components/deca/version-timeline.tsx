@@ -61,8 +61,9 @@ export function VersionTimeline({
         ))}
       </ol>
       <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-        Cada corrección genera una versión nueva con su propio QR y URL. Las versiones anteriores no
-        se borran y siguen siendo consultables.
+        En DeCA Profesional, cada corrección genera una versión nueva con su propio QR y URL — uno
+        de los dos métodos de corrección que permite la normativa —. Las versiones anteriores no se
+        borran y siguen siendo consultables.
       </p>
     </section>
   );
