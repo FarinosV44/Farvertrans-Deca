@@ -2689,3 +2689,66 @@
   (super-admin platform-wide dashboard beyond what #33 already built, an explicit permissions matrix,
   external-carrier-vs-employee invite distinction) stays open — see the progress comment posted on
   the issue.
+
+## D-095 — `develop` (D-092…D-094) merged to `main` at `a08db07`, on the user's explicit request ("finish issue 51 54 55 and 56 ... push to main")
+- Date / phase: 2026-09-06, same session, immediately after D-094. `--no-ff` merge from `develop` at
+  `009f45f`, pushed to `origin/main` at `5ba21c4..a08db07`. 20 files changed, no conflicts.
+- Brings `main` current with: the password-reset i18n fix (closes #54's last gap), the `/crear`
+  desktop preview panel (closes #51), and team audit logging + the new `/admin/auditoria` viewer
+  (partial progress on #56, which stays open).
+- **Repeated the D-085/§10 GitHub auto-close mistake once more, on #56 this time**: the D-093/D-094
+  commit message (`8ee8002`) contained "(closes #56 gap)" in its title — GitHub read "closes #56" as
+  a bare closing keyword regardless of the trailing word "gap", and auto-closed #56 on push even
+  though real scope remains there. Caught it via `gh issue close 51` unexpectedly reporting #51
+  "already closed" (from the SAME commit closing both #51 and #56 — #51's closure was correct and
+  intended, #56's was not). Reopened #56 immediately with an explanatory comment and posted the
+  intended progress comment listing what remains. This merge's own commit message was written
+  without any "closes #N" phrasing specifically to avoid a third occurrence.
+- **This merge's own gate**: no new verification run beyond what D-092/D-093/D-094 already did on
+  `develop` — no code changed since that last full run (157/157, 2 pre-existing flakes reconfirmed
+  unrelated).
+- **No new Prisma migrations in this merge** — no `prisma migrate deploy` needed. A production
+  redeploy to actually serve this code is still a separate, not-yet-done action, same standing
+  distinction as every prior merge this session.
+- CI triggered on the `main` push (queued at push time).
+
+## D-096 — PRODUCTION INCIDENT: total login/registration outage — missing SECURITY #53 migrations on production, diagnosed live
+- Date / phase: 2026-09-06, same session, immediately after D-095. The user reported registration/
+  login failing with a generic error "even with Google", and no emails sending.
+- **Diagnosed live, not assumed**: `curl -X POST https://decaprofesional.es/api/auth/login` with a
+  wrong password against a NONEXISTENT email returned `{"code":"internal","message":"Error al
+  iniciar sesión."}` at HTTP 500 — that can only happen if the crash occurs on `login()`'s very
+  first database read, before the credential check (`AuthError("invalid_credentials")`) is even
+  reached. Root cause: `main` has carried the SECURITY #53 schema (D-063–067) since D-088's merge,
+  but production's Postgres never had `prisma migrate deploy` run for the 3 pending migrations
+  D-088 explicitly flagged (`user_session_version`, `admin_2fa_and_audit_log`,
+  `company_role_read_only`). `setSessionCookie()` — called unconditionally on EVERY successful
+  login, registration, AND the Google OAuth callback (confirmed via `app/api/auth/google/
+  callback/route.ts` also calling it) — reads `user.session_version`, a column that does not exist
+  on production. Every auth path crashes identically, which is why it happened "even with Google."
+- **Not a code bug** — no code change fixes this; the fix is running `prisma migrate deploy` (or the
+  pending migrations' SQL directly via the Supabase SQL Editor, same workaround as D-060 if the
+  session-pooler connection limit blocks Prisma's own migrate command) against the ACTUAL production
+  database. Gave the user the exact SQL for all 3 migrations so they don't have to hunt for it.
+  Told them to confirm once run so this can be re-verified live and, if the SQL-editor path was
+  used, the `_prisma_migrations` ledger reconciled the same way as D-060.
+- **The separate "no emails send" report** is the already-documented `RESEND_API_KEY` placeholder/
+  invalid-key issue (every dev/CI run this entire session logs `mail_provider_error 401 API key is
+  invalid`) — a credential the user needs to provide, not a code gap.
+- **Hardened `lib/diagnostics.ts` so this exact failure class is caught proactively next time**
+  (this is the THIRD time a missing-migration-on-production incident has happened — D-054, D-060,
+  now this — and each time the existing `schema` check reported "ok" because it only verified TABLE
+  existence, never column existence, so a table that exists but is missing a column added by a
+  later migration passed silently). Added `REQUIRED_COLUMNS` (currently `user.session_version`,
+  `user.totp_secret`, `user.totp_enabled_at`, `user.preferred_locale` — the columns a hot,
+  unconditional auth-path read depends on) checked via one `information_schema.columns` query
+  alongside the existing table check; also added the 2 tables the SECURITY #53 migration created
+  (`admin_recovery_code`, `security_audit_log`) to `REQUIRED_TABLES`, which had never been added
+  there. `npm run diagnose` and `/admin/sistema` will now report `Faltan columnas: user.session_
+  version...` explicitly instead of a false "ok", the next time code ships ahead of a migration.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139. Full
+  `playwright test --workers=3` — **159/159 passed, zero flakes this run** (including "internal user
+  gets the shell, overview KPIs and system health", which exercises the `/admin/sistema` page this
+  check feeds).
+- **Not committed to `main` yet at the time of writing** — this is a `develop`-only diagnostics
+  improvement so far; will merge once verified against the fixed production database.
