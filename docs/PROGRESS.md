@@ -1160,3 +1160,14 @@ suite 159/161 (2 pre-existing flakes, reconfirmed unrelated). See `decisions.md`
 for #56: "drafts requiring completion" (needs new server-side draft persistence), richer route/
 carrier/vehicle frequency widgets, the super-admin dashboard beyond #33, permissions matrix, and the
 external-carrier-vs-employee invite distinction.
+
+## D-102: admin route-intelligence screen (closes #56 item, also closes DATA #45)
+#45's own tracking comment said it stays open until this exact screen lands. Added
+`lib/admin/route-intelligence.ts` (cross-company corridor frequency, consent-gated — only companies
+with a granted `CommercialConsent` are counted, per #45's own privacy requirement) and a new
+`/admin/inteligencia-rutas` page following the `/admin/errores` list pattern. Gate: typecheck, lint,
+prettier clean, 139/139 unit, 6/6 targeted admin e2e (new consent-gating test using a before/after
+KPI delta, safe under parallel execution), full suite 160/162 (2 pre-existing flakes, reconfirmed
+unrelated). See `decisions.md` D-102. Still open for #56: Legal/configuration admin section,
+permissions matrix, drafts requiring completion, richer carrier/vehicle widgets, external-invite
+distinction.

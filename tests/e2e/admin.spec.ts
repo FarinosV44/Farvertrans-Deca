@@ -217,4 +217,38 @@ test.describe("ADMIN #33 — internal command center", () => {
       await close();
     }
   });
+
+  test("DATA #45 / PRODUCT #56: route intelligence only counts companies with granted commercial consent", async ({
+    browser,
+  }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await registerAndGenerate(page, `Consentimiento Rutas SL ${rnd()}`);
+
+    const { page: admin, close } = await internalPage(browser);
+    try {
+      await admin.goto("/admin/inteligencia-rutas");
+      await expect(admin.getByRole("heading", { name: "Inteligencia de rutas" })).toBeVisible();
+      const kpiValue = () =>
+        admin
+          .getByText("Empresas con consentimiento")
+          .locator("..")
+          .locator(".text-lg")
+          .textContent();
+      const before = Number((await kpiValue()) ?? "0");
+
+      // Not consented yet — granting it is what should move the KPI.
+      const consentRes = await page.request.post("/api/company/consent", {
+        data: { granted: true },
+      });
+      expect(consentRes.status()).toBe(200);
+
+      await admin.goto("/admin/inteligencia-rutas");
+      const after = Number((await kpiValue()) ?? "0");
+      expect(after).toBeGreaterThan(before);
+    } finally {
+      await close();
+      await ctx.close();
+    }
+  });
 });

@@ -2875,3 +2875,37 @@ commit either way.
 - **Scope note:** this is one concrete #56 item, not the whole "Company dashboard improvements"
   list — "drafts requiring completion" (needs server-side draft persistence, real new architecture)
   and richer route/carrier/vehicle frequency widgets remain unaddressed. #56 stays open.
+
+## D-101 — `develop` (D-100) merged to `main` at `5e5fbfb`, on the user's explicit request ("finish it")
+`--no-ff` merge, no conflicts, 13 files. Brings `main` current with the team-activity dashboard
+widget. The user asked directly whether #56 was finished/merged; answered honestly (audit logging
+was already on `main`, this widget was not) and was told to continue toward finishing #56's
+remaining scope.
+
+## D-102 — PRODUCT #56 gap closed (also closes DATA #45): admin route-intelligence screen
+- Date / phase: 2026-09-06, same session, on the user's explicit "finish it" (#56) instruction.
+  DATA #45's own tracking comment explicitly named this as the reason to keep #45 open ("keeping
+  this open until the admin route-intelligence section (§5) lands") — this closes both issues.
+- **Implemented**: `lib/admin/route-intelligence.ts` — `topCorridors(since, limit)` and
+  `consentedCompanyCount()`, reading the same `DecaRouteIntel` rows the company-scoped
+  `lib/data/route-intel.ts` already uses (no new data collection, same fetch-then-group-in-JS
+  pattern). **The one rule that makes this different and admin-safe**: a company's rows are only
+  included when that company has an explicit, granted `CommercialConsent` row — enforced by first
+  resolving consenting company IDs, then filtering `DecaRouteIntel` to only those, matching #45's
+  own explicit privacy requirement ("must be used only... according to the separate commercial-
+  consent model where required. Do not silently repurpose customer data for commercial matching").
+  New `/admin/inteligencia-rutas` screen (`app/admin/(protected)/inteligencia-rutas/page.tsx`)
+  follows the exact `/admin/errores` list-page pattern (range filter, KPIs, table, empty state) —
+  no new UI pattern invented. Added to `ADMIN_SECTIONS` nav as "Rutas."
+- Verification: `tsc --noEmit` clean; ESLint clean (one `no-unused-vars` warning from an initial
+  rest-destructure was refactored away, not suppressed); Prettier clean; `vitest run` 139/139.
+  New e2e test in `tests/e2e/admin.spec.ts` grants commercial consent for a fresh company via
+  `POST /api/company/consent` and asserts the "Empresas con consentimiento" KPI strictly increases
+  — a before/after delta rather than an absolute count, so it stays correct under `fullyParallel`
+  execution alongside every other test writing to the same shared database. `playwright test
+  tests/e2e/admin.spec.ts` — 6/6 passed. Full `playwright test --workers=3` — 160/162 passed; the 2
+  failures (`admin-2fa`, `content-cms`) are the same already-documented parallel-only flakes.
+- **This is still one item, not all of #56's remaining scope.** Still open: the super-admin
+  dashboard's "Legal/configuration" section (no `/admin/configuracion` exists), an explicit
+  permissions matrix, "drafts requiring completion," richer company-level carrier/vehicle frequency
+  widgets, and the external-carrier-vs-employee invite distinction.
