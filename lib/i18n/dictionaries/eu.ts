@@ -193,7 +193,7 @@ export const eu = {
           },
           {
             q: "Noiz da nahitaezkoa?",
-            a: "2026ko urriaren 5etik aurrera barne-garraiorako. Ez dago luzapenik ez trantsizio-epealdirik: paperak ez du balio izango.",
+            a: "2026ko urriaren 5etik aurrera barne-garraiorako, luzapenik edo trantsizio-epealdirik gabe: DeCA jatorritik formatu elektronikoan sortu behar da. Gidariak kopia elektronikoa mugikorrean edo QR kodea daukan kopia inprimatua eraman ditzake; jatorriz paperean sortu eta gero eskaneatutako dokumentua ez da baliozko DeCA elektronikoa.",
           },
           {
             q: "Nork egin behar du?",

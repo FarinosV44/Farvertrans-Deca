@@ -41,6 +41,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // SEO: decaprofesional.es (no "www") is the single canonical host. Every
+  // request to the www host is permanently redirected to the same path,
+  // preserving the query string (including attribution params like ?ref=,
+  // utm_*) automatically since the destination has no query of its own.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.decaprofesional.es" }],
+        destination: "https://decaprofesional.es/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

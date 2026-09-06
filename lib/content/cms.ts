@@ -35,6 +35,7 @@ function toData(input: ContentInput) {
     tags: input.tags,
     heroImage: clean(input.heroImage),
     authorName: clean(input.authorName),
+    legalReviewerName: clean(input.legalReviewerName),
     focusKeyword: clean(input.focusKeyword),
     seoTitle: clean(input.seoTitle),
     metaDescription: clean(input.metaDescription),

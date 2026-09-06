@@ -25,6 +25,15 @@ export default function ContactoPage() {
         </a>
       </p>
       <p>
+        También puedes llamarnos:{" "}
+        <a
+          href={`tel:${BRAND.supportPhone.replace(/\s+/g, "")}`}
+          className="font-medium text-[var(--color-primary)] no-underline hover:underline"
+        >
+          {BRAND.supportPhone}
+        </a>
+      </p>
+      <p>
         Si el problema es con un documento ya generado, indícanos la referencia (por ejemplo
         <code className="mx-1 rounded bg-[var(--color-surface)] px-1">DECA-A1B2C3D4</code>) o el
         código de incidencia si lo tienes — lo localizamos al instante.

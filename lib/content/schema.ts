@@ -22,6 +22,9 @@ export const contentInputSchema = z.object({
   tags: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
   heroImage: z.string().trim().url().optional().or(z.literal("")),
   authorName: z.string().trim().max(80).optional().or(z.literal("")),
+  // Optional named legal reviewer (e.g. a PRAETORIA lawyer). Only set when a
+  // real review took place — never auto-filled from a template.
+  legalReviewerName: z.string().trim().max(120).optional().or(z.literal("")),
   focusKeyword: z.string().trim().max(80).optional().or(z.literal("")),
   seoTitle: z.string().trim().max(70).optional().or(z.literal("")),
   metaDescription: z.string().trim().max(180).optional().or(z.literal("")),

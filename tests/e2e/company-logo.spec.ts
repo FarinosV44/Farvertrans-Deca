@@ -217,4 +217,75 @@ test.describe("PRODUCT #39 — company logo on the DeCA PDF", () => {
     await expect(member.getByTestId("company-logo-remove")).toHaveCount(0);
     await memberCtx.close();
   });
+
+  test("owner can add and edit the company's contact email/phone/address", async ({ page }) => {
+    await register(page);
+    await page.goto("/panel/empresa");
+
+    // Nothing set yet — fields start empty, owner can fill them in.
+    await page.fill('[data-testid="company-email"]', "contacto@empresa-test.example");
+    await page.fill('[data-testid="company-phone"]', "600111222");
+    await page.fill('[data-testid="company-address"]', "Calle Prueba 1, Madrid");
+    await page.fill('[data-testid="company-contact-name"]', "Ana Ejemplo");
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes("/api/company/profile") && r.request().method() === "PATCH",
+      ),
+      page.getByTestId("company-profile-save").click(),
+    ]);
+    await expect(page.getByRole("status")).toHaveText("Guardado.");
+
+    // Persists across a reload.
+    await page.reload();
+    await expect(page.locator('[data-testid="company-email"]')).toHaveValue(
+      "contacto@empresa-test.example",
+    );
+    await expect(page.locator('[data-testid="company-phone"]')).toHaveValue("600111222");
+    await expect(page.locator('[data-testid="company-address"]')).toHaveValue(
+      "Calle Prueba 1, Madrid",
+    );
+    await expect(page.locator('[data-testid="company-contact-name"]')).toHaveValue("Ana Ejemplo");
+
+    // Editable again — a real edit, not just a one-time fill.
+    await page.fill('[data-testid="company-phone"]', "600999888");
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes("/api/company/profile") && r.request().method() === "PATCH",
+      ),
+      page.getByTestId("company-profile-save").click(),
+    ]);
+    await page.reload();
+    await expect(page.locator('[data-testid="company-phone"]')).toHaveValue("600999888");
+  });
+
+  test("a non-owner member sees the company contact info read-only", async ({ browser }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await register(owner);
+    await owner.goto("/panel/equipo");
+    const memberEmail = email();
+    await owner.fill('[data-testid="invite-email"]', memberEmail);
+    await Promise.all([
+      owner.waitForResponse(
+        (r) => r.url().includes("/api/team/invites") && r.request().method() === "POST",
+      ),
+      owner.getByTestId("invite-submit").click(),
+    ]);
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    const memberCtx = await browser.newContext();
+    const member = await memberCtx.newPage();
+    await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await member.fill("#email", memberEmail);
+    await member.fill("#password", "Supersecret123!");
+    await member.getByTestId("register-submit").click();
+    await expect(member).toHaveURL(/\/verificar-email/);
+
+    await member.goto("/panel/empresa");
+    await expect(member.getByTestId("company-email")).toHaveCount(0);
+    await expect(member.getByTestId("company-profile-save")).toHaveCount(0);
+
+    await ownerCtx.close();
+    await memberCtx.close();
+  });
 });

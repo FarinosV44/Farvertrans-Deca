@@ -35,7 +35,9 @@ test.describe("BUILD 06 — production landing", () => {
     const cta = page.getByTestId("cta-crear").first();
     await expect(cta).toHaveAttribute("href", "/crear");
 
-    await expect(page).toHaveTitle(/DeCA Gratis/i);
+    // Homepage title deliberately moved off "gratis" to resolve a keyword
+    // cannibalisation with /deca-gratis (docs/decisions.md D-105).
+    await expect(page).toHaveTitle(/DeCA Profesional/i);
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
     await expect(page.locator('meta[property="og:title"]')).toHaveCount(1);
     await expect(page.locator('meta[name="description"]')).toHaveCount(1);
@@ -216,7 +218,10 @@ test.describe("BUILD 06 — production landing", () => {
     expect(robots).toMatch(/Disallow: \/api/);
     expect(robots).toMatch(/Disallow: \/d\//);
     const sitemap = await (await request.get("/sitemap.xml")).text();
-    expect(sitemap).toContain("/crear");
+    // /crear is deliberately excluded (noindex,follow — it's the wizard, not
+    // a landing page); /generador-deca is its indexable equivalent (D-105).
+    expect(sitemap).not.toContain("/crear");
+    expect(sitemap).toContain("/generador-deca");
     expect(sitemap).not.toContain("/api");
   });
 

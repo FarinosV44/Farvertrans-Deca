@@ -1171,3 +1171,127 @@ KPI delta, safe under parallel execution), full suite 160/162 (2 pre-existing fl
 unrelated). See `decisions.md` D-102. Still open for #56: Legal/configuration admin section,
 permissions matrix, drafts requiring completion, richer carrier/vehicle widgets, external-invite
 distinction.
+
+## D-103: `develop` (D-102) merged to `main` at `1d8c78a`; #56's final status for this session
+Merged the route-intelligence screen to `main`. Before pushing further on #56, asked the owner
+directly about the two remaining items that need a design decision, not just effort: the external-
+carrier-vs-employee invite distinction, and server-side draft persistence. Owner chose "not now" for
+both — real architecture decisions without a concrete driving use case yet. Posted a full section-by-
+section status comment on #56 (8 of 10 suggested admin-dashboard sections now exist; company
+dashboard items done except drafts/frequency widgets; invitations fully audited now). **#56 stays
+open** for the two deferred items — this is the honest final state, not a forced close. See
+`decisions.md` D-103.
+
+## D-104: editable company contact profile (email/phone/address/contact name) + public support phone
+`/panel/empresa` had no way to add/edit company email/phone/address — only the logo was editable.
+Added `Company.email` (new migration, **needs `prisma migrate deploy` on production**), a
+`PATCH /api/company/profile` route (owner-only), and a `CompanyProfileForm` (editable for owners,
+read-only for members) shown in a new "Datos de contacto" section. Also added a public support
+phone (`607 52 77 19`) via `BRAND.supportPhone`, shown in the footer and on `/contacto`. Found and
+fixed a real regression in `nav-links.spec.ts` (the footer link-checker didn't know to skip `tel:`
+links — first one in the product). Gate: typecheck, lint, prettier clean, 139/139 unit, 10/10
+targeted e2e, full suite 163/164 (1 pre-existing flake, reconfirmed unrelated). See `decisions.md`
+D-104. **Production still needs the migration applied** before this feature works live.
+
+## D-105/D-106: Technical SEO audit of decaprofesional.es (canonical host, sitemap, cannibalisation, legal reviewer)
+Full technical SEO audit requested directly by the user, on branch `seo/technical-audit-2026-09`
+(off `develop`, not merged to `main`). Chose `decaprofesional.es` (no `www`) as the single canonical
+host and added a permanent redirect from `www` (`next.config.ts`). Fixed `app/sitemap.ts`: removed
+`/crear` (now `noindex, follow` — it's the wizard, not a landing page; `/generador-deca` stays as the
+indexable equivalent), replaced every `lastModified: new Date()` with genuine per-page dates, and
+dropped `priority`/`changeFrequency` (not real ranking signals). Resolved a homepage vs
+`/deca-gratis` title/description cannibalisation by giving the homepage a distinct "DeCA Profesional
+generador" intent (H1 was already fine, untouched). Reviewed `/deca-obligatorio-2026` vs the blog
+countdown post, kept both (different intents), cross-linked them instead. Completed D-081's brand
+rename in the two files it had missed (`prisma/content-seed.ts`, `content/seo/pages.ts`) and added a
+migration to backfill already-seeded rows. Added an optional `legalReviewer`/`legalReviewerName`
+field (SEO cluster + CMS + Prisma + Zod), set the user's given PRAETORIA-reviewer credential on 5
+normative pages, and built a new `/revision-legal` page (only from the already-approved
+`LEGAL_ENTITY` copy, consistent with D-043) linked from the footer. Added `nav` to every SiteHeader
+call missing it, renamed "Sigue leyendo" to "Guías relacionadas" with the 3 cornerstone guides always
+offered, and added Article/BreadcrumbList/Organization JSON-LD where missing. `robots.ts` already
+covered every private route — no change needed.
+**Verification, honestly bounded by this sandbox**: this environment blocks `binaries.prisma.sh` and
+`fonts.googleapis.com` (confirmed pre-existing via an unmodified baseline before any edit), so
+`prisma migrate deploy` and `next build`/`test:e2e` cannot complete here. Verified everything that
+could run: `tsc --noEmit` — byte-identical 86 pre-existing errors before/after (none newly
+introduced); lint clean on every touched file; `prettier --check` clean; `vitest run` 139/139
+unchanged. See `decisions.md` D-105/D-106 for the full reasoning and the two migrations left for the
+user/CI to apply. **Not merged to `main` and not deployed**, per the task's explicit instruction —
+ready for review on the branch.
+
+## D-107: Legal-content correctness pass on the SEO branch (correction methods, paper wording)
+Follow-up gate the user required before merging/deploying the SEO audit (D-105/D-106). Verified the
+two flagged claim types directly against the real BOE resolution
+(BOE-A-2026-12784, fetched live) rather than trusting paraphrase alone: confirmed a DeCA can be
+corrected either by amending the existing PDF (same URL/QR) or by issuing a new PDF (new URL/QR) —
+both valid — and that the driver may carry either an electronic copy or a printed paper copy of an
+electronically-originated DeCA; only a paper-originated-then-scanned document is invalid. Fixed
+every place that overstated this as "cannot be edited" / "always a new QR" or as "paper no longer
+accepted" without that nuance: the `como-corregir-un-deca` guide, `requisitos-deca`'s FAQ,
+`deca-empresas-transporte`'s copy, the in-app version-history caption, the countdown blog post,
+`que-es-el-deca`, `deca-obligatorio-2026`, the homepage FAQ, and **all 8 locale dictionaries**
+(confirmed live via the language switcher, not dead code). Also found and cited `Ley 9/2025 de
+Movilidad Sostenible` (verified real, BOE-A-2025-24545) — the actual enabling law behind the October
+2026 deadline — which was missing from every source list despite being one of the three primary
+sources named. Added a third migration (`20260906190000_backfill_legal_correction_wording`) since
+`seedContent()`'s idempotency means the source fix alone wouldn't correct already-seeded rows;
+validated its SQL against a scratch table in this sandbox's local Postgres.
+**Gate run in this sandbox**: `tsc --noEmit` unchanged (86 pre-existing errors, none new); lint and
+prettier clean on every touched file; `vitest run` 139/139 unchanged. **Gate NOT run here** (same
+sandbox network limitation as D-105: `binaries.prisma.sh` and `fonts.googleapis.com` blocked):
+`prisma generate`/`migrate deploy`, `npm run build`, `test:e2e`, sitemap crawl, staging deploy — all
+need to run in CI or the user's normal environment before merge. See `decisions.md` D-107.
+**Still not merged to `main`, not deployed** — the user explicitly said not to yet. Still on
+`seo/technical-audit-2026-09`, still unpushed to origin (D-106's git-proxy authorization issue,
+unchanged on retry).
+
+## D-108: Structured-data correction — reviewer Person schema, Organization/Brand separation
+User-required correction before deployment: the reviewer's `reviewedBy` JSON-LD had the full
+"Name — credential, firm" string jammed into `Person.name`; and the site-wide `Organization`
+(added in D-105) had DeCA Profesional's own domain as PRAETORIA's `url` instead of PRAETORIA's real
+corporate site. Fixed both: new `lib/content/legal-reviewer.ts` splits the reviewer into
+name/jobTitle/identifier/memberOf/url (visible credit line unchanged — same combined string, now
+sourced from one shared constant instead of repeated literals), applied to the SEO template, the CMS
+Article/BlogPosting schema, and a new standalone entity on `/revision-legal`. Added
+`LEGAL_ENTITY.corporateUrl` (`https://praetoriaabogados.es/`, PRAETORIA's real site — already
+established fact from the paused Praetoria Ads campaign, not invented) and corrected every operator
+`Organization` (`app/layout.tsx`, the SEO template's `publisher`, the CMS `publisher`,
+`/revision-legal`'s `publisher`) to `{name, url: corporateUrl, brand: {name: BRAND.name, url:
+publicEnv.baseUrl}}`. Gate: `tsc --noEmit` unchanged (86 pre-existing, none new), lint/prettier
+clean, `vitest run` 139/139. See `decisions.md` D-108. Still not merged/deployed; same sandbox
+network limitation blocks `next build`/`test:e2e` here (D-105/D-106/D-107).
+
+## D-109: passkeys (WebAuthn) as primary admin 2FA, TOTP kept as fallback
+Redesigned mandatory admin 2FA per the owner's explicit spec: passkey (Face ID/Touch ID/Windows
+Hello) is now the primary method — one button, no QR code — with the existing TOTP flow kept fully
+intact as an explicit fallback. Added `@simplewebauthn/server`/`browser` (MIT), new
+`WebAuthnCredential` + `TrustedDevice` tables (migration `20260906204958_webauthn_passkeys_and_
+trusted_devices`, **needs `prisma migrate deploy` on production**), 9 new API routes (registration/
+authentication ceremonies, credential + trusted-device management, TOTP reset), and redefined
+"2FA enrolled" across all three `lib/admin/guard.ts` gates as TOTP OR passkey. New `/admin/seguridad`
+Security screen (passkeys, TOTP status, recovery codes, trusted devices). `totp-setup-form.tsx`
+rewritten as a passkey-primary choice screen; `totp-verify-form.tsx` gained a passkey button + a
+30-day "trust this device" checkbox, with the TOTP/recovery-code input still visible and usable by
+default. Fixed two real bugs found while building this: `enable` route regenerating recovery codes
+even when a passkey already had unused ones, and the Security screen silently swallowing the
+"can't remove your last 2FA method" server error. Gate: typecheck, lint, prettier clean, `npm run
+build` clean, 139/139 unit, `admin-2fa.spec.ts` 7/7 unchanged, new `admin-passkey.spec.ts` 5/5
+(CDP virtual authenticator standing in for Face ID), full suite 169/169, zero flakes. See
+`decisions.md` D-109. **Production needs the migration applied** before this feature works live.
+
+## D-110: merged the SEO audit branch (D-105–D-108) into develop; fixed 2 real test regressions
+Pushing D-109 was rejected — PR #57 (a separate SEO audit session, D-105–D-108) had already merged
+to `origin/develop`. Merged it in (conflicts only in the two append-only doc logs; renumbered my own
+entry D-105→D-109 since theirs landed first), then ran the full suite for the first time against
+that branch's changes (its own sandbox couldn't run `next build`/`test:e2e` at all). Found and fixed
+2 real, reproducible test regressions — both stale assertions left behind by that branch's own
+*intentional* changes, not product bugs: `landing.spec.ts` still expected the old homepage title
+and the old `/crear`-in-sitemap behavior (both deliberately changed by D-105/D-106's cannibalisation
+fix), and `content-cms.spec.ts` assumed the first JSON-LD block was the page's `Article` schema
+(D-108 added a site-wide `Organization` block to the root layout that now renders first). Full gate
+after merge + fixes: typecheck/lint/prettier clean, `npm run build` clean, 139/139 unit, full
+`playwright test --workers=3` 168/169 (1 pre-existing parallel-only flake, reconfirmed passing at
+`--workers=1`). `develop` now carries both the SEO audit and the passkey feature, fully green. See
+`decisions.md` D-110. **Production needs 4 migrations applied, in order**: the 3 from the SEO branch
+plus D-109's `webauthn_passkeys_and_trusted_devices`.

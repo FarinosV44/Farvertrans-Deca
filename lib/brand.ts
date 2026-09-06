@@ -17,6 +17,8 @@ export const BRAND = {
   tagline: "Genera tu Documento Electrónico de Control en menos de 2 minutos.",
   /** Support / operational contact (LEGAL #52 — PRAETORIA's dedicated DeCA address). */
   supportEmail: "Deca@praetoriaabogados.es",
+  /** Support phone (owner directive, 2026-09-06). */
+  supportPhone: "607 52 77 19",
   /** Canonical base URL comes from the environment (NEXT_PUBLIC_FVD_BASE_URL). */
   get baseUrl(): string {
     return process.env.NEXT_PUBLIC_FVD_BASE_URL ?? "http://localhost:3000";

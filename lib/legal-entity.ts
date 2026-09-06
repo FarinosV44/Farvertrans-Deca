@@ -13,8 +13,17 @@ export const LEGAL_ENTITY = {
   cif: "B21810452",
   /** Registered address (LEGAL #52). */
   address: "Calle Pintor Francisco Ribalta 4A, 46540 El Puig, Valencia, España",
+  /**
+   * PRAETORIA's own corporate/legal website — NOT the DeCA Profesional
+   * product domain. Used as the Organization's `url` in structured data;
+   * DeCA Profesional's own domain belongs under `brand.url` instead
+   * (2026-09 legal-content pass, docs/decisions.md D-108).
+   */
+  corporateUrl: "https://praetoriaabogados.es/",
   /** Support/operational contact — reuses the product's support address. */
   supportEmail: BRAND.supportEmail,
+  /** Support phone — reuses the product's support phone. */
+  supportPhone: BRAND.supportPhone,
   /** Data-protection contact, if it ever differs from support. */
   privacyEmail: BRAND.supportEmail,
   legalNoticeUrl: "/aviso-legal",

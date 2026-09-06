@@ -1,16 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { registerPasskey, browserSupportsWebAuthn } from "@/lib/auth/webauthn-client";
+
+type Mode = "choice" | "totp";
 
 /**
- * Mandatory admin TOTP enrollment (SECURITY #53): QR + manual-secret
- * fallback, one confirmed code before anything is considered enabled, then
- * the one-time recovery codes. Google/Microsoft Authenticator and Authy all
- * scan the same standard `otpauth://` QR — no app-specific branching needed.
+ * First-time admin strong-auth enrollment (SECURITY #53 passkey follow-up).
+ * Passkey (Face ID / Touch ID / Windows Hello) is the primary path — one
+ * button, no QR code, no manual secret. TOTP (Google/Microsoft
+ * Authenticator, Authy) stays fully available as the explicit fallback for
+ * devices/browsers without a platform authenticator. Both paths converge on
+ * the same one-time recovery-codes screen.
  */
 export function TotpSetupForm() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<Mode>("choice");
+  const [passkeySupported, setPasskeySupported] = useState(true);
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
   const [secret, setSecret] = useState("");
   const [qrDataUri, setQrDataUri] = useState("");
   const [code, setCode] = useState("");
@@ -19,10 +29,18 @@ export function TotpSetupForm() {
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   useEffect(() => {
+    setPasskeySupported(browserSupportsWebAuthn());
+  }, []);
+
+  useEffect(() => {
+    if (mode !== "totp") return;
+    let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const res = await fetch("/api/admin/2fa/enroll", { method: "POST" });
         const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
         if (res.ok) {
           setSecret(data.secret);
           setQrDataUri(data.qrDataUri);
@@ -32,14 +50,35 @@ export function TotpSetupForm() {
           setError("No se pudo iniciar la configuración. Recarga la página.");
         }
       } catch {
-        setError("Sin conexión. Recarga la página.");
+        if (!cancelled) setError("Sin conexión. Recarga la página.");
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mode]);
 
-  async function confirm(e: React.FormEvent) {
+  async function startPasskey() {
+    if (passkeyBusy) return;
+    setPasskeyBusy(true);
+    setPasskeyError(null);
+    const result = await registerPasskey();
+    setPasskeyBusy(false);
+    if (!result.ok) {
+      setPasskeyError(result.error);
+      return;
+    }
+    if (result.data.recoveryCodes) {
+      setRecoveryCodes(result.data.recoveryCodes);
+    } else {
+      router.push("/admin");
+      router.refresh();
+    }
+  }
+
+  async function confirmTotp(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
@@ -60,7 +99,12 @@ export function TotpSetupForm() {
         setBusy(false);
         return;
       }
-      setRecoveryCodes(data.recoveryCodes);
+      if (data.recoveryCodes) {
+        setRecoveryCodes(data.recoveryCodes);
+      } else {
+        router.push("/admin");
+        router.refresh();
+      }
     } catch {
       setError("Sin conexión. Inténtalo de nuevo.");
     }
@@ -73,7 +117,7 @@ export function TotpSetupForm() {
         <h1 className="text-2xl font-bold">Guarda tus códigos de recuperación</h1>
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
           Cada código solo se puede usar una vez, y solo los verás aquí. Guárdalos en un lugar
-          seguro — los necesitarás si pierdes acceso a tu app de autenticación.
+          seguro — los necesitarás si pierdes acceso a tu clave de acceso o app de autenticación.
         </p>
         <ul
           data-testid="recovery-codes"
@@ -98,12 +142,66 @@ export function TotpSetupForm() {
     );
   }
 
+  if (mode === "choice") {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold">Protege tu cuenta de administrador</h1>
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+          Obligatorio para acceder al panel de administración. La forma más rápida es con Face ID,
+          Touch ID, Windows Hello o el PIN de tu dispositivo.
+        </p>
+
+        {passkeySupported && (
+          <button
+            type="button"
+            data-testid="setup-passkey-start"
+            onClick={startPasskey}
+            disabled={passkeyBusy}
+            className="mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
+          >
+            {passkeyBusy
+              ? "Confirma en tu dispositivo…"
+              : "Configurar con Face ID / clave de acceso"}
+          </button>
+        )}
+        {passkeyError && (
+          <p
+            role="alert"
+            data-testid="setup-passkey-error"
+            className="mt-2 text-sm text-[var(--color-danger)]"
+          >
+            {passkeyError}
+          </p>
+        )}
+
+        <button
+          type="button"
+          data-testid="setup-use-totp"
+          onClick={() => setMode("totp")}
+          className={`min-h-12 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium text-[var(--color-text)] ${
+            passkeySupported ? "mt-3" : "mt-6"
+          }`}
+        >
+          Usar una app de autenticación en su lugar
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h1 className="text-2xl font-bold">Configura la verificación en dos pasos</h1>
+      <button
+        type="button"
+        data-testid="setup-back-to-choice"
+        onClick={() => setMode("choice")}
+        className="text-sm font-medium text-[var(--color-primary)]"
+      >
+        ← Volver
+      </button>
+      <h1 className="mt-2 text-2xl font-bold">Configura la verificación en dos pasos</h1>
       <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-        Obligatoria para acceder al panel de administración. Escanea este código con Google
-        Authenticator, Microsoft Authenticator, Authy o cualquier app TOTP compatible.
+        Escanea este código con Google Authenticator, Microsoft Authenticator, Authy o cualquier app
+        TOTP compatible.
       </p>
       {loading ? (
         <p className="mt-6 text-sm">Cargando…</p>
@@ -130,7 +228,7 @@ export function TotpSetupForm() {
             </p>
           </details>
 
-          <form onSubmit={confirm} className="mt-6">
+          <form onSubmit={confirmTotp} className="mt-6">
             <label htmlFor="totp-code" className="block text-sm font-medium">
               Código de 6 dígitos
             </label>

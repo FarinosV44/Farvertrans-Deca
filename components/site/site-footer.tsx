@@ -26,6 +26,7 @@ const LEGAL: FooterLink[] = [
   { label: "Términos", href: "/terminos" },
   { label: "Cookies", href: "/cookies" },
   { label: "Contacto", href: "/contacto" },
+  { label: "Autoría y revisión legal", href: "/revision-legal" },
 ];
 
 function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) {
@@ -95,6 +96,15 @@ export function SiteFooter() {
             {LEGAL_ENTITY.operatorLine}
           </p>
           <p className="mt-1 text-xs text-[var(--color-text-muted)]">{LEGAL_ENTITY.address}</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            Tel.{" "}
+            <a
+              href={`tel:${BRAND.supportPhone.replace(/\s+/g, "")}`}
+              className="underline hover:text-[var(--color-primary)]"
+            >
+              {BRAND.supportPhone}
+            </a>
+          </p>
         </div>
       </div>
     </footer>

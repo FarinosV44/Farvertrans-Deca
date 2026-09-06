@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { CompanyLogoManager } from "@/components/app/company-logo-manager";
+import { CompanyProfileForm } from "@/components/app/company-profile-form";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,23 @@ export default async function EmpresaPage() {
               <dd className="text-sm">{user.company.nif ?? "—"}</dd>
             </div>
           </dl>
+        </section>
+
+        <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
+          <h2 className="text-lg font-bold">Datos de contacto</h2>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            Email, teléfono, dirección y persona de contacto de la empresa — visible solo dentro de
+            tu espacio de trabajo.
+          </p>
+          <CompanyProfileForm
+            initial={{
+              email: user.company.email,
+              phone: user.company.phone,
+              address: user.company.address,
+              contactName: user.company.contactName,
+            }}
+            canChange={user.companyRole === "owner"}
+          />
         </section>
 
         <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
