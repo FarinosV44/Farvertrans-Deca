@@ -2875,3 +2875,9 @@ commit either way.
 - **Scope note:** this is one concrete #56 item, not the whole "Company dashboard improvements"
   list — "drafts requiring completion" (needs server-side draft persistence, real new architecture)
   and richer route/carrier/vehicle frequency widgets remain unaddressed. #56 stays open.
+
+## D-101 — `develop` (D-100) merged to `main` at `5e5fbfb`, on the user's explicit request ("finish it")
+`--no-ff` merge, no conflicts, 13 files. Brings `main` current with the team-activity dashboard
+widget. The user asked directly whether #56 was finished/merged; answered honestly (audit logging
+was already on `main`, this widget was not) and was told to continue toward finishing #56's
+remaining scope.
