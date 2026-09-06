@@ -432,6 +432,7 @@ export const it = {
     createOne: "Crea un DeCA",
   },
   crear: {
+    previewHeading: "Ecco come sarà il tuo DeCA",
     steps: ["Chi contratta e chi trasporta", "Carico e scarico", "Veicolo, merce e revisione"],
     subheadLeadGate:
       "Completa i dati senza impegno — ti chiederemo nome ed e-mail solo alla fine, senza bisogno di creare un account.",
@@ -624,5 +625,8 @@ export const it = {
       `Conferma la tua e-mail per attivare il tuo account ${brand}.\n\nApri questo link (scade tra 24 ore):\n${link}\n\nSe non sei stato tu, ignora questo messaggio.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Conferma la tua nuova e-mail per attivare il tuo account ${brand}.\n\nApri questo link (scade tra 24 ore):\n${link}\n\nSe non sei stato tu, ignora questo messaggio.`,
+    passwordResetSubject: (brand: string) => `Recupera l'accesso a ${brand}`,
+    passwordResetText: (brand: string, link: string) =>
+      `Hai richiesto di reimpostare la tua password ${brand}.\n\nApri questo link (scade tra 1 ora):\n${link}\n\nSe non sei stato tu, ignora questo messaggio.`,
   },
 } satisfies Messages;

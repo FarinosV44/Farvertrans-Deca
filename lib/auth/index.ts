@@ -81,6 +81,14 @@ export async function signup(input: SignupInput): Promise<{
         },
       });
       await markInviteAccepted(inv.id);
+      const { recordAudit } = await import("@/lib/admin/audit");
+      await recordAudit({
+        actorId: user.id,
+        action: "team_invite_accepted",
+        targetType: "company",
+        targetId: inv.companyId,
+        result: "success",
+      });
       // A team member joins an already-onboarded workspace — no separate T&C
       // checkbox is shown (matches the client, which hides it for this path).
       return { userId: user.id, companyId: inv.companyId, joinedTeam: true };
@@ -236,6 +244,14 @@ export async function completeCompanyForUser(
         data: { companyId: inv.companyId, companyRole: inv.role },
       });
       await markInviteAccepted(inv.id);
+      const { recordAudit } = await import("@/lib/admin/audit");
+      await recordAudit({
+        actorId: userId,
+        action: "team_invite_accepted",
+        targetType: "company",
+        targetId: inv.companyId,
+        result: "success",
+      });
       return { companyId: inv.companyId, joinedTeam: true };
     }
     throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
@@ -369,9 +385,12 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
  * exists (no account enumeration). Returns the raw token + email ONLY when a
  * user was found, so the caller can send the message.
  */
-export async function requestPasswordReset(
-  emailRaw: string,
-): Promise<{ token: string; email: string; userId: string } | null> {
+export async function requestPasswordReset(emailRaw: string): Promise<{
+  token: string;
+  email: string;
+  userId: string;
+  preferredLocale: string | null;
+} | null> {
   const email = normEmail(emailRaw);
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user) return null;
@@ -392,7 +411,7 @@ export async function requestPasswordReset(
       },
     }),
   ]);
-  return { token, email, userId: user.id };
+  return { token, email, userId: user.id, preferredLocale: user.preferredLocale };
 }
 
 export class ResetError extends Error {

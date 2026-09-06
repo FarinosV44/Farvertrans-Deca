@@ -430,6 +430,7 @@ export const gl = {
     createOne: "Crear un DeCA",
   },
   crear: {
+    previewHeading: "Así quedará o teu DeCA",
     steps: [
       "Quen contrata e quen transporta",
       "Carga e descarga",
@@ -625,5 +626,8 @@ export const gl = {
       `Confirma o teu correo para activar a túa conta de ${brand}.\n\nAbre esta ligazón (caduca en 24 horas):\n${link}\n\nSe non fuches ti, ignora esta mensaxe.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Confirma o teu novo correo para activar a túa conta de ${brand}.\n\nAbre esta ligazón (caduca en 24 horas):\n${link}\n\nSe non fuches ti, ignora esta mensaxe.`,
+    passwordResetSubject: (brand: string) => `Recupera o acceso a ${brand}`,
+    passwordResetText: (brand: string, link: string) =>
+      `Solicitaches restablecer o teu contrasinal de ${brand}.\n\nAbre esta ligazón (caduca en 1 hora):\n${link}\n\nSe non fuches ti, ignora esta mensaxe.`,
   },
 } satisfies Messages;

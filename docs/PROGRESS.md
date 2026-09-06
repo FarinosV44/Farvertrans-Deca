@@ -1038,3 +1038,43 @@ direct request that the app sends the correct `.../api/auth/google/callback` URI
 Cloud Console had the segments swapped (`.../api/auth/callback/google`, a NextAuth.js-style path this
 app's hand-rolled OAuth client doesn't use). Told the user the exact fix — external account setting,
 not a code issue.
+
+## D-091: `develop` (D-089…D-090) merged to `main` at `5ba21c4`, on the user's explicit request ("done complete issue 55 and push to main")
+`--no-ff` merge, no conflicts, 14 files. **Issue #55 (DESIGN — landing overhaul) is now closed on
+`main`** — all 15 numbered items from the owner's directive shipped across D-081 through D-090. No
+new Prisma migrations in this merge (D-089/D-090 were UI-only), so unlike D-088 this one needs no
+`prisma migrate deploy` — a production redeploy to actually serve the new code is still a separate,
+not-yet-done action. See `decisions.md` D-091.
+
+## D-092: I18N #54 gap closed — password-reset emails now locale-aware
+Found during a per-issue verification pass (grepped every `sendMail` call site, not just trusted
+docs): password-reset emails were the one transactional email still hardcoded to Spanish while
+register/verify-email routes already used the account's `preferredLocale`. Fixed to match that exact
+existing pattern — `passwordResetSubject`/`passwordResetText` added to all 8 dictionaries,
+`requestPasswordReset()` now returns `preferredLocale`, the route resolves it with the same
+`isLocale`/`DEFAULT_LOCALE` fallback already used elsewhere. Gate: typecheck, lint, prettier clean,
+139/139 unit, 17/17 targeted account+audit-log e2e, full suite 156/157 (1 pre-existing flake,
+reconfirmed unrelated). See `decisions.md` D-092. This was the last unmet item for issue #54.
+
+## D-093: DESIGN #51 closed — `/crear` was the one screen still stretched mobile-to-desktop
+Re-verified #51's full acceptance list against actual code rather than an assumed-large scope: fake
+QR removed (D-069), `/panel` two-column (D-070), result screen already redesigned (D-033), landing
+covered by #55, auth screens already a deliberate centered-card pattern (D-031) — all already done.
+One real gap: `/crear` capped at `max-w-[720px]`, identical mobile/desktop. Added a `lg:` two-column
+layout with a sticky preview panel reusing the real-QR `DecaPreview` component. Found and fixed a
+real regression it introduced (the panel's decorative "Paso 1 de 3" text collided with the wizard's
+own live progress label, breaking one e2e assertion — fixed by matching more specific text already
+used elsewhere in the suite). Gate: typecheck, lint, prettier clean, 139/139 unit, 10-width overflow
+check at zero overflow, full suite 156/157 (1 pre-existing flake, reconfirmed unrelated). See
+`decisions.md` D-093. Closes issue #51.
+
+## D-094: PRODUCT #56 gap closed — team invites/role-changes/removals now audited and viewable
+#56 explicitly requires role/invitation/membership changes to be audited; found `recordAudit()` was
+never wired to any `lib/team.ts` action. Added audit calls at every team-mutation point
+(`team_invite_created`, `team_invite_accepted`, `team_member_removed`, `team_role_changed`) — no
+schema change needed. Also found nothing surfaced this data to a human (only e2e tests queried it
+directly) — added `/admin/auditoria`, a read-only viewer following the exact `/admin/errores`
+list-page pattern. New tests confirm both the writes and the viewer. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 6/6 targeted audit-log e2e, full suite 157/157 (2 pre-existing flakes,
+reconfirmed unrelated). See `decisions.md` D-094. #56's remaining scope (super-admin dashboard beyond
+#33, permissions matrix, external-invite distinction) stays open per the issue's progress comment.

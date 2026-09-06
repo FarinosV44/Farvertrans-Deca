@@ -2577,3 +2577,115 @@
   OAuth client per D-046). Told the user the exact string to correct in the Google Cloud Console
   "Authorized redirect URIs" field; this is an external account setting only the user can change —
   no code or documentation change was needed or made.
+
+## D-091 — `develop` (D-089…D-090) merged to `main` at `5ba21c4`, on the user's explicit request ("done complete issue 55 and push to main")
+- Date / phase: 2026-09-06, same session, immediately after D-090. `--no-ff` merge from `develop` at
+  `9272ebc`, pushed to `origin/main` at `d7792d6..5ba21c4`. 14 files changed, no conflicts.
+- Brings `main` current with the rest of DESIGN #55: FAQ grouping (§10), the hero-spacing/second-
+  visual follow-up, and the density/hierarchy pass (§15) — on top of everything D-088 already merged
+  (I18N #54, SECURITY #53, LEGAL #52/#54, PRODUCT #56 slices 1-3, the earlier #55 slices).
+- **Issue #55 (DESIGN — landing overhaul) is now closed in code and on `main`.** All 15 numbered
+  items from the owner's original directive have shipped: hero visual (§1), free-value competitive
+  positioning (§2/§3), multilingual header (§4), visual storytelling (§5), persona polish (§6), daily-
+  use differentiator reframe (§7), trust section (§8), normative scannability (§9), FAQ polish (§10),
+  final CTA (§11), footer legal identity (§12), brand consistency (§13), micro-interactions (§14),
+  and the density/hierarchy pass (§15).
+- Pre-merge state was already gate-verified in D-090 (typecheck/lint/prettier/139 unit/156-157 e2e
+  with 1 reconfirmed-unrelated flake) — not re-run a second time since no code changed between that
+  verification and this merge.
+- **No new Prisma migrations in this merge** (D-089/D-090 were UI-only) — unlike D-088, this merge
+  needs no `prisma migrate deploy` step. A production redeploy (to actually serve the new landing
+  code) is still a separate action from this git-level merge, same standing distinction as D-088.
+- CI triggered on the `main` push (queued at push time).
+
+## D-092 — I18N #54 closing gap: password-reset emails were the one transactional email NOT locale-aware
+- Date / phase: 2026-09-06, same session, immediately after D-091, found while doing a per-issue
+  verification pass before closing GitHub issues (not assumed from docs — grepped every
+  `sendMail` call site in `app/api/auth/` and found one, `app/api/auth/password/request/route.ts`,
+  that hardcoded Spanish subject/body while the other three (`register`, `verify-email/resend`,
+  `verify-email/change-email`) already used `getDictionary()` keyed off the account's
+  `preferredLocale`). This is a real, concrete gap against issue #54's own acceptance criterion
+  ("Transactional emails use the selected language") — not previously caught because unit/e2e tests
+  assert on `mail.sent`/delivery status, never on the email body language.
+- **Fixed to match the exact existing convention** (`verify-email/resend`'s pattern, not a new one):
+  `requestPasswordReset()` in `lib/auth/index.ts` now also returns the user's `preferredLocale`;
+  the route resolves `isLocale(result.preferredLocale) ? result.preferredLocale : DEFAULT_LOCALE`
+  and sends `dict.emails.passwordResetSubject`/`passwordResetText` instead of a hardcoded Spanish
+  string. New `passwordResetSubject`/`passwordResetText` keys added to all 8 dictionaries, same
+  function-returning-a-template shape as the existing `verifySubject`/`verifyText*` keys.
+  Deliberately uses the ACCOUNT's stored preference, not the current request's cookie locale — a
+  password-reset request often comes from a different browser/device than the one the account's
+  locale preference was set on, and the existing `verify-email` routes already established this as
+  the correct pattern for an existing-account email.
+- Verification: `tsc --noEmit` clean (8-locale `emails` key parity via `satisfies Messages`); ESLint
+  clean; Prettier clean; `vitest run` 139/139; `playwright test tests/e2e/account.spec.ts
+  tests/e2e/audit-log.spec.ts` — 17/17 passed (covers password reset end to end: request, expired
+  token, weak-password rejection, session invalidation, audit row). Full `playwright test
+  --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-documented
+  parallel-only flake, reconfirmed passing with `--workers=1`.
+- **This was the last unmet acceptance item found for issue #54** — closing it on the forge next.
+
+## D-093 — DESIGN #51 closing gap: `/crear` was a mobile-width form stretched across the desktop viewport
+- Date / phase: 2026-09-06, same session, immediately after D-092, on the user's explicit "finish
+  issue 51 54 55 and 56" instruction. Re-read #51's full body/acceptance list against the actual
+  current code (not the earlier session summary's assumption that #51 was a large undone effort) —
+  found most of its acceptance items already satisfied by earlier work: fake QR removed everywhere
+  (D-069), `/panel` two-column desktop layout (D-070), the `DeCA generado` result screen already
+  redesigned with a two-column desktop layout (D-033 document cockpit), DESIGN #55 covering the
+  landing, and auth screens (`/entrar`/`/registro`) already using a deliberate centered-card pattern
+  (D-031) rather than a stretched mobile form. **One real gap found**: `/crear` (the actual DeCA
+  creator wizard — arguably the most important screen in the product) was capped at a single
+  `max-w-[720px]` column, identical on mobile and desktop — exactly the "stretched mobile page" #51
+  explicitly calls out.
+- **Fixed**: `app/crear/page.tsx` restructured into a `lg:` two-column layout — the wizard unchanged
+  on the left, a new sticky right-hand panel (hidden below `lg`) reusing the exact same real-QR
+  `DecaPreview` component already established on the landing (never a new/fake visual element,
+  matching #51's own explicit "no fake code artwork" requirement). New `crear.previewHeading`
+  dictionary key ("Así quedará tu DeCA") added to all 8 locales.
+- **Found and fixed one real regression this introduced**: the new preview panel's decorative
+  "Paso 1 de 3" text (from `DecaPreview`'s static creator-mock content) duplicated the wizard's own
+  live progress label on the same page, breaking `tests/e2e/crear.spec.ts`'s
+  `page.getByText("Paso 1 de 3")` assertion (Playwright strict-mode: 2 elements matched). Fixed by
+  matching the more specific text (`"Paso 1 de 3 ·"`, with the trailing separator) already used
+  successfully elsewhere in the same test suite for this exact ambiguity risk — no component change
+  needed.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139. A custom
+  10-width overflow script against `/crear` specifically (375–1920px) — zero overflow. Full
+  `playwright test --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-
+  documented parallel-only flake, reconfirmed passing with `--workers=1`. Manually verified in a real
+  browser at 1440px: the sticky preview panel renders cleanly alongside the wizard with no overlap.
+- **This closes issue #51** — every acceptance item verified against the actual current code, not
+  assumed from an earlier summary.
+
+## D-094 — PRODUCT #56 gap closed: company-level team events (invites, role changes, removals) are now audited and viewable
+- Date / phase: 2026-09-06, same session, immediately after D-093. #56's own "Security and audit"
+  section explicitly requires "role changes audited... invitation events audited... company
+  membership changes audited" — a direct grep confirmed `recordAudit()` (SECURITY #53's write-only
+  audit trail) was wired to admin-login/2FA/content-edit/password-reset events only, never to any
+  `lib/team.ts` action. This was a real, concrete unmet acceptance item, not assumed from docs.
+- **Fixed**: `recordAudit()` calls added at every team-mutation point — `createInvite` (
+  `team_invite_created`), `acceptInvite` and both `signup()` invite-join branches in
+  `lib/auth/index.ts` (`team_invite_accepted`), `removeMember` (`team_member_removed`), `changeRole`
+  (`team_role_changed`, with the resulting role recorded in `targetType` since `SecurityAuditLog` has
+  no separate metadata column). No schema change needed — the existing `SecurityAuditLog` model is
+  already generic (actorId/action/targetType/targetId/result).
+- **Also found and fixed: nothing surfaced this data to a human.** `SecurityAuditLog` had zero admin
+  UI reading it — only e2e tests queried it directly via Prisma. Recording an audit trail nobody can
+  see falls short of "auditable" in any practical sense. Added `lib/admin/audit-log.ts` (read-only
+  query functions) and a new `/admin/auditoria` screen (`app/admin/(protected)/auditoria/page.tsx`),
+  following the exact same list-page pattern as the existing `/admin/errores` screen (range/action/
+  result filters, a table, an empty state) — reuses `components/admin/ui.tsx` primitives, no new UI
+  patterns invented. Added to `ADMIN_SECTIONS` nav.
+- New tests: `tests/e2e/audit-log.spec.ts` gained two — one confirming the three new audit actions
+  are actually written during a real invite→accept→promote flow, one confirming `/admin/auditoria`
+  renders and correctly filters to show a `team_role_changed` row to an internal user. Both are
+  self-contained (produce their own event) rather than depending on execution order, since
+  `playwright.config.ts` runs `fullyParallel: true`.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139;
+  `playwright test tests/e2e/audit-log.spec.ts` — 6/6 passed including both new tests. Full
+  `playwright test --workers=3` — 157/157 passed; 2 failures (`content-cms`, `master-data`)
+  reconfirmed as the same pre-existing parallel-only flake class with `--workers=1`.
+- **Scope note:** this addresses one specific, concrete #56 acceptance item. #56's remaining scope
+  (super-admin platform-wide dashboard beyond what #33 already built, an explicit permissions matrix,
+  external-carrier-vs-employee invite distinction) stays open — see the progress comment posted on
+  the issue.

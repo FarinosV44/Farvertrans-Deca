@@ -420,6 +420,7 @@ export const en = {
     createOne: "Create a DeCA",
   },
   crear: {
+    previewHeading: "This is how your DeCA will look",
     steps: [
       "Who's hiring and who's transporting",
       "Loading and unloading",
@@ -615,5 +616,8 @@ export const en = {
       `Confirm your email to activate your ${brand} account.\n\nOpen this link (expires in 24 hours):\n${link}\n\nIf this wasn't you, ignore this message.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Confirm your new email to activate your ${brand} account.\n\nOpen this link (expires in 24 hours):\n${link}\n\nIf this wasn't you, ignore this message.`,
+    passwordResetSubject: (brand: string) => `Recover access to ${brand}`,
+    passwordResetText: (brand: string, link: string) =>
+      `You requested to reset your ${brand} password.\n\nOpen this link (expires in 1 hour):\n${link}\n\nIf this wasn't you, ignore this message.`,
   },
 } satisfies Messages;

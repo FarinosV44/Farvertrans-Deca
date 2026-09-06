@@ -81,7 +81,7 @@ export async function createInvite(
     throw new TeamError("already_member", "Esta persona ya está en el equipo.");
 
   const token = randomBytes(32).toString("base64url");
-  await prisma.companyInvite.create({
+  const invite = await prisma.companyInvite.create({
     data: {
       companyId,
       email,
@@ -91,6 +91,16 @@ export async function createInvite(
       expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 864e5),
     },
   });
+
+  const { recordAudit } = await import("@/lib/admin/audit");
+  await recordAudit({
+    actorId: invitedByUserId,
+    action: "team_invite_created",
+    targetType: "company_invite",
+    targetId: invite.id,
+    result: "success",
+  });
+
   return { token, email };
 }
 
@@ -135,6 +145,16 @@ export async function acceptInvite(token: string, userId: string): Promise<{ com
     }),
     prisma.companyInvite.update({ where: { id: inv.id }, data: { acceptedAt: new Date() } }),
   ]);
+
+  const { recordAudit } = await import("@/lib/admin/audit");
+  await recordAudit({
+    actorId: userId,
+    action: "team_invite_accepted",
+    targetType: "company",
+    targetId: inv.companyId,
+    result: "success",
+  });
+
   return { companyId: inv.companyId };
 }
 
@@ -172,6 +192,15 @@ export async function removeMember(companyId: string, actingUserId: string, targ
     where: { id: targetUserId },
     data: { companyId: null, companyRole: "owner" },
   });
+
+  const { recordAudit } = await import("@/lib/admin/audit");
+  await recordAudit({
+    actorId: actingUserId,
+    action: "team_member_removed",
+    targetType: "user",
+    targetId: targetUserId,
+    result: "success",
+  });
 }
 
 /**
@@ -202,4 +231,13 @@ export async function changeRole(
   }
 
   await prisma.user.update({ where: { id: targetUserId }, data: { companyRole: role } });
+
+  const { recordAudit } = await import("@/lib/admin/audit");
+  await recordAudit({
+    actorId: actingUserId,
+    action: "team_role_changed",
+    targetType: role,
+    targetId: targetUserId,
+    result: "success",
+  });
 }
