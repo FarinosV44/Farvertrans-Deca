@@ -2496,3 +2496,50 @@
   the push itself was the explicit ask).
 - **Scope note — this is a code merge, not a production deploy.** No redeploy, no `prisma migrate
   deploy`, and no DNS/infra action was taken as part of this decision.
+
+## D-089 — DESIGN #55 slice 7: FAQ grouping (§10 close-out), hero spacing refinement, second "Cada DeCA" visual
+- Date / phase: 2026-09-06, same session, immediately after D-088. Two separate triggers: (1)
+  continuing the "keep going" instruction toward the last open #55 item (§10), and (2) a follow-up
+  owner directive mid-slice, explicit that it is "a #55 landing refinement, not a new global
+  redesign" and not a duplicate of #51 — addressed directly rather than deferred.
+- **§10 — FAQ grouped into 3 categories** across all 8 locales: "Normativa y obligación" (what/when/
+  who/agencies), "El documento" (scanned PDF/signature/required data), "Uso y coste" (driver
+  carrying it/free/generation limits) — same 10 questions, same order, just grouped, so no content
+  was added or removed. `landing.faq` (flat array) restructured to `landing.faqGroups` (array of
+  `{heading, items}`) in all 8 dictionaries — mechanical, positionally identical restructuring,
+  `satisfies Messages` catches any dictionary that drifts. `FaqAccordion` (`components/site/
+  faq-accordion.tsx`) rewritten to render a heading per group; `app/page.tsx` updated to pass
+  `groups` instead of `items`. The separate Spanish-only `FAQ` constant in `lib/content/landing.ts`
+  (used only for the FAQPage JSON-LD structured-data block) was NOT touched — search engines still
+  get one flat canonical FAQ list, unaffected by the on-page visual grouping. This closes out #55
+  §10 — #55 is now fully complete.
+- **Hero spacing (owner's item 1)**: `DecaPreview`'s front ("DeCA generado") card previously
+  overlapped the back (creator) card via a negative top margin (`-mt-8`), which the owner correctly
+  read as "one card sitting on top of the other." Changed to a positive offset (`mt-6 sm:mt-8`,
+  keeping the existing `ml-6 sm:ml-16` rightward shift) — the two cards now read as a diagonal,
+  clearly-separated cascade instead of a literal stack. `DecaPreview` is shared by the hero AND the
+  "Product proof" section (both call sites use the same component), so this fix applies to both
+  automatically rather than needing a hero-only special case.
+- **"Cada DeCA" section rebalance (owner's item 2)**: the right column previously held only
+  `WorkspacePreview` (the history table, D-087), leaving visible empty space below it once the left
+  icon grid ran longer. Added a second real product visual, `components/site/saved-data-preview.tsx`
+  — a non-interactive mock of the real `/panel/datos` saved-data manager (saved company/vehicle/
+  location rows, each with a check mark implying one-click reuse), stacked above `WorkspacePreview`
+  in the right column. Chosen over the other options the owner listed (quick-duplicate panel, PDF
+  preview, quick-actions panel) because it visually completes the "Guarda una vez. Reutiliza
+  siempre." claim directly: saved data (guarda una vez) feeding into the history of documents it
+  produced (reutiliza siempre) — a before/after pair, not two disconnected UI snippets. Same
+  generic-values-on-real-layout rule as `DecaPreview`/`WorkspacePreview` — no real customer data.
+- Verification: `tsc --noEmit` clean (8-locale `faqGroups` parity confirmed via `satisfies
+  Messages`); ESLint clean; Prettier clean; `vitest run` 139/139. `playwright test
+  tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed, including the FAQ-content-in-SSR-
+  HTML test (still finds the answer text under the new grouped markup) and axe (group headings add
+  no accessibility violations). A custom 10-width overflow script (375–1920px) — zero overflow at
+  every width, specifically checked given the new stacked two-visual right column. Full `playwright
+  test --workers=3` — 156/157 passed; the 1 failure (`content-cms`) is the same already-documented
+  parallel-only flake, reconfirmed passing with `--workers=1`. Manually verified in a real browser at
+  1440px: the hero cards are now clearly separated with no overlap, and the "Cada DeCA" section's
+  right column now closely matches the left icon grid's height with the two stacked panels.
+- **Scope note:** this closes ALL of DESIGN #55 except §15 (an overall density/hierarchy pass across
+  the whole landing, which was never blocking — it's a final polish pass, not a missing feature).
+- Not committed to `main` yet at the time of writing — see the next entry for the follow-up merge.

@@ -2,9 +2,11 @@ import { DocumentIcon } from "@/components/panel/icons";
 
 /**
  * Non-interactive visual of the real product — the landing hero/product-proof
- * illustration (DESIGN #55 §1). Two layered cards: the creator step behind,
- * the generated-document result in front, overlapping — "product-led
- * graphics", not a stock photo or an abstract shape (EPIC 01).
+ * illustration (DESIGN #55 §1, spacing refined in a later §1 follow-up). Two
+ * cards in a layered SaaS-product composition: the creator step behind, the
+ * generated-document result in front — offset diagonally (down + right)
+ * rather than overlapping, so the two are clearly separate, related steps
+ * instead of one card visually sitting on top of the other.
  *
  * The QR shown is a REAL, server-generated QR code pointing at the site's own
  * public base URL (`qrDataUri`, produced by `lib/pdf/qr.ts` — the exact same
@@ -16,7 +18,7 @@ export function DecaPreview({ qrDataUri }: { qrDataUri: string }) {
   return (
     <div aria-hidden className="relative min-w-0">
       {/* Back card: the creator, step 1 of 3 */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-4 shadow-[0_4px_16px_rgba(15,23,32,0.08)] sm:mr-10">
+      <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-4 shadow-[0_4px_16px_rgba(15,23,32,0.08)] sm:mr-14">
         <p className="text-xs font-medium text-[var(--color-text-muted)]">Paso 1 de 3</p>
         <p className="mt-1 text-sm font-bold">Cargador contractual y transportista</p>
         <div className="mt-3 space-y-2">
@@ -36,8 +38,11 @@ export function DecaPreview({ qrDataUri }: { qrDataUri: string }) {
         </div>
       </div>
 
-      {/* Front card: the generated document, overlapping the creator card */}
-      <div className="relative z-10 -mt-8 ml-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(15,23,32,0.18)] sm:ml-16">
+      {/* Front card: the generated document — offset down and right from the
+          creator card, not overlapping it, so the composition reads as two
+          related but separate steps rather than one card stacked on the
+          other. */}
+      <div className="relative z-10 mt-6 ml-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(15,23,32,0.18)] sm:mt-8 sm:ml-16">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--color-success)] text-white">
             ✓

@@ -10,6 +10,7 @@ import { TrackView } from "@/components/analytics/track-view";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
 import { WorkspacePreview } from "@/components/site/workspace-preview";
+import { SavedDataPreview } from "@/components/site/saved-data-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
@@ -107,7 +108,7 @@ export default async function HomePage() {
     ...dict.landing.freeValueItems[i],
   }));
   const legalPoints = dict.landing.legalPoints;
-  const faq = dict.landing.faq;
+  const faqGroups = dict.landing.faqGroups;
 
   return (
     <>
@@ -313,10 +314,12 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Daily use — DESIGN #55 §5: paired with a real workspace-history visual
-            (`WorkspacePreview`, same product-led-graphics rule as the hero's
-            `DecaPreview`) so "empresa trabaja más rápido" has a concrete visual,
-            not just an icon list. */}
+        {/* Daily use — DESIGN #55 §5: paired with two real product visuals
+            (`WorkspacePreview` + `SavedDataPreview`, same product-led-graphics
+            rule as the hero's `DecaPreview`) so "Guarda una vez. Reutiliza
+            siempre." has concrete visual proof on both halves of that claim —
+            saved data on top, the reuse outcome (history) below it — instead
+            of one visual and empty space under it. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="cada-dia"
@@ -354,7 +357,10 @@ export default async function HomePage() {
                 {dict.landing.dailyUseFooterAfterLink}
               </p>
             </div>
-            <WorkspacePreview />
+            <div className="space-y-4">
+              <SavedDataPreview />
+              <WorkspacePreview />
+            </div>
           </div>
         </section>
 
@@ -428,7 +434,7 @@ export default async function HomePage() {
           <h2 id="faq" className="text-2xl font-bold md:text-3xl">
             {dict.landing.faqHeading}
           </h2>
-          <FaqAccordion items={faq} />
+          <FaqAccordion groups={faqGroups} />
         </section>
 
         {/* Final CTA */}

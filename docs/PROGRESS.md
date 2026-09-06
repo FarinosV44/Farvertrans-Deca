@@ -1010,3 +1010,17 @@ migrations on `main` NOT yet applied to production**
 of this session's security/role work is live. See `decisions.md` D-088.
 **Continuing** with the remaining #55 items (§10, §15) and any other open issues next, per the
 user's "keep going on closing and finishing all the remaining issues" instruction.
+
+## D-089: DESIGN #55 slice 7 — FAQ grouping (§10 done, closes #55 bar §15), hero spacing fix, second "Cada DeCA" visual
+FAQ restructured from a flat 10-item list to 3 groups ("Normativa y obligación", "El documento",
+"Uso y coste") across all 8 dictionaries — `landing.faq` → `landing.faqGroups`, `FaqAccordion`
+rewritten to render group headings. Owner also sent a follow-up mid-slice with two landing-refinement
+requests: (1) the hero's `DecaPreview` cards were overlapping (`-mt-8` negative margin) — changed to
+a positive `mt-6 sm:mt-8` offset so the two cards read as separated, not stacked; (2) the "Cada DeCA"
+section's right column had visible empty space under the history-table visual — added a second real
+visual, `SavedDataPreview` (mock of `/panel/datos`), stacked above it, completing the "Guarda una
+vez. Reutiliza siempre." message with a save→reuse visual pair. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 18/18 targeted landing+a11y e2e, 10-width overflow script at zero overflow, full
+suite 156/157 (1 pre-existing flake, reconfirmed unrelated). Manually verified in a real browser at
+1440px. See `decisions.md` D-089. **This closes DESIGN #55 except §15** (an overall density pass,
+non-blocking final polish).

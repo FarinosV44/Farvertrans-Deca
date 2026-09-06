@@ -177,46 +177,61 @@ export const de = {
     legalSourceLabel: "Quelle:",
     operatorTrustHeading: "Wer hinter dem Dienst steht",
     faqHeading: "Häufige Fragen",
-    faq: [
+    faqGroups: [
       {
-        q: "Was ist das DeCA?",
-        a: "Das Elektronische Verwaltungskontrolldokument ist die verpflichtende digitale Version des Kontrolldokuments für den Güterkraftverkehr auf der Straße. Es ersetzt das Papierdokument.",
+        heading: "Vorschriften und Pflicht",
+        items: [
+          {
+            q: "Was ist das DeCA?",
+            a: "Das Elektronische Verwaltungskontrolldokument ist die verpflichtende digitale Version des Kontrolldokuments für den Güterkraftverkehr auf der Straße. Es ersetzt das Papierdokument.",
+          },
+          {
+            q: "Wann wird es verpflichtend?",
+            a: "Ab dem 5. Oktober 2026 für den innerstaatlichen Verkehr. Es gibt weder eine Verlängerung noch eine Übergangsfrist: Papier wird nicht mehr akzeptiert.",
+          },
+          {
+            q: "Wer muss es ausstellen?",
+            a: "Der vertragliche Verlader und der tatsächliche Frachtführer des öffentlichen Güterkraftverkehrs, gemäß der geltenden Vorschrift.",
+          },
+          {
+            q: "Ist es für Transportagenturen verpflichtend?",
+            a: "Ja, wenn sie als vertraglicher Verlader oder als Betreiber auftreten, der den Transport beauftragt, mit denselben Erstellungs- und Aufbewahrungspflichten.",
+          },
+        ],
       },
       {
-        q: "Wann wird es verpflichtend?",
-        a: "Ab dem 5. Oktober 2026 für den innerstaatlichen Verkehr. Es gibt weder eine Verlängerung noch eine Übergangsfrist: Papier wird nicht mehr akzeptiert.",
+        heading: "Das Dokument",
+        items: [
+          {
+            q: "Reicht ein gescanntes PDF aus?",
+            a: "Nein. Die Datei muss ein natives digitales PDF sein, das aus strukturierten Daten erstellt wurde. Ein Scan oder ein digitalisiertes Bild ist nicht gültig.",
+          },
+          {
+            q: "Muss es signiert werden?",
+            a: "Die Verordnung verlangt keine elektronische Signatur. Sie verlangt jedoch ein natives PDF, einen QR-Code, eine direkte Download-URL über HTTPS sowie eine Erfassung der Erstellung und Änderungen.",
+          },
+          {
+            q: "Welche Daten muss es enthalten?",
+            a: "Mindestens: der vertragliche Verlader (Name oder Firmenname, Steuernummer und Adresse), der tatsächliche Frachtführer (Name oder Firmenname und Steuernummer), Ort und Datum der Beladung, Ort und Datum der Entladung, Art und Gewicht der Ware sowie das Kennzeichen des Fahrzeugs (Zugmaschine und Anhänger bei einem Sattelzug).",
+          },
+        ],
       },
       {
-        q: "Wer muss es ausstellen?",
-        a: "Der vertragliche Verlader und der tatsächliche Frachtführer des öffentlichen Güterkraftverkehrs, gemäß der geltenden Vorschrift.",
-      },
-      {
-        q: "Ist es für Transportagenturen verpflichtend?",
-        a: "Ja, wenn sie als vertraglicher Verlader oder als Betreiber auftreten, der den Transport beauftragt, mit denselben Erstellungs- und Aufbewahrungspflichten.",
-      },
-      {
-        q: "Reicht ein gescanntes PDF aus?",
-        a: "Nein. Die Datei muss ein natives digitales PDF sein, das aus strukturierten Daten erstellt wurde. Ein Scan oder ein digitalisiertes Bild ist nicht gültig.",
-      },
-      {
-        q: "Muss es signiert werden?",
-        a: "Die Verordnung verlangt keine elektronische Signatur. Sie verlangt jedoch ein natives PDF, einen QR-Code, eine direkte Download-URL über HTTPS sowie eine Erfassung der Erstellung und Änderungen.",
-      },
-      {
-        q: "Welche Daten muss es enthalten?",
-        a: "Mindestens: der vertragliche Verlader (Name oder Firmenname, Steuernummer und Adresse), der tatsächliche Frachtführer (Name oder Firmenname und Steuernummer), Ort und Datum der Beladung, Ort und Datum der Entladung, Art und Gewicht der Ware sowie das Kennzeichen des Fahrzeugs (Zugmaschine und Anhänger bei einem Sattelzug).",
-      },
-      {
-        q: "Wie führt der Fahrer es mit sich?",
-        a: "Vor Beginn der Fahrt, als sichtbare elektronische Kopie auf dem Mobiltelefon oder als Ausdruck, immer mit verfügbarem QR-Code.",
-      },
-      {
-        q: `Ist ${BRAND.name} kostenlos?`,
-        a: "Ja. Sie können bis zum 31. Dezember 2026 Dokumente ohne Kreditkarte und ohne Limit erstellen und herunterladen.",
-      },
-      {
-        q: "Kann ich beliebig viele Dokumente erstellen?",
-        a: "Ja. Es gibt kein monatliches Limit. Wir wenden nur automatische Kontrollen gegen missbräuchliche Nutzung an, die die normale Nutzung oder Kontrolle nicht beeinträchtigen.",
+        heading: "Nutzung und Kosten",
+        items: [
+          {
+            q: "Wie führt der Fahrer es mit sich?",
+            a: "Vor Beginn der Fahrt, als sichtbare elektronische Kopie auf dem Mobiltelefon oder als Ausdruck, immer mit verfügbarem QR-Code.",
+          },
+          {
+            q: `Ist ${BRAND.name} kostenlos?`,
+            a: "Ja. Sie können bis zum 31. Dezember 2026 Dokumente ohne Kreditkarte und ohne Limit erstellen und herunterladen.",
+          },
+          {
+            q: "Kann ich beliebig viele Dokumente erstellen?",
+            a: "Ja. Es gibt kein monatliches Limit. Wir wenden nur automatische Kontrollen gegen missbräuchliche Nutzung an, die die normale Nutzung oder Kontrolle nicht beeinträchtigen.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Jetzt starten. Ohne Kreditkarte.",
