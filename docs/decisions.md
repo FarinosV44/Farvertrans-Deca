@@ -2123,3 +2123,45 @@
   or command list beyond free-text lookup; extending the palette to admin/internal search (kept
   separate from the existing `AdminSearch`, different audiences and data).
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-078.
+
+## D-080 — PRODUCT #56 slice 3: company-level route intelligence on the panel home
+- Date / phase: 2026-09-06, same session, immediately after D-079. Continuing #56's "Route
+  intelligence for the company" list (most frequent routes, "quick create from route" — explicitly
+  cautioned against inventing GPS/realtime tracking that doesn't exist).
+- **Found that the entire data layer already existed**, built for a different feature (DATA #45,
+  commercial route-matching consent): `lib/deca/route-intel.ts`'s `recordRouteIntel()` has been
+  writing a `DecaRouteIntel` row (company id, load/unload city/province/country, carrier, plates, a
+  normalized `routeKey` corridor string) on every DeCA **creation** (not corrections — confirmed by
+  grepping `persist.ts`'s call sites) since that feature shipped. This session added zero new data
+  collection — purely a new READ path over data the product was already recording.
+- **New `lib/data/route-intel.ts`** (read-side, company-facing — distinct file from the write-side
+  `lib/deca/route-intel.ts`): `getTopRoutes(companyId, limit)` fetches a capped, most-recent-first
+  window (1000 rows) and groups by `routeKey` in JS — the same fetch-then-group pattern already used
+  in `lib/data/history.ts` for this project's per-company data volumes, not a new convention. Tracks
+  each route's count AND its most recent DeCA id (`lastDecaId`), which is what makes "quick create
+  from route" a real feature rather than just a decorative stat: the panel links straight to
+  `/crear?from=<lastDecaId>`, reusing the wizard's existing duplicate-prefill path (no new prefill
+  logic needed).
+- **UI:** `/panel`'s sidebar gained a "Rutas frecuentes" section (top 4 routes, count, quick-create
+  link) below the existing saved-data summary cards — restructured the sidebar's outer div into a
+  `space-y-6` wrapper holding both the existing summary-card grid and the new section as siblings,
+  rather than nesting awkwardly inside the summary-card grid's own column layout. The quick-create
+  link respects the existing `canCreate` (`companyRole !== "read_only"`) flag from D-078 — an Auditor
+  sees the frequency stats but not a dead-end create link.
+- **Deliberately bounded, not the full #56 route-intelligence list:** shipped only "most frequent
+  routes" + "quick create from route". NOT done this slice: most-frequent origins/destinations shown
+  independently of full routes, most-used carriers/vehicles as their own ranked lists, monthly DeCA
+  volume, a dedicated `/panel/rutas` page. Chose the single highest-value item (frequent routes with
+  real quick-create, not just a stat) over a wider shallow pass across all six #56 sub-bullets,
+  consistent with this session's repeated "one well-tested vertical slice over many half-done ones"
+  pattern. The others remain queued, not dropped.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139 (including
+  the pre-existing `route-intel.test.ts` unit tests for `routeKeyFor()`, untouched by this slice). New
+  e2e test in `tests/e2e/workspace.spec.ts` ("PRODUCT #56: frequent routes on the panel home count
+  repeats and let you quick-create from the route") — creates two DeCAs on the identical route
+  (reusing the existing `DECA` test fixture's fixed cities), confirms the panel shows a count of 2 for
+  that route, and confirms clicking the quick-create link lands on `/crear?from=` with the wizard
+  actually prefilled from the most recent DeCA's shipper/carrier data. Full `playwright test
+  --workers=3` — **157/157 passed, zero flakes this run** (the two previously-documented parallel-only
+  flakes did not reproduce).
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-079.

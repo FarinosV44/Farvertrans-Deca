@@ -264,6 +264,27 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.getByTestId("command-palette-input")).toHaveCount(0);
   });
 
+  test("PRODUCT #56: frequent routes on the panel home count repeats and let you quick-create from the route", async ({
+    page,
+  }) => {
+    await registerCompany(page);
+    await createDecaAuthed(page);
+    await createDecaAuthed(page); // same route (DECA constant) — should count as 2
+
+    await page.goto("/panel", { waitUntil: "networkidle" });
+    const routeCard = page
+      .getByTestId("frequent-routes")
+      .locator("li", { hasText: `${DECA.loadLocation.city} → ${DECA.unloadLocation.city}` });
+    await expect(routeCard).toBeVisible();
+    await expect(routeCard).toContainText("2 DeCA");
+
+    // "quick create from route" prefills the wizard from the most recent DeCA on it
+    await routeCard.getByRole("link", { name: /Crear DeCA en esta ruta/ }).click();
+    await expect(page).toHaveURL(/\/crear\?from=/);
+    await expect(page.locator("#shipperName")).toHaveValue(DECA.shipper.name);
+    await expect(page.locator("#carrierName")).toHaveValue(DECA.carrier.name);
+  });
+
   test("a11y: /panel, /panel/historico and /panel/datos have no serious/critical violations", async ({
     page,
   }) => {

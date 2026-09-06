@@ -883,4 +883,17 @@ attached, only visible under parallel workers — fixed with the same `networkid
 used elsewhere in the suite. Also corrected three stale "owner only" doc claims in `docs/api/INDEX.md`
 that predated this session (those routes never actually checked ownership, only company membership).
 Gate: typecheck, lint, prettier clean, 139/139 unit, 154/154 e2e (2 pre-existing unrelated flakes). See
-`decisions.md` D-079. **Continuing** with the next #56 piece next.
+`decisions.md` D-079.
+
+## D-080: PRODUCT #56 slice 3 — company-level route intelligence on the panel home
+Found the entire data layer already existed from DATA #45 (commercial route-matching): `DecaRouteIntel`
+rows have been written on every DeCA creation all along, just never read back for the company's own
+use. New `lib/data/route-intel.ts`'s `getTopRoutes()` reads that data (fetch-then-group in JS, same
+pattern as `lib/data/history.ts`), tracking each route's count and most-recent DeCA id. `/panel`
+sidebar gained a "Rutas frecuentes" section with a real "quick create from route" link
+(`/crear?from=<lastDecaId>`, reusing the existing duplicate-prefill path — no new prefill logic).
+Respects the D-078 `read_only` gate. Deliberately shipped only this one item from #56's six-item route-
+intelligence list (frequent routes + quick-create) rather than a shallow pass across all of them.
+Gate: typecheck, lint, prettier clean, 139/139 unit, **157/157 e2e passed with zero flakes this run**.
+New e2e test creates two DeCAs on the same route and verifies the count and quick-create prefill.
+See `decisions.md` D-080. **Continuing** with the next #56 piece next.

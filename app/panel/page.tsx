@@ -6,6 +6,7 @@ import { AppNav } from "@/components/app/app-nav";
 import { getCurrentUser } from "@/lib/auth";
 import { listHistory } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
+import { getTopRoutes } from "@/lib/data/route-intel";
 import { publicEnv } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n/server";
 import {
@@ -24,7 +25,11 @@ export default async function AppHome() {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro");
 
-  const [rows, saved] = await Promise.all([listHistory(user.companyId), listSaved(user.companyId)]);
+  const [rows, saved, topRoutes] = await Promise.all([
+    listHistory(user.companyId),
+    listSaved(user.companyId),
+    getTopRoutes(user.companyId, 4),
+  ]);
   const recent = rows.slice(0, 5);
   const last = rows[0];
   const t = await getDictionary();
@@ -146,21 +151,54 @@ export default async function AppHome() {
             </section>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-            <SummaryCard
-              title={t.panel.companiesCard}
-              manageLabel={t.panel.manageData}
-              count={saved.companies.length}
-              href="/panel/datos"
-              Icon={BuildingIcon}
-            />
-            <SummaryCard
-              title={t.panel.vehiclesCard}
-              manageLabel={t.panel.manageData}
-              count={saved.vehicles.length}
-              href="/panel/datos"
-              Icon={TruckIcon}
-            />
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
+              <SummaryCard
+                title={t.panel.companiesCard}
+                manageLabel={t.panel.manageData}
+                count={saved.companies.length}
+                href="/panel/datos"
+                Icon={BuildingIcon}
+              />
+              <SummaryCard
+                title={t.panel.vehiclesCard}
+                manageLabel={t.panel.manageData}
+                count={saved.vehicles.length}
+                href="/panel/datos"
+                Icon={TruckIcon}
+              />
+            </div>
+
+            {topRoutes.length > 0 && (
+              <section aria-labelledby="rutas-frecuentes">
+                <h2 id="rutas-frecuentes" className="text-sm font-bold">
+                  Rutas frecuentes
+                </h2>
+                <ul className="mt-2 space-y-2" data-testid="frequent-routes">
+                  {topRoutes.map((r) => (
+                    <li
+                      key={r.key}
+                      className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
+                    >
+                      <p className="font-medium">
+                        {r.loadCity} → {r.unloadCity}
+                      </p>
+                      <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                        {r.count} {r.count === 1 ? "DeCA" : "DeCA"}
+                      </p>
+                      {canCreate && (
+                        <Link
+                          href={`/crear?from=${r.lastDecaId}`}
+                          className="mt-1 inline-block text-xs font-medium text-[var(--color-primary)]"
+                        >
+                          Crear DeCA en esta ruta →
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
         </div>
       </main>
