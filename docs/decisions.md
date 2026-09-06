@@ -2909,3 +2909,24 @@ remaining scope.
   dashboard's "Legal/configuration" section (no `/admin/configuracion` exists), an explicit
   permissions matrix, "drafts requiring completion," richer company-level carrier/vehicle frequency
   widgets, and the external-carrier-vs-employee invite distinction.
+
+## D-103 — `develop` (D-102) merged to `main` at `1d8c78a`; #56 asked-and-answered on the two remaining architecturally-ambiguous items
+- Date / phase: 2026-09-06, same session, immediately after D-102. `--no-ff` merge, no conflicts,
+  6 files.
+- Before continuing to "finish" #56 further, asked the owner directly (rather than guessing) about
+  the two remaining items that need a real design decision, not just implementation effort:
+  1. **External-carrier-vs-employee invite distinction** — no external-invite mechanism exists at
+     all today; the owner chose **not now**, since designing the relationship model (what data an
+     external carrier can see, how the link differs from a team invite) without a concrete driving
+     use case risks building the wrong thing.
+  2. **Server-side draft persistence** ("drafts requiring completion") — the owner chose **not now**,
+     agreeing this is a real separate feature (new data model, save/list/resume/expire) rather than
+     a small dashboard addition.
+- **Posted a full status comment on #56** covering every section of the issue against what actually
+  shipped this session (8 of 10 suggested Super Admin dashboard sections now exist; company
+  dashboard improvements list — done except drafts and richer frequency widgets; invitation model
+  — done, now fully audited). Explicitly did NOT attempt a dedicated permissions-matrix UI — judged
+  low-value given the role model is already simple (3 roles), server-side enforced, and already
+  visible through actual UI behavior per role.
+- **#56 stays open** for the two owner-deferred items — closing it would misrepresent a deliberate
+  deferral as completion. This is the honest final state for this session's #56 work.

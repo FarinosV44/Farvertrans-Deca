@@ -1171,3 +1171,13 @@ KPI delta, safe under parallel execution), full suite 160/162 (2 pre-existing fl
 unrelated). See `decisions.md` D-102. Still open for #56: Legal/configuration admin section,
 permissions matrix, drafts requiring completion, richer carrier/vehicle widgets, external-invite
 distinction.
+
+## D-103: `develop` (D-102) merged to `main` at `1d8c78a`; #56's final status for this session
+Merged the route-intelligence screen to `main`. Before pushing further on #56, asked the owner
+directly about the two remaining items that need a design decision, not just effort: the external-
+carrier-vs-employee invite distinction, and server-side draft persistence. Owner chose "not now" for
+both — real architecture decisions without a concrete driving use case yet. Posted a full section-by-
+section status comment on #56 (8 of 10 suggested admin-dashboard sections now exist; company
+dashboard items done except drafts/frequency widgets; invitations fully audited now). **#56 stays
+open** for the two deferred items — this is the honest final state, not a forced close. See
+`decisions.md` D-103.
