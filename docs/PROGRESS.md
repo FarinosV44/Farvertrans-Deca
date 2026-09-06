@@ -1120,3 +1120,15 @@ flakes). See `decisions.md` D-096. Merged to `main` at `da868ca` immediately per
 so the hardened diagnostics are live once they redeploy + migrate. **#56 resumes once the user
 confirms production auth is restored** — paused per their explicit "push it to main so i can try
 before finishing issue 56."
+
+## D-097: Google OAuth failures were silently swallowed — same incident, one real separate bug found
+While live-testing, the user reported Google registration "does nothing" and password registration
+shows "No se pudo crear la cuenta." Both are the SAME root cause as D-096 (missing `session_version`
+column). But investigating found one genuinely separate bug: the Google callback route redirects to
+`/entrar?error=<reason>` on any failure, and NOTHING in the UI ever read that param — every Google
+auth failure looked exactly like the button doing nothing. Fixed: new `auth.errors.googleFailed` key
+(8 locales) + `RegisterForm` now shows it when `?error=` is present. This makes failures visible; it
+doesn't fix the underlying crash (still needs D-096's migration). Gate: typecheck, lint, prettier
+clean, 139/139 unit, 4/4 targeted auth-ux e2e (new test), full suite 159/160 (1 pre-existing flake).
+See `decisions.md` D-097. Also answered the user's email-env-var question: `RESEND_API_KEY` (real
+key, not the placeholder) + `FVD_MAIL_FROM`, both already in `.env.example`.

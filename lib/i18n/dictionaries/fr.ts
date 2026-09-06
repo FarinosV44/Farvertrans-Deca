@@ -323,6 +323,8 @@ export const fr = {
         "Vous devez accepter les Conditions Générales et la Politique de Confidentialité.",
       generic: "Impossible de terminer. Réessayez.",
       noConnection: "Pas de connexion. Réessayez.",
+      googleFailed:
+        "La connexion avec Google n'a pas pu aboutir. Réessayez ou utilisez votre e-mail et mot de passe.",
     },
     invalidInvite: {
       title: "Invitation non valide",

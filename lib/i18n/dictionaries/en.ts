@@ -311,6 +311,8 @@ export const en = {
       acceptTerms: "You must accept the Terms and Conditions and the Privacy Policy.",
       generic: "This couldn't be completed. Please try again.",
       noConnection: "No connection. Please try again.",
+      googleFailed:
+        "Google sign-in couldn't be completed. Try again or use your email and password.",
     },
     invalidInvite: {
       title: "Invalid invitation",

@@ -324,6 +324,8 @@ export const de = {
         "Sie müssen die Allgemeinen Geschäftsbedingungen und die Datenschutzerklärung akzeptieren.",
       generic: "Konnte nicht abgeschlossen werden. Versuchen Sie es erneut.",
       noConnection: "Keine Verbindung. Versuchen Sie es erneut.",
+      googleFailed:
+        "Die Anmeldung mit Google konnte nicht abgeschlossen werden. Versuchen Sie es erneut oder nutzen Sie E-Mail und Passwort.",
     },
     invalidInvite: {
       title: "Einladung ungültig",

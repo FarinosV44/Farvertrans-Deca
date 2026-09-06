@@ -313,6 +313,8 @@ export const es = {
       acceptTerms: "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
       generic: "No se pudo completar. Inténtalo de nuevo.",
       noConnection: "Sin conexión. Inténtalo de nuevo.",
+      googleFailed:
+        "No se pudo completar el acceso con Google. Inténtalo de nuevo o usa tu email y contraseña.",
     },
     invalidInvite: {
       title: "Invitación no válida",

@@ -2756,3 +2756,38 @@
   the pending migrations. No new Prisma migrations in this merge — the diagnostics fix is pure code,
   the actual database fix is the user's action described above. #56 resumes once the user confirms
   production auth is restored.
+
+## D-097 — same incident, follow-up: Google OAuth failures were silently swallowed with no visible error
+- Date / phase: 2026-09-06, same session, immediately after D-096, while the user was live-testing
+  production and reported "te registras con google y no hace nada, se te queda en la misma página"
+  (register with Google does nothing, stays on the same page) and separately that password
+  registration shows "No se pudo crear la cuenta. Inténtalo de nuevo."
+- **Confirmed both are the SAME root cause as D-096** (the missing `session_version` column) —
+  `app/api/auth/register/route.ts`'s catch-all at line 70 and the Google callback's
+  `findOrCreateGoogleUser`/`setSessionCookie` both crash on the identical missing column. This is
+  not three bugs, it is one migration gap surfacing on all three auth entry points.
+- **Found and fixed one genuinely separate, real bug while investigating**: `app/api/auth/google/
+  callback/route.ts` fails closed correctly (`fail("oauth_failed")` etc.) and redirects to
+  `/entrar?error=<reason>` — but grepping the whole codebase found NOTHING ever read that `error`
+  query param. Every Google OAuth failure, for ANY reason (state mismatch, unverified email,
+  exchange failure, not just this incident's migration gap), landed the user back on `/entrar` with
+  zero visible feedback — indistinguishable from the button doing nothing at all. This is a real,
+  independent UX bug the user's live testing surfaced, not just a symptom of the migration gap.
+- **Fixed**: new `auth.errors.googleFailed` dictionary key (all 8 locales) + `RegisterForm` now reads
+  `params.get("error")` on mount and shows the translated message via the form's existing `error`
+  state/display block (no new UI pattern). New test in `tests/e2e/auth-ux.spec.ts` asserts
+  `/entrar?error=oauth_failed` shows the message — previously zero coverage existed for this param
+  at all.
+- **This fix makes Google-auth failures visible; it does not make Google auth WORK** — that still
+  needs D-096's migration fix, since the underlying crash is unchanged. Once the user applies the
+  pending migrations, this error path should stop firing for the current incident; the fix stays
+  valuable for any future Google-auth failure (state/consent/email-unverified cases), which would
+  otherwise still look like "does nothing."
+- **Also answered the user's question about email env vars**: `RESEND_API_KEY` (a real key, not the
+  `.env.example` placeholder) and `FVD_MAIL_FROM` (a sender address on a verified sending domain) —
+  both already documented in `.env.example`, just not yet set to real values in production per every
+  `mail_provider_error 401 API key is invalid` log line this entire session.
+- Verification: `tsc --noEmit` clean (8-locale `googleFailed` key parity via `satisfies Messages`);
+  ESLint clean; Prettier clean; `vitest run` 139/139; `playwright test tests/e2e/auth-ux.spec.ts` —
+  4/4 passed including the new test. Full `playwright test --workers=3` — 159/160 passed; the 1
+  failure (`admin-2fa`) is the same already-documented parallel-only flake.

@@ -321,6 +321,8 @@ export const gl = {
       acceptTerms: "Debes aceptar os Termos e Condicións e a Política de Privacidade.",
       generic: "Non se puido completar. Téntao de novo.",
       noConnection: "Sen conexión. Téntao de novo.",
+      googleFailed:
+        "Non se puido completar o acceso con Google. Téntao de novo ou usa o teu email e contrasinal.",
     },
     invalidInvite: {
       title: "Invitación non válida",

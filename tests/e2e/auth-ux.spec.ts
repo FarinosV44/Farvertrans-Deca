@@ -24,6 +24,18 @@ test.describe("AUTH #30 — premium auth card", () => {
     await expect(page.getByRole("link", { name: "DeCA Profesional — inicio" })).toBeVisible();
   });
 
+  test("a failed Google callback (?error=...) shows a visible message instead of silently landing back here", async ({
+    page,
+  }) => {
+    // Previously nothing on /entrar ever read this param — a Google handshake
+    // failure looked exactly like "the button did nothing" (no error, same
+    // page). The callback route always fails closed with this exact param.
+    await page.goto("/entrar?error=oauth_failed");
+    await expect(
+      page.getByText("No se pudo completar el acceso con Google. Inténtalo de nuevo"),
+    ).toBeVisible();
+  });
+
   test("password show/hide toggles the field type", async ({ page }) => {
     await page.goto("/entrar");
     const pw = page.locator("#password");
