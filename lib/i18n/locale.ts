@@ -1,4 +1,4 @@
-export const LOCALES = ["es", "ca", "eu", "gl", "en", "fr", "de"] as const;
+export const LOCALES = ["es", "ca", "eu", "gl", "en", "fr", "de", "it"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "es";
 /** Client-readable (not httpOnly) — the switcher and analytics both read it. */

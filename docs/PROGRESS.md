@@ -826,3 +826,20 @@ the 7th switcher button. Gate: typecheck (parity), lint, prettier clean, 139/139
 (1 pre-existing flake, unrelated). Verified live: German renders correctly. See `decisions.md` D-076.
 **Continuing** with Italian — the last of the six UI-only languages from the owner's D-072 scope
 decision.
+
+## D-077: I18N #54 slice 7 (final) — Italian added, completing the 8-locale set; fixed a WCAG target-size regression
+Added `lib/i18n/dictionaries/it.ts`, completing the full es/ca/eu/gl/en/fr/de/it locale set the owner
+specified. **Found and fixed a real accessibility regression, not a flake:** the 8th switcher button
+pushed individual button touch targets under WCAG 2.2's 24×24px minimum (axe `target-size`/
+`target-offset`), caught by 4 a11y test failures across `/`, `/crear`, an SEO page, and `/panel/*`.
+Fixed by widening buttons to `px-2` + `min-w-8`, which the D-074 fixed-width/internal-scroll switcher
+absorbs without reintroducing the earlier page-overflow problem — width cap solves overflow, size
+floor solves touch-target a11y, both now satisfied together. Gate: typecheck (8-locale parity),
+lint, prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing flake). Verified live: Italian renders
+correctly, 8-button switcher touch targets properly sized. See `decisions.md` D-077.
+
+**I18N #54 status:** product UI (landing, wizard, panel, auth, emails) now available in all 8 target
+locales. Legal pages stay Spanish-only everywhere (owner decision, D-072). Basque carries an explicit
+lower-confidence caveat pending native-speaker review. No automated i18n smoke test exists yet across
+locales (only manual verification per slice) — flagged as a reasonable follow-up, not done this
+session to keep slices bounded.

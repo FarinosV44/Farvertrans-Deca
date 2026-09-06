@@ -1961,3 +1961,41 @@
 - **Not done:** Italian — the last of the six UI-only languages from the owner's D-072 scope decision.
   Continuing next.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-075.
+
+## D-077 — I18N #54 slice 7 (final): Italian added, completing the 8-locale set; fixed a real WCAG target-size regression from D-074
+- Date / phase: 2026-09-06, same session, immediately after D-076. `lib/i18n/dictionaries/it.ts`
+  added, completing the owner's specified locale set: es/ca/eu/gl/en/fr/de/it, all registered in
+  `LOCALES` and both `DICTS` maps in that exact order. This closes out #54's product-UI translation
+  scope as defined in D-072 (legal pages remain Spanish-only in every locale, per that decision).
+- **Real accessibility regression found and fixed, not a flake:** adding the 8th switcher button
+  triggered 4 new axe failures across `/`, `/crear`, an SEO page, and `/panel/*` — WCAG 2.2 §2.5.8
+  (Target Size, `target-size` and `target-offset` axe rules). The D-074 fix (shrinking each button to
+  `px-1.5` to solve the 360px page-overflow problem) had pushed individual buttons down to ~23×32px —
+  under the 24×24 CSS-px minimum touch-target size, and too close to their flush neighbors. Fixed by
+  increasing button padding to `px-2` with an explicit `min-w-8` (32px), which satisfies WCAG 2.5.8
+  without reintroducing the overflow problem: the switcher's fixed `max-w-[104px]` + `overflow-x-auto`
+  (from D-074) means widening individual buttons only shows fewer of them before the internal scroll
+  kicks in — it does not affect the page's outer `scrollWidth`, which is what the 360px test checks.
+  This is the accessibility corollary of the D-072/D-073/D-074 overflow saga: a switcher that keeps
+  growing needs BOTH a width cap (page-overflow) AND a per-button size floor (touch-target a11y) to be
+  safe against arbitrarily many locales — both are now satisfied simultaneously and require no further
+  tuning as future locales are (hypothetically) added.
+- Verification: `tsc --noEmit` clean (`it.ts satisfies Messages` confirms full 8-locale structural
+  parity); ESLint clean; Prettier clean; `vitest run` 139/139. First full-suite run surfaced 5
+  failures (4 real axe target-size violations across `a11y.spec.ts`, `seo.spec.ts`, `workspace.spec.ts`
+  + 1 unrelated `trust-registration-v2` failure that did not reproduce on a clean re-run, confirming
+  it was a parallel-run artifact, not a regression). After the button-size fix: targeted re-run of
+  `a11y.spec.ts`, `landing.spec.ts`, `seo.spec.ts`, `workspace.spec.ts`, `trust-registration-v2.spec.ts`
+  — 32/32 passed. Full `playwright test --workers=3` — 153/154 passed, the 1 failure being the
+  already-documented `admin-2fa` recovery-code-replay parallel-only flake. Manually verified in a real
+  Chrome session: Italian renders correctly across nav/hero/subhead/trust-row/CTA at 1440px, and the
+  8-button switcher's touch targets look properly sized.
+- **I18N #54 status at end of this session:** product UI (landing, wizard/creator, panel, auth flows,
+  emails) is now available in all 8 target locales. Legal pages remain Spanish-only everywhere, by the
+  owner's own D-072 decision. Basque (`eu.ts`) carries an explicit lower-confidence caveat and is
+  recommended for native-speaker review before being trusted the same as the other 7. No e2e coverage
+  exists for any locale beyond the default Spanish path and the ad-hoc manual verification recorded in
+  D-071 through this entry — an automated i18n smoke test (assert each `LOCALES` entry renders its own
+  `hero.h1` on `/`) would be a reasonable follow-up but was not added this session, to keep each slice
+  bounded to translation content plus whatever regression it actually triggered.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-076.
