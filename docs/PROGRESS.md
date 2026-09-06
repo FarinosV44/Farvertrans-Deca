@@ -1099,3 +1099,22 @@ See `decisions.md` D-095.
   distinction) either depends on #43's entitlement work (not started) or was deliberately not
   attempted (no external-invite mechanism exists yet to safely build the distinction against).
   Flagged explicitly rather than silently declared done.
+
+## D-096: PRODUCTION INCIDENT — total login/registration outage, missing SECURITY #53 migrations
+User reported registration/login failing with a generic error "even with Google", no emails sending.
+Diagnosed LIVE (not assumed): a wrong-password login attempt against a nonexistent email on
+`decaprofesional.es` returned a raw 500 `{"code":"internal"}` — that only happens if the crash is on
+`login()`'s first DB read, before any credential check. Root cause: production's database never had
+`prisma migrate deploy` run for the 3 pending migrations D-088 flagged
+(`user_session_version`/`admin_2fa_and_audit_log`/`company_role_read_only`) — `setSessionCookie()`,
+called on every login/registration/Google-callback, reads `user.session_version`, which doesn't
+exist on production. Not a code bug — gave the user the exact fix (`prisma migrate deploy`, or the
+raw SQL directly in Supabase's SQL Editor as a fallback, same as D-060). Separately, "no emails send"
+is the already-known invalid `RESEND_API_KEY` placeholder — a credential gap, not code.
+**Hardened `lib/diagnostics.ts`** so this exact failure class (table exists, column doesn't) is
+caught next time instead of the schema check falsely reporting "ok" — this is the 3rd time a
+missing-migration incident has happened (D-054, D-060, this one). Added a `REQUIRED_COLUMNS` check
+alongside the existing table check, and added the 2 SECURITY #53 tables that were never in
+`REQUIRED_TABLES`. Gate: typecheck, lint, prettier clean, 139/139 unit, full suite 159/159 (zero
+flakes). See `decisions.md` D-096. Pushing to `main` immediately per the user's request so the
+hardened diagnostics are live for them to use once they redeploy + migrate.

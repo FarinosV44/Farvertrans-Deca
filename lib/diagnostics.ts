@@ -61,6 +61,25 @@ const REQUIRED_TABLES = [
   "generation_failure",
   "deca_route_intel",
   "commercial_consent",
+  "admin_recovery_code",
+  "security_audit_log",
+];
+
+/**
+ * Individual columns that a table-existence check alone would miss — this is
+ * exactly the gap that let a real production outage through undetected
+ * (D-054, D-060, and again after SECURITY #53's `session_version` shipped:
+ * `user` existed, but every single login/registration/Google callback calls
+ * `setSessionCookie()`, which reads this column unconditionally — a missing
+ * column crashes it with a generic 500, not a recognisable "run your
+ * migrations" message). Add a row here whenever a migration adds a column
+ * that a hot path reads unconditionally, not just for admin-only features.
+ */
+const REQUIRED_COLUMNS: { table: string; column: string }[] = [
+  { table: "user", column: "session_version" },
+  { table: "user", column: "totp_secret" },
+  { table: "user", column: "totp_enabled_at" },
+  { table: "user", column: "preferred_locale" },
 ];
 
 /**
@@ -132,21 +151,38 @@ export async function runDiagnostics(): Promise<DiagnosticsReport> {
   } else {
     const schema = await timed(async () => {
       const { prisma } = await import("@/lib/prisma");
-      const rows = await prisma.$queryRaw<{ table_name: string }[]>`
+      const tableRows = await prisma.$queryRaw<{ table_name: string }[]>`
         SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`;
-      const present = new Set(rows.map((r) => r.table_name));
-      return REQUIRED_TABLES.filter((t) => !present.has(t));
+      const presentTables = new Set(tableRows.map((r) => r.table_name));
+      const missingTables = REQUIRED_TABLES.filter((t) => !presentTables.has(t));
+
+      const columnRows = await prisma.$queryRaw<{ table_name: string; column_name: string }[]>`
+        SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'`;
+      const presentColumns = new Set(columnRows.map((r) => `${r.table_name}.${r.column_name}`));
+      const missingColumns = REQUIRED_COLUMNS.filter(
+        (c) => !presentColumns.has(`${c.table}.${c.column}`),
+      ).map((c) => `${c.table}.${c.column}`);
+
+      return { missingTables, missingColumns };
     });
-    const missingTables = schema.value ?? [];
+    const missingTables = schema.value?.missingTables ?? [];
+    const missingColumns = schema.value?.missingColumns ?? [];
+    const missingAny = missingTables.length > 0 || missingColumns.length > 0;
     checks.push({
       id: "schema",
       label: "Esquema y migraciones",
-      state: schema.error ? "fail" : missingTables.length ? "fail" : "ok",
+      state: schema.error ? "fail" : missingAny ? "fail" : "ok",
       detail: schema.error
         ? fail(schema.error)
-        : missingTables.length
-          ? `Faltan tablas: ${missingTables.join(", ")} — ejecuta prisma migrate deploy.`
-          : "Todas las tablas del flujo DeCA existen.",
+        : missingAny
+          ? [
+              missingTables.length ? `Faltan tablas: ${missingTables.join(", ")}.` : "",
+              missingColumns.length ? `Faltan columnas: ${missingColumns.join(", ")}.` : "",
+              "Ejecuta prisma migrate deploy.",
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : "Todas las tablas y columnas críticas del flujo de autenticación y DeCA existen.",
       ms: schema.ms,
     });
   }
