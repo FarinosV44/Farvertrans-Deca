@@ -2930,3 +2930,51 @@ remaining scope.
   visible through actual UI behavior per role.
 - **#56 stays open** for the two owner-deferred items — closing it would misrepresent a deliberate
   deferral as completion. This is the honest final state for this session's #56 work.
+
+## D-104 — WORKSPACE #24 follow-up: editable company contact profile (email/phone/address/contact name); public support phone added
+- Date / phase: 2026-09-06, same session. The user reported `/panel/empresa` showed no way to add
+  or edit company email/phone/address — confirmed by reading the page: name/NIF were read-only
+  `<dd>` text and the only editable control was the logo. `phone`/`address`/`contactName` already
+  existed as `Company` columns (collected optionally at signup) but had no edit UI at all; `email`
+  didn't exist on `Company` at all (only on `User`, which is a personal login email, not a company
+  contact address).
+- **Implemented**: new `Company.email` column (proper Prisma migration,
+  `20260906201940_company_contact_email`, applied to local dev via `prisma migrate dev` — NOT yet on
+  production, same standing distinction as every schema change this session). New `PATCH
+  /api/company/profile` (owner-only, same authorization pattern as the existing `POST /api/company/
+  logo`) validates and updates email/phone/address/contactName; an empty string clears a field, all
+  four stay optional. New `components/app/company-profile-form.tsx` — an editable form for owners,
+  a read-only `<dl>` for members (same `canChange={role === "owner"}` pattern the logo manager
+  already uses). `/panel/empresa` gained a "Datos de contacto" section using it, placed between the
+  existing read-only name/NIF block and the logo section.
+- **Separately, the owner asked for a public support phone number** (`607 52 77 19`) to be added
+  alongside the existing support email. Added `BRAND.supportPhone` (source of truth, matching how
+  `supportEmail` is already centralised) + `LEGAL_ENTITY.supportPhone` (re-exports it, matching the
+  existing pattern), and displayed it in the site footer (next to the existing email/address) and on
+  the dedicated `/contacto` page (next to the existing mailto link) — the two places the support
+  email already appears publicly.
+- **Found and fixed a real regression in an existing test**: `tests/e2e/nav-links.spec.ts`'s footer
+  link-checker already excluded `mailto:`/`http` links from its "every footer link resolves" HTTP
+  check, but had never needed to exclude `tel:` before (this is the first `tel:` link in the
+  product) — it tried `request.get("tel:...")`, which Playwright's API request context rejects
+  outright ("Protocol tel: not supported"). Fixed by adding `tel:` to the same exclusion list,
+  matching the exact rationale already applied to `mailto:` (external URI scheme, not a route).
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139 (including
+  the existing `brand.test.ts`, unaffected by the additive field). New tests in
+  `tests/e2e/company-logo.spec.ts` (the file that already covers `/panel/empresa`): owner can fill
+  in and later edit the four contact fields (persists across reload — not just an in-memory form
+  state), and a non-owner member sees the same data read-only with no save control. `playwright test
+  tests/e2e/company-logo.spec.ts tests/e2e/nav-links.spec.ts` — 10/10 passed. Full `playwright test
+  --workers=3` — 163/164 passed; the 1 failure (`master-data`) is the same already-documented
+  parallel-only flake, reconfirmed passing with `--workers=1`.
+- **A real, unrelated gotcha hit mid-slice, not a code bug**: the local dev server that Playwright's
+  `reuseExistingServer` option reused for the first test run had been started BEFORE the Prisma
+  migration ran, so it held a stale Prisma Client without the new `email` column — every test in
+  `company-logo.spec.ts` failed immediately (page load itself hung). Killing that stale process and
+  letting Playwright start a fresh one resolved it instantly; not a symptom of anything wrong with
+  the migration or the new code. Worth remembering: any schema change made while a dev server is
+  already running needs that server restarted before its tests will see the new columns.
+- **Production note, same standing pattern as every schema change this session**: the new
+  `Company.email` column needs `prisma migrate deploy` (or the equivalent manual SQL) against
+  production before this feature works there — it is NOT part of the migrations already applied for
+  D-096/D-098's incident fix.

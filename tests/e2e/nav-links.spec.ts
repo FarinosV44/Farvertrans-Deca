@@ -36,7 +36,8 @@ test.describe("Navigation — no broken links in header/footer", () => {
     expect(hrefs.length).toBeGreaterThanOrEqual(9); // 4 product/resource/legal cols worth + email
 
     for (const href of new Set(hrefs)) {
-      if (href.startsWith("mailto:") || href.startsWith("http")) continue; // external / email — not a route
+      if (href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("http"))
+        continue; // external / email / phone — not a route
       const path = href.split("#")[0] || "/";
       if (href.includes("#")) continue; // in-page anchor
       const res = await request.get(path);

@@ -15,6 +15,8 @@ export const LEGAL_ENTITY = {
   address: "Calle Pintor Francisco Ribalta 4A, 46540 El Puig, Valencia, España",
   /** Support/operational contact — reuses the product's support address. */
   supportEmail: BRAND.supportEmail,
+  /** Support phone — reuses the product's support phone. */
+  supportPhone: BRAND.supportPhone,
   /** Data-protection contact, if it ever differs from support. */
   privacyEmail: BRAND.supportEmail,
   legalNoticeUrl: "/aviso-legal",

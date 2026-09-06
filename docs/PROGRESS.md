@@ -1181,3 +1181,14 @@ section status comment on #56 (8 of 10 suggested admin-dashboard sections now ex
 dashboard items done except drafts/frequency widgets; invitations fully audited now). **#56 stays
 open** for the two deferred items — this is the honest final state, not a forced close. See
 `decisions.md` D-103.
+
+## D-104: editable company contact profile (email/phone/address/contact name) + public support phone
+`/panel/empresa` had no way to add/edit company email/phone/address — only the logo was editable.
+Added `Company.email` (new migration, **needs `prisma migrate deploy` on production**), a
+`PATCH /api/company/profile` route (owner-only), and a `CompanyProfileForm` (editable for owners,
+read-only for members) shown in a new "Datos de contacto" section. Also added a public support
+phone (`607 52 77 19`) via `BRAND.supportPhone`, shown in the footer and on `/contacto`. Found and
+fixed a real regression in `nav-links.spec.ts` (the footer link-checker didn't know to skip `tel:`
+links — first one in the product). Gate: typecheck, lint, prettier clean, 139/139 unit, 10/10
+targeted e2e, full suite 163/164 (1 pre-existing flake, reconfirmed unrelated). See `decisions.md`
+D-104. **Production still needs the migration applied** before this feature works live.
