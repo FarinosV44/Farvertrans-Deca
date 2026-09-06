@@ -2,12 +2,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+type CompanyRoleValue = "owner" | "member" | "read_only";
+
 type Member = {
   id: string;
   email: string;
-  companyRole: "owner" | "member";
+  companyRole: CompanyRoleValue;
   isInternal: boolean;
   joinedAt: string;
+};
+
+const ROLE_LABEL: Record<CompanyRoleValue, string> = {
+  owner: "Administrador",
+  member: "Operador",
+  read_only: "Solo lectura",
 };
 type Invite = { id: string; email: string; role: string; expiresAt: string };
 
@@ -24,6 +32,7 @@ export function TeamManager({
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<CompanyRoleValue>("member");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
@@ -38,7 +47,7 @@ export function TeamManager({
       const res = await fetch("/api/team/invites", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, role: inviteRole }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -64,7 +73,7 @@ export function TeamManager({
     router.refresh();
   }
 
-  async function setRole(memberId: string, role: "owner" | "member") {
+  async function setRole(memberId: string, role: CompanyRoleValue) {
     setMsg(null);
     const res = await fetch(`/api/team/members/${memberId}`, {
       method: "PATCH",
@@ -110,7 +119,7 @@ export function TeamManager({
                 <span className="font-medium">{m.email}</span>
                 {m.id === meId && <span className="text-[var(--color-text-muted)]"> (tú)</span>}
                 <span className="ml-2 rounded-[4px] bg-[var(--color-surface)] px-1.5 py-0.5 text-xs">
-                  {m.companyRole === "owner" ? "Administrador" : "Operador"}
+                  {ROLE_LABEL[m.companyRole]}
                 </span>
                 <span className="ml-2 text-xs text-[var(--color-text-muted)]">
                   Activo · desde {m.joinedAt.slice(0, 10)}
@@ -125,10 +134,11 @@ export function TeamManager({
                     id={`role-${m.id}`}
                     data-testid={`role-${m.email}`}
                     value={m.companyRole}
-                    onChange={(e) => setRole(m.id, e.target.value as "owner" | "member")}
+                    onChange={(e) => setRole(m.id, e.target.value as CompanyRoleValue)}
                     className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-xs"
                   >
                     <option value="member">Operador</option>
+                    <option value="read_only">Solo lectura</option>
                     <option value="owner">Administrador</option>
                   </select>
                   <button
@@ -161,6 +171,19 @@ export function TeamManager({
                 data-testid="invite-email"
                 className="mt-1 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
               />
+            </label>
+            <label>
+              <span className="block text-sm font-medium">Rol</span>
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as CompanyRoleValue)}
+                data-testid="invite-role"
+                className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+              >
+                <option value="member">Operador</option>
+                <option value="read_only">Solo lectura</option>
+                <option value="owner">Administrador</option>
+              </select>
             </label>
             <button
               type="submit"

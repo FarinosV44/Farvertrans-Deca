@@ -492,6 +492,11 @@ export const fr = {
       cta: "Créer un compte gratuit",
       loginPrompt: "Vous avez déjà un compte ? Connexion",
     },
+    readOnlyGate: {
+      title: "Votre rôle est en lecture seule",
+      body: "Vous pouvez consulter l'historique et les documents de votre entreprise, mais pas créer ni corriger de DeCA. Demandez à un administrateur de modifier votre rôle si nécessaire.",
+      cta: "Aller à mon historique",
+    },
     correctionReason: "Motif de la correction",
     correctionReasonRequired: "Indiquez le motif de la correction.",
     correctionSaveFailed: "Impossible d'enregistrer la correction.",

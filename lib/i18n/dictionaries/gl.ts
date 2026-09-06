@@ -487,6 +487,11 @@ export const gl = {
       cta: "Crear conta gratis",
       loginPrompt: "Xa tes conta? Entra",
     },
+    readOnlyGate: {
+      title: "O teu rol é de só lectura",
+      body: "Podes ver o historial e os documentos da túa empresa, pero non crear nin corrixir DeCA. Pídelle a un administrador que cambie o teu rol se o necesitas.",
+      cta: "Ir ao meu historial",
+    },
     correctionReason: "Motivo da corrección",
     correctionReasonRequired: "Indica o motivo da corrección.",
     correctionSaveFailed: "Non se puido gardar a corrección.",

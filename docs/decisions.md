@@ -1999,3 +1999,73 @@
   `hero.h1` on `/`) would be a reasonable follow-up but was not added this session, to keep each slice
   bounded to translation content plus whatever regression it actually triggered.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-076.
+
+## D-078 — PRODUCT #56 slice 1: `read_only` (Auditor) company role, enforced server-side on every mutating route
+- Date / phase: 2026-09-06, same session. User said "CONTINUE you can set the priority I dont really
+  care" after the #52/#51/#54 queue was reported done. Reviewed the two explicitly-queued "next major
+  objectives" (`gh issue view 55`, `gh issue view 56` — #55 premium visual/component system, largely
+  overlapping and superseding #51 which already had a first slice done this session; #56 multi-level
+  control center: role model, invitations, super-admin dashboard, route intelligence, global search).
+  Chose to start #56 over #55 because #56 is foundational (permissions everything else builds on) and
+  because #55's core acceptance items (fake QR removed, desktop uses width intelligently, no fake
+  dashboards) were already substantively addressed in D-069/D-070; further #55 work is open-ended
+  visual taste, the same diminishing-returns judgment already applied once this session.
+- **Audited the existing role model before building anything new** (grepped `companyRole` across the
+  whole codebase) and found #56's platform-level "Super Admin" requirement is ALREADY satisfied by the
+  existing `Role.internal` + `requireInternal()` + mandatory TOTP 2FA from #53 (D-063/D-064) — no new
+  platform-role work needed. The company-level model already had `owner` (≈ #56's Company Admin) and
+  `member` (≈ #56's Operator, already correctly scoped: full DeCA/saved-data access, no team/billing/
+  security management) via the pre-existing TEAM #27/#37 work. The one genuinely missing piece from
+  #56's role spec was the **Read-only/Auditor role** — chose this as the first bounded #56 slice.
+- **Schema:** `CompanyRole` enum extended with `read_only` (additive, `ALTER TYPE ... ADD VALUE`,
+  migration `20260906094103_company_role_read_only`, applied to the local dev Postgres instance).
+- **`lib/team.ts`:** exported `CompanyRoleValue` type and a new `canWrite(role)` helper (`role !==
+  "read_only"`). `createInvite`/`changeRole` widened to the 3-value type.
+- **Real bug found and fixed while extending `changeRole`'s "must keep ≥1 owner" invariant:** the
+  existing guard only fired on `target.companyRole === "owner" && role === "member"` — i.e. it
+  protected against demoting the last owner to Operator, but NOT against demoting them straight to the
+  new `read_only` role, which would have silently left a company with zero admins. Widened the
+  condition to `role !== "owner"` (any non-owner target), closing that gap for `read_only` and for any
+  future role added the same way.
+- **Server-side enforcement (the actual security boundary) added to every mutating route a `read_only`
+  member could otherwise reach:** `POST /api/deca` (create), `POST /api/deca/[id]/version` (correct),
+  `POST /api/saved/[kind]` (create saved company/vehicle/location), `DELETE /api/saved/[kind]/[id]`,
+  `POST /api/templates`, `DELETE /api/templates/[id]` — each now returns `403 forbidden` for
+  `user.companyRole === "read_only"`, checked fresh from the session on every call, never trusting a
+  client-side gate alone (security.md). Company-admin-only routes (logo, commercial consent, team
+  invites/role-changes/removal) already excluded `read_only` implicitly since they already require
+  `owner`.
+- **UI (view-only, not the real security boundary):** `components/app/team-manager.tsx` gained a
+  "Solo lectura" role option in both the invite form (role selectable at invite time, closing #56's
+  "role is defined at invite time" requirement) and the post-join role-change select, plus a
+  `ROLE_LABEL` map replacing the old two-way ternary. `app/crear/page.tsx` gained a page-level gate
+  (mirroring the existing anonymous lead-gate pattern) that shows a clear "Tu rol es de solo lectura"
+  screen instead of the wizard. `app/panel/page.tsx` hides the "Nuevo DeCA"/"Repetir último"/per-row
+  "Duplicar" actions for `read_only` users (`canCreate` flag) while leaving all view actions (detail,
+  PDF, history) untouched.
+- **New dictionary key across all 8 locales:** `crear.readOnlyGate` (title/body/cta), added to
+  `es/en/ca/eu/gl/fr/de/it.ts` to keep `satisfies Messages` parity — the read-only gate screen is
+  translated in every language from day one, not just Spanish.
+- **Explicitly NOT done in this slice, noted so it isn't silently dropped:** `/panel/datos`'s
+  `SavedDataManager` component still unconditionally renders add/edit/delete controls to a `read_only`
+  user (a click would now correctly get a 403 from the server, just with a less polished UX than the
+  gates already added to `/crear` and `/panel`) — deferred as a follow-up UI-polish item, not a
+  security gap, since the server-side check is what actually protects the data either way. The
+  external-carrier-vs-internal-employee invitation distinction from #56's "IMPORTANT" callout was
+  deliberately NOT tackled this slice: no external-invite mechanism exists yet at all, so there is no
+  current risk of accidentally conflating the two — it's a "build carefully" future feature, not a
+  "fix an existing conflation" bug, and a bigger scope than this slice.
+- **Doc gap noted, not created:** `docs/api/INDEX.md`'s row for `lib/team.ts` points at
+  `docs/reference/lib.md`, which does not exist anywhere in the repo (`docs/reference/` is not a real
+  directory) — a pre-existing gap from before this session, not something introduced here. Updated the
+  INDEX.md row's description to the as-built signature regardless, per docs-discipline, but did not
+  create a new reference-doc system to fully close the gap — out of scope for this slice.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139. New e2e test
+  added to `tests/e2e/team.spec.ts` ("PRODUCT #56: a read_only member can view history but cannot
+  create or correct a DeCA") — invites with the role picked at invite time, confirms the member list
+  shows "Solo lectura", confirms history/detail/PDF viewing still works, confirms `/crear` shows the
+  read-only gate (not the wizard fields), confirms `/panel` hides the create button, and confirms a
+  direct `POST /api/deca` call is rejected with `403 forbidden` regardless of any UI gate. Full
+  `playwright test --workers=3` — 154/154 passed (the single content-cms preview-race flake from
+  earlier runs did not reproduce this run).
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-077.

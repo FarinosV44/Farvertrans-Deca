@@ -843,3 +843,29 @@ locales. Legal pages stay Spanish-only everywhere (owner decision, D-072). Basqu
 lower-confidence caveat pending native-speaker review. No automated i18n smoke test exists yet across
 locales (only manual verification per slice) — flagged as a reasonable follow-up, not done this
 session to keep slices bounded.
+
+## D-078: PRODUCT #56 slice 1 — `read_only` (Auditor) company role, enforced server-side
+Owner said "continue, you set the priority." Reviewed #55 (premium visual/component system — largely
+superseded by the #51 work already done this session) vs #56 (multi-level control center: roles,
+invitations, super-admin, route intelligence, search) and started #56 as the more foundational,
+bounded next step. Audited the existing role model first: platform-level "Super Admin" is already
+satisfied by `Role.internal` + mandatory 2FA (#53); company-level `owner`/`member` already map onto
+#56's Company Admin/Operator. The one real gap was a Read-only/Auditor role — built it as this slice.
+
+`CompanyRole` enum extended with `read_only` (additive migration, applied to local dev DB). `lib/team.ts`
+gained a `canWrite()` helper and widened types. **Found and fixed a real bug** while extending the
+"keep ≥1 owner" invariant in `changeRole()` — it only guarded owner→member demotion, not owner→
+read_only, which would have silently zeroed out a company's admins. Server-side 403 checks added to
+every mutating route a read_only member could reach (DeCA create/correct, saved-data create/delete,
+templates create/delete) — the real security boundary. UI: role now selectable at invite time, "Solo
+lectura" label added, `/crear` shows a dedicated read-only gate screen (translated into all 8 locales),
+`/panel` hides create/duplicate actions for read_only users. Explicitly deferred, not dropped:
+`/panel/datos`'s SavedDataManager still shows add/delete UI to read_only users (server rejects it
+correctly, just a rougher UX) — noted as a follow-up. The external-carrier-vs-employee invite
+distinction from #56 was NOT tackled — no external-invite mechanism exists yet, so there's no current
+risk to fix, just a bigger future feature to build carefully.
+
+Gate: typecheck, lint, prettier clean, 139/139 unit. New e2e test in `team.spec.ts` covers the full
+flow: invite-time role selection, member-list label, history/detail view still works, `/crear` gate
+renders, `/panel` hides create button, and a direct API call returns 403 regardless of any UI gate.
+Full suite 154/154 passed. See `decisions.md` D-078. **Continuing** with the next #56 piece next.

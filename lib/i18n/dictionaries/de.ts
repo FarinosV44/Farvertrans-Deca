@@ -494,6 +494,11 @@ export const de = {
       cta: "Kostenloses Konto erstellen",
       loginPrompt: "Haben Sie bereits ein Konto? Anmelden",
     },
+    readOnlyGate: {
+      title: "Ihre Rolle ist schreibgeschützt",
+      body: "Sie können den Verlauf und die Dokumente Ihres Unternehmens einsehen, aber keine DeCA erstellen oder korrigieren. Bitten Sie einen Administrator, Ihre Rolle zu ändern, falls nötig.",
+      cta: "Zu meinem Verlauf",
+    },
     correctionReason: "Grund der Korrektur",
     correctionReasonRequired: "Geben Sie den Grund der Korrektur an.",
     correctionSaveFailed: "Die Korrektur konnte nicht gespeichert werden.",

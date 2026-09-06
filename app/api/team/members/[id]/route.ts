@@ -27,7 +27,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-const roleSchema = z.object({ role: z.enum(["owner", "member"]) });
+const roleSchema = z.object({ role: z.enum(["owner", "member", "read_only"]) });
 
 /** Admin changes a member's workspace role (TEAM #37). */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

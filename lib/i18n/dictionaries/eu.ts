@@ -495,6 +495,11 @@ export const eu = {
       cta: "Sortu kontu doakoa",
       loginPrompt: "Kontua duzu jada? Sartu",
     },
+    readOnlyGate: {
+      title: "Zure rola irakurtzeko soilik da",
+      body: "Zure enpresaren historiala eta dokumentuak ikus ditzakezu, baina ezin duzu DeCArik sortu edo zuzendu. Eskatu administratzaile bati zure rola aldatzeko behar baduzu.",
+      cta: "Joan nire historialera",
+    },
     correctionReason: "Zuzenketaren arrazoia",
     correctionReasonRequired: "Adierazi zuzenketaren arrazoia.",
     correctionSaveFailed: "Ezin izan da zuzenketa gorde.",

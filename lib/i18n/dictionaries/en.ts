@@ -477,6 +477,11 @@ export const en = {
       cta: "Create free account",
       loginPrompt: "Already have an account? Log in",
     },
+    readOnlyGate: {
+      title: "Your role is read-only",
+      body: "You can view your company's history and documents, but not create or correct DeCA. Ask an admin to change your role if you need to.",
+      cta: "Go to my history",
+    },
     correctionReason: "Reason for the correction",
     correctionReasonRequired: "State the reason for the correction.",
     correctionSaveFailed: "Couldn't save the correction.",

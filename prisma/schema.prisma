@@ -166,10 +166,15 @@ enum Role {
   internal
 }
 
-/// Role WITHIN a company workspace (TEAM #27). `owner` = admin.
+/// Role WITHIN a company workspace (TEAM #27, PRODUCT #56). `owner` = Company
+/// Admin, `member` = Operator (creates/manages DeCA and saved data, no team/
+/// billing/security management), `read_only` = Auditor (can view history and
+/// documents but cannot create, correct, or modify anything — enforced
+/// server-side on every mutating route, never just hidden in the UI).
 enum CompanyRole {
   owner
   member
+  read_only
 }
 
 /// A pending invitation to join a company workspace (TEAM #27). One-time, expiring.

@@ -486,6 +486,11 @@ export const it = {
       cta: "Crea account gratuito",
       loginPrompt: "Hai già un account? Accedi",
     },
+    readOnlyGate: {
+      title: "Il tuo ruolo è di sola lettura",
+      body: "Puoi vedere la cronologia e i documenti della tua azienda, ma non creare né correggere DeCA. Chiedi a un amministratore di cambiare il tuo ruolo se necessario.",
+      cta: "Vai alla mia cronologia",
+    },
     correctionReason: "Motivo della correzione",
     correctionReasonRequired: "Indica il motivo della correzione.",
     correctionSaveFailed: "Impossibile salvare la correzione.",
