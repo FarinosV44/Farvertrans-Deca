@@ -1078,3 +1078,24 @@ list-page pattern. New tests confirm both the writes and the viewer. Gate: typec
 clean, 139/139 unit, 6/6 targeted audit-log e2e, full suite 157/157 (2 pre-existing flakes,
 reconfirmed unrelated). See `decisions.md` D-094. #56's remaining scope (super-admin dashboard beyond
 #33, permissions matrix, external-invite distinction) stays open per the issue's progress comment.
+
+## D-095: `develop` (D-092…D-094) merged to `main` at `a08db07`, on the user's explicit request ("finish issue 51 54 55 and 56 ... push to main")
+`--no-ff` merge, no conflicts, 20 files. Closes #54 (i18n) and #51 (desktop /crear panel) on `main`;
+#56 gets real partial progress (team audit logging) but stays open — its remaining scope (super-admin
+dashboard, permissions matrix, external-invite distinction) wasn't attempted since it depends on
+other not-yet-built foundations (#43 entitlements) or is deliberately deferred. **Repeated the
+GitHub auto-close-keyword mistake once more** — a commit message accidentally closed #56 too; caught
+and reopened immediately with an explanation. No new migrations, no `prisma migrate deploy` needed.
+See `decisions.md` D-095.
+
+### Where things stand after this push
+- **Closed and merged to `main`**: #51, #54, #55 (all of DESIGN #55's 15 items, plus #51's one real
+  desktop gap, plus #54's full 8-locale coverage). Also closed this session: #6-14, #19-39 (most of
+  the early BUILD/EPIC backlog), #42/#43/#46/#47 stay open with accurate progress notes, #56 stays
+  open with real remaining scope.
+- **#56 is NOT finished** — this is the one issue from the user's "finish 51 54 55 and 56" instruction
+  that could not be responsibly completed in this pass. What remains (super-admin platform-wide
+  dashboard beyond #33, an explicit permissions matrix, external-carrier-vs-employee invite
+  distinction) either depends on #43's entitlement work (not started) or was deliberately not
+  attempted (no external-invite mechanism exists yet to safely build the distinction against).
+  Flagged explicitly rather than silently declared done.

@@ -2689,3 +2689,25 @@
   (super-admin platform-wide dashboard beyond what #33 already built, an explicit permissions matrix,
   external-carrier-vs-employee invite distinction) stays open — see the progress comment posted on
   the issue.
+
+## D-095 — `develop` (D-092…D-094) merged to `main` at `a08db07`, on the user's explicit request ("finish issue 51 54 55 and 56 ... push to main")
+- Date / phase: 2026-09-06, same session, immediately after D-094. `--no-ff` merge from `develop` at
+  `009f45f`, pushed to `origin/main` at `5ba21c4..a08db07`. 20 files changed, no conflicts.
+- Brings `main` current with: the password-reset i18n fix (closes #54's last gap), the `/crear`
+  desktop preview panel (closes #51), and team audit logging + the new `/admin/auditoria` viewer
+  (partial progress on #56, which stays open).
+- **Repeated the D-085/§10 GitHub auto-close mistake once more, on #56 this time**: the D-093/D-094
+  commit message (`8ee8002`) contained "(closes #56 gap)" in its title — GitHub read "closes #56" as
+  a bare closing keyword regardless of the trailing word "gap", and auto-closed #56 on push even
+  though real scope remains there. Caught it via `gh issue close 51` unexpectedly reporting #51
+  "already closed" (from the SAME commit closing both #51 and #56 — #51's closure was correct and
+  intended, #56's was not). Reopened #56 immediately with an explanatory comment and posted the
+  intended progress comment listing what remains. This merge's own commit message was written
+  without any "closes #N" phrasing specifically to avoid a third occurrence.
+- **This merge's own gate**: no new verification run beyond what D-092/D-093/D-094 already did on
+  `develop` — no code changed since that last full run (157/157, 2 pre-existing flakes reconfirmed
+  unrelated).
+- **No new Prisma migrations in this merge** — no `prisma migrate deploy` needed. A production
+  redeploy to actually serve this code is still a separate, not-yet-done action, same standing
+  distinction as every prior merge this session.
+- CI triggered on the `main` push (queued at push time).
