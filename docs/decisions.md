@@ -3336,3 +3336,16 @@ remaining scope.
   `20260906190000_backfill_legal_correction_wording`) plus D-109's
   `20260906204958_webauthn_passkeys_and_trusted_devices` — all four are applied to local dev via
   this merge's `prisma migrate dev` but none are yet on production.
+
+## D-111 — merged `develop` into `main` at `11be387` (SEO audit D-105–D-108 + passkey admin 2FA D-109)
+- Date / phase: 2026-09-07. User explicitly asked to merge to `main` after D-110's merge left
+  `develop` fully green (typecheck/lint/prettier/build/vitest/full Playwright suite, 169/169).
+  Clean merge, no conflicts (`main` had not diverged from `develop` beyond earlier releases).
+  Re-ran the entire gate on `main` after the merge before pushing: `tsc --noEmit` clean, ESLint/
+  Prettier clean (same pre-existing baseline warnings only), `vitest run` 139/139, `npm run build`
+  clean, full `playwright test --workers=3` 169/169 with zero flakes. Pushed `main` at `11be387`.
+- **Production still needs 4 migrations applied, in this order**, before either feature works live:
+  `20260906120000_backfill_author_name_brand`, `20260906120500_content_item_legal_reviewer_name`,
+  `20260906190000_backfill_legal_correction_wording` (SEO audit), then
+  `20260906204958_webauthn_passkeys_and_trusted_devices` (D-109 passkeys). `prisma migrate deploy`
+  or the equivalent manual SQL, same standing pattern as every schema change this session.
