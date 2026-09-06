@@ -7,12 +7,33 @@ import { CtaButton } from "@/components/site/cta-button";
 import { publicEnv } from "@/lib/env";
 import { HERO } from "@/lib/content/landing";
 import { LEGAL_SOURCE } from "@/lib/content/landing";
+import { BRAND } from "@/lib/brand";
+
+const CANONICAL = `${publicEnv.baseUrl}/soy-obligado`;
 
 export const metadata: Metadata = {
   title: "¿Estoy obligado a hacer el DeCA?",
   description:
     "Comprueba en 30 segundos si estás obligado a generar el Documento Electrónico de Control Administrativo (DeCA) del transporte de mercancías por carretera.",
-  alternates: { canonical: `${publicEnv.baseUrl}/soy-obligado` },
+  alternates: { canonical: CANONICAL },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    url: CANONICAL,
+    title: "¿Estoy obligado a hacer el DeCA?",
+    description:
+      "Comprueba en 30 segundos si estás obligado a generar el DeCA del transporte de mercancías por carretera.",
+    siteName: BRAND.name,
+  },
+};
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Inicio", item: publicEnv.baseUrl },
+    { "@type": "ListItem", position: 2, name: "¿Estoy obligado a hacer el DeCA?", item: CANONICAL },
+  ],
 };
 
 type SP = { ambito?: string; rol?: string; tipo?: string };
@@ -66,9 +87,22 @@ export default async function SoyObligadoPage({ searchParams }: { searchParams: 
 
   return (
     <>
-      <SiteHeader />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <SiteHeader nav />
       <main id="contenido" className="mx-auto max-w-[640px] px-4 pb-24 pt-10 md:px-6 md:pb-12">
-        <h1 className="text-3xl font-bold md:text-4xl">¿Estoy obligado a hacer el DeCA?</h1>
+        <nav aria-label="Migas de pan" className="text-xs text-[var(--color-text-muted)]">
+          <Link href="/" className="underline">
+            Inicio
+          </Link>
+          <span aria-hidden> / </span>
+          <span>¿Estoy obligado a hacer el DeCA?</span>
+        </nav>
+        <h1 className="mt-2 text-3xl font-bold md:text-4xl">¿Estoy obligado a hacer el DeCA?</h1>
         <p className="mt-3 text-[var(--color-text-muted)]">
           Tres preguntas. No guardamos ninguna respuesta. Esto es orientativo; la referencia es la
           norma.

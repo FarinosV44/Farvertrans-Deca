@@ -11,6 +11,8 @@ import {
 import { getInternalUser } from "@/lib/admin/guard";
 import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { reviewerPersonJsonLd } from "@/lib/content/legal-reviewer";
 
 /**
  * Shared rendering for the CMS public routes (SEO #32). `/guias/[slug]` and
@@ -95,7 +97,23 @@ export async function ContentPage({
       datePublished: item.publishedAt?.toISOString(),
       dateModified: item.updatedAt.toISOString(),
       author: { "@type": "Organization", name: item.authorName || BRAND.name },
-      publisher: { "@type": "Organization", name: BRAND.name },
+      // PRAETORIA, S.L. is the legal operator/publisher; DeCA Profesional is
+      // its product brand (2026-09 legal-content pass, docs/decisions.md
+      // D-108) — never the reverse, and never DeCA Profesional's own domain
+      // as PRAETORIA's `url`.
+      publisher: {
+        "@type": "Organization",
+        name: LEGAL_ENTITY.name,
+        url: LEGAL_ENTITY.corporateUrl,
+        brand: { "@type": "Brand", name: BRAND.name, url: publicEnv.baseUrl },
+      },
+      // Optional named legal reviewer credit (D-081/#33) — only present when
+      // an editor explicitly set one; never invented. Uses structured Person
+      // properties (name/jobTitle/identifier/memberOf), never the combined
+      // display string as `Person.name`.
+      ...(item.legalReviewerName
+        ? { reviewedBy: reviewerPersonJsonLd(item.legalReviewerName) }
+        : {}),
       mainEntityOfPage: url,
     },
     {

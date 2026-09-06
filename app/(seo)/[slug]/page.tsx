@@ -9,6 +9,8 @@ import { TrackView } from "@/components/analytics/track-view";
 import { publicEnv } from "@/lib/env";
 import { HERO } from "@/lib/content/landing";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { reviewerPersonJsonLd } from "@/lib/content/legal-reviewer";
 import { SEO_PAGES, getSeoPage } from "@/content/seo/pages";
 
 export const dynamicParams = false; // only the 10 known slugs render; anything else 404s
@@ -29,6 +31,7 @@ export async function generateMetadata({
     title: p.title,
     description: p.description,
     alternates: { canonical: url },
+    robots: { index: true, follow: true },
     openGraph: {
       type: "article",
       url,
@@ -39,14 +42,77 @@ export async function generateMetadata({
   };
 }
 
+const CORNERSTONE_SLUGS = ["que-es-el-deca", "deca-obligatorio-2026", "como-hacer-un-deca"];
+
+/**
+ * Cross-family contextual links (SEO cluster → CMS blog/guides), keyed by SEO
+ * page slug. `p.related` only resolves other `content/seo/pages.ts` slugs
+ * (see `getSeoPage`), so a link to a CMS article needs its full `/blog/...`
+ * or `/guias/...` href listed here instead.
+ *
+ * `deca-obligatorio-2026` (evergreen normative reference: scope, sanctions,
+ * who's affected) and `/blog/cuenta-atras-deca-5-octubre-2026` (a timely
+ * countdown/checklist) were reviewed for cannibalisation and kept as two
+ * separate pages with distinct intents — cross-linked instead of merged
+ * (docs/decisions.md D-105).
+ */
+const EXTRA_RELATED: Record<string, { href: string; label: string }[]> = {
+  "deca-obligatorio-2026": [
+    {
+      href: "/blog/cuenta-atras-deca-5-octubre-2026",
+      label: "Cuenta atrás: checklist antes del 5 de octubre de 2026",
+    },
+  ],
+};
+
 export default async function SeoPageView({ params }: { params: Promise<{ slug: string }> }) {
   const p = getSeoPage((await params).slug);
   if (!p) notFound();
 
+  const url = `${publicEnv.baseUrl}/${p.slug}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: p.h1,
+      description: p.description,
+      dateModified: p.lastReviewed,
+      author: { "@type": "Organization", name: BRAND.name },
+      // PRAETORIA, S.L. is the legal operator/publisher; DeCA Profesional is
+      // its product brand (2026-09 legal-content pass, docs/decisions.md
+      // D-108) — never the reverse, and never DeCA Profesional's own domain
+      // as PRAETORIA's `url`.
+      publisher: {
+        "@type": "Organization",
+        name: LEGAL_ENTITY.name,
+        url: LEGAL_ENTITY.corporateUrl,
+        brand: { "@type": "Brand", name: BRAND.name, url: publicEnv.baseUrl },
+      },
+      // Optional named legal reviewer credit — only present when the page's
+      // content has `legalReviewer` explicitly set; never invented. Uses
+      // structured Person properties (name/jobTitle/identifier/memberOf),
+      // never the combined display string as `Person.name`.
+      ...(p.legalReviewer ? { reviewedBy: reviewerPersonJsonLd(p.legalReviewer) } : {}),
+      mainEntityOfPage: url,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Inicio", item: publicEnv.baseUrl },
+        { "@type": "ListItem", position: 2, name: p.h1, item: url },
+      ],
+    },
+  ];
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <TrackView event="landing_view" />
-      <SiteHeader />
+      <SiteHeader nav />
 
       <main id="contenido" className="mx-auto max-w-[760px] px-4 pb-24 pt-10 md:px-6 md:pb-12">
         <nav aria-label="Migas de pan" className="text-xs text-[var(--color-text-muted)]">
@@ -60,6 +126,14 @@ export default async function SeoPageView({ params }: { params: Promise<{ slug: 
         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
           Última revisión normativa: {p.lastReviewed}
         </p>
+        {p.legalReviewer && (
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            Revisión legal:{" "}
+            <Link href="/revision-legal" className="underline">
+              {p.legalReviewer}
+            </Link>
+          </p>
+        )}
 
         {p.intro.map((para) => (
           <p key={para} className="mt-4 text-[var(--color-text)]">
@@ -115,9 +189,15 @@ export default async function SeoPageView({ params }: { params: Promise<{ slug: 
         </section>
 
         <section className="mt-8">
-          <h2 className="text-lg font-bold">Sigue leyendo</h2>
+          <h2 className="text-lg font-bold">Guías relacionadas</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-            {[...p.related, "requisitos-deca"].map((slug) => {
+            {[
+              ...new Set(
+                [...p.related, "requisitos-deca", ...CORNERSTONE_SLUGS].filter(
+                  (slug) => slug !== p.slug,
+                ),
+              ),
+            ].map((slug) => {
               const r = getSeoPage(slug);
               return (
                 <li key={slug}>
@@ -127,6 +207,13 @@ export default async function SeoPageView({ params }: { params: Promise<{ slug: 
                 </li>
               );
             })}
+            {(EXTRA_RELATED[p.slug] ?? []).map((x) => (
+              <li key={x.href}>
+                <Link href={x.href} className="inline-block min-h-[24px] py-1">
+                  {x.label}
+                </Link>
+              </li>
+            ))}
             <li>
               <Link href="/" className="inline-block min-h-[24px] py-1">
                 Landing y generador

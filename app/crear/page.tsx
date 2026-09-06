@@ -23,7 +23,10 @@ export const metadata: Metadata = {
   title: "Crear DeCA gratis",
   description:
     "Crea tu primer Documento Electrónico de Control sin registrarte, solo con tu nombre y email. 3 pasos, PDF nativo con QR y URL de descarga directa.",
-  robots: { index: true, follow: true },
+  // SEO: /crear is the application/form screen, not a canonical landing
+  // page — /generador-deca is the indexable transactional equivalent and
+  // stays indexed. Kept out of the sitemap too (see app/sitemap.ts).
+  robots: { index: false, follow: true },
 };
 
 export const dynamic = "force-dynamic";

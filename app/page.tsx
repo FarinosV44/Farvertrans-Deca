@@ -38,17 +38,21 @@ import {
   landingJsonLd,
 } from "@/lib/content/landing";
 
+// SEO: this is the product/brand homepage — its primary intent is "generador
+// profesional de DeCA" (the software), not "gratis", which is owned
+// exclusively by /deca-gratis (see docs/decisions.md keyword-cannibalisation
+// entry). Keep this distinct from /deca-gratis's title/description.
 export const metadata: Metadata = {
-  title: "DeCA Gratis | Genera el Documento de Control Online",
+  title: "DeCA Profesional | Generador online del Documento de Control",
   description:
-    "Genera gratis el Documento Electrónico de Control (DeCA) obligatorio desde el 5 de octubre de 2026. PDF nativo, QR y conservación online. Sin tarjeta y sin límite.",
+    "Genera y gestiona el Documento Electrónico de Control (DeCA) del transporte de mercancías por carretera: PDF nativo, QR, historial y conservación online, antes del 5 de octubre de 2026.",
   alternates: { canonical: publicEnv.baseUrl + "/" },
   openGraph: {
     type: "website",
     url: publicEnv.baseUrl + "/",
-    title: "DeCA Gratis | Genera el Documento de Control Online",
+    title: "DeCA Profesional | Generador online del Documento de Control",
     description:
-      "Crea tu Documento Electrónico de Control en segundos. PDF nativo, QR y conservación online. Sin tarjeta, sin límite.",
+      "El Documento Electrónico de Control (DeCA) para transportistas y cargadores: PDF nativo, QR, historial y conservación online.",
     siteName: BRAND.name,
   },
 };

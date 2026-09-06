@@ -2978,3 +2978,236 @@ remaining scope.
   `Company.email` column needs `prisma migrate deploy` (or the equivalent manual SQL) against
   production before this feature works there — it is NOT part of the migrations already applied for
   D-096/D-098's incident fix.
+## D-105 — 2026-09 technical SEO audit: cannibalisation, `/crear` de-indexing, legal-reviewer field
+- Date / phase: 2026-09-06, requested directly by the user as a full technical SEO audit of
+  `https://decaprofesional.es` ("audit and improve the technical SEO... without changing the
+  existing product functionality or visual identity").
+- **Canonical host**: chose `https://decaprofesional.es` (no `www`) as the single canonical host;
+  added a permanent redirect from the `www` host in `next.config.ts` `redirects()`, preserving path
+  and query string (including attribution params) via `:path*`.
+- **`/crear` de-indexed**: it is the application/form wizard, not a landing page. Set
+  `robots: { index: false, follow: true }` on it and removed it from `app/sitemap.ts`.
+  `/generador-deca` (already in `content/seo/pages.ts`) is the indexable transactional equivalent
+  and stays indexed and in the sitemap — no content was deleted.
+- **Sitemap `lastmod` bug fixed**: every static entry previously used `new Date()` (the render/
+  deploy timestamp) as `lastModified`, which is meaningless as an SEO signal. Replaced with genuine
+  per-page dates: `SEO_PAGES[].lastReviewed` for the SEO cluster, `ContentItem.updatedAt` for CMS
+  content (already correct), and real dates taken from `git log` for the 4 remaining core static
+  routes (`CORE_LAST_MODIFIED` in `app/sitemap.ts`). Also dropped `priority`/`changeFrequency` from
+  every entry — Google has stated for years it does not use either as a ranking or crawl-budget
+  signal, so they were noise, not a lever.
+- **Homepage vs `/deca-gratis` keyword cannibalisation**: both had "DeCA Gratis | Genera el
+  Documento de Control..." as their `<title>`, competing for the exact same "gratis" intent. Kept
+  both pages (each serves a real, different audience: homepage = the product, `/deca-gratis` = the
+  "free" angle specifically) and instead **gave the homepage a distinct primary intent** — "DeCA
+  Profesional | Generador online del Documento de Control" (the product/brand), leaving "gratis" as
+  `/deca-gratis`'s exclusive keyword target. Also updated `app/layout.tsx`'s root-layout default
+  title/description to match (previously the same duplicated "gratis" copy). The H1 itself
+  (`hero.h1` in `lib/i18n/dictionaries/es.ts`, "DeCA profesional, sencillo y listo para trabajar.")
+  was already distinct and untouched — only `<title>`/meta description/OG changed, so no visual
+  change to the rendered page.
+- **`/deca-obligatorio-2026` vs `/blog/cuenta-atras-deca-5-octubre-2026` reviewed, kept separate**:
+  both concern the October 2026 deadline, but they answer different intents — the SEO page is the
+  evergreen normative reference (scope, sanctions, who's affected), the blog post is a timely
+  countdown/checklist. Not consolidated; instead cross-linked explicitly in both directions (a
+  markdown link in the blog post's body pointing to the SEO page, and an `EXTRA_RELATED` entry in
+  `app/(seo)/[slug]/page.tsx`'s "Guías relacionadas" section pointing back to the blog post) so
+  neither page dead-ends and Google can see they are related-but-distinct rather than duplicates.
+- **No other cannibalisation found** among `/`, `/deca-gratis`, `/generador-deca`, `/crear`,
+  `/deca-obligatorio-2026`, `/blog/cuenta-atras-deca-5-octubre-2026` — `/generador-deca`'s intent
+  (the transactional generator itself) and `/crear`'s (the actual wizard, now non-indexed) are
+  complementary, not competing, and every other `content/seo/pages.ts` entry already carries a
+  distinct `intent` string.
+- **Brand consistency**: replaced the last live "Equipo DeCA Fácil" occurrences (4 in
+  `prisma/content-seed.ts`, plus 6 body-copy "DeCA Fácil" mentions in `content/seo/pages.ts`) with
+  "DeCA Profesional", completing D-081 for these files. Because `seedContent()` is idempotent and
+  skips existing slugs, a source-only fix does not correct rows already seeded in any deployed
+  environment — added migration `20260906120000_backfill_author_name_brand` to backfill
+  `content_item.author_name` directly. Left `DeCA Fácil` untouched in `tests/unit/totp.test.ts`
+  (an arbitrary OTP-issuer test fixture), `scripts/diagnose.mjs` (an internal CLI diagnostic banner,
+  not public-facing), and the historical explanatory comment in
+  `components/i18n/language-switcher.tsx` that correctly describes the D-081 rename as a past event
+  — none of these are public content, so rewriting them was out of scope for this audit.
+- **New optional `legalReviewer`/`legalReviewerName` field**: added to `content/seo/pages.ts`'s
+  `SeoPage` type and to the Prisma `ContentItem` model (migration
+  `20260906120500_content_item_legal_reviewer_name`), plus the Zod `contentInputSchema` and
+  `cms.ts`'s `toData()`. Set the exact credential string the user specified, "Juan José Farinós
+  Ibáñez — Abogado ICAV 13.981, PRAETORIA", on the 5 most normative/legal SEO pages
+  (`que-es-el-deca`, `deca-obligatorio-2026`, `requisitos-deca`, `datos-obligatorios-deca`,
+  `quien-esta-obligado-deca`). No biographical claim was invented — the string is exactly what the
+  user provided, used verbatim only where explicitly assigned, never defaulted or auto-applied.
+  Rendered as `reviewedBy` in the page's Article JSON-LD and as a visible credit line linking to the
+  new `/revision-legal` page.
+- **New `/revision-legal` page**: explains the DeCA Profesional ↔ PRAETORIA relationship using only
+  the pre-existing, already-approved `LEGAL_ENTITY` copy (`lib/legal-entity.ts` — name, CIF, address,
+  `legalBackingLine`, `custodyLine`, `operatorLine`). Per **D-043**, PRAETORIA's public disclosure is
+  already a deliberate, separate decision unaffected by D-039's "no company attribution" policy, so
+  this page adds no new claim, only makes the existing relationship discoverable and linkable.
+  Linked from the site footer (`components/site/site-footer.tsx`) and from every credit line, so it
+  is reachable via normal HTML links from anywhere on the site, and listed in the sitemap.
+- **Internal linking / nav**: passed `nav` (true) to every `<SiteHeader>` call that was missing it
+  (`app/(seo)/[slug]/page.tsx`, `app/(seo)/soy-obligado/page.tsx`, `app/blog/page.tsx`,
+  `app/guias/page.tsx`, `components/content/article-layout.tsx`) so the main site navigation is now
+  present on every SEO/content page, not only the homepage. Renamed "Sigue leyendo" to "Guías
+  relacionadas" on the SEO template and ensured the three cornerstone guides (`que-es-el-deca`,
+  `deca-obligatorio-2026`, `como-hacer-un-deca`) always appear there (unless the page itself is one
+  of them), with varied Spanish anchor text already sourced from each target page's own `h1`.
+- **Structured data added**: Article + BreadcrumbList JSON-LD on the SEO cluster template
+  (`app/(seo)/[slug]/page.tsx`, previously had none), a BreadcrumbList + full OG block on
+  `/soy-obligado` (previously had neither), a site-wide `Organization` JSON-LD in `app/layout.tsx`
+  built only from `LEGAL_ENTITY`/`BRAND`, and `reviewedBy` on both the CMS `Article`/`BlogPosting`
+  JSON-LD (`lib/content/public-page.tsx`) and the SEO cluster's `Article` JSON-LD, only when a
+  reviewer is actually set. `robots.ts` already fully disallowed all private routes (`/panel`,
+  `/api`, `/d/`, `/operadores`, `/admin`, `/claim`, `/entrar`, `/registro`, `/recuperar`) — no change
+  needed there.
+- **Verification limitation, honestly disclosed**: this sandbox blocks `binaries.prisma.sh` (so
+  `prisma generate`/`migrate deploy` cannot run here — pre-existing, confirmed via an unmodified
+  baseline `tsc`/`build` run before any edit in this session) and `fonts.googleapis.com` (so
+  `next build` cannot complete here either, same pre-existing baseline failure). Verified instead,
+  bit-for-bit against that same baseline: `tsc --noEmit` produces the exact same 86 error lines
+  before and after this branch's changes (all from the missing generated Prisma client, none newly
+  introduced); `next lint` reports the same pre-existing errors/warnings, none in a file this branch
+  touched; `npm run test:unit` — 139/139 passing, unchanged; `prettier --check` clean on every
+  touched file. `npm run test:e2e` and the sitemap-URL crawl could not run here because Playwright's
+  `webServer` is `npm run build && npm run start`, which hits the same two sandbox-only blocks — this
+  is a sandbox limitation, not a claim that e2e/build pass; the real CI/deploy environment has normal
+  network access and should run both before this branch is merged.
+
+## D-106 — SEO audit: two DB migrations left for the user to apply
+- Date / phase: 2026-09-06, immediately after D-105, same session.
+- Decision: wrote (but could not execute, per D-105's sandbox network limitation) two migrations:
+  `20260906120000_backfill_author_name_brand` (data-only `UPDATE` backfilling any already-seeded
+  `content_item.author_name = 'Equipo DeCA Fácil'` row to `'Equipo DeCA Profesional'`) and
+  `20260906120500_content_item_legal_reviewer_name` (`ALTER TABLE` adding the nullable
+  `legal_reviewer_name` column). Both follow the exact SQL style of the existing migrations
+  (`prisma/migrations/20260906094103_company_role_read_only/migration.sql`).
+- Why left unapplied: `prisma migrate deploy` needs the Prisma engine binary from
+  `binaries.prisma.sh`, which this sandbox's network allowlist blocks — the same limitation recorded
+  against D-096/D-097 investigation and confirmed again here via an unmodified baseline. Applying
+  either migration to a real database (staging/production) is an action for the user or CI, not for
+  this sandboxed session.
+- Follow-up for the user: run `npx prisma migrate deploy` (or apply both `migration.sql` files
+  directly) against staging/production once this branch is reviewed, before relying on
+  `legal_reviewer_name` or expecting the "DeCA Fácil" backfill to be reflected on already-seeded
+  content.
+
+## D-107 — Legal-content correctness pass: DeCA correction methods, paper-vs-electronic wording
+- Date / phase: 2026-09-06, requested directly by the user as a follow-up gate on the SEO audit
+  ("The SEO audit is approved in principle, but do not merge or deploy it yet. Complete the
+  following legal-correctness and release-validation pass first").
+- **Verified against the actual primary source, not just the user's paraphrase**: fetched
+  `https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-12784` (Resolución de 5 de junio de 2026)
+  directly. Confirmed word-for-word: correcting a DeCA has two valid methods — (1) amend the
+  existing PDF, adding the new data and the reason for the change, keeping the old data marked as
+  no longer valid, with the URL/QR unchanged; or (2) issue a new PDF with its own new URL/QR,
+  keeping the original for traceability. Also confirmed: the driver may carry either an electronic
+  copy on a mobile device or a printed paper copy; a document originally created on paper and then
+  scanned is **not** valid (must be digital-native from generation). This matches exactly what the
+  user specified, plus one detail neither of us had stated (handwritten annotations on a printed
+  copy are disregarded) — not added to any page since it wasn't asked for and isn't a correction of
+  an existing inaccuracy, but worth the legal reviewer's attention if they want it added later.
+- **Also verified `Ley 9/2025, de 3 de diciembre, de Movilidad Sostenible` is real** (BOE-A-2025-24545)
+  and is in fact the enabling law that moved the DeCA mandate to 5 October 2026 — it was not cited
+  anywhere in the codebase despite being one of the three sources the user named. Added a
+  `LEY_MOVILIDAD` source constant (`content/seo/pages.ts` and `prisma/content-seed.ts`) and included
+  it in the `sources` list of every page/post that asserts the October 2026 deadline
+  (`que-es-el-deca`, `deca-obligatorio-2026`, the countdown blog post) — strengthening the "clear
+  links to the relevant BOE primary sources" requirement from the original SEO audit (D-105), not a
+  new/unrelated addition.
+- **Checked every `sources` array for CETM usage**: CETM (a transport trade association, not a
+  literal competitor of this product) never appears alone in any `sources` list — always alongside
+  BOE/the Ministry/the Orden article. It is not used "as the authority" for any legal claim, so no
+  change was needed there.
+- **Corrected the "cannot be edited" / "always a new QR" over-generalisation** in
+  `prisma/content-seed.ts` (the `como-corregir-un-deca` guide: excerpt, `seoTitle`,
+  `metaDescription`, body, and a new FAQ item), `content/seo/pages.ts` (`requisitos-deca`'s FAQ,
+  `deca-empresas-transporte`'s "Historial y correcciones" section), and
+  `components/deca/version-timeline.tsx` (the in-product version-history caption, shown on both the
+  `/crear/[id]` and `/panel/deca/[id]` correction views). Every corrected instance now states the
+  resolution's two valid methods and is explicit that **DeCA Profesional's own correction feature
+  implements only the second one** (always a new version/QR/URL) — I did not claim the product
+  offers in-place PDF amendment, since it doesn't; changing that would be a functional change, out
+  of scope for this content-only pass. Left untouched: `app/admin/(protected)/deca/[id]/page.tsx`
+  (an internal, non-public admin-panel note about admin permissions, not a claim about DeCA law) and
+  `tests/unit/content-cms.test.ts` (a test fixture string, never rendered to a user).
+- **Corrected the "paper is no longer accepted" over-generalisation** in `prisma/content-seed.ts`
+  (the countdown blog post: excerpt + body), `content/seo/pages.ts` (`que-es-el-deca`'s "Qué cambia
+  respecto al papel" section, `deca-obligatorio-2026`'s intro), `lib/content/landing.ts` (the
+  homepage FAQPage JSON-LD source array), and **all 8 locale dictionaries**
+  (`lib/i18n/dictionaries/{es,ca,gl,eu,en,de,fr,it}.ts` — confirmed via `lib/i18n/server.ts` that the
+  language switcher makes every one of these live to real visitors, not dead scaffolding). Every
+  corrected answer now distinguishes the electronic original (mandatory from the outset, no
+  exception) from the paper copy the driver may still carry, and states plainly that a
+  paper-originated-then-scanned document is not valid. Deliberately left untouched: "Sustituye al
+  documento en papel" (the very first FAQ answer in each locale, describing the DeCA replacing the
+  old paper-based control-document system) — it doesn't match any of the four flagged patterns and
+  sits directly above the now-corrected second answer, which supplies the nuance.
+- **Translation quality caveat**: the ca/gl/eu/de/fr/it corrections were translated by me, not by a
+  native legal translator. The Spanish and English versions are the ones I could verify most
+  carefully against the BOE source; the user's PRAETORIA legal reviewer should confirm the other six
+  before this is taken as final in those locales.
+- **New migration** `20260906190000_backfill_legal_correction_wording`: `seedContent()` is
+  idempotent (D-105's same lesson, applied again) — a source-only fix does not correct
+  `como-corregir-un-deca`/`cuenta-atras-deca-5-octubre-2026` rows already seeded in any deployed
+  environment. Backfills `excerpt`/`seo_title`/`meta_description`/`body` for the first slug and
+  `excerpt`/`body`/`sources` for the second, to the exact corrected text. Validated by executing the
+  migration's SQL against a scratch temp table in this sandbox's local Postgres (real schema/engine
+  access is still blocked — see below) — it applied cleanly, `UPDATE 1` for each statement, content
+  verified byte-for-byte against the source file.
+- **Verification actually run in this sandbox**: `tsc --noEmit` — same 86 pre-existing errors,
+  byte-identical to every prior baseline in this branch, none from this pass; `eslint` clean on
+  every touched file; `prettier --check` clean; `vitest run` — 139/139, unchanged.
+- **Verification NOT possible in this sandbox — same root cause as D-105, re-confirmed**:
+  `binaries.prisma.sh` and `fonts.googleapis.com` are still network-blocked here, so
+  `npx prisma generate`/`migrate deploy`, `npm run build`, and anything depending on a completed
+  build (`npm run test:e2e`, a live sitemap crawl, a staging deploy) cannot run in this environment.
+  This is not a claim that they pass — it is an honest statement of what this sandbox can and cannot
+  execute. The user's own instruction explicitly said not to treat the 86 TypeScript errors as an
+  acceptable final release result and to determine whether the build genuinely succeeds once Prisma
+  Client is generated — that determination requires the real network access this sandbox does not
+  have, and must happen in CI or the user's normal dev environment before merge.
+- **Not merged, not deployed** — per both the original SEO task's instruction and this follow-up's
+  explicit "do not merge or deploy it yet." Committed to the same `seo/technical-audit-2026-09`
+  branch (off `develop`), which per D-106 could not be pushed from this sandbox either (git proxy:
+  "repository not in this session's authorized set") — a patch file was exported again as a safety
+  net.
+
+## D-108 — Structured-data correction: reviewer Person schema, Organization/Brand separation
+- Date / phase: 2026-09-06, requested directly by the user as a required correction before
+  deployment, following review of D-105's `reviewedBy`/`Organization` JSON-LD.
+- **Reviewer `Person` schema**: the combined display string
+  ("Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA") was being placed whole into
+  `Person.name` in every `reviewedBy` block. Created `lib/content/legal-reviewer.ts` as the single
+  place that splits it into schema-correct, semantically separated properties: `name` ("Juan José
+  Farinós Ibáñez" only), `jobTitle` ("Abogado"), `identifier` ("ICAV 13.981"), `memberOf` (an
+  Organization for PRAETORIA, S.L. with its own `url`), and `url` (the reviewer's own page,
+  `/revision-legal`). `PRAETORIA_REVIEWER_DISPLAY` is the one place the combined string is now
+  defined; `content/seo/pages.ts`'s 5 `legalReviewer` entries and `/revision-legal`'s visible credit
+  line all reference it instead of repeating the literal string, so the visible text and the
+  structured data can never drift independently. Applied to every `reviewedBy` site: the SEO cluster
+  template (`app/(seo)/[slug]/page.tsx`), the CMS Article/BlogPosting schema
+  (`lib/content/public-page.tsx`), and added a standalone `Person` entity (same helper) to
+  `/revision-legal`'s own JSON-LD, since that page didn't carry any structured reviewer data before.
+  An unrecognized display string falls back to putting all of it in `name` rather than crashing —
+  flagged in the helper's own doc comment as "not corrected data, add an entry instead."
+- **Organization vs. Brand**: the site-wide `Organization` JSON-LD (`app/layout.tsx`, added in
+  D-105) had set `url` to the DeCA Profesional domain — wrong, since PRAETORIA, S.L. is the actual
+  legal operator, not a legal entity whose "URL" is a product's marketing site. Added
+  `LEGAL_ENTITY.corporateUrl` (`https://praetoriaabogados.es/`) to `lib/legal-entity.ts` — this is
+  PRAETORIA's own real corporate site, already established as fact in this account's records (the
+  paused Google Ads campaign for "Praetoria División Jurídica" targets this same domain), not an
+  invented credential. `Organization.url` now points there; `brand.url` now correctly points at
+  `publicEnv.baseUrl` (the DeCA Profesional product domain) instead of being unset. Applied the same
+  corrected `{name, url, brand: {name, url}}` shape everywhere an operator-level `Organization`
+  appears as `publisher` — the SEO cluster template, the CMS Article/BlogPosting schema, and
+  `/revision-legal`'s `AboutPage.publisher` — so the site no longer emits two different unreconciled
+  claims about who "the Organization" is depending on which page a crawler reads. `author` fields
+  (the "Equipo DeCA Profesional" byline, a distinct concept from the operator/publisher) were left
+  unchanged — they correctly describe who wrote the content, not who legally operates the site.
+- **No new claims invented**: `corporateUrl` is a previously-established real fact (see above), the
+  reviewer's jobTitle/identifier/memberOf are exactly what the user specified and what was already
+  approved in D-105, and no address/CIF/credential text changed.
+- Verification: `tsc --noEmit` unchanged (86 pre-existing errors, none new); `eslint` and
+  `prettier --check` clean on every touched file; `vitest run` 139/139, unchanged. Same sandbox
+  network limitation as D-105/D-106/D-107 (`binaries.prisma.sh`, `fonts.googleapis.com` blocked) —
+  `next build`/`test:e2e`/a rendered JSON-LD crawl still cannot run in this sandbox.
