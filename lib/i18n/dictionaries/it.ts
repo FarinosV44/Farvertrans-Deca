@@ -624,5 +624,8 @@ export const it = {
       `Conferma la tua e-mail per attivare il tuo account ${brand}.\n\nApri questo link (scade tra 24 ore):\n${link}\n\nSe non sei stato tu, ignora questo messaggio.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Conferma la tua nuova e-mail per attivare il tuo account ${brand}.\n\nApri questo link (scade tra 24 ore):\n${link}\n\nSe non sei stato tu, ignora questo messaggio.`,
+    passwordResetSubject: (brand: string) => `Recupera l'accesso a ${brand}`,
+    passwordResetText: (brand: string, link: string) =>
+      `Hai richiesto di reimpostare la tua password ${brand}.\n\nApri questo link (scade tra 1 ora):\n${link}\n\nSe non sei stato tu, ignora questo messaggio.`,
   },
 } satisfies Messages;

@@ -634,5 +634,8 @@ export const de = {
       `Bestätigen Sie Ihre E-Mail-Adresse, um Ihr ${brand}-Konto zu aktivieren.\n\nÖffnen Sie diesen Link (läuft in 24 Stunden ab):\n${link}\n\nWenn Sie das nicht waren, ignorieren Sie diese Nachricht.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Bestätigen Sie Ihre neue E-Mail-Adresse, um Ihr ${brand}-Konto zu aktivieren.\n\nÖffnen Sie diesen Link (läuft in 24 Stunden ab):\n${link}\n\nWenn Sie das nicht waren, ignorieren Sie diese Nachricht.`,
+    passwordResetSubject: (brand: string) => `Zugang zu ${brand} wiederherstellen`,
+    passwordResetText: (brand: string, link: string) =>
+      `Sie haben angefordert, Ihr ${brand}-Passwort zurückzusetzen.\n\nÖffnen Sie diesen Link (läuft in 1 Stunde ab):\n${link}\n\nWenn Sie das nicht waren, ignorieren Sie diese Nachricht.`,
   },
 } satisfies Messages;

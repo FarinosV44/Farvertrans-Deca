@@ -633,5 +633,8 @@ export const eu = {
       `Berretsi zure posta ${brand}-ko zure kontua aktibatzeko.\n\nIreki esteka hau (24 orduan iraungitzen da):\n${link}\n\nZu ez bazina izan, ez ikusi mezu hau.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Berretsi zure posta berria ${brand}-ko zure kontua aktibatzeko.\n\nIreki esteka hau (24 orduan iraungitzen da):\n${link}\n\nZu ez bazina izan, ez ikusi mezu hau.`,
+    passwordResetSubject: (brand: string) => `Berreskuratu ${brand}(e)rako sarbidea`,
+    passwordResetText: (brand: string, link: string) =>
+      `${brand}(e)ko zure pasahitza berrezartzeko eskatu duzu.\n\nIreki esteka hau (1 orduan iraungitzen da):\n${link}\n\nZu ez bazina izan, ez ikusi mezu hau.`,
   },
 } satisfies Messages;

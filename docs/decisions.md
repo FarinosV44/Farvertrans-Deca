@@ -2597,3 +2597,30 @@
   needs no `prisma migrate deploy` step. A production redeploy (to actually serve the new landing
   code) is still a separate action from this git-level merge, same standing distinction as D-088.
 - CI triggered on the `main` push (queued at push time).
+
+## D-092 — I18N #54 closing gap: password-reset emails were the one transactional email NOT locale-aware
+- Date / phase: 2026-09-06, same session, immediately after D-091, found while doing a per-issue
+  verification pass before closing GitHub issues (not assumed from docs — grepped every
+  `sendMail` call site in `app/api/auth/` and found one, `app/api/auth/password/request/route.ts`,
+  that hardcoded Spanish subject/body while the other three (`register`, `verify-email/resend`,
+  `verify-email/change-email`) already used `getDictionary()` keyed off the account's
+  `preferredLocale`). This is a real, concrete gap against issue #54's own acceptance criterion
+  ("Transactional emails use the selected language") — not previously caught because unit/e2e tests
+  assert on `mail.sent`/delivery status, never on the email body language.
+- **Fixed to match the exact existing convention** (`verify-email/resend`'s pattern, not a new one):
+  `requestPasswordReset()` in `lib/auth/index.ts` now also returns the user's `preferredLocale`;
+  the route resolves `isLocale(result.preferredLocale) ? result.preferredLocale : DEFAULT_LOCALE`
+  and sends `dict.emails.passwordResetSubject`/`passwordResetText` instead of a hardcoded Spanish
+  string. New `passwordResetSubject`/`passwordResetText` keys added to all 8 dictionaries, same
+  function-returning-a-template shape as the existing `verifySubject`/`verifyText*` keys.
+  Deliberately uses the ACCOUNT's stored preference, not the current request's cookie locale — a
+  password-reset request often comes from a different browser/device than the one the account's
+  locale preference was set on, and the existing `verify-email` routes already established this as
+  the correct pattern for an existing-account email.
+- Verification: `tsc --noEmit` clean (8-locale `emails` key parity via `satisfies Messages`); ESLint
+  clean; Prettier clean; `vitest run` 139/139; `playwright test tests/e2e/account.spec.ts
+  tests/e2e/audit-log.spec.ts` — 17/17 passed (covers password reset end to end: request, expired
+  token, weak-password rejection, session invalidation, audit row). Full `playwright test
+  --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-documented
+  parallel-only flake, reconfirmed passing with `--workers=1`.
+- **This was the last unmet acceptance item found for issue #54** — closing it on the forge next.

@@ -625,5 +625,8 @@ export const ca = {
       `Confirma el teu correu per activar el teu compte de ${brand}.\n\nObre aquest enllaç (caduca en 24 hores):\n${link}\n\nSi no has estat tu, ignora aquest missatge.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Confirma el teu nou correu per activar el teu compte de ${brand}.\n\nObre aquest enllaç (caduca en 24 hores):\n${link}\n\nSi no has estat tu, ignora aquest missatge.`,
+    passwordResetSubject: (brand: string) => `Recupera l'accés a ${brand}`,
+    passwordResetText: (brand: string, link: string) =>
+      `Has demanat restablir la teva contrasenya de ${brand}.\n\nObre aquest enllaç (caduca en 1 hora):\n${link}\n\nSi no has estat tu, ignora aquest missatge.`,
   },
 } satisfies Messages;

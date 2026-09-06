@@ -369,9 +369,12 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
  * exists (no account enumeration). Returns the raw token + email ONLY when a
  * user was found, so the caller can send the message.
  */
-export async function requestPasswordReset(
-  emailRaw: string,
-): Promise<{ token: string; email: string; userId: string } | null> {
+export async function requestPasswordReset(emailRaw: string): Promise<{
+  token: string;
+  email: string;
+  userId: string;
+  preferredLocale: string | null;
+} | null> {
   const email = normEmail(emailRaw);
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user) return null;
@@ -392,7 +395,7 @@ export async function requestPasswordReset(
       },
     }),
   ]);
-  return { token, email, userId: user.id };
+  return { token, email, userId: user.id, preferredLocale: user.preferredLocale };
 }
 
 export class ResetError extends Error {

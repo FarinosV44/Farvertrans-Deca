@@ -1045,3 +1045,13 @@ not a code issue.
 new Prisma migrations in this merge (D-089/D-090 were UI-only), so unlike D-088 this one needs no
 `prisma migrate deploy` — a production redeploy to actually serve the new code is still a separate,
 not-yet-done action. See `decisions.md` D-091.
+
+## D-092: I18N #54 gap closed — password-reset emails now locale-aware
+Found during a per-issue verification pass (grepped every `sendMail` call site, not just trusted
+docs): password-reset emails were the one transactional email still hardcoded to Spanish while
+register/verify-email routes already used the account's `preferredLocale`. Fixed to match that exact
+existing pattern — `passwordResetSubject`/`passwordResetText` added to all 8 dictionaries,
+`requestPasswordReset()` now returns `preferredLocale`, the route resolves it with the same
+`isLocale`/`DEFAULT_LOCALE` fallback already used elsewhere. Gate: typecheck, lint, prettier clean,
+139/139 unit, 17/17 targeted account+audit-log e2e, full suite 156/157 (1 pre-existing flake,
+reconfirmed unrelated). See `decisions.md` D-092. This was the last unmet item for issue #54.

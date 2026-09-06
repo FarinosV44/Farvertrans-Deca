@@ -34,10 +34,15 @@ export async function POST(req: Request) {
     if (result) {
       const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/recuperar/${encodeURIComponent(result.token)}`;
       const { sendMail } = await import("@/lib/mailer");
+      const { getDictionary } = await import("@/lib/i18n/server");
+      const { isLocale, DEFAULT_LOCALE } = await import("@/lib/i18n/locale");
+      const dict = await getDictionary(
+        isLocale(result.preferredLocale) ? result.preferredLocale : DEFAULT_LOCALE,
+      );
       const mail = await sendMail({
         to: result.email,
-        subject: `Recupera el acceso a ${BRAND.name}`,
-        text: `Has pedido restablecer tu contraseña de ${BRAND.name}.\n\nAbre este enlace (caduca en 1 hora):\n${link}\n\nSi no has sido tú, ignora este mensaje.`,
+        subject: dict.emails.passwordResetSubject(BRAND.name),
+        text: dict.emails.passwordResetText(BRAND.name, link),
       });
       delivery = mail.sent ? "sent" : "unconfigured";
 

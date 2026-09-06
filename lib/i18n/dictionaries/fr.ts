@@ -631,5 +631,8 @@ export const fr = {
       `Confirmez votre e-mail pour activer votre compte ${brand}.\n\nOuvrez ce lien (expire dans 24 heures) :\n${link}\n\nSi ce n'était pas vous, ignorez ce message.`,
     verifyTextChangeEmail: (brand: string, link: string) =>
       `Confirmez votre nouvel e-mail pour activer votre compte ${brand}.\n\nOuvrez ce lien (expire dans 24 heures) :\n${link}\n\nSi ce n'était pas vous, ignorez ce message.`,
+    passwordResetSubject: (brand: string) => `Récupérez l'accès à ${brand}`,
+    passwordResetText: (brand: string, link: string) =>
+      `Vous avez demandé à réinitialiser votre mot de passe ${brand}.\n\nOuvrez ce lien (expire dans 1 heure) :\n${link}\n\nSi ce n'était pas vous, ignorez ce message.`,
   },
 } satisfies Messages;
