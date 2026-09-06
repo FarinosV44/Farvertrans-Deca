@@ -186,7 +186,7 @@ export const it = {
           },
           {
             q: "Quando diventa obbligatorio?",
-            a: "Dal 5 ottobre 2026 per il trasporto interno. Non ci sono proroghe né periodi transitori: la carta non sarà più accettata.",
+            a: "Dal 5 ottobre 2026 per il trasporto interno, senza proroghe né periodi transitori: il DeCA deve essere generato in formato elettronico fin dall'origine. L'autista può portarlo in copia elettronica sul cellulare o in copia stampata con il codice QR; un documento creato originariamente su carta e poi scansionato non è un DeCA elettronico valido.",
           },
           {
             q: "Chi deve emetterlo?",

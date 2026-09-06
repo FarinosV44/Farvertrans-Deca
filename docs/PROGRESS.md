@@ -1219,3 +1219,29 @@ introduced); lint clean on every touched file; `prettier --check` clean; `vitest
 unchanged. See `decisions.md` D-105/D-106 for the full reasoning and the two migrations left for the
 user/CI to apply. **Not merged to `main` and not deployed**, per the task's explicit instruction —
 ready for review on the branch.
+
+## D-107: Legal-content correctness pass on the SEO branch (correction methods, paper wording)
+Follow-up gate the user required before merging/deploying the SEO audit (D-105/D-106). Verified the
+two flagged claim types directly against the real BOE resolution
+(BOE-A-2026-12784, fetched live) rather than trusting paraphrase alone: confirmed a DeCA can be
+corrected either by amending the existing PDF (same URL/QR) or by issuing a new PDF (new URL/QR) —
+both valid — and that the driver may carry either an electronic copy or a printed paper copy of an
+electronically-originated DeCA; only a paper-originated-then-scanned document is invalid. Fixed
+every place that overstated this as "cannot be edited" / "always a new QR" or as "paper no longer
+accepted" without that nuance: the `como-corregir-un-deca` guide, `requisitos-deca`'s FAQ,
+`deca-empresas-transporte`'s copy, the in-app version-history caption, the countdown blog post,
+`que-es-el-deca`, `deca-obligatorio-2026`, the homepage FAQ, and **all 8 locale dictionaries**
+(confirmed live via the language switcher, not dead code). Also found and cited `Ley 9/2025 de
+Movilidad Sostenible` (verified real, BOE-A-2025-24545) — the actual enabling law behind the October
+2026 deadline — which was missing from every source list despite being one of the three primary
+sources named. Added a third migration (`20260906190000_backfill_legal_correction_wording`) since
+`seedContent()`'s idempotency means the source fix alone wouldn't correct already-seeded rows;
+validated its SQL against a scratch table in this sandbox's local Postgres.
+**Gate run in this sandbox**: `tsc --noEmit` unchanged (86 pre-existing errors, none new); lint and
+prettier clean on every touched file; `vitest run` 139/139 unchanged. **Gate NOT run here** (same
+sandbox network limitation as D-105: `binaries.prisma.sh` and `fonts.googleapis.com` blocked):
+`prisma generate`/`migrate deploy`, `npm run build`, `test:e2e`, sitemap crawl, staging deploy — all
+need to run in CI or the user's normal environment before merge. See `decisions.md` D-107.
+**Still not merged to `main`, not deployed** — the user explicitly said not to yet. Still on
+`seo/technical-audit-2026-09`, still unpushed to origin (D-106's git-proxy authorization issue,
+unchanged on retry).

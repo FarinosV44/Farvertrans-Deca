@@ -185,7 +185,7 @@ export const gl = {
           },
           {
             q: "Cando é obrigatorio?",
-            a: "Desde o 5 de outubro de 2026 para o transporte interior. Non hai prórroga nin período transitorio: o papel deixa de admitirse.",
+            a: "Desde o 5 de outubro de 2026 para o transporte interior, sen prórroga nin período transitorio: o DeCA debe xerarse en formato electrónico desde a orixe. O condutor pode levalo en copia electrónica no móbil ou en copia impresa co código QR; un documento creado orixinalmente en papel e escaneado despois non é un DeCA electrónico válido.",
           },
           {
             q: "Quen o ten que facer?",

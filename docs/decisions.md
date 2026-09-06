@@ -3090,3 +3090,84 @@ remaining scope.
   directly) against staging/production once this branch is reviewed, before relying on
   `legal_reviewer_name` or expecting the "DeCA Fácil" backfill to be reflected on already-seeded
   content.
+
+## D-107 — Legal-content correctness pass: DeCA correction methods, paper-vs-electronic wording
+- Date / phase: 2026-09-06, requested directly by the user as a follow-up gate on the SEO audit
+  ("The SEO audit is approved in principle, but do not merge or deploy it yet. Complete the
+  following legal-correctness and release-validation pass first").
+- **Verified against the actual primary source, not just the user's paraphrase**: fetched
+  `https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-12784` (Resolución de 5 de junio de 2026)
+  directly. Confirmed word-for-word: correcting a DeCA has two valid methods — (1) amend the
+  existing PDF, adding the new data and the reason for the change, keeping the old data marked as
+  no longer valid, with the URL/QR unchanged; or (2) issue a new PDF with its own new URL/QR,
+  keeping the original for traceability. Also confirmed: the driver may carry either an electronic
+  copy on a mobile device or a printed paper copy; a document originally created on paper and then
+  scanned is **not** valid (must be digital-native from generation). This matches exactly what the
+  user specified, plus one detail neither of us had stated (handwritten annotations on a printed
+  copy are disregarded) — not added to any page since it wasn't asked for and isn't a correction of
+  an existing inaccuracy, but worth the legal reviewer's attention if they want it added later.
+- **Also verified `Ley 9/2025, de 3 de diciembre, de Movilidad Sostenible` is real** (BOE-A-2025-24545)
+  and is in fact the enabling law that moved the DeCA mandate to 5 October 2026 — it was not cited
+  anywhere in the codebase despite being one of the three sources the user named. Added a
+  `LEY_MOVILIDAD` source constant (`content/seo/pages.ts` and `prisma/content-seed.ts`) and included
+  it in the `sources` list of every page/post that asserts the October 2026 deadline
+  (`que-es-el-deca`, `deca-obligatorio-2026`, the countdown blog post) — strengthening the "clear
+  links to the relevant BOE primary sources" requirement from the original SEO audit (D-105), not a
+  new/unrelated addition.
+- **Checked every `sources` array for CETM usage**: CETM (a transport trade association, not a
+  literal competitor of this product) never appears alone in any `sources` list — always alongside
+  BOE/the Ministry/the Orden article. It is not used "as the authority" for any legal claim, so no
+  change was needed there.
+- **Corrected the "cannot be edited" / "always a new QR" over-generalisation** in
+  `prisma/content-seed.ts` (the `como-corregir-un-deca` guide: excerpt, `seoTitle`,
+  `metaDescription`, body, and a new FAQ item), `content/seo/pages.ts` (`requisitos-deca`'s FAQ,
+  `deca-empresas-transporte`'s "Historial y correcciones" section), and
+  `components/deca/version-timeline.tsx` (the in-product version-history caption, shown on both the
+  `/crear/[id]` and `/panel/deca/[id]` correction views). Every corrected instance now states the
+  resolution's two valid methods and is explicit that **DeCA Profesional's own correction feature
+  implements only the second one** (always a new version/QR/URL) — I did not claim the product
+  offers in-place PDF amendment, since it doesn't; changing that would be a functional change, out
+  of scope for this content-only pass. Left untouched: `app/admin/(protected)/deca/[id]/page.tsx`
+  (an internal, non-public admin-panel note about admin permissions, not a claim about DeCA law) and
+  `tests/unit/content-cms.test.ts` (a test fixture string, never rendered to a user).
+- **Corrected the "paper is no longer accepted" over-generalisation** in `prisma/content-seed.ts`
+  (the countdown blog post: excerpt + body), `content/seo/pages.ts` (`que-es-el-deca`'s "Qué cambia
+  respecto al papel" section, `deca-obligatorio-2026`'s intro), `lib/content/landing.ts` (the
+  homepage FAQPage JSON-LD source array), and **all 8 locale dictionaries**
+  (`lib/i18n/dictionaries/{es,ca,gl,eu,en,de,fr,it}.ts` — confirmed via `lib/i18n/server.ts` that the
+  language switcher makes every one of these live to real visitors, not dead scaffolding). Every
+  corrected answer now distinguishes the electronic original (mandatory from the outset, no
+  exception) from the paper copy the driver may still carry, and states plainly that a
+  paper-originated-then-scanned document is not valid. Deliberately left untouched: "Sustituye al
+  documento en papel" (the very first FAQ answer in each locale, describing the DeCA replacing the
+  old paper-based control-document system) — it doesn't match any of the four flagged patterns and
+  sits directly above the now-corrected second answer, which supplies the nuance.
+- **Translation quality caveat**: the ca/gl/eu/de/fr/it corrections were translated by me, not by a
+  native legal translator. The Spanish and English versions are the ones I could verify most
+  carefully against the BOE source; the user's PRAETORIA legal reviewer should confirm the other six
+  before this is taken as final in those locales.
+- **New migration** `20260906190000_backfill_legal_correction_wording`: `seedContent()` is
+  idempotent (D-105's same lesson, applied again) — a source-only fix does not correct
+  `como-corregir-un-deca`/`cuenta-atras-deca-5-octubre-2026` rows already seeded in any deployed
+  environment. Backfills `excerpt`/`seo_title`/`meta_description`/`body` for the first slug and
+  `excerpt`/`body`/`sources` for the second, to the exact corrected text. Validated by executing the
+  migration's SQL against a scratch temp table in this sandbox's local Postgres (real schema/engine
+  access is still blocked — see below) — it applied cleanly, `UPDATE 1` for each statement, content
+  verified byte-for-byte against the source file.
+- **Verification actually run in this sandbox**: `tsc --noEmit` — same 86 pre-existing errors,
+  byte-identical to every prior baseline in this branch, none from this pass; `eslint` clean on
+  every touched file; `prettier --check` clean; `vitest run` — 139/139, unchanged.
+- **Verification NOT possible in this sandbox — same root cause as D-105, re-confirmed**:
+  `binaries.prisma.sh` and `fonts.googleapis.com` are still network-blocked here, so
+  `npx prisma generate`/`migrate deploy`, `npm run build`, and anything depending on a completed
+  build (`npm run test:e2e`, a live sitemap crawl, a staging deploy) cannot run in this environment.
+  This is not a claim that they pass — it is an honest statement of what this sandbox can and cannot
+  execute. The user's own instruction explicitly said not to treat the 86 TypeScript errors as an
+  acceptable final release result and to determine whether the build genuinely succeeds once Prisma
+  Client is generated — that determination requires the real network access this sandbox does not
+  have, and must happen in CI or the user's normal dev environment before merge.
+- **Not merged, not deployed** — per both the original SEO task's instruction and this follow-up's
+  explicit "do not merge or deploy it yet." Committed to the same `seo/technical-audit-2026-09`
+  branch (off `develop`), which per D-106 could not be pushed from this sandbox either (git proxy:
+  "repository not in this session's authorized set") — a patch file was exported again as a safety
+  net.

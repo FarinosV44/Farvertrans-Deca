@@ -32,6 +32,12 @@ const ART6 = {
   label: "Orden FOM/2861/2012, artículo 6 (BOE)",
   url: "https://www.boe.es/buscar/act.php?id=BOE-A-2013-154",
 };
+// The enabling law behind the 5 October 2026 deadline (verified against the
+// BOE, 2026-09 legal-content pass — docs/decisions.md D-107).
+const LEY_MOVILIDAD = {
+  label: "Ley 9/2025, de 3 de diciembre, de Movilidad Sostenible (BOE)",
+  url: "https://www.boe.es/buscar/act.php?id=BOE-A-2025-24545",
+};
 const REVIEWED = "2026-09-03";
 
 export const SEO_PAGES: SeoPage[] = [
@@ -101,8 +107,8 @@ export const SEO_PAGES: SeoPage[] = [
       {
         h2: "Qué cambia respecto al papel",
         body: [
-          "Desde el 5 de octubre de 2026 el documento de control del transporte interior deja de admitirse en papel: debe ser electrónico.",
-          "No vale un PDF escaneado ni una imagen digitalizada: el fichero tiene que ser nativo digital.",
+          "Desde el 5 de octubre de 2026, el documento de control del transporte interior debe generarse en formato electrónico desde el origen. El conductor puede seguir llevándolo en copia electrónica en el móvil o en copia impresa con el código QR.",
+          "Lo que no vale es un documento creado originalmente en papel y escaneado después: el fichero tiene que ser nativo digital desde su generación.",
         ],
       },
     ],
@@ -116,7 +122,7 @@ export const SEO_PAGES: SeoPage[] = [
         a: "La resolución no exige firma electrónica; sí exige PDF nativo, QR, URL HTTPS de descarga directa y registro de creación y modificaciones.",
       },
     ],
-    sources: [BOE, MIN, CETM],
+    sources: [BOE, MIN, CETM, LEY_MOVILIDAD],
     related: ["deca-obligatorio-2026", "requisitos-deca", "como-hacer-un-deca"],
   },
   {
@@ -129,8 +135,8 @@ export const SEO_PAGES: SeoPage[] = [
     lastReviewed: REVIEWED,
     legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
     intro: [
-      "El 5 de octubre de 2026 entra en vigor la obligación de que el documento de control administrativo del transporte interior de mercancías por carretera sea electrónico.",
-      "No hay prórroga ni periodo transitorio: a partir de esa fecha el papel deja de admitirse.",
+      "El 5 de octubre de 2026 entra en vigor la obligación de que el documento de control administrativo del transporte interior de mercancías por carretera se genere en formato electrónico desde el origen.",
+      "No hay prórroga ni periodo transitorio. El conductor puede seguir llevando el documento en copia electrónica en el móvil o en copia impresa con el código QR; lo que deja de admitirse es originar el documento en papel y escanearlo después.",
     ],
     sections: [
       {
@@ -158,7 +164,7 @@ export const SEO_PAGES: SeoPage[] = [
         a: "Sí. Puedes generar DeCA válidos desde ya y llegar preparado a la fecha de obligatoriedad.",
       },
     ],
-    sources: [BOE, MIN],
+    sources: [BOE, MIN, LEY_MOVILIDAD],
     related: ["que-es-el-deca", "quien-esta-obligado-deca", "generador-deca"],
   },
   {
@@ -199,7 +205,7 @@ export const SEO_PAGES: SeoPage[] = [
     faq: [
       {
         q: "¿Y si tengo que corregir un dato después?",
-        a: "Se genera una nueva versión con un QR y una URL nuevos; la versión anterior se conserva. Entrega al conductor la versión vigente.",
+        a: "La normativa permite corregir modificando el PDF existente o generando uno nuevo; en DeCA Profesional, la corrección genera una versión nueva con QR y URL propios, y la anterior se conserva. Entrega al conductor la versión vigente.",
       },
       {
         q: "¿Puedo reutilizar datos de un DeCA anterior?",
@@ -557,7 +563,7 @@ export const SEO_PAGES: SeoPage[] = [
       {
         h2: "Historial y correcciones",
         body: [
-          "El historial es común y se filtra por fecha, ruta, matrícula, cargador o referencia. Una corrección genera siempre una versión nueva con su propio QR y URL; la versión anterior se conserva y sigue siendo consultable.",
+          "El historial es común y se filtra por fecha, ruta, matrícula, cargador o referencia. En DeCA Profesional, cada corrección genera una versión nueva con su propio QR y URL — uno de los dos métodos de corrección que permite la normativa —; la versión anterior se conserva y sigue siendo consultable.",
         ],
       },
     ],
