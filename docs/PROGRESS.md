@@ -868,4 +868,19 @@ risk to fix, just a bigger future feature to build carefully.
 Gate: typecheck, lint, prettier clean, 139/139 unit. New e2e test in `team.spec.ts` covers the full
 flow: invite-time role selection, member-list label, history/detail view still works, `/crear` gate
 renders, `/panel` hides create button, and a direct API call returns 403 regardless of any UI gate.
-Full suite 154/154 passed. See `decisions.md` D-078. **Continuing** with the next #56 piece next.
+Full suite 154/154 passed. See `decisions.md` D-078.
+
+## D-079: PRODUCT #56 slice 2 — company-scoped global search + Cmd/Ctrl+K command palette
+Continued #56's "power-user UX" list. Reused `listHistory`'s existing free-text filter instead of a
+second search path — new `lib/data/search.ts` wraps it, capped to top 8 hits. New `GET /api/search`
+(company-scoped, available to `read_only` too — viewing isn't a write) backs a new
+`components/panel/command-palette.tsx`: Cmd/Ctrl+K modal, debounced search, arrow-key nav, Enter to
+navigate. Mounted in `SiteHeader` (gated on `authed && companyName`) rather than a new panel layout
+file. Re-verified against the exact 360px-overflow and target-size tests that earlier i18n slices had
+already found regressions in — both held with the new icon-only trigger. Found and fixed a real
+test-hydration race (not a product bug): `Control+k` pressed before the client component's listener
+attached, only visible under parallel workers — fixed with the same `networkidle` wait pattern already
+used elsewhere in the suite. Also corrected three stale "owner only" doc claims in `docs/api/INDEX.md`
+that predated this session (those routes never actually checked ownership, only company membership).
+Gate: typecheck, lint, prettier clean, 139/139 unit, 154/154 e2e (2 pre-existing unrelated flakes). See
+`decisions.md` D-079. **Continuing** with the next #56 piece next.

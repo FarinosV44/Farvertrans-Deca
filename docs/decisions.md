@@ -2069,3 +2069,57 @@
   `playwright test --workers=3` — 154/154 passed (the single content-cms preview-race flake from
   earlier runs did not reproduce this run).
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-077.
+
+## D-079 — PRODUCT #56 slice 2: company-scoped global search + Cmd/Ctrl+K command palette
+- Date / phase: 2026-09-06, same session, immediately after D-078. Continuing #56's "power-user UX"
+  list, which explicitly names "global search across DeCA/reference/carrier/route/plate" and a
+  "command/search palette for desktop" as two related items — built together as one bounded slice.
+- **Reused existing infrastructure instead of building a second search path.** `lib/data/history.ts`'s
+  `listHistory(companyId, { q })` already had a free-text filter (`lib/data/history-filter.ts`'s
+  `rowMatches`) matching reference/locations/carrier/plate/shipper/NIF — exactly the field set #56
+  asks for. New `lib/data/search.ts`'s `searchCompanyDecas()` is a thin wrapper: same matching rules
+  everywhere a company searches its own history, capped to the top 8 hits. Also found and mirrored the
+  existing ADMIN #33 §9 internal search precedent (`lib/admin/search.ts` + `/api/admin/search` +
+  `components/admin/admin-search.tsx`) for the route/hit-shape convention, though the new UI is a
+  modal command palette rather than an inline dropdown (the admin one), matching what #56 actually
+  asked for.
+- **New:** `GET /api/search` (company-scoped, authenticated, read-only — deliberately available to
+  `read_only` members too, since viewing search results is not a write); `components/panel/
+  command-palette.tsx` (Cmd/Ctrl+K opens a modal, 200ms-debounced fetch, arrow-key navigation, Enter to
+  navigate, Escape/backdrop-click to close); a new `SearchIcon` added to `components/panel/icons.tsx`
+  following the existing stroke-icon convention.
+- **Mounted in `SiteHeader`**, gated on `authed && companyName` (a real company-workspace context, not
+  the landing page or the "authed but no company yet" edge case) — deliberately NOT a new
+  `app/panel/layout.tsx`, since SiteHeader is already the one component every panel page includes, and
+  introducing a new shared layout file is a bigger, riskier structural change than adding one gated
+  child to an existing component (matches "don't rewrite architecture unnecessarily").
+- **Deliberately no visible width-hungry trigger given this header's history:** the trigger is a
+  single icon-only button, added and immediately re-verified against the exact `landing.spec.ts` 360px
+  overflow test and `a11y.spec.ts` (target-size) that D-072/D-073/D-074 had already found regressions
+  in — both passed with the new button, since the header's fixed-width elements (switcher, CTA, login/
+  panel link) already had comfortable margin at 8 locales.
+- **Flake found and fixed in the new e2e test itself, not a product bug:** the first
+  `--workers=3` full-suite run failed the new command-palette test (`Control+k` pressed before the
+  client component had finished hydrating, so its `keydown` listener wasn't attached yet) while an
+  isolated `--workers=1` run passed — a hydration race that only showed up under parallel load.
+  Reproduced-and-fixed rather than dismissed as a pre-existing-style flake: added `{ waitUntil:
+  "networkidle" }` to the test's `page.goto("/panel")` calls (the same pattern already used in
+  `growth.spec.ts`/`operadores.spec.ts` for the identical class of issue) and re-ran it 3× isolated +
+  once in the full parallel suite, all green.
+- **Doc-accuracy fixes made while touching `docs/api/INDEX.md`'s rows for the routes this and D-078
+  touched:** `POST /api/templates`, `POST/DELETE /api/saved/[kind]`, and `POST /api/deca/[id]/version`
+  were all documented as "owner only", which was already inaccurate before this session — none of
+  those routes actually check `companyRole === "owner"`, only `companyId` presence (any company member
+  could always reach them). Corrected to "any authed non-`read_only` member" instead of leaving a
+  doc that describes access control the code was never actually enforcing.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139. New e2e test
+  in `tests/e2e/workspace.spec.ts` ("PRODUCT #56: Ctrl+K opens the command palette and navigates to a
+  matching DeCA") covers: keyboard-shortcut open, debounced search by carrier name, result content
+  (route + reference + carrier), click-to-navigate to the DeCA detail page, and Escape-to-close without
+  navigating. Full `playwright test --workers=3` — 154/154 passed (2 already-documented, unrelated
+  parallel-only flakes: `admin-2fa` recovery-code replay, `content-cms` preview race).
+- **Not done, explicitly deferred:** searching saved companies/vehicles/locations/templates (scope was
+  bounded to DeCA history, matching #56's literal field list); a persistent visible "recent searches"
+  or command list beyond free-text lookup; extending the palette to admin/internal search (kept
+  separate from the existing `AdminSearch`, different audiences and data).
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-078.

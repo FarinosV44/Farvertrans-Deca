@@ -232,6 +232,38 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.getByTestId("historico-table")).toContainText("Transportes Pérez SL");
   });
 
+  test("PRODUCT #56: Ctrl+K opens the command palette and navigates to a matching DeCA", async ({
+    page,
+  }) => {
+    await registerCompany(page);
+    await createDecaAuthed(page);
+    await page.goto("/panel", { waitUntil: "networkidle" });
+
+    // Ctrl+K opens the palette from anywhere in the workspace
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("command-palette-input")).toBeVisible();
+
+    // searching by carrier name surfaces the DeCA
+    await page.getByTestId("command-palette-input").fill(DECA.carrier.name);
+    await expect(page.getByTestId("command-palette-results")).toContainText(DECA.carrier.name);
+    await expect(page.getByTestId("command-palette-results")).toContainText(DECA.loadLocation.name);
+    await expect(page.getByTestId("command-palette-results")).toContainText(
+      DECA.unloadLocation.name,
+    );
+
+    // selecting a result navigates to that DeCA's detail page
+    await page.getByTestId("command-palette-results").locator("button").first().click();
+    await expect(page).toHaveURL(/\/panel\/deca\/[a-z0-9]+/i);
+    await expect(page.getByTestId("qr-card")).toBeVisible();
+
+    // Escape closes the palette without navigating
+    await page.goto("/panel", { waitUntil: "networkidle" });
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("command-palette-input")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("command-palette-input")).toHaveCount(0);
+  });
+
   test("a11y: /panel, /panel/historico and /panel/datos have no serious/critical violations", async ({
     page,
   }) => {

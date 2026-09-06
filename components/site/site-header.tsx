@@ -4,6 +4,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { Wordmark } from "@/components/brand/wordmark";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { CommandPalette } from "@/components/panel/command-palette";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
 
 /**
@@ -60,6 +61,7 @@ export async function SiteHeader({
         )}
 
         <div className="ml-auto flex items-center gap-1">
+          {authed && companyName && <CommandPalette />}
           <LanguageSwitcher current={locale} />
           {authed ? (
             companyName ? (
