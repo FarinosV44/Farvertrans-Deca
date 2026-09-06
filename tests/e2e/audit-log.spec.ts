@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { PrismaClient } from "@/prisma/generated/client";
-import { ADMIN, adminTotpCode } from "./helpers/admin-auth";
+import { ADMIN, adminTotpCode, internalPage } from "./helpers/admin-auth";
 
 /**
  * SECURITY #53 — append-only security audit trail. Covers the events this
@@ -12,6 +12,22 @@ import { ADMIN, adminTotpCode } from "./helpers/admin-auth";
 
 function email() {
   return `aud${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
+}
+
+async function registerOwner(page: Page, addr = email()) {
+  await page.goto("/registro");
+  await page.fill("#email", addr);
+  await page.fill("#password", "Supersecret123!");
+  await page.fill("#companyName", "Agencia Auditoria SL");
+  await page.fill("#companyNif", "B12345675");
+  await page.getByTestId("accept-terms").check();
+  await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
+  await expect(page).toHaveURL(/\/verificar-email/);
+  await page.goto("/panel");
+  return addr;
 }
 
 test.describe("SECURITY #53 — security audit log", () => {
@@ -121,6 +137,117 @@ test.describe("SECURITY #53 — security audit log", () => {
       expect(row).not.toBeNull();
     } finally {
       await prisma.$disconnect();
+    }
+  });
+
+  test("PRODUCT #56: team invites, invite acceptance and role changes all leave audit rows", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    const ownerEmail = await registerOwner(owner);
+
+    await owner.goto("/panel/equipo");
+    const memberEmail = email();
+    await owner.fill('[data-testid="invite-email"]', memberEmail);
+    await owner.getByTestId("invite-submit").click();
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    const memberCtx = await browser.newContext();
+    const member = await memberCtx.newPage();
+    await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await member.fill("#email", memberEmail);
+    await member.fill("#password", "Supersecret123!");
+    await member.getByTestId("register-submit").click();
+    await expect(member).toHaveURL(/\/verificar-email/);
+
+    await owner.goto("/panel/equipo");
+    await Promise.all([
+      owner.waitForResponse(
+        (r) =>
+          r.url().includes("/api/team/members/") &&
+          r.request().method() === "PATCH" &&
+          r.status() === 200,
+      ),
+      owner.getByTestId(`role-${memberEmail}`).selectOption("owner"),
+    ]);
+
+    const prisma = new PrismaClient();
+    try {
+      const ownerUser = await prisma.user.findFirstOrThrow({ where: { email: ownerEmail } });
+      const memberUser = await prisma.user.findFirstOrThrow({ where: { email: memberEmail } });
+
+      const created = await prisma.securityAuditLog.findFirst({
+        where: { action: "team_invite_created", actorId: ownerUser.id, result: "success" },
+      });
+      expect(created).not.toBeNull();
+
+      const accepted = await prisma.securityAuditLog.findFirst({
+        where: { action: "team_invite_accepted", actorId: memberUser.id, result: "success" },
+      });
+      expect(accepted).not.toBeNull();
+
+      const roleChanged = await prisma.securityAuditLog.findFirst({
+        where: {
+          action: "team_role_changed",
+          actorId: ownerUser.id,
+          targetId: memberUser.id,
+          targetType: "owner",
+          result: "success",
+        },
+      });
+      expect(roleChanged).not.toBeNull();
+    } finally {
+      await prisma.$disconnect();
+      await ownerCtx.close();
+      await memberCtx.close();
+    }
+  });
+
+  test("PRODUCT #56: /admin/auditoria shows role-change and invite events to an internal user", async ({
+    browser,
+  }) => {
+    // Self-contained (tests run fullyParallel — never assumes a prior test's
+    // row exists): produces its own team_role_changed event first.
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+    await owner.goto("/panel/equipo");
+    const memberEmail = email();
+    await owner.fill('[data-testid="invite-email"]', memberEmail);
+    await owner.getByTestId("invite-submit").click();
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    const memberCtx = await browser.newContext();
+    const member = await memberCtx.newPage();
+    await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await member.fill("#email", memberEmail);
+    await member.fill("#password", "Supersecret123!");
+    await member.getByTestId("register-submit").click();
+    await expect(member).toHaveURL(/\/verificar-email/);
+
+    await owner.goto("/panel/equipo");
+    await Promise.all([
+      owner.waitForResponse(
+        (r) =>
+          r.url().includes("/api/team/members/") &&
+          r.request().method() === "PATCH" &&
+          r.status() === 200,
+      ),
+      owner.getByTestId(`role-${memberEmail}`).selectOption("owner"),
+    ]);
+    await ownerCtx.close();
+    await memberCtx.close();
+
+    const { page, close } = await internalPage(browser);
+    try {
+      await page.goto("/admin/auditoria");
+      await expect(page.getByRole("heading", { name: "Auditoría de seguridad" })).toBeVisible();
+
+      await page.goto("/admin/auditoria?action=team_role_changed");
+      await expect(page.getByText("team_role_changed").first()).toBeVisible();
+    } finally {
+      await close();
     }
   });
 });

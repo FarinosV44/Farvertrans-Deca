@@ -432,6 +432,7 @@ export const it = {
     createOne: "Crea un DeCA",
   },
   crear: {
+    previewHeading: "Ecco come sarà il tuo DeCA",
     steps: ["Chi contratta e chi trasporta", "Carico e scarico", "Veicolo, merce e revisione"],
     subheadLeadGate:
       "Completa i dati senza impegno — ti chiederemo nome ed e-mail solo alla fine, senza bisogno di creare un account.",

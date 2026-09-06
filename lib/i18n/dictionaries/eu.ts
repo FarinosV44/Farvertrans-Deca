@@ -439,6 +439,7 @@ export const eu = {
     createOne: "Sortu DeCA bat",
   },
   crear: {
+    previewHeading: "Horrela geratuko da zure DeCA",
     steps: [
       "Nork kontratatzen eta nork garraiatzen duen",
       "Karga eta deskarga",

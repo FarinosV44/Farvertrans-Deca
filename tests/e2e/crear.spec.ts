@@ -92,8 +92,10 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     const summary = page.getByTestId("error-summary");
     await expect(summary).toBeVisible();
     await expect(summary).toContainText("Indica el NIF");
-    // still on step 1
-    await expect(page.getByText("Paso 1 de 3")).toBeVisible();
+    // still on step 1 — matched with the trailing separator so this doesn't
+    // also match the decorative "Paso 1 de 3" text in the desktop preview
+    // panel's static creator mock (DESIGN #51).
+    await expect(page.getByText("Paso 1 de 3 ·")).toBeVisible();
   });
 
   test("back/forward preserves entered data", async ({ page }) => {

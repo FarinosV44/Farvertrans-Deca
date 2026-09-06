@@ -436,6 +436,7 @@ export const de = {
     createOne: "DeCA erstellen",
   },
   crear: {
+    previewHeading: "So wird Ihr DeCA aussehen",
     steps: [
       "Wer beauftragt und wer transportiert",
       "Be- und Entladung",

@@ -2624,3 +2624,68 @@
   --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-documented
   parallel-only flake, reconfirmed passing with `--workers=1`.
 - **This was the last unmet acceptance item found for issue #54** — closing it on the forge next.
+
+## D-093 — DESIGN #51 closing gap: `/crear` was a mobile-width form stretched across the desktop viewport
+- Date / phase: 2026-09-06, same session, immediately after D-092, on the user's explicit "finish
+  issue 51 54 55 and 56" instruction. Re-read #51's full body/acceptance list against the actual
+  current code (not the earlier session summary's assumption that #51 was a large undone effort) —
+  found most of its acceptance items already satisfied by earlier work: fake QR removed everywhere
+  (D-069), `/panel` two-column desktop layout (D-070), the `DeCA generado` result screen already
+  redesigned with a two-column desktop layout (D-033 document cockpit), DESIGN #55 covering the
+  landing, and auth screens (`/entrar`/`/registro`) already using a deliberate centered-card pattern
+  (D-031) rather than a stretched mobile form. **One real gap found**: `/crear` (the actual DeCA
+  creator wizard — arguably the most important screen in the product) was capped at a single
+  `max-w-[720px]` column, identical on mobile and desktop — exactly the "stretched mobile page" #51
+  explicitly calls out.
+- **Fixed**: `app/crear/page.tsx` restructured into a `lg:` two-column layout — the wizard unchanged
+  on the left, a new sticky right-hand panel (hidden below `lg`) reusing the exact same real-QR
+  `DecaPreview` component already established on the landing (never a new/fake visual element,
+  matching #51's own explicit "no fake code artwork" requirement). New `crear.previewHeading`
+  dictionary key ("Así quedará tu DeCA") added to all 8 locales.
+- **Found and fixed one real regression this introduced**: the new preview panel's decorative
+  "Paso 1 de 3" text (from `DecaPreview`'s static creator-mock content) duplicated the wizard's own
+  live progress label on the same page, breaking `tests/e2e/crear.spec.ts`'s
+  `page.getByText("Paso 1 de 3")` assertion (Playwright strict-mode: 2 elements matched). Fixed by
+  matching the more specific text (`"Paso 1 de 3 ·"`, with the trailing separator) already used
+  successfully elsewhere in the same test suite for this exact ambiguity risk — no component change
+  needed.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139. A custom
+  10-width overflow script against `/crear` specifically (375–1920px) — zero overflow. Full
+  `playwright test --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-
+  documented parallel-only flake, reconfirmed passing with `--workers=1`. Manually verified in a real
+  browser at 1440px: the sticky preview panel renders cleanly alongside the wizard with no overlap.
+- **This closes issue #51** — every acceptance item verified against the actual current code, not
+  assumed from an earlier summary.
+
+## D-094 — PRODUCT #56 gap closed: company-level team events (invites, role changes, removals) are now audited and viewable
+- Date / phase: 2026-09-06, same session, immediately after D-093. #56's own "Security and audit"
+  section explicitly requires "role changes audited... invitation events audited... company
+  membership changes audited" — a direct grep confirmed `recordAudit()` (SECURITY #53's write-only
+  audit trail) was wired to admin-login/2FA/content-edit/password-reset events only, never to any
+  `lib/team.ts` action. This was a real, concrete unmet acceptance item, not assumed from docs.
+- **Fixed**: `recordAudit()` calls added at every team-mutation point — `createInvite` (
+  `team_invite_created`), `acceptInvite` and both `signup()` invite-join branches in
+  `lib/auth/index.ts` (`team_invite_accepted`), `removeMember` (`team_member_removed`), `changeRole`
+  (`team_role_changed`, with the resulting role recorded in `targetType` since `SecurityAuditLog` has
+  no separate metadata column). No schema change needed — the existing `SecurityAuditLog` model is
+  already generic (actorId/action/targetType/targetId/result).
+- **Also found and fixed: nothing surfaced this data to a human.** `SecurityAuditLog` had zero admin
+  UI reading it — only e2e tests queried it directly via Prisma. Recording an audit trail nobody can
+  see falls short of "auditable" in any practical sense. Added `lib/admin/audit-log.ts` (read-only
+  query functions) and a new `/admin/auditoria` screen (`app/admin/(protected)/auditoria/page.tsx`),
+  following the exact same list-page pattern as the existing `/admin/errores` screen (range/action/
+  result filters, a table, an empty state) — reuses `components/admin/ui.tsx` primitives, no new UI
+  patterns invented. Added to `ADMIN_SECTIONS` nav.
+- New tests: `tests/e2e/audit-log.spec.ts` gained two — one confirming the three new audit actions
+  are actually written during a real invite→accept→promote flow, one confirming `/admin/auditoria`
+  renders and correctly filters to show a `team_role_changed` row to an internal user. Both are
+  self-contained (produce their own event) rather than depending on execution order, since
+  `playwright.config.ts` runs `fullyParallel: true`.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139;
+  `playwright test tests/e2e/audit-log.spec.ts` — 6/6 passed including both new tests. Full
+  `playwright test --workers=3` — 157/157 passed; 2 failures (`content-cms`, `master-data`)
+  reconfirmed as the same pre-existing parallel-only flake class with `--workers=1`.
+- **Scope note:** this addresses one specific, concrete #56 acceptance item. #56's remaining scope
+  (super-admin platform-wide dashboard beyond what #33 already built, an explicit permissions matrix,
+  external-carrier-vs-employee invite distinction) stays open — see the progress comment posted on
+  the issue.

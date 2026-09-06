@@ -422,6 +422,7 @@ export const es = {
     createOne: "Crear un DeCA",
   },
   crear: {
+    previewHeading: "Así quedará tu DeCA",
     steps: [
       "Quién contrata y quién transporta",
       "Carga y descarga",

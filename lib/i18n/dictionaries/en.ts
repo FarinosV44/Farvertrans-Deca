@@ -420,6 +420,7 @@ export const en = {
     createOne: "Create a DeCA",
   },
   crear: {
+    previewHeading: "This is how your DeCA will look",
     steps: [
       "Who's hiring and who's transporting",
       "Loading and unloading",

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { DecaPreview } from "@/components/site/deca-preview";
 import {
   CrearWizard,
   type SavedData,
@@ -15,6 +16,8 @@ import { listSaved } from "@/lib/data/saved";
 import { listTemplates } from "@/lib/data/templates";
 import { LEAD_COOKIE } from "@/lib/deca/lead";
 import { getDictionary } from "@/lib/i18n/server";
+import { publicEnv } from "@/lib/env";
+import { qrPngDataUriCached } from "@/lib/pdf/qr";
 
 export const metadata: Metadata = {
   title: "Crear DeCA gratis",
@@ -130,22 +133,46 @@ export default async function CrearPage({
     }
   }
 
+  // DESIGN #51: the creator was a mobile-width form stretched across the
+  // whole desktop viewport — no desktop-specific richness. A lg+ sticky side
+  // panel now uses the extra width to reinforce what the wizard produces,
+  // reusing the exact same real-QR `DecaPreview` visual already established
+  // on the landing (never a fake/decorative QR).
+  const dict = await getDictionary();
+  const previewQr = await qrPngDataUriCached(publicEnv.baseUrl);
+
   return (
     <>
       <SiteHeader authed={!!user?.companyId} companyName={user?.company?.name} />
-      <main id="contenido" className="mx-auto max-w-[720px] px-4 py-10 md:px-6">
-        <CrearWizard
-          initial={initial}
-          saved={saved}
-          templates={templates}
-          authed={!!user?.companyId}
-          emailVerified={!!user?.emailVerifiedAt}
-          company={
-            user?.company
-              ? { name: user.company.name, nif: user.company.nif, address: user.company.address }
-              : undefined
-          }
-        />
+      <main id="contenido" className="mx-auto max-w-[1100px] px-4 py-10 md:px-6">
+        <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start">
+          <div className="mx-auto w-full max-w-[720px] lg:mx-0">
+            <CrearWizard
+              initial={initial}
+              saved={saved}
+              templates={templates}
+              authed={!!user?.companyId}
+              emailVerified={!!user?.emailVerifiedAt}
+              company={
+                user?.company
+                  ? {
+                      name: user.company.name,
+                      nif: user.company.nif,
+                      address: user.company.address,
+                    }
+                  : undefined
+              }
+            />
+          </div>
+          <div className="hidden lg:sticky lg:top-24 lg:block">
+            <p className="text-sm font-bold text-[var(--color-text-muted)]">
+              {dict.crear.previewHeading}
+            </p>
+            <div className="mt-4">
+              <DecaPreview qrDataUri={previewQr} />
+            </div>
+          </div>
+        </div>
       </main>
       <SiteFooter />
     </>

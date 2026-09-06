@@ -430,6 +430,7 @@ export const gl = {
     createOne: "Crear un DeCA",
   },
   crear: {
+    previewHeading: "Así quedará o teu DeCA",
     steps: [
       "Quen contrata e quen transporta",
       "Carga e descarga",

@@ -81,6 +81,14 @@ export async function signup(input: SignupInput): Promise<{
         },
       });
       await markInviteAccepted(inv.id);
+      const { recordAudit } = await import("@/lib/admin/audit");
+      await recordAudit({
+        actorId: user.id,
+        action: "team_invite_accepted",
+        targetType: "company",
+        targetId: inv.companyId,
+        result: "success",
+      });
       // A team member joins an already-onboarded workspace — no separate T&C
       // checkbox is shown (matches the client, which hides it for this path).
       return { userId: user.id, companyId: inv.companyId, joinedTeam: true };
@@ -236,6 +244,14 @@ export async function completeCompanyForUser(
         data: { companyId: inv.companyId, companyRole: inv.role },
       });
       await markInviteAccepted(inv.id);
+      const { recordAudit } = await import("@/lib/admin/audit");
+      await recordAudit({
+        actorId: userId,
+        action: "team_invite_accepted",
+        targetType: "company",
+        targetId: inv.companyId,
+        result: "success",
+      });
       return { companyId: inv.companyId, joinedTeam: true };
     }
     throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
