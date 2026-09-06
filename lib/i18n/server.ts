@@ -6,9 +6,10 @@ import { ca } from "./dictionaries/ca";
 import { eu } from "./dictionaries/eu";
 import { gl } from "./dictionaries/gl";
 import { en } from "./dictionaries/en";
+import { fr } from "./dictionaries/fr";
 import type { Messages } from "./dictionaries/es";
 
-const DICTS: Record<Locale, Messages> = { es, ca, eu, gl, en };
+const DICTS: Record<Locale, Messages> = { es, ca, eu, gl, en, fr };
 
 /**
  * Server-side locale resolution: the explicit `fvd_locale` cookie (set by the

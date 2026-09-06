@@ -1932,3 +1932,18 @@
 - **Not done:** French, German, Italian — continuing next, in that order (all well-resourced languages
   this session has high translation confidence in, unlike Basque).
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-073.
+
+## D-075 — I18N #54 slice 5: French added
+- Date / phase: 2026-09-06, same session, immediately after D-074. Same registration pattern as
+  Catalan/Galician: `lib/i18n/dictionaries/fr.ts` (`satisfies Messages`), added to `LOCALES` and both
+  `DICTS` maps. High translation confidence (well-resourced Romance language). No `app/page.tsx` or
+  header changes needed — the D-074 switcher fix (fixed max-width, internal scroll) absorbed the 6th
+  button with zero further changes, confirming that fix's purpose.
+- Verification: `tsc --noEmit` clean (parity confirmed), ESLint clean, Prettier clean (after
+  `prettier --write`), `vitest run` 139/139, full `playwright test --workers=3` — 152/154 passed, the
+  2 failures being the same two already-documented parallel-only flakes (`admin-2fa` recovery-code
+  replay, `content-cms` preview race) — no overflow regression, confirming D-074's fix holds. Manually
+  verified in a real Chrome session (set the `fr` cookie directly via the locale API to skip scrolling
+  the switcher pill): nav, hero, subhead, trust row and CTA all render correctly in French at 1440px.
+- **Not done:** German, Italian — continuing next.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-074.

@@ -811,3 +811,11 @@ prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing flake, unrelated). Ver
 renders correctly, switcher's internal scroll works at 1440px. See `decisions.md` D-074. **Continuing**
 with French, German, Italian next — all well-resourced languages with high translation confidence,
 unlike Basque.
+
+## D-075: I18N #54 slice 5 — French added
+Added `lib/i18n/dictionaries/fr.ts` following the same pattern as Catalan/Galician. Zero header/page
+changes needed for the 6th switcher button — confirms D-074's fixed-width, internally-scrolling
+switcher absorbs new locales with no further changes. Gate: typecheck (parity), lint, prettier clean,
+139/139 unit, 152/154 e2e (2 pre-existing flakes, unrelated, no new regression). Verified live: French
+renders correctly across nav/hero/trust-row/CTA. See `decisions.md` D-075. **Continuing** with German,
+then Italian.
