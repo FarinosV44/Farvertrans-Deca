@@ -1192,3 +1192,21 @@ fixed a real regression in `nav-links.spec.ts` (the footer link-checker didn't k
 links — first one in the product). Gate: typecheck, lint, prettier clean, 139/139 unit, 10/10
 targeted e2e, full suite 163/164 (1 pre-existing flake, reconfirmed unrelated). See `decisions.md`
 D-104. **Production still needs the migration applied** before this feature works live.
+
+## D-105: passkeys (WebAuthn) as primary admin 2FA, TOTP kept as fallback
+Redesigned mandatory admin 2FA per the owner's explicit spec: passkey (Face ID/Touch ID/Windows
+Hello) is now the primary method — one button, no QR code — with the existing TOTP flow kept fully
+intact as an explicit fallback. Added `@simplewebauthn/server`/`browser` (MIT), new
+`WebAuthnCredential` + `TrustedDevice` tables (migration `20260906204958_webauthn_passkeys_and_
+trusted_devices`, **needs `prisma migrate deploy` on production**), 9 new API routes (registration/
+authentication ceremonies, credential + trusted-device management, TOTP reset), and redefined
+"2FA enrolled" across all three `lib/admin/guard.ts` gates as TOTP OR passkey. New `/admin/seguridad`
+Security screen (passkeys, TOTP status, recovery codes, trusted devices). `totp-setup-form.tsx`
+rewritten as a passkey-primary choice screen; `totp-verify-form.tsx` gained a passkey button + a
+30-day "trust this device" checkbox, with the TOTP/recovery-code input still visible and usable by
+default. Fixed two real bugs found while building this: `enable` route regenerating recovery codes
+even when a passkey already had unused ones, and the Security screen silently swallowing the
+"can't remove your last 2FA method" server error. Gate: typecheck, lint, prettier clean, `npm run
+build` clean, 139/139 unit, `admin-2fa.spec.ts` 7/7 unchanged, new `admin-passkey.spec.ts` 5/5
+(CDP virtual authenticator standing in for Face ID), full suite 169/169, zero flakes. See
+`decisions.md` D-105. **Production needs the migration applied** before this feature works live.

@@ -330,6 +330,11 @@ export async function bumpSessionVersion(userId: string, reissueCurrent = true):
     const store = await cookies();
     store.set(SESSION_COOKIE, signSession(userId, user.sessionVersion), SESSION_COOKIE_OPTIONS);
   }
+  // SECURITY #53 passkey follow-up: a password change/reset or "log out
+  // everywhere" must never leave a standing 2FA bypass behind on some other
+  // device.
+  const { revokeAllTrustedDevices } = await import("./trusted-device");
+  await revokeAllTrustedDevices(userId);
 }
 
 /**

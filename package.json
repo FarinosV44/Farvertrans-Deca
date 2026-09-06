@@ -32,6 +32,8 @@
   "dependencies": {
     "@prisma/client": "6.1.0",
     "@react-pdf/renderer": "4.1.6",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.0.1",
     "@supabase/ssr": "0.5.2",
     "@supabase/supabase-js": "2.47.10",
     "jsqr": "^1.4.0",

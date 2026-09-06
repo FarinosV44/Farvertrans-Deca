@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getInternalUser } from "@/lib/admin/guard";
 import { verifyTotp } from "@/lib/auth/totp";
 import { markTotpVerified } from "@/lib/auth";
-import { generateRecoveryCodes } from "@/lib/auth/recovery-codes";
+import { generateRecoveryCodes, countUnusedRecoveryCodes } from "@/lib/auth/recovery-codes";
 import { recordAudit } from "@/lib/admin/audit";
 import { prisma } from "@/lib/prisma";
 
@@ -45,7 +45,16 @@ export async function POST(req: Request) {
   }
 
   await prisma.user.update({ where: { id: user.id }, data: { totpEnabledAt: new Date() } });
-  const recoveryCodes = await generateRecoveryCodes(user.id);
+
+  // SECURITY #53 passkey follow-up: recovery codes are only (re-)issued the
+  // first time this account gets ANY strong-auth method — enabling TOTP as a
+  // second method alongside an existing passkey must never silently
+  // invalidate codes the admin already saved.
+  const hadPasskey = (await prisma.webAuthnCredential.count({ where: { userId: user.id } })) > 0;
+  let recoveryCodes: string[] | undefined;
+  if (!hadPasskey || (await countUnusedRecoveryCodes(user.id)) === 0) {
+    recoveryCodes = await generateRecoveryCodes(user.id);
+  }
   await markTotpVerified(user.id);
   await recordAudit({
     actorId: user.id,

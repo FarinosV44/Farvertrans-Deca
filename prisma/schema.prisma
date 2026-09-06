@@ -122,8 +122,66 @@ model User {
   savedVehicles  SavedVehicle[]
   savedLocations SavedLocation[]
   recoveryCodes  AdminRecoveryCode[]
+  webauthnCredentials WebAuthnCredential[]
+  trustedDevices      TrustedDevice[]
 
   @@map("user")
+}
+
+/// SECURITY #53 passkey follow-up: a registered WebAuthn credential (Face
+/// ID/Touch ID/Windows Hello/security key), the primary admin 2FA method.
+/// TOTP (above) stays as the fallback — either method satisfies
+/// `requireInternal()`'s "fresh 2FA check" requirement identically, via the
+/// same `tv` session timestamp. Only the public key is ever stored; the
+/// private key never leaves the authenticator.
+model WebAuthnCredential {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  /// Base64url credential ID from the authenticator — how a login/step-up
+  /// challenge finds which public key to verify against.
+  credentialId String @unique @map("credential_id")
+  publicKey    Bytes  @map("public_key")
+  /// Signature counter — WebAuthn replay protection (must strictly increase
+  /// on every use; a non-increasing counter means a cloned authenticator).
+  counter BigInt @default(0)
+  /// "singleDevice" | "multiDevice" (a synced passkey, e.g. iCloud Keychain).
+  deviceType String  @map("device_type")
+  backedUp   Boolean @default(false) @map("backed_up")
+  /// Comma-separated AuthenticatorTransport hints ("internal,hybrid", …).
+  transports String?
+  /// User-facing label ("iPhone de Ana") — set from the device/browser at
+  /// registration time, editable nowhere yet (not required by the brief).
+  name       String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("webauthn_credential")
+}
+
+/// SECURITY #53 passkey follow-up: "trust this device" for ~30 days after a
+/// successful strong-auth check, so an admin isn't re-challenged on every
+/// visit from their own phone/laptop. Same hashed-token-in-DB shape as
+/// `PasswordResetToken`/`EmailVerificationToken`, except a trusted device is
+/// reusable until expiry/revocation rather than single-use, hence
+/// `revokedAt` instead of `usedAt`. Revoked wholesale on password change/
+/// reset and "log out everywhere" (`bumpSessionVersion`) — a compromised
+/// password must never leave a standing bypass of 2FA behind.
+model TrustedDevice {
+  tokenHash  String    @id @map("token_hash")
+  userId     String    @map("user_id")
+  label      String?
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastSeenAt DateTime? @map("last_seen_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("trusted_device")
 }
 
 /// SECURITY #53: one-time admin 2FA recovery codes, shown once at enrollment

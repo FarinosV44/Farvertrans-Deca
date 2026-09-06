@@ -2978,3 +2978,87 @@ remaining scope.
   `Company.email` column needs `prisma migrate deploy` (or the equivalent manual SQL) against
   production before this feature works there — it is NOT part of the migrations already applied for
   D-096/D-098's incident fix.
+
+## D-105 — SECURITY #53 passkey follow-up: WebAuthn/passkeys as primary admin 2FA, TOTP kept as fallback
+- Date / phase: 2026-09-06, same session. The owner asked for the mandatory admin TOTP flow
+  (Google/Microsoft Authenticator, QR + manual secret) to be redesigned: passkeys (Face ID/Touch
+  ID/Windows Hello/PIN) as the primary method, TOTP kept fully intact as an explicit fallback, one-
+  time recovery codes, an optional 30-day "trust this device" grant, and a Settings → Security
+  screen — full spec in the conversation, ten numbered requirements plus an explicit "inspect the
+  existing stack before changing anything" instruction.
+- **Inspected first, as required**: `lib/auth/totp.ts` (hand-rolled RFC 6238, unchanged, stays the
+  fallback), `lib/admin/guard.ts` (the three gate functions — `getInternalUser`, `isInternalRequest`,
+  `requireInternal`, `requireStepUp` — and their exact freshness windows), `lib/auth/session.ts`
+  (the stateless `tv` field is what "2FA verified recently" already means — reused identically for
+  passkeys), the existing enroll/enable/verify/regenerate-codes routes and `totp-setup-form.tsx`/
+  `totp-verify-form.tsx`, and `tests/e2e/admin-2fa.spec.ts` (confirmed it drives the API/test-id
+  surface directly via a pre-seeded TOTP fixture, never the setup screen's UI — so the setup screen
+  could be freely redesigned with zero risk to that suite, confirmed by running it unchanged after
+  the redesign: 7/7 still pass).
+- **New dependency**: `@simplewebauthn/server@14.0.1` + `@simplewebauthn/browser@14.0.0` (MIT,
+  D-003's permissive-license policy) — the standard, actively-maintained WebAuthn library; hand-
+  rolling CBOR/COSE parsing and attestation/assertion verification for a security-critical path was
+  never on the table. Read the v14 `.d.ts` files directly before writing against them (v14 changed
+  `registrationInfo.credential` to a nested `{id, publicKey, counter, transports}` shape from older
+  versions' flat fields).
+- **Schema** (migration `20260906204958_webauthn_passkeys_and_trusted_devices`, applied to local dev
+  via `prisma migrate dev` — **not yet applied to production**): new `WebAuthnCredential` (one row
+  per registered passkey: `credentialId`, `publicKey`, `counter` for replay protection, `deviceType`,
+  `backedUp`, `transports`, `name`, `lastUsedAt`) and `TrustedDevice` (hashed-token-in-DB, same shape
+  as `PasswordResetToken`/`EmailVerificationToken` but with `revokedAt` instead of `usedAt` since a
+  trust grant is reusable until expiry/revocation, not single-use) — both on `User`.
+- **"Enrolled" redefined app-wide**: `totpEnabledAt !== null OR ≥1 WebAuthnCredential` — was
+  `totpEnabledAt` alone in all three gate functions in `lib/admin/guard.ts`; a passkey-only admin
+  would otherwise have been permanently bounced to the mandatory-setup screen. `requireStepUp()`
+  deliberately still NEVER accepts a trusted-device cookie — a destructive/high-risk action always
+  needs a check from the last few minutes, regardless of how routine `/admin` access was granted.
+- **Trust-device revocation wired into `bumpSessionVersion()`** (the existing password-change/
+  "log out everywhere" trigger) — a compromised password can never leave a standing 2FA bypass on
+  some other device.
+- **Recovery codes issued exactly once per account's first-ever strong-auth method** (checked via
+  "no existing method AND zero unused codes"), never silently regenerated when a second device/
+  method is added later. Found and fixed a real inconsistency here: `POST /api/admin/2fa/enable`
+  (confirming TOTP) unconditionally regenerated codes even when the account already had a passkey
+  with unused codes saved — brought in line with the register-verify route's already-correct logic.
+- **New API routes**: `webauthn/register-options` + `register-verify` (registration ceremony,
+  challenge stored in a signed short-lived cookie mirroring `lib/auth/oauth-state.ts`'s pattern —
+  no throwaway DB table for something this short-lived), `webauthn/auth-options` + `auth-verify`
+  (authentication ceremony), `webauthn/credentials` (list) + `webauthn/credentials/[id]` (DELETE,
+  step-up gated, refuses to remove the last strong-auth method), `2fa/trust-device` (POST, issues
+  the cookie), `2fa/trusted-devices` (list) + `2fa/trusted-devices/[id]` (DELETE, step-up gated),
+  and `2fa/totp` (DELETE — new: "reset the authenticator" from the Security screen, symmetric to
+  passkey removal, same last-method guard, step-up gated).
+- **UI**: `totp-setup-form.tsx` rewritten as a choice screen ("Protege tu cuenta de administrador" →
+  primary "Configurar con Face ID / clave de acceso", secondary "Usar una app de autenticación en su
+  lugar" falling through to the unchanged QR/manual-secret/6-digit flow) — both paths converge on
+  the same recovery-codes screen. `totp-verify-form.tsx` gained a primary "Continuar con Face ID /
+  clave de acceso" button (shown only when the account actually has a passkey) plus a "confiar en
+  este dispositivo durante 30 días" checkbox — the existing TOTP/recovery-code input stays visible
+  and immediately usable by default (never hidden behind an extra click), which is also what keeps
+  `tests/e2e/helpers/admin-auth.ts`'s existing UI-login helper working unchanged. New `/admin/
+  seguridad` (added to `ADMIN_SECTIONS`): passkey list with add/remove, TOTP status with inline
+  configure/reset, recovery-codes remaining count + regenerate, trusted-device list + revoke — every
+  action that can fail on staleness surfaces a "Verifica tu identidad de nuevo" notice linking back
+  to the verify screen rather than failing silently (a real gap caught during testing: passkey
+  removal blocked by the last-method guard was originally swallowed with no UI feedback — fixed to
+  surface the server's message).
+- **No new environment variable** — the relying-party ID and origin derive from the existing
+  `NEXT_PUBLIC_FVD_BASE_URL` (`publicEnv.baseUrl`), exactly like every other origin-aware check in
+  the app already does.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `npm run build` clean (new
+  `/admin/seguridad` route compiles); `vitest run` 139/139 unchanged. `tests/e2e/admin-2fa.spec.ts`
+  (the full pre-existing mandatory-TOTP suite) 7/7 unchanged. New `tests/e2e/admin-passkey.spec.ts`
+  (5 tests, using a CDP virtual authenticator — `WebAuthn.addVirtualAuthenticator` with
+  `automaticPresenceSimulation: true` standing in for Face ID, since no CI browser has real
+  biometrics): first-time passkey enrollment end to end, TOTP fallback from the new choice screen
+  end to end, passkey login on a fresh session via the verify screen, "trust this device" granting
+  a later password-only session direct `/admin` access, and the Security screen listing a passkey
+  and refusing to remove the last strong-auth method. Full `playwright test --workers=3` —
+  169/169 passed, zero flakes this run.
+- **Production note, same standing pattern as every schema change this session**: the new
+  `WebAuthnCredential`/`TrustedDevice` tables need `prisma migrate deploy` (or the equivalent manual
+  SQL) against production before any of this works there.
+- **iPhone/Safari testing**: a real device test needs a real platform authenticator, which nothing
+  in this session's toolchain can simulate end-to-end — the owner should verify on their own iPhone
+  once this reaches a deployed environment (see the continuation prompt / final report for the exact
+  steps).
