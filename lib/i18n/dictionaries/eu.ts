@@ -408,6 +408,19 @@ export const eu = {
       equipo: "Taldea",
       empresa: "Nire enpresa",
     },
+    teamActivity: {
+      heading: "Taldearen jarduera",
+      invited: (actor: string) => `${actor}(e)k gonbidapena bidali du`,
+      joined: (actor: string) => `${actor} taldera batu da`,
+      roleChanged: (actor: string, target: string, role: string) =>
+        `${actor}(e)k ${target}(r)en rola ${role} izatera aldatu du`,
+      removed: (actor: string, target: string) => `${actor}(e)k ${target} taldetik kendu du`,
+      roleLabel: {
+        owner: "Administratzailea",
+        member: "Operadorea",
+        read_only: "Irakurtzeko soilik",
+      },
+    },
   },
   historico: {
     title: "Historiala",

@@ -288,4 +288,45 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     });
     expect(r.status()).toBe(409); // AuthError → bad_input mapped to 409 by the route
   });
+
+  test("PRODUCT #56: the owner's panel home shows recent team activity; a member's does not", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+    await owner.goto("/panel/equipo");
+    const memberEmail = email();
+    await owner.fill('[data-testid="invite-email"]', memberEmail);
+    await Promise.all([
+      owner.waitForResponse(
+        (r) => r.url().includes("/api/team/invites") && r.request().method() === "POST",
+      ),
+      owner.getByTestId("invite-submit").click(),
+    ]);
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    // The owner's own dashboard shows the invite as team activity.
+    await owner.goto("/panel");
+    await expect(owner.getByTestId("team-activity")).toContainText("envió una invitación");
+
+    const memberCtx = await browser.newContext();
+    const member = await memberCtx.newPage();
+    await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await member.fill("#email", memberEmail);
+    await member.fill("#password", "Supersecret123!");
+    await member.getByTestId("register-submit").click();
+    await expect(member).toHaveURL(/\/verificar-email/);
+
+    // The owner's dashboard now also shows the join.
+    await owner.goto("/panel");
+    await expect(owner.getByTestId("team-activity")).toContainText("se unió al equipo");
+
+    // A regular member never sees this section at all (owner-only widget).
+    await member.goto("/panel");
+    await expect(member.getByTestId("team-activity")).toHaveCount(0);
+
+    await ownerCtx.close();
+    await memberCtx.close();
+  });
 });

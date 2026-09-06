@@ -402,6 +402,15 @@ export const fr = {
       equipo: "Équipe",
       empresa: "Mon entreprise",
     },
+    teamActivity: {
+      heading: "Activité de l'équipe",
+      invited: (actor: string) => `${actor} a envoyé une invitation`,
+      joined: (actor: string) => `${actor} a rejoint l'équipe`,
+      roleChanged: (actor: string, target: string, role: string) =>
+        `${actor} a changé le rôle de ${target} en ${role}`,
+      removed: (actor: string, target: string) => `${actor} a retiré ${target} de l'équipe`,
+      roleLabel: { owner: "Administrateur", member: "Opérateur", read_only: "Lecture seule" },
+    },
   },
   historico: {
     title: "Historique",

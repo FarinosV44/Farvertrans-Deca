@@ -1148,3 +1148,15 @@ that Resend actually accepts the key. Asked the user to verify the key and sendi
 their Resend dashboard. Noted as a real (if secondary) gap in the diagnose tool itself for a future
 slice: it can report false-positive "ok" on mail exactly the way the schema check used to on columns.
 **#56 resumes now that production auth is confirmed restored.**
+
+## D-100: PRODUCT #56 — "team activity" dashboard widget shipped
+#56 explicitly names "team activity" as a recommended home-dashboard item. Added
+`listCompanyTeamActivity()` (reuses the D-094 audit trail, scoped to current company members) and an
+owner-only "Actividad del equipo" section on `/panel` showing the last 5 team events in friendly
+text. 8-locale dictionary keys added. Found and fixed a real race-condition bug in my own new e2e
+test while writing it (asserted before the invite API response had settled — same class of bug as
+D-093). Gate: typecheck, lint, prettier clean, 139/139 unit, 13/13 targeted team+workspace e2e, full
+suite 159/161 (2 pre-existing flakes, reconfirmed unrelated). See `decisions.md` D-100. Still open
+for #56: "drafts requiring completion" (needs new server-side draft persistence), richer route/
+carrier/vehicle frequency widgets, the super-admin dashboard beyond #33, permissions matrix, and the
+external-carrier-vs-employee invite distinction.

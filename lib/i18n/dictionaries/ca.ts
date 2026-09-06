@@ -399,6 +399,15 @@ export const ca = {
       equipo: "Equip",
       empresa: "La meva empresa",
     },
+    teamActivity: {
+      heading: "Activitat de l'equip",
+      invited: (actor: string) => `${actor} ha enviat una invitació`,
+      joined: (actor: string) => `${actor} s'ha unit a l'equip`,
+      roleChanged: (actor: string, target: string, role: string) =>
+        `${actor} ha canviat el rol de ${target} a ${role}`,
+      removed: (actor: string, target: string) => `${actor} ha eliminat ${target} de l'equip`,
+      roleLabel: { owner: "Administrador", member: "Operador", read_only: "Només lectura" },
+    },
   },
   historico: {
     title: "Historial",

@@ -399,6 +399,15 @@ export const gl = {
       equipo: "Equipo",
       empresa: "A miña empresa",
     },
+    teamActivity: {
+      heading: "Actividade do equipo",
+      invited: (actor: string) => `${actor} enviou unha invitación`,
+      joined: (actor: string) => `${actor} uniuse ao equipo`,
+      roleChanged: (actor: string, target: string, role: string) =>
+        `${actor} cambiou o rol de ${target} a ${role}`,
+      removed: (actor: string, target: string) => `${actor} eliminou a ${target} do equipo`,
+      roleLabel: { owner: "Administrador", member: "Operador", read_only: "Só lectura" },
+    },
   },
   historico: {
     title: "Historial",

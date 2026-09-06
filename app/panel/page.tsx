@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { listHistory } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
 import { getTopRoutes } from "@/lib/data/route-intel";
+import { listCompanyTeamActivity } from "@/lib/admin/audit-log";
 import { publicEnv } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n/server";
 import {
@@ -25,10 +26,15 @@ export default async function AppHome() {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro");
 
-  const [rows, saved, topRoutes] = await Promise.all([
+  // PRODUCT #56 "Company dashboard improvements" — team activity, owner-only
+  // (the same audience as the invite/role-management UI on /panel/equipo):
+  // members don't manage the team, so this would be noise for them.
+  const isOwner = user.companyRole === "owner";
+  const [rows, saved, topRoutes, teamActivity] = await Promise.all([
     listHistory(user.companyId),
     listSaved(user.companyId),
     getTopRoutes(user.companyId, 4),
+    isOwner ? listCompanyTeamActivity(user.companyId, 5) : Promise.resolve([]),
   ]);
   const recent = rows.slice(0, 5);
   const last = rows[0];
@@ -199,12 +205,68 @@ export default async function AppHome() {
                 </ul>
               </section>
             )}
+
+            {isOwner && teamActivity.length > 0 && (
+              <section aria-labelledby="actividad-equipo">
+                <h2 id="actividad-equipo" className="text-sm font-bold">
+                  {t.panel.teamActivity.heading}
+                </h2>
+                <ul className="mt-2 space-y-2" data-testid="team-activity">
+                  {teamActivity.map((a) => (
+                    <li
+                      key={a.id}
+                      className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
+                    >
+                      <p>{formatTeamActivity(a, t.panel.teamActivity)}</p>
+                      <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                        {a.createdAt.toISOString().slice(0, 16).replace("T", " ")}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
         </div>
       </main>
       <SiteFooter />
     </>
   );
+}
+
+function formatTeamActivity(
+  a: {
+    action: string;
+    actorEmail: string | null;
+    targetEmail: string | null;
+    targetType: string | null;
+  },
+  dict: {
+    invited: (actor: string) => string;
+    joined: (actor: string) => string;
+    roleChanged: (actor: string, target: string, role: string) => string;
+    removed: (actor: string, target: string) => string;
+    roleLabel: Record<string, string>;
+  },
+): string {
+  const actor = a.actorEmail ?? "—";
+  const target = a.targetEmail ?? "—";
+  switch (a.action) {
+    case "team_invite_created":
+      return dict.invited(actor);
+    case "team_invite_accepted":
+      return dict.joined(actor);
+    case "team_role_changed":
+      return dict.roleChanged(
+        actor,
+        target,
+        dict.roleLabel[a.targetType ?? ""] ?? a.targetType ?? "",
+      );
+    case "team_member_removed":
+      return dict.removed(actor, target);
+    default:
+      return a.action;
+  }
 }
 
 function SummaryCard({

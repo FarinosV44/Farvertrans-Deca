@@ -2843,3 +2843,35 @@ message) and D-098 (incident-resolution record). D-096 was already on `main` fro
 this closes the gap the user's question surfaced. The actual production fix (the `preferred_locale`
 column) is SQL applied directly to the database, not a git artifact, so it has no corresponding
 commit either way.
+
+## D-100 — PRODUCT #56 gap closed: company-level "team activity" dashboard widget
+- Date / phase: 2026-09-06, same session, resuming #56 after the production incident (D-096…D-099)
+  was confirmed resolved. #56's own "Company dashboard improvements" section explicitly lists "team
+  activity" as a recommended home-dashboard item — not yet built.
+- **Implemented**: `lib/admin/audit-log.ts` gained `listCompanyTeamActivity(companyId, take)`,
+  reusing the exact `SecurityAuditLog` trail D-094 wired `lib/team.ts` into — scoped to the
+  company's CURRENT members' `team_*` actions (a deliberate scoping choice: this is a dashboard
+  convenience widget showing "who's been doing what on my team recently," not the compliance-grade
+  permanent record, which stays served by `/admin/auditoria` for internal staff regardless of later
+  membership changes). `app/panel/page.tsx` gained an owner-only "Actividad del equipo" section
+  (same audience as the invite/role-management UI on `/panel/equipo` — members don't manage the
+  team, so this would be noise for them) showing the last 5 events with friendly per-action text
+  ("X envió una invitación", "X se unió al equipo", "X cambió el rol de Y a Z", "X eliminó a Y del
+  equipo"). New `panel.teamActivity` dictionary keys across all 8 locales, including a small
+  `roleLabel` map (owner/member/read_only → localized names) reused only within this widget.
+- **Found and fixed one real test bug of my own while writing coverage**: the first version of the
+  new e2e test navigated away from `/panel/equipo` to check the dashboard widget BEFORE the invite
+  API response had actually completed (no `waitForResponse`), and separately tried to read the
+  invite link from the wrong page after already navigating away — both are the same "assert before
+  the async action settled" class of bug this session already hit once in D-093 (a different
+  symptom, same root cause: navigating/asserting without waiting on the real network response).
+  Fixed by capturing the invite link right after an explicit `waitForResponse` on the `POST
+  /api/team/invites` call, before navigating anywhere else.
+- Verification: `tsc --noEmit` clean (8-locale `teamActivity` key parity via `satisfies Messages`);
+  ESLint clean; Prettier clean; `vitest run` 139/139; `playwright test tests/e2e/team.spec.ts
+  tests/e2e/workspace.spec.ts` — 13/13 passed including axe on `/panel`. Full `playwright test
+  --workers=3` — 159/161 passed; the 2 failures (`admin-2fa`, `content-cms`) are the same already-
+  documented parallel-only flakes, reconfirmed passing with `--workers=1`.
+- **Scope note:** this is one concrete #56 item, not the whole "Company dashboard improvements"
+  list — "drafts requiring completion" (needs server-side draft persistence, real new architecture)
+  and richer route/carrier/vehicle frequency widgets remain unaddressed. #56 stays open.
