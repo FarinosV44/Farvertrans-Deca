@@ -1865,3 +1865,33 @@
   extra scrutiny (native speaker review, if available) before being trusted at the same level as this
   one.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-071.
+
+## D-073 — I18N #54 slice 3: Galician added; fixed a keyboard-reachability test that breaks with every new locale
+- Date / phase: 2026-09-06, same session, immediately after D-072. Continuing the language sequence
+  (Romance languages first, highest translation confidence): Galician next, following the exact
+  registration pattern established for Catalan (D-072) — new `lib/i18n/dictionaries/gl.ts`
+  (`satisfies Messages`), registered in `LOCALES` (`lib/i18n/locale.ts`) and BOTH `DICTS` maps
+  (`lib/i18n/server.ts`, `lib/i18n/client.tsx`). No `app/page.tsx` changes needed at all this time —
+  confirming D-072's refactor claim that adding a locale is now purely a dictionary-registration change.
+- **Regression found and fixed — structural, will recur with every future locale unless fixed once:**
+  `tests/e2e/a11y.spec.ts`'s "landing is keyboard-reachable to the primary CTA" test Tab-pressed a
+  HARDCODED budget of 12 to reach the header's CTA button. Each language added to the switcher is one
+  more focusable `<button>` in that tab sequence (skip-link → wordmark → 5 nav links → N switcher
+  buttons → login link → CTA) — with `ca` (D-072) the count was already at the edge (11 of 12); adding
+  `gl` pushed it to 12–13 depending on the skip-link, exceeding the budget and failing outright (not a
+  flake — reproduced deterministically). Rather than bump the constant again for the next locale (eu,
+  then fr/de/it — 4 more to go), raised it once to 30 with a comment explaining the full worst-case
+  count at 8 total locales, so this doesn't need touching again for the rest of #54.
+- Verification: `tsc --noEmit` clean (`gl.ts satisfies Messages` parity confirmed); ESLint clean;
+  Prettier clean (after `prettier --write` on the new file); `vitest run` 139/139;
+  `playwright test tests/e2e/landing.spec.ts -g "360px|768px|1280px"` re-verified clean with 4 switcher
+  buttons (the exact regression class from D-072 did not recur); full `playwright test --workers=3` —
+  154/154 passed, zero flakes this run (the two previously-documented parallel-only flakes did not
+  reproduce, consistent with them being timing-sensitive rather than deterministic). Manually verified
+  in a real Chrome session: switched to `gl`, confirmed the landing hero/subhead/trust-row render in
+  Galician and the header shows the 4-button switcher (ES/CA/GL/EN) correctly highlighted with no
+  layout overflow at 1440px.
+- **Not done:** Basque, French, German, Italian — continuing next. Basque remains flagged (D-072) as
+  needing extra translation-quality scrutiny before being trusted at the same level as the Romance
+  languages done so far.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-072.

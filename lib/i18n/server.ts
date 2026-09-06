@@ -3,10 +3,11 @@ import { cookies } from "next/headers";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "./locale";
 import { es } from "./dictionaries/es";
 import { ca } from "./dictionaries/ca";
+import { gl } from "./dictionaries/gl";
 import { en } from "./dictionaries/en";
 import type { Messages } from "./dictionaries/es";
 
-const DICTS: Record<Locale, Messages> = { es, ca, en };
+const DICTS: Record<Locale, Messages> = { es, ca, gl, en };
 
 /**
  * Server-side locale resolution: the explicit `fvd_locale` cookie (set by the

@@ -784,3 +784,15 @@ zero page-level code for the new locale. See `decisions.md` D-072. **Not done, e
 owner's own scope decision:** Basque/Galician/French/German/Italian dictionaries, and all legal-page
 translation. Basque flagged as needing extra translation-quality scrutiny (language isolate, lower
 confidence than the Romance languages here).
+
+## D-073: I18N #54 slice 3 — Galician added; fixed a keyboard-reachability test that breaks with every new locale
+Added `lib/i18n/dictionaries/gl.ts` following the exact Catalan pattern (D-072) — no `app/page.tsx`
+changes needed at all, confirming the dictionary-only scaling claim. Found and fixed a structural
+regression: `tests/e2e/a11y.spec.ts`'s keyboard-reachability test had a hardcoded 12-Tab-press budget
+to reach the header CTA, and each new language switcher button eats one more tab stop — Catalan had
+already pushed it to the edge, Galician broke it outright. Raised the budget once to 30 (covers the
+full 8-locale target: es/ca/eu/gl/en/fr/de/it) instead of re-tuning it per locale. Gate: typecheck
+(parity check), lint, prettier clean, 139/139 unit, 154/154 e2e with zero flakes this run. Verified
+live: Galician renders correctly, 4-button switcher fits with no overflow at 1440px. See
+`decisions.md` D-073. **Continuing** with Basque next (flagged for extra scrutiny — language isolate,
+lower translation confidence than the Romance languages done so far), then French, German, Italian.
