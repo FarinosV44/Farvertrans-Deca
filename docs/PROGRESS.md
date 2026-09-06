@@ -1116,5 +1116,35 @@ caught next time instead of the schema check falsely reporting "ok" — this is 
 missing-migration incident has happened (D-054, D-060, this one). Added a `REQUIRED_COLUMNS` check
 alongside the existing table check, and added the 2 SECURITY #53 tables that were never in
 `REQUIRED_TABLES`. Gate: typecheck, lint, prettier clean, 139/139 unit, full suite 159/159 (zero
-flakes). See `decisions.md` D-096. Pushing to `main` immediately per the user's request so the
-hardened diagnostics are live for them to use once they redeploy + migrate.
+flakes). See `decisions.md` D-096. Merged to `main` at `da868ca` immediately per the user's request
+so the hardened diagnostics are live once they redeploy + migrate. **#56 resumes once the user
+confirms production auth is restored** — paused per their explicit "push it to main so i can try
+before finishing issue 56."
+
+## D-097: Google OAuth failures were silently swallowed — same incident, one real separate bug found
+While live-testing, the user reported Google registration "does nothing" and password registration
+shows "No se pudo crear la cuenta." Both are the SAME root cause as D-096 (missing `session_version`
+column). But investigating found one genuinely separate bug: the Google callback route redirects to
+`/entrar?error=<reason>` on any failure, and NOTHING in the UI ever read that param — every Google
+auth failure looked exactly like the button doing nothing. Fixed: new `auth.errors.googleFailed` key
+(8 locales) + `RegisterForm` now shows it when `?error=` is present. This makes failures visible; it
+doesn't fix the underlying crash (still needs D-096's migration). Gate: typecheck, lint, prettier
+clean, 139/139 unit, 4/4 targeted auth-ux e2e (new test), full suite 159/160 (1 pre-existing flake).
+See `decisions.md` D-097. Also answered the user's email-env-var question: `RESEND_API_KEY` (real
+key, not the placeholder) + `FVD_MAIL_FROM`, both already in `.env.example`.
+
+## D-098: PRODUCTION INCIDENT RESOLVED — login/registration/Google auth all working again
+D-096 correctly diagnosed "a missing migration column" but named the wrong one. After the user
+applied D-096's SQL and it still crashed, the user ran `npm run diagnose` against production with
+their own admin token — D-096's own newly-added column check immediately named the REAL gap:
+`user.preferred_locale` (a different, earlier migration neither D-088 nor D-096 had flagged). User
+applied `ALTER TABLE "user" ADD COLUMN preferred_locale TEXT NOT NULL DEFAULT 'es'`. **Confirmed live:
+`npm run diagnose` fully green, a wrong-password login now correctly returns 401
+`invalid_credentials` (not a 500), and a real registration against production succeeded (201,
+real account created).** See `decisions.md` D-098 for full detail.
+**Still open: real email delivery.** Registration returned `emailSent: false` despite diagnose
+reporting the mail provider "Configurado" — that check only verifies the env vars are non-empty, not
+that Resend actually accepts the key. Asked the user to verify the key and sending domain directly in
+their Resend dashboard. Noted as a real (if secondary) gap in the diagnose tool itself for a future
+slice: it can report false-positive "ok" on mail exactly the way the schema check used to on columns.
+**#56 resumes now that production auth is confirmed restored.**

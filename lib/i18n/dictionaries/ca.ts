@@ -321,6 +321,8 @@ export const ca = {
       acceptTerms: "Has d'acceptar els Termes i Condicions i la Política de Privacitat.",
       generic: "No s'ha pogut completar. Torna-ho a intentar.",
       noConnection: "Sense connexió. Torna-ho a intentar.",
+      googleFailed:
+        "No s'ha pogut completar l'accés amb Google. Torna-ho a intentar o utilitza el teu email i contrasenya.",
     },
     invalidInvite: {
       title: "Invitació no vàlida",

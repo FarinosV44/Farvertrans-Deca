@@ -2750,5 +2750,89 @@
   `playwright test --workers=3` — **159/159 passed, zero flakes this run** (including "internal user
   gets the shell, overview KPIs and system health", which exercises the `/admin/sistema` page this
   check feeds).
-- **Not committed to `main` yet at the time of writing** — this is a `develop`-only diagnostics
-  improvement so far; will merge once verified against the fixed production database.
+- **Merged to `main` at `da868ca`, on the user's explicit request** ("when finish this fix push it
+  to main so i can try before finishing issue 56") — pushed immediately so the hardened diagnostics
+  are live for the user to run (`npm run diagnose` or `/admin/sistema`) once they redeploy and apply
+  the pending migrations. No new Prisma migrations in this merge — the diagnostics fix is pure code,
+  the actual database fix is the user's action described above. #56 resumes once the user confirms
+  production auth is restored.
+
+## D-097 — same incident, follow-up: Google OAuth failures were silently swallowed with no visible error
+- Date / phase: 2026-09-06, same session, immediately after D-096, while the user was live-testing
+  production and reported "te registras con google y no hace nada, se te queda en la misma página"
+  (register with Google does nothing, stays on the same page) and separately that password
+  registration shows "No se pudo crear la cuenta. Inténtalo de nuevo."
+- **Confirmed both are the SAME root cause as D-096** (the missing `session_version` column) —
+  `app/api/auth/register/route.ts`'s catch-all at line 70 and the Google callback's
+  `findOrCreateGoogleUser`/`setSessionCookie` both crash on the identical missing column. This is
+  not three bugs, it is one migration gap surfacing on all three auth entry points.
+- **Found and fixed one genuinely separate, real bug while investigating**: `app/api/auth/google/
+  callback/route.ts` fails closed correctly (`fail("oauth_failed")` etc.) and redirects to
+  `/entrar?error=<reason>` — but grepping the whole codebase found NOTHING ever read that `error`
+  query param. Every Google OAuth failure, for ANY reason (state mismatch, unverified email,
+  exchange failure, not just this incident's migration gap), landed the user back on `/entrar` with
+  zero visible feedback — indistinguishable from the button doing nothing at all. This is a real,
+  independent UX bug the user's live testing surfaced, not just a symptom of the migration gap.
+- **Fixed**: new `auth.errors.googleFailed` dictionary key (all 8 locales) + `RegisterForm` now reads
+  `params.get("error")` on mount and shows the translated message via the form's existing `error`
+  state/display block (no new UI pattern). New test in `tests/e2e/auth-ux.spec.ts` asserts
+  `/entrar?error=oauth_failed` shows the message — previously zero coverage existed for this param
+  at all.
+- **This fix makes Google-auth failures visible; it does not make Google auth WORK** — that still
+  needs D-096's migration fix, since the underlying crash is unchanged. Once the user applies the
+  pending migrations, this error path should stop firing for the current incident; the fix stays
+  valuable for any future Google-auth failure (state/consent/email-unverified cases), which would
+  otherwise still look like "does nothing."
+- **Also answered the user's question about email env vars**: `RESEND_API_KEY` (a real key, not the
+  `.env.example` placeholder) and `FVD_MAIL_FROM` (a sender address on a verified sending domain) —
+  both already documented in `.env.example`, just not yet set to real values in production per every
+  `mail_provider_error 401 API key is invalid` log line this entire session.
+- Verification: `tsc --noEmit` clean (8-locale `googleFailed` key parity via `satisfies Messages`);
+  ESLint clean; Prettier clean; `vitest run` 139/139; `playwright test tests/e2e/auth-ux.spec.ts` —
+  4/4 passed including the new test. Full `playwright test --workers=3` — 159/160 passed; the 1
+  failure (`admin-2fa`) is the same already-documented parallel-only flake.
+
+## D-098 — PRODUCTION INCIDENT D-096 RESOLVED: the real missing column was `user.preferred_locale`, not just `session_version`
+- Date / phase: 2026-09-06, same session, immediately after D-097. The user applied D-096's SQL
+  (`session_version`, `totp_secret`, `totp_enabled_at`, `admin_recovery_code`, `security_audit_log`,
+  the `read_only` enum value) and confirmed every piece present via direct `information_schema`
+  queries — but a live login test still returned the identical `{"code":"internal"}` 500. D-096's
+  root-cause diagnosis was directionally correct (a missing-migration column) but **named the wrong
+  column** — this entry corrects the record rather than leaving D-096 standing as the final word.
+- **Found the actual cause using the newly-hardened diagnostics from D-096 itself**: the user ran
+  `FVD_ADMIN_TOKEN=… npm run diagnose -- https://decaprofesional.es` (their own token, shared in
+  chat — flagged to them to rotate it, since it's now been exposed in a chat log) and the new
+  column-level schema check immediately named the real gap: `Faltan columnas: user.preferred_locale`.
+  This confirmed two things at once: (1) production IS already running the latest `main` build (the
+  diagnose output has D-096's new checks, which only exist in code merged after D-096), so the
+  earlier confusion was never a stale-deploy issue; (2) the actual missing column was from a
+  DIFFERENT, EARLIER migration (`20260905190509_user_preferred_locale`, I18N #54/#62) that neither
+  D-088's "3 pending migrations" note nor D-096's diagnosis had flagged as still outstanding on
+  production — `login()`'s `prisma.user.findFirst({ where: { email } })` selects every model field
+  including `preferredLocale`, so a missing column there crashes identically to a missing
+  `session_version`, with the same generic 500. This is exactly why D-096's own newly-added
+  `REQUIRED_COLUMNS` check (which already included `user.preferred_locale`, foreseeing this exact
+  class of gap) was the tool that actually found it — the fix from the previous incident directly
+  solved this one.
+- **User applied**: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "preferred_locale" TEXT NOT NULL
+  DEFAULT 'es';` — confirmed via a second clean `npm run diagnose` run: **all checks green**,
+  including "Esquema y migraciones."
+- **Verified live, not just via diagnose**: a wrong-password login attempt now correctly returns
+  `{"code":"invalid_credentials"}` at 401 (not a 500); a real registration attempt against
+  production returned `201 Created` with a real account made (`emailSent: false` — see the open
+  item below).
+- **Not yet resolved: real email delivery.** The registration response's `emailSent: false` shows
+  the verification email did not actually send, despite `npm run diagnose`'s "Proveedor de email:
+  Configurado" reporting green — that check only verifies `RESEND_API_KEY`/`FVD_MAIL_FROM` are
+  non-empty strings, never that Resend actually accepts the key or that the sending domain is
+  verified. Asked the user to check both directly in their Resend dashboard. **`npm run diagnose`'s
+  mail check is itself a real, if minor, gap** — it can report "Configurado" while email delivery is
+  silently broken, which is exactly the false-confidence class of bug D-096 was written to eliminate
+  for the schema check. Worth hardening the same way in a future slice (an actual test-send or a
+  Resend API key validation call, not just an env-var presence check) — not done in this pass since
+  the user's immediate blocker (login/registration) is resolved and this is now a secondary,
+  independent gap.
+- **Credential hygiene note**: the user's `FVD_ADMIN_TOKEN` value was pasted in plain text in chat
+  during this diagnosis. It was used once, live, for the diagnostic fetch above, was never written to
+  any file or included in any commit, and the user was told directly to rotate it. No other
+  credential was exposed during this incident.

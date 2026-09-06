@@ -322,6 +322,8 @@ export const it = {
       acceptTerms: "Devi accettare i Termini e Condizioni e l'Informativa sulla Privacy.",
       generic: "Impossibile completare. Riprova.",
       noConnection: "Nessuna connessione. Riprova.",
+      googleFailed:
+        "Non è stato possibile completare l'accesso con Google. Riprova oppure usa la tua email e password.",
     },
     invalidInvite: {
       title: "Invito non valido",

@@ -55,7 +55,12 @@ export function RegisterForm({
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [mode, setMode] = useState<"register" | "login">(initialMode);
-  const [error, setError] = useState<string | null>(null);
+  // AUTH #30: the Google callback fails closed and redirects back here with
+  // `?error=...` on any handshake failure — previously silent (no UI ever
+  // read this param), which looked exactly like "the button did nothing."
+  const [error, setError] = useState<string | null>(() =>
+    params.get("error") ? t.auth.errors.googleFailed : null,
+  );
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
 

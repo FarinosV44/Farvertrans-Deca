@@ -330,6 +330,8 @@ export const eu = {
         "Baldintzak eta Erabilera Baldintzak eta Pribatutasun Politika onartu behar dituzu.",
       generic: "Ezin izan da osatu. Saiatu berriro.",
       noConnection: "Konexiorik gabe. Saiatu berriro.",
+      googleFailed:
+        "Ezin izan da Google bidezko sarrera osatu. Saiatu berriro edo erabili zure emaila eta pasahitza.",
     },
     invalidInvite: {
       title: "Gonbidapena ez da baliozkoa",
