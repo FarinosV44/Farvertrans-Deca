@@ -1,17 +1,15 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { ProspectManager } from "@/components/app/prospect-manager";
-import { getCurrentUser } from "@/lib/auth";
+import { requireInternal } from "@/lib/admin/guard";
 import { acquisitionFunnel, listProspects } from "@/lib/growth";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Captación", robots: { index: false, follow: false } };
 
 export default async function CaptacionPage() {
-  const user = await getCurrentUser();
-  if (user?.role !== "internal") notFound();
+  const user = await requireInternal();
 
   const [{ byOperator, totals }, prospects] = await Promise.all([
     acquisitionFunnel(),

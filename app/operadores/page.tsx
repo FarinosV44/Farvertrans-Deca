@@ -1,8 +1,7 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
-import { getCurrentUser } from "@/lib/auth";
+import { requireInternal } from "@/lib/admin/guard";
 import { operatorStats, type OperatorRow } from "@/lib/attribution/persist";
 
 export const dynamic = "force-dynamic";
@@ -11,9 +10,9 @@ export const metadata = { title: "Operadores", robots: { index: false, follow: f
 const pct = (num: number, den: number) => (den > 0 ? `${Math.round((num / den) * 100)}%` : "—");
 
 export default async function OperadoresPage() {
-  const user = await getCurrentUser();
-  // Non-internal users must not discover the dashboard content.
-  if (user?.role !== "internal") notFound();
+  // Non-internal users must not discover the dashboard content; an internal
+  // user with no/stale admin 2FA is sent to enroll/verify first (SECURITY #53).
+  const user = await requireInternal();
 
   const stats = await operatorStats();
   const rows: OperatorRow[] = [...stats.operators, ...stats.unknown, stats.organic];

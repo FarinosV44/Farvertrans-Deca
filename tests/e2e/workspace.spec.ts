@@ -59,7 +59,7 @@ function email() {
 async function registerCompany(page: Page) {
   await page.goto("/registro");
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Mi Transporte SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -230,6 +230,59 @@ test.describe("BUILD 10 — registered workspace", () => {
     await expect(page.getByText("Habitual Cargas SL")).toHaveCount(0);
     await page.goto("/panel/historico");
     await expect(page.getByTestId("historico-table")).toContainText("Transportes Pérez SL");
+  });
+
+  test("PRODUCT #56: Ctrl+K opens the command palette and navigates to a matching DeCA", async ({
+    page,
+  }) => {
+    await registerCompany(page);
+    await createDecaAuthed(page);
+    await page.goto("/panel", { waitUntil: "networkidle" });
+
+    // Ctrl+K opens the palette from anywhere in the workspace
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("command-palette-input")).toBeVisible();
+
+    // searching by carrier name surfaces the DeCA
+    await page.getByTestId("command-palette-input").fill(DECA.carrier.name);
+    await expect(page.getByTestId("command-palette-results")).toContainText(DECA.carrier.name);
+    await expect(page.getByTestId("command-palette-results")).toContainText(DECA.loadLocation.name);
+    await expect(page.getByTestId("command-palette-results")).toContainText(
+      DECA.unloadLocation.name,
+    );
+
+    // selecting a result navigates to that DeCA's detail page
+    await page.getByTestId("command-palette-results").locator("button").first().click();
+    await expect(page).toHaveURL(/\/panel\/deca\/[a-z0-9]+/i);
+    await expect(page.getByTestId("qr-card")).toBeVisible();
+
+    // Escape closes the palette without navigating
+    await page.goto("/panel", { waitUntil: "networkidle" });
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("command-palette-input")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("command-palette-input")).toHaveCount(0);
+  });
+
+  test("PRODUCT #56: frequent routes on the panel home count repeats and let you quick-create from the route", async ({
+    page,
+  }) => {
+    await registerCompany(page);
+    await createDecaAuthed(page);
+    await createDecaAuthed(page); // same route (DECA constant) — should count as 2
+
+    await page.goto("/panel", { waitUntil: "networkidle" });
+    const routeCard = page
+      .getByTestId("frequent-routes")
+      .locator("li", { hasText: `${DECA.loadLocation.city} → ${DECA.unloadLocation.city}` });
+    await expect(routeCard).toBeVisible();
+    await expect(routeCard).toContainText("2 DeCA");
+
+    // "quick create from route" prefills the wizard from the most recent DeCA on it
+    await routeCard.getByRole("link", { name: /Crear DeCA en esta ruta/ }).click();
+    await expect(page).toHaveURL(/\/crear\?from=/);
+    await expect(page.locator("#shipperName")).toHaveValue(DECA.shipper.name);
+    await expect(page.locator("#carrierName")).toHaveValue(DECA.carrier.name);
   });
 
   test("a11y: /panel, /panel/historico and /panel/datos have no serious/critical violations", async ({

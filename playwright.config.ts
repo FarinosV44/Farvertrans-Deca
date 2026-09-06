@@ -27,7 +27,10 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
-    // Test seam: lets the password-reset e2e read the emailed token. Never set in production.
-    env: { FVD_EXPOSE_RESET_TOKEN: "1" },
+    // Test seams — never set in production:
+    // - FVD_EXPOSE_RESET_TOKEN: lets the password-reset e2e read the emailed token.
+    // - FVD_DISABLE_ABUSE_CHECKS: the suite creates dozens of real accounts from one
+    //   machine inside one rate-limit window by design; see lib/abuse/index.ts.
+    env: { FVD_EXPOSE_RESET_TOKEN: "1", FVD_DISABLE_ABUSE_CHECKS: "1" },
   },
 });

@@ -37,48 +37,59 @@ export default async function ResultPage({
     <>
       <TrackView event="deca_generated" />
       <SiteHeader />
-      <main id="contenido" className="mx-auto max-w-[680px] px-4 py-12 md:px-6">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--color-success)] text-white">
+      <main id="contenido" className="mx-auto max-w-[1120px] px-4 py-12 md:px-6">
+        <div className="flex items-center gap-4">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[var(--color-success)] text-2xl text-white shadow-[0_6px_18px_rgba(20,150,90,0.28)]">
             ✓
           </span>
           <div>
-            <h1 className="text-2xl font-bold">{t.result.heading}</h1>
-            <p className="text-sm text-[var(--color-text-muted)]">
+            <h1 className="text-2xl font-bold md:text-3xl">{t.result.heading}</h1>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)] md:text-base">
               {formatLocationShort(c.data.loadLocation)} →{" "}
-              {formatLocationShort(c.data.unloadLocation)} · {doc.reference}
+              {formatLocationShort(c.data.unloadLocation)}
             </p>
           </div>
         </div>
 
-        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-          {t.result.versionGenerated(c.versionNo, fmt(doc.createdAt))}
-        </p>
-
-        <ResultActions
-          publicUrl={c.publicUrl}
-          claimToken={claim}
-          versionNo={c.versionNo}
-          pdfSha256={c.pdfSha256}
-        />
-
-        <div className="mt-8 space-y-8">
-          <QrCard qrDataUri={qr} publicUrl={c.publicUrl} versionNo={c.versionNo} />
-
-          <section aria-labelledby="datos-h">
-            <h2 id="datos-h" className="mb-3 text-base font-bold">
-              {t.result.documentData}
-            </h2>
-            <DocSummary data={c.data} />
-          </section>
-
-          <VersionTimeline versions={doc.versions} />
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-medium">
+          <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1">
+            {doc.reference}
+          </span>
+          <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1">
+            {t.result.version} {c.versionNo}
+          </span>
+          <span className="rounded-full bg-[color-mix(in_srgb,var(--color-success)_14%,transparent)] px-3 py-1 text-[var(--color-success)]">
+            {t.result.versionGenerated(c.versionNo, fmt(doc.createdAt))}
+          </span>
         </div>
 
-        <p className="mt-8 text-xs text-[var(--color-text-muted)]">{t.result.retentionNotice}</p>
-        <p className="mt-4 text-sm">
-          <Link href="/crear">{t.result.createAnother}</Link>
-        </p>
+        <div className="mt-8 grid gap-8 md:grid-cols-[1fr_380px] md:items-start md:gap-10">
+          <div className="space-y-8 md:order-2">
+            <ResultActions
+              publicUrl={c.publicUrl}
+              claimToken={claim}
+              versionNo={c.versionNo}
+              pdfSha256={c.pdfSha256}
+            />
+            <QrCard qrDataUri={qr} publicUrl={c.publicUrl} versionNo={c.versionNo} />
+          </div>
+
+          <div className="space-y-8 md:order-1">
+            <section aria-labelledby="datos-h">
+              <h2 id="datos-h" className="mb-3 text-base font-bold">
+                {t.result.documentData}
+              </h2>
+              <DocSummary data={c.data} />
+            </section>
+
+            <VersionTimeline versions={doc.versions} />
+
+            <p className="text-xs text-[var(--color-text-muted)]">{t.result.retentionNotice}</p>
+            <p className="text-sm">
+              <Link href="/crear">{t.result.createAnother}</Link>
+            </p>
+          </div>
+        </div>
       </main>
       <SiteFooter />
     </>

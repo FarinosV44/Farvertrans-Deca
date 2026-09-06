@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth";
+import { isInternalRequest } from "@/lib/admin/guard";
 import { createProspect, importProspects, issueProspectInvite } from "@/lib/growth";
 import { publicEnv } from "@/lib/env";
 
@@ -27,10 +27,9 @@ const importSchema = z.object({
   fallbackRef: z.string().optional(),
 });
 
-/** Internal-only prospect management (GROWTH #28). */
+/** Internal-only prospect management, fresh admin 2FA required (GROWTH #28, SECURITY #53). */
 export async function POST(req: Request) {
-  const user = await getCurrentUser();
-  if (user?.role !== "internal") return notFound();
+  if (!(await isInternalRequest(req.headers))) return notFound();
 
   const body = await req.json().catch(() => ({}));
 

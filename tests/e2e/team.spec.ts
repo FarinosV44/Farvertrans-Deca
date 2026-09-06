@@ -7,7 +7,7 @@ function email() {
 async function registerOwner(page: Page, addr = email()) {
   await page.goto("/registro");
   await page.fill("#email", addr);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Agencia Equipo SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -86,7 +86,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await expect(member.getByRole("heading", { name: "Únete al equipo" })).toBeVisible();
     await expect(member.locator("#companyName")).toHaveCount(0);
     await member.fill("#email", inviteEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -121,7 +121,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", email());
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -148,7 +148,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", memberEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -182,7 +182,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", memberEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
@@ -210,13 +210,78 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await memberCtx.close();
   });
 
+  test("PRODUCT #56: a read_only member can view history but cannot create or correct a DeCA", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+    await createDeca(owner);
+
+    // owner invites with the "Solo lectura" role selected up front
+    await owner.goto("/panel/equipo");
+    const auditorEmail = email();
+    await owner.fill('[data-testid="invite-email"]', auditorEmail);
+    await owner.getByTestId("invite-role").selectOption("read_only");
+    await owner.getByTestId("invite-submit").click();
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    const auditorCtx = await browser.newContext();
+    const auditor = await auditorCtx.newPage();
+    await auditor.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await auditor.fill("#email", auditorEmail);
+    await auditor.fill("#password", "Supersecret123!");
+    const [regRes] = await Promise.all([
+      auditor.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+      auditor.getByTestId("register-submit").click(),
+    ]);
+    await expect(auditor).toHaveURL(/\/verificar-email/);
+    // verify for real — this test targets the read_only gate specifically,
+    // not the unrelated email-verification gate.
+    const regBody = await regRes.json();
+    await auditor.request.get(`/verificar-email/${regBody.verifyTestToken}`);
+    await auditor.goto("/panel");
+
+    // the owner sees the new member already tagged "Solo lectura"
+    await owner.goto("/panel/equipo");
+    await expect(owner.getByTestId("member-list")).toContainText("Solo lectura");
+
+    // the auditor can view the shared history (view is allowed)
+    await auditor.goto("/panel/historico");
+    await expect(auditor.getByTestId("historico-table")).toContainText(
+      "Almacén Sevilla — Sevilla → Almacén Bilbao — Bilbao",
+    );
+
+    // but /crear shows the read-only gate, never the wizard
+    await auditor.goto("/crear");
+    await expect(auditor.getByRole("heading", { name: "Tu rol es de solo lectura" })).toBeVisible();
+    await expect(auditor.locator("#shipperName")).toHaveCount(0);
+
+    // and the panel home hides the create/duplicate actions
+    await auditor.goto("/panel");
+    await expect(auditor.getByTestId("app-crear")).toHaveCount(0);
+
+    // server-side: a direct API call is rejected regardless of any UI gate
+    const apiRes = await auditor.request.post("/api/deca", {
+      data: {
+        shipper: { name: "X", nif: "B1", address: "A" },
+        carrier: { name: "Y", nif: "B2", address: "B" },
+      },
+    });
+    expect(apiRes.status()).toBe(403);
+    expect((await apiRes.json()).error.code).toBe("forbidden");
+
+    await ownerCtx.close();
+    await auditorCtx.close();
+  });
+
   test("invite token cannot create a second company; an unknown/expired token is rejected", async ({
     request,
   }) => {
     const r = await request.post("/api/auth/register", {
       data: {
         email: email(),
-        password: "supersecret123",
+        password: "Supersecret123!",
         acceptTerms: true,
         invite: "totally-invalid-token-000000000000",
       },

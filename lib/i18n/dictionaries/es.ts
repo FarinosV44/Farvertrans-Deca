@@ -36,8 +36,183 @@ export const es = {
         "Mercancías · PDF + QR · Custodia digital · Histórico · Multiusuario · Gratis durante la fase de lanzamiento",
       cta: "CREAR DECA GRATIS",
       ctaSecondary: "ENTRAR",
+      noCardNote: "Sin tarjeta · Sin límite de documentos durante la fase de lanzamiento.",
     },
     trustRow: ["Sin registro para tu primer DeCA", "PDF + QR", "Custodia digital", "Histórico"],
+    stepsHeading: "Crea tu DeCA en 3 pasos",
+    steps: [
+      {
+        title: "Introduce los datos",
+        body: "Cargador, transportista, origen, destino, mercancía y matrícula. Sin compromiso.",
+      },
+      {
+        title: "Crea tu cuenta y genera",
+        body: "Registro gratuito en segundos — creamos el PDF nativo con QR y una URL única de descarga directa. Nada de lo que ya escribiste se pierde.",
+      },
+      {
+        title: "Compártelo con el conductor",
+        body: "Enlace, WhatsApp, email o copia impresa. Listo para inspección.",
+      },
+    ],
+    freeValueHeading: "Todo incluido durante el lanzamiento.",
+    freeValueSubhead:
+      "Multiusuario, histórico, custodia y reutilización de datos incluidos sin coste durante la fase de lanzamiento — funciones que otras plataformas de DeCA cobran aparte.",
+    freeValueComingSoon: "Próximamente",
+    freeValueItems: [
+      { label: "Generar DeCA" },
+      { label: "PDF nativo + QR" },
+      { label: "Histórico" },
+      { label: "Custodia digital" },
+      { label: "Multiusuario" },
+      { label: "Empresas habituales" },
+      { label: "Vehículos guardados" },
+      { label: "Lugares habituales" },
+      { label: "Duplicado rápido" },
+      { label: "Rutas frecuentes" },
+      { label: "Modo inspección" },
+      { label: "Acceso API / ERP" },
+    ],
+    productHeading: "Del formulario al PDF con QR, sin pasos de más",
+    benefits: [
+      {
+        title: "Gratis",
+        body: "Sin límite de DeCA durante la fase de captación. Sin tarjeta, sin plan de pago.",
+      },
+      {
+        title: "Rápido",
+        body: "Reutiliza tus datos habituales y duplica documentos anteriores en un toque.",
+      },
+      {
+        title: "Preparado para inspección",
+        body: "PDF nativo, QR y URL HTTPS directa conforme a la resolución vigente.",
+      },
+    ],
+    personasHeading: "Hecho para quien mueve mercancía",
+    personas: [
+      {
+        title: "Transportista autónomo",
+        jobToBeDone: "Genera el DeCA en minutos y llévalo en el móvil.",
+        benefits: [
+          "Registro gratuito en segundos",
+          "Empresa y vehículo guardados tras registrarte",
+          "Duplicado rápido del último documento",
+          "Envío al conductor en un toque",
+        ],
+      },
+      {
+        title: "Empresa de transporte",
+        jobToBeDone: "Un mismo espacio para todos tus operadores y documentos.",
+        benefits: [
+          "Varios usuarios en la misma empresa",
+          "Historial compartido",
+          "Cargadores, vehículos y direcciones guardados",
+          "Auditoría de quién creó o corrigió cada DeCA",
+        ],
+      },
+      {
+        title: "Agencia / operador de transporte",
+        jobToBeDone: "Gestiona el documento como cargador contractual sin depender de terceros.",
+        benefits: [
+          "Varias empresas y transportistas",
+          "Contrapartes reutilizables",
+          "Duplicado rápido",
+          "Espacio de trabajo para el equipo",
+        ],
+      },
+      {
+        title: "Cargador / expedidor",
+        jobToBeDone: "Genera, conserva y comparte tus DeCA desde un único sitio.",
+        benefits: [
+          "Transportistas habituales guardados",
+          "Historial de documentos",
+          "Ruta de inspección directa por QR/PDF",
+          "Sin montar un proceso nuevo en tu ERP",
+        ],
+      },
+    ],
+    personaCtaPrefix: "Cómo funciona para",
+    dailyUseHeading: "Cada DeCA te cuesta menos tiempo que el anterior.",
+    dailyUseSubhead: "Guarda una vez. Reutiliza siempre.",
+    dailyUseFooter:
+      "Empieza a rellenar tu DeCA sin compromiso; solo pedimos crear una cuenta gratuita al final, para generarlo.",
+    dailyUseFooterLink: "tu empresa",
+    dailyUseFooterAfterLink:
+      "guarda todo esto para que el siguiente DeCA sea cuestión de segundos.",
+    dailyUse: [
+      { label: "Generar DeCA", body: "Formulario guiado en 3 pasos." },
+      { label: "PDF + QR", body: "Documento nativo con QR de verificación." },
+      { label: "Histórico", body: "Todos tus documentos, siempre a mano." },
+      { label: "Duplicar", body: "Repite un DeCA anterior en segundos." },
+      { label: "Vehículos guardados", body: "Tractora y remolque en un clic." },
+      {
+        label: "Empresas habituales",
+        body: "Cargadores y transportistas reutilizables.",
+      },
+      { label: "Lugares habituales", body: "Carga y descarga listos para elegir." },
+      {
+        label: "Custodia digital",
+        body: "Conservación conforme a la normativa vigente.",
+      },
+    ],
+    regulationHeading: "Qué exige la normativa",
+    legalPoints: [
+      "Obligatorio desde el 5 de octubre de 2026 para el transporte interior de mercancías por carretera.",
+      "El fichero es un PDF nativo digital, generado a partir de datos estructurados — no vale un escaneo.",
+      "Tamaño máximo 5 MB.",
+      "Incluye un código QR con una URL única que empieza por https://",
+      "La URL permite la descarga directa del PDF, sin registro y sin contraseña.",
+      "Se registra la fecha y hora de creación y de cualquier modificación.",
+      "Conservación mínima de 1 año por el cargador y por el transportista.",
+    ],
+    legalSourceLabel: "Fuente:",
+    operatorTrustHeading: "Quién está detrás del servicio",
+    faqHeading: "Preguntas frecuentes",
+    faq: [
+      {
+        q: "¿Qué es el DeCA?",
+        a: "El Documento Electrónico de Control Administrativo es la versión digital obligatoria del documento de control del transporte de mercancías por carretera. Sustituye al documento en papel.",
+      },
+      {
+        q: "¿Cuándo es obligatorio?",
+        a: "Desde el 5 de octubre de 2026 para el transporte interior. No hay prórroga ni periodo transitorio: el papel deja de admitirse.",
+      },
+      {
+        q: "¿Quién tiene que hacerlo?",
+        a: "El cargador contractual y el transportista efectivo del transporte público de mercancías por carretera, en los términos de la normativa aplicable.",
+      },
+      {
+        q: "¿Es obligatorio para agencias de transporte?",
+        a: "Sí, cuando actúan como cargador contractual u operador que contrata el transporte, con las mismas obligaciones de generación y conservación.",
+      },
+      {
+        q: "¿Sirve un PDF escaneado?",
+        a: "No. El fichero debe ser un PDF nativo digital generado a partir de datos estructurados. Un escaneo o una imagen digitalizada no es válido.",
+      },
+      {
+        q: "¿Tiene que firmarse?",
+        a: "La resolución no exige firma electrónica. Sí exige PDF nativo, QR, URL HTTPS de descarga directa y registro de creación y modificaciones.",
+      },
+      {
+        q: "¿Qué datos debe contener?",
+        a: "Como mínimo: cargador contractual (nombre o razón social, NIF y domicilio), transportista efectivo (nombre o razón social y NIF), lugar y fecha de carga, lugar y fecha de descarga, naturaleza y peso de la mercancía, y matrícula del vehículo (tractora y remolque si es un conjunto articulado).",
+      },
+      {
+        q: "¿Cómo lo lleva el conductor?",
+        a: "Antes del inicio del servicio, en copia electrónica visible en el móvil o en copia impresa, siempre con el QR disponible.",
+      },
+      {
+        q: `¿Es gratis ${BRAND.name}?`,
+        a: "Sí. Puedes crear y descargar documentos sin tarjeta y sin límite hasta el 31 de diciembre de 2026.",
+      },
+      {
+        q: "¿Puedo generar todos los documentos que quiera?",
+        a: "Sí. No hay límite mensual. Solo aplicamos controles automáticos frente a usos abusivos que no afectan al uso normal ni a la inspección.",
+      },
+    ],
+    finalCtaHeading: "Empieza ahora. Sin tarjeta.",
+    finalCtaSubhead:
+      "Crea tu DeCA, guarda tus datos habituales y empieza a trabajar desde un único espacio.",
+    finalCtaMicrocopy: "Gratis durante la fase de lanzamiento · Sin tarjeta",
   },
   auth: {
     heading: {
@@ -60,7 +235,7 @@ export const es = {
     orContinueWithEmail: "o continúa con email",
     googleCta: "Continuar con Google",
     emailLabel: "Email",
-    passwordHint: "Al menos 8 caracteres.",
+    passwordHint: "Mínimo 12 caracteres, con mayúsculas, minúsculas, números y un símbolo.",
     company: {
       legend: "Tu empresa",
       name: "Nombre o razón social",
@@ -150,6 +325,7 @@ export const es = {
       changeEmail: {
         open: "Cambiar correo electrónico",
         label: "Nuevo correo electrónico",
+        currentPasswordLabel: "Tu contraseña actual",
         save: "Guardar y reenviar",
         cancel: "Cancelar",
         error: "No se pudo cambiar el correo.",
@@ -325,6 +501,11 @@ export const es = {
       cta: "Crear cuenta gratis",
       loginPrompt: "¿Ya tienes cuenta? Entra",
     },
+    readOnlyGate: {
+      title: "Tu rol es de solo lectura",
+      body: "Puedes ver el historial y los documentos de tu empresa, pero no crear ni corregir DeCA. Pide a un administrador que cambie tu rol si lo necesitas.",
+      cta: "Ir a mi historial",
+    },
     correctionReason: "Motivo de la corrección",
     correctionReasonRequired: "Indica el motivo de la corrección.",
     correctionSaveFailed: "No se pudo guardar la corrección.",
@@ -409,6 +590,20 @@ export const es = {
   errors: {
     generic: "Algo no ha ido bien. Vuelve a intentarlo en unos segundos.",
     notFound: "No hemos encontrado esta página.",
+  },
+  /**
+   * LEGAL #52/#54: the legal pages themselves (aviso legal, privacidad,
+   * términos, cookies) are deliberately Spanish-only in every locale — a
+   * mistranslated liability/GDPR clause carries real legal risk, and no
+   * translation of that content has had a professional legal review (owner
+   * decision, D-072, reaffirmed by the owner directly per D-085). This ONE
+   * string is the exception: a short, non-technical notice — safe to
+   * translate — shown on those pages in every non-Spanish locale so a visitor
+   * knows why the page in front of them is in Spanish.
+   */
+  legalNotice: {
+    notTranslated:
+      "Este documento solo tiene validez legal en su versión en español. Aún no hay una traducción disponible en este idioma.",
   },
   emails: {
     verifySubject: (brand: string) => `Confirma tu correo en ${brand}`,

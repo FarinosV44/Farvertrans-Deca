@@ -60,7 +60,7 @@ async function registerViaApi(request: import("@playwright/test").APIRequestCont
   const res = await request.post("/api/auth/register", {
     data: {
       email: `rel${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`,
-      password: "supersecret123",
+      password: "Supersecret123!",
       companyName: "Reliability SL",
       companyNif: "B12345674",
       acceptTerms: true,

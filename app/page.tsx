@@ -9,9 +9,11 @@ import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
+import { WorkspacePreview } from "@/components/site/workspace-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
+import { qrPngDataUriCached } from "@/lib/pdf/qr";
 import {
   PlusIcon,
   QrIcon,
@@ -20,19 +22,18 @@ import {
   TruckIcon,
   BuildingIcon,
   MapPinIcon,
+  RouteIcon,
   ShieldIcon,
   IconBadge,
+  CheckIcon,
 } from "@/components/panel/icons";
 import {
-  HERO,
-  TRUST_ROW,
   STEPS,
   PERSONAS,
   BENEFITS,
-  LEGAL_POINTS,
   LEGAL_SOURCE,
   OPERATOR_TRUST,
-  FAQ,
+  FREE_VALUE_ITEMS,
   landingJsonLd,
 } from "@/lib/content/landing";
 
@@ -55,38 +56,58 @@ export const dynamic = "force-dynamic";
 
 const wrap = "mx-auto max-w-[1120px] px-4 md:px-6";
 
-/** Visual product showcase (PRIORITY 5) — the same icon language as the workspace, not text bullets. */
+/**
+ * Visual product showcase (PRIORITY 5) — the same icon language as the workspace,
+ * not text bullets. Icons only: the label/body text is locale text, sourced
+ * positionally from `dict.landing.dailyUse` (kept in this exact order in every
+ * dictionary — see `lib/i18n/dictionaries/*.ts`).
+ */
 const PRODUCT_SHOWCASE = [
-  { Icon: PlusIcon, label: "Generar DeCA", body: "Formulario guiado en 3 pasos." },
-  { Icon: QrIcon, label: "PDF + QR", body: "Documento nativo con QR de verificación." },
-  { Icon: HistoryIcon, label: "Histórico", body: "Todos tus documentos, siempre a mano." },
-  { Icon: CopyIcon, label: "Duplicar", body: "Repite un DeCA anterior en segundos." },
-  { Icon: TruckIcon, label: "Vehículos guardados", body: "Tractora y remolque en un clic." },
-  {
-    Icon: BuildingIcon,
-    label: "Empresas habituales",
-    body: "Cargadores y transportistas reutilizables.",
-  },
-  { Icon: MapPinIcon, label: "Lugares habituales", body: "Carga y descarga listos para elegir." },
-  {
-    Icon: ShieldIcon,
-    label: "Custodia digital",
-    body: "Conservación conforme a la normativa vigente.",
-  },
+  { Icon: PlusIcon },
+  { Icon: QrIcon },
+  { Icon: HistoryIcon },
+  { Icon: CopyIcon },
+  { Icon: TruckIcon },
+  { Icon: BuildingIcon },
+  { Icon: MapPinIcon },
+  { Icon: ShieldIcon },
 ] as const;
+
+/**
+ * DESIGN #55 §6: one icon per persona, matched to its job-to-be-done, in the
+ * same fixed order as `PERSONAS` in `lib/content/landing.ts`.
+ */
+const PERSONA_ICONS = [TruckIcon, BuildingIcon, RouteIcon, MapPinIcon] as const;
 
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
   const authed = !!user?.companyId;
+  // DESIGN #55 §1: a REAL QR (same `lib/pdf/qr.ts` used for the actual PDF),
+  // pointing at the site's own base URL — never a decorative pixel grid.
+  const heroQr = await qrPngDataUriCached(publicEnv.baseUrl);
 
-  // I18N: only the hero + trust row are locale-branched in this slice — the
-  // rest of the landing (steps, personas, FAQ...) stays Spanish-only for now
-  // (tracked as follow-up on #50), so `HERO`/`TRUST_ROW` remain the default
-  // for `es` and every OTHER consumer of `lib/content/landing.ts` is untouched.
+  // I18N #54: the whole landing reads from `getDictionary(locale)` unconditionally
+  // now — `lib/content/landing.ts` only supplies the non-translatable bits that
+  // stay identical across every locale (persona slugs/tracking events, the legal
+  // source URL/label, JSON-LD). Adding a new locale to `lib/i18n/dictionaries/`
+  // and `DICTS` in `lib/i18n/server.ts` is enough for the landing to pick it up —
+  // no page-level branching needed. Legal-entity trust copy (`OPERATOR_TRUST.body`)
+  // is deliberately NEVER translated — it's PRAETORIA's own legal-identity
+  // wording, translating it is #52/legal-review territory, not a landing-copy
+  // task, and it stays Spanish in every locale.
   const locale = await getLocale();
   const dict = await getDictionary(locale);
-  const hero = locale === "en" ? dict.landing.hero : HERO;
-  const trustRow = locale === "en" ? dict.landing.trustRow : TRUST_ROW;
+  const hero = dict.landing.hero;
+  const trustRow = dict.landing.trustRow;
+  const steps = STEPS.map((s, i) => ({ ...s, ...dict.landing.steps[i] }));
+  const benefits = BENEFITS.map((b, i) => ({ ...b, ...dict.landing.benefits[i] }));
+  const personas = PERSONAS.map((p, i) => ({ ...p, ...dict.landing.personas[i] }));
+  const freeValueItems = FREE_VALUE_ITEMS.map((item, i) => ({
+    ...item,
+    ...dict.landing.freeValueItems[i],
+  }));
+  const legalPoints = dict.landing.legalPoints;
+  const faq = dict.landing.faq;
 
   return (
     <>
@@ -130,7 +151,10 @@ export default async function HomePage() {
                   </Link>
                 )}
               </div>
-              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-muted)]">
+              <p className="mt-3 text-sm font-medium text-[var(--color-text-muted)]">
+                {hero.noCardNote}
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-muted)]">
                 {trustRow.map((t) => (
                   <li key={t} className="flex items-center gap-1.5">
                     <span aria-hidden className="text-[var(--color-success)]">
@@ -141,7 +165,7 @@ export default async function HomePage() {
                 ))}
               </ul>
             </div>
-            <DecaPreview />
+            <DecaPreview qrDataUri={heroQr} />
           </div>
         </section>
 
@@ -151,12 +175,19 @@ export default async function HomePage() {
           aria-labelledby="pasos"
         >
           <h2 id="pasos" className="text-2xl font-bold md:text-3xl">
-            Crea tu DeCA en 3 pasos
+            {dict.landing.stepsHeading}
           </h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {STEPS.map((s) => (
+          {/* DESIGN #55 §5: a connecting line turns the 3 numbered circles into an
+              actual flow, not just a 3-column list — desktop only, since the
+              stacked mobile layout already reads top-to-bottom as a sequence. */}
+          <div className="relative mt-8 grid gap-6 md:grid-cols-3">
+            <div
+              aria-hidden
+              className="absolute top-[18px] right-[calc(16.6%+18px)] left-[calc(16.6%+18px)] hidden h-px bg-[var(--color-border)] md:block"
+            />
+            {steps.map((s) => (
               <div key={s.n} className="relative">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
+                <span className="relative z-10 grid h-9 w-9 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
                   {s.n}
                 </span>
                 <h3 className="mt-3 text-lg font-bold">{s.title}</h3>
@@ -164,6 +195,48 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Free value — what competitors often paywall, included during launch */}
+        <section
+          className={`${wrap} border-t border-[var(--color-border)] py-16`}
+          aria-labelledby="incluido"
+        >
+          <h2 id="incluido" className="text-2xl font-bold md:text-3xl">
+            {dict.landing.freeValueHeading}
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
+            {dict.landing.freeValueSubhead}
+          </p>
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {freeValueItems.map((item) => (
+              <li
+                key={item.label}
+                className={`flex items-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm transition-shadow duration-200 ${
+                  item.available
+                    ? "border-[var(--color-border)] bg-[var(--color-surface)] hover:shadow-[0_6px_20px_rgba(15,23,42,0.07)]"
+                    : "border-dashed border-[var(--color-border)] text-[var(--color-text-muted)]"
+                }`}
+              >
+                {item.available ? (
+                  <CheckIcon
+                    width={16}
+                    height={16}
+                    className="shrink-0 text-[var(--color-success)]"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="h-4 w-4 shrink-0 rounded-full border border-[var(--color-border)]"
+                  />
+                )}
+                <span className="min-w-0 flex-1">{item.label}</span>
+                {!item.available && (
+                  <span className="shrink-0 text-xs">{dict.landing.freeValueComingSoon}</span>
+                )}
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* Product proof */}
@@ -174,10 +247,10 @@ export default async function HomePage() {
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
               <h2 id="producto" className="text-2xl font-bold md:text-3xl">
-                Del formulario al PDF con QR, sin pasos de más
+                {dict.landing.productHeading}
               </h2>
               <ul className="mt-5 space-y-3 text-sm">
-                {BENEFITS.map((b) => (
+                {benefits.map((b) => (
                   <li key={b.title}>
                     <span className="font-bold">{b.title}. </span>
                     <span className="text-[var(--color-text-muted)]">{b.body}</span>
@@ -185,10 +258,10 @@ export default async function HomePage() {
                 ))}
               </ul>
               <div className="mt-7">
-                <CtaButton event="product_demo_cta">{HERO.cta}</CtaButton>
+                <CtaButton event="product_demo_cta">{hero.cta}</CtaButton>
               </div>
             </div>
-            <DecaPreview />
+            <DecaPreview qrDataUri={heroQr} />
           </div>
         </section>
 
@@ -198,116 +271,153 @@ export default async function HomePage() {
           aria-labelledby="para-quien"
         >
           <h2 id="para-quien" className="text-2xl font-bold md:text-3xl">
-            Hecho para quien mueve mercancía
+            {dict.landing.personasHeading}
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {PERSONAS.map((p) => (
-              <div
-                key={p.title}
-                className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
-              >
-                <h3 className="text-lg font-bold">{p.title}</h3>
-                <p className="mt-1 text-sm font-medium">{p.jobToBeDone}</p>
-                <ul className="mt-3 space-y-1 text-sm text-[var(--color-text-muted)]">
-                  {p.benefits.map((b) => (
-                    <li key={b} className="flex gap-2">
-                      <span aria-hidden className="text-[var(--color-success)]">
-                        ✓
-                      </span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-                <TrackedLink
-                  href={`/${p.slug}`}
-                  event={p.event}
-                  data-testid={`persona-cta-${p.slug}`}
-                  className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
+            {personas.map((p, i) => {
+              const Icon = PERSONA_ICONS[i];
+              return (
+                <div
+                  key={p.title}
+                  className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
                 >
-                  Cómo funciona para {p.title.toLowerCase()} →
-                </TrackedLink>
-              </div>
-            ))}
+                  <IconBadge size={44}>
+                    <Icon width={20} height={20} />
+                  </IconBadge>
+                  <h3 className="mt-4 text-lg font-bold">{p.title}</h3>
+                  <p className="mt-1 text-sm font-medium">{p.jobToBeDone}</p>
+                  <ul className="mt-3 space-y-1 text-sm text-[var(--color-text-muted)]">
+                    {p.benefits.map((b) => (
+                      <li key={b} className="flex gap-2">
+                        <span aria-hidden className="text-[var(--color-success)]">
+                          ✓
+                        </span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <TrackedLink
+                    href={`/${p.slug}`}
+                    event={p.event}
+                    data-testid={`persona-cta-${p.slug}`}
+                    className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
+                  >
+                    {dict.landing.personaCtaPrefix} {p.title.toLowerCase()} →
+                  </TrackedLink>
+                </div>
+              );
+            })}
           </div>
           <div className="mt-8">
-            <CtaButton event="persona_section_cta">{HERO.cta}</CtaButton>
+            <CtaButton event="persona_section_cta">{hero.cta}</CtaButton>
           </div>
         </section>
 
-        {/* Daily use */}
+        {/* Daily use — DESIGN #55 §5: paired with a real workspace-history visual
+            (`WorkspacePreview`, same product-led-graphics rule as the hero's
+            `DecaPreview`) so "empresa trabaja más rápido" has a concrete visual,
+            not just an icon list. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="cada-dia"
         >
-          <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
-            Por qué usarlo cada día
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
-            Todo lo que necesitas para no volver a escribir los mismos datos.
-          </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PRODUCT_SHOWCASE.map(({ Icon, label, body }) => (
-              <div
-                key={label}
-                className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
-              >
-                <IconBadge size={44}>
-                  <Icon width={20} height={20} />
-                </IconBadge>
-                <div>
-                  <p className="text-sm font-bold">{label}</p>
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">{body}</p>
-                </div>
+          <div className="grid items-start gap-10 md:grid-cols-2 md:gap-14">
+            <div>
+              <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
+                {dict.landing.dailyUseHeading}
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-[var(--color-text-muted)]">
+                {dict.landing.dailyUseSubhead}
+              </p>
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                {PRODUCT_SHOWCASE.map(({ Icon }, i) => {
+                  const item = dict.landing.dailyUse[i];
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
+                    >
+                      <IconBadge size={40}>
+                        <Icon width={18} height={18} />
+                      </IconBadge>
+                      <div>
+                        <p className="text-sm font-bold">{item.label}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">{item.body}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+              <p className="mt-6 text-sm text-[var(--color-text-muted)]">
+                {dict.landing.dailyUseFooter}{" "}
+                <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
+                {dict.landing.dailyUseFooterAfterLink}
+              </p>
+            </div>
+            <WorkspacePreview />
           </div>
-          <p className="mt-6 text-sm text-[var(--color-text-muted)]">
-            Empieza a rellenar tu DeCA sin compromiso; solo pedimos crear una cuenta gratuita al
-            final, para generarlo. Desde entonces, <Link href="/entrar">tu empresa</Link> guarda
-            todo esto para que el siguiente DeCA sea cuestión de segundos.
-          </p>
         </section>
 
-        {/* Legal / trust */}
+        {/* Legal / trust — DESIGN #55 §9: grouped in one scannable card instead of
+            bare full-width text, each point led by the same success-check visual
+            language as the free-value section (D-083) for consistency. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="normativa"
         >
           <h2 id="normativa" className="text-2xl font-bold md:text-3xl">
-            Qué exige la normativa
+            {dict.landing.regulationHeading}
           </h2>
-          <ul className="mt-6 grid gap-2 md:grid-cols-2">
-            {LEGAL_POINTS.map((p) => (
-              <li key={p} className="flex gap-2 text-sm">
-                <span aria-hidden className="text-[var(--color-success)]">
-                  ✓
-                </span>
-                <span>{p}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+            <ul className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+              {legalPoints.map((p) => (
+                <li key={p} className="flex items-start gap-3 text-sm leading-relaxed">
+                  <CheckIcon
+                    width={16}
+                    height={16}
+                    className="mt-0.5 shrink-0 text-[var(--color-success)]"
+                  />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">
-            Fuente:{" "}
+            {dict.landing.legalSourceLabel}{" "}
             <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
               {LEGAL_SOURCE.label}
             </a>
           </p>
         </section>
 
-        {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) */}
+        {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) — body is
+            PRAETORIA's own legal-identity wording and is intentionally NEVER translated
+            (see the i18n note above), whatever the locale.
+            DESIGN #55 §8: kept deliberately secondary/muted (no gavels, scales, or
+            law-firm visual cliché) — the only change is a quiet bordered card so it
+            reads as a trust footnote, not a wall of small text. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-12`}
           aria-labelledby="operador"
         >
-          <h2 id="operador" className="text-lg font-bold text-[var(--color-text-muted)]">
-            {OPERATOR_TRUST.heading}
-          </h2>
-          <p
-            className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]"
-            data-testid="operator-trust"
-          >
-            {OPERATOR_TRUST.body}
-          </p>
+          <div className="flex max-w-2xl items-start gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-5">
+            <ShieldIcon
+              width={18}
+              height={18}
+              className="mt-0.5 shrink-0 text-[var(--color-text-muted)]"
+            />
+            <div>
+              <h2 id="operador" className="text-sm font-bold text-[var(--color-text-muted)]">
+                {dict.landing.operatorTrustHeading}
+              </h2>
+              <p
+                className="mt-1.5 text-sm text-[var(--color-text-muted)]"
+                data-testid="operator-trust"
+              >
+                {OPERATOR_TRUST.body}
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* FAQ */}
@@ -316,16 +426,18 @@ export default async function HomePage() {
           aria-labelledby="faq"
         >
           <h2 id="faq" className="text-2xl font-bold md:text-3xl">
-            Preguntas frecuentes
+            {dict.landing.faqHeading}
           </h2>
-          <FaqAccordion items={FAQ} />
+          <FaqAccordion items={faq} />
         </section>
 
         {/* Final CTA */}
         <section className="bg-[var(--color-primary)]">
           <div className={`${wrap} py-16 text-center`}>
-            <h2 className="text-2xl font-bold text-white md:text-3xl">Haz tu primer DeCA gratis</h2>
-            <p className="mt-2 text-white/90">Sin demo. Sin comercial. Sin tarjeta.</p>
+            <h2 className="text-2xl font-bold text-white md:text-3xl">
+              {dict.landing.finalCtaHeading}
+            </h2>
+            <p className="mt-2 text-white/90">{dict.landing.finalCtaSubhead}</p>
             <div className="mt-7">
               <CtaButton
                 event="final_cta"
@@ -333,9 +445,10 @@ export default async function HomePage() {
                 variant="inverse"
                 className="text-base"
               >
-                {HERO.cta}
+                {hero.cta}
               </CtaButton>
             </div>
+            <p className="mt-4 text-sm text-white/90">{dict.landing.finalCtaMicrocopy}</p>
           </div>
         </section>
       </main>

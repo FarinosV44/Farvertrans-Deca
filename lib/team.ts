@@ -3,19 +3,28 @@ import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Company workspaces & invitations (TEAM #27). A company has one or more users;
- * `owner` is the admin role, `member` the operator role. All workspace data
- * (DeCAs, saved entities, templates) is shared by companyId — never per user.
+ * Company workspaces & invitations (TEAM #27, PRODUCT #56). A company has one
+ * or more users; `owner` is the Company Admin role, `member` the Operator
+ * role, `read_only` the Auditor role (view-only — see `canWrite()`). All
+ * workspace data (DeCAs, saved entities, templates) is shared by companyId —
+ * never per user.
  */
 
 const INVITE_TTL_DAYS = 14;
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 const normEmail = (e: string) => e.trim().toLowerCase();
 
+export type CompanyRoleValue = "owner" | "member" | "read_only";
+
+/** PRODUCT #56: a `read_only` member (Auditor) can view but never create/modify. */
+export function canWrite(role: CompanyRoleValue): boolean {
+  return role !== "read_only";
+}
+
 export type Member = {
   id: string;
   email: string;
-  companyRole: "owner" | "member";
+  companyRole: CompanyRoleValue;
   isInternal: boolean;
   createdAt: Date;
 };
@@ -57,7 +66,7 @@ export async function createInvite(
   companyId: string,
   invitedByUserId: string,
   emailRaw: string,
-  role: "owner" | "member" = "member",
+  role: CompanyRoleValue = "member",
 ): Promise<{ token: string; email: string }> {
   const inviter = await prisma.user.findUnique({ where: { id: invitedByUserId } });
   if (!inviter || inviter.companyId !== companyId || inviter.companyRole !== "owner")
@@ -173,7 +182,7 @@ export async function changeRole(
   companyId: string,
   actingUserId: string,
   targetUserId: string,
-  role: "owner" | "member",
+  role: CompanyRoleValue,
 ) {
   const acting = await prisma.user.findUnique({ where: { id: actingUserId } });
   if (!acting || acting.companyId !== companyId || acting.companyRole !== "owner")
@@ -186,7 +195,7 @@ export async function changeRole(
     throw new TeamError("not_found", "Miembro no encontrado.");
   if (target.companyRole === role) return;
 
-  if (target.companyRole === "owner" && role === "member") {
+  if (target.companyRole === "owner" && role !== "owner") {
     const owners = await prisma.user.count({ where: { companyId, companyRole: "owner" } });
     if (owners <= 1)
       throw new TeamError("bad_input", "El equipo debe tener al menos un administrador.");

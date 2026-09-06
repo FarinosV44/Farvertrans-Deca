@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, isStrongEnough, verifyPassword } from "./password";
+import { checkPasswordStrength, hashPassword, verifyPassword } from "./password";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS, signSession, verifySession } from "./session";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
 
@@ -57,8 +57,11 @@ export async function signup(input: SignupInput): Promise<{
   const email = normEmail(input.email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
     throw new AuthError("bad_input", "Email no válido.");
-  if (!isStrongEnough(input.password))
-    throw new AuthError("weak_password", "La contraseña debe tener al menos 8 caracteres.");
+  const strength = checkPasswordStrength(input.password, {
+    email,
+    companyName: input.company.name,
+  });
+  if (!strength.ok) throw new AuthError("weak_password", strength.reason);
 
   const existing = await prisma.user.findFirst({ where: { email } });
   if (existing) throw new AuthError("email_taken", "Ya existe una cuenta con este email.");
@@ -271,18 +274,22 @@ export async function completeCompanyForUser(
 export async function login(
   emailRaw: string,
   password: string,
-): Promise<{ userId: string; preferredLocale: string }> {
+): Promise<{ userId: string; preferredLocale: string; role: string }> {
   const email = normEmail(emailRaw);
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     throw new AuthError("invalid_credentials", "Email o contraseña incorrectos.");
   }
-  return { userId: user.id, preferredLocale: user.preferredLocale };
+  return { userId: user.id, preferredLocale: user.preferredLocale, role: user.role };
 }
 
 export async function setSessionCookie(userId: string) {
   const store = await cookies();
-  store.set(SESSION_COOKIE, signSession(userId), SESSION_COOKIE_OPTIONS);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sessionVersion: true },
+  });
+  store.set(SESSION_COOKIE, signSession(userId, user?.sessionVersion ?? 1), SESSION_COOKIE_OPTIONS);
 }
 
 export async function clearSessionCookie() {
@@ -290,11 +297,64 @@ export async function clearSessionCookie() {
   store.delete(SESSION_COOKIE);
 }
 
-export async function getCurrentUser() {
+/**
+ * Bump this user's session version, invalidating every OTHER session token
+ * (they carry the old version and are rejected by `getCurrentUser` from now
+ * on) — used after a password change/reset and by "log out everywhere"
+ * (SECURITY #53). Re-issues the CURRENT browser's cookie at the new version
+ * so the caller isn't logged out of their own request.
+ */
+export async function bumpSessionVersion(userId: string, reissueCurrent = true): Promise<void> {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { sessionVersion: { increment: 1 } },
+    select: { sessionVersion: true },
+  });
+  if (reissueCurrent) {
+    const store = await cookies();
+    store.set(SESSION_COOKIE, signSession(userId, user.sessionVersion), SESSION_COOKIE_OPTIONS);
+  }
+}
+
+/**
+ * The full session — user row + the raw signed-session payload (SECURITY
+ * #53 needs `payload.tv`, the last successful admin TOTP check, which isn't
+ * part of the `User` row). `getCurrentUser()` below is a thin wrapper kept
+ * for the ~50 existing call sites that only need the user.
+ */
+export async function getCurrentSession() {
   const store = await cookies();
-  const uid = verifySession(store.get(SESSION_COOKIE)?.value);
-  if (!uid) return null;
-  return prisma.user.findUnique({ where: { id: uid }, include: { company: true } });
+  const payload = verifySession(store.get(SESSION_COOKIE)?.value);
+  if (!payload) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: payload.uid },
+    include: { company: true },
+  });
+  if (!user || user.sessionVersion !== payload.sv) return null;
+  return { user, payload };
+}
+
+export async function getCurrentUser() {
+  const session = await getCurrentSession();
+  return session?.user ?? null;
+}
+
+/**
+ * Mark this browser's session as having just passed an admin TOTP/recovery-
+ * code check (SECURITY #53) — re-issues the cookie with `tv` set to now.
+ * `requireInternal()`/`requireStepUp()` read it back to gate admin access.
+ */
+export async function markTotpVerified(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sessionVersion: true },
+  });
+  const store = await cookies();
+  store.set(
+    SESSION_COOKIE,
+    signSession(userId, user?.sessionVersion ?? 1, Math.floor(Date.now() / 1000)),
+    SESSION_COOKIE_OPTIONS,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -317,13 +377,21 @@ export async function requestPasswordReset(
   if (!user) return null;
 
   const token = randomBytes(32).toString("base64url");
-  await prisma.passwordResetToken.create({
-    data: {
-      tokenHash: sha256(token),
-      userId: user.id,
-      expiresAt: new Date(Date.now() + RESET_TTL_MIN * 60 * 1000),
-    },
-  });
+  await prisma.$transaction([
+    // A new request rotates the token — at most one active reset link per
+    // user at a time (SECURITY #53), same pattern as email verification.
+    prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+    prisma.passwordResetToken.create({
+      data: {
+        tokenHash: sha256(token),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + RESET_TTL_MIN * 60 * 1000),
+      },
+    }),
+  ]);
   return { token, email, userId: user.id };
 }
 
@@ -342,19 +410,26 @@ export async function resetPassword(
   token: string,
   newPassword: string,
 ): Promise<{ userId: string }> {
-  if (!isStrongEnough(newPassword))
-    throw new ResetError("weak_password", "La contraseña debe tener al menos 8 caracteres.");
-
   const row = await prisma.passwordResetToken.findUnique({ where: { tokenHash: sha256(token) } });
   if (!row) throw new ResetError("invalid", "Este enlace de recuperación no es válido.");
   if (row.usedAt) throw new ResetError("used", "Este enlace de recuperación ya se ha utilizado.");
   if (row.expiresAt.getTime() < Date.now())
     throw new ResetError("expired", "El enlace de recuperación ha caducado. Pide otro.");
 
+  const user = await prisma.user.findUnique({
+    where: { id: row.userId },
+    include: { company: { select: { name: true } } },
+  });
+  const strength = checkPasswordStrength(newPassword, {
+    email: user?.email,
+    companyName: user?.company?.name,
+  });
+  if (!strength.ok) throw new ResetError("weak_password", strength.reason);
+
   await prisma.$transaction([
     prisma.user.update({
       where: { id: row.userId },
-      data: { passwordHash: hashPassword(newPassword) },
+      data: { passwordHash: hashPassword(newPassword), sessionVersion: { increment: 1 } },
     }),
     prisma.passwordResetToken.updateMany({
       where: { userId: row.userId, usedAt: null },

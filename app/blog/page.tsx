@@ -11,7 +11,7 @@ import { BRAND } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "Blog de DeCA Fácil | Novedades y actualidad del transporte";
+const TITLE = `Blog de ${BRAND.name} | Novedades y actualidad del transporte`;
 const DESCRIPTION =
   "Cambios normativos, fechas clave, inspecciones y consejos prácticos sobre el Documento Electrónico de Control (DeCA) para transportistas y cargadores.";
 

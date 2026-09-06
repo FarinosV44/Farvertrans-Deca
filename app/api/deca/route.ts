@@ -56,6 +56,18 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+    // PRODUCT #56: a read_only (Auditor) member can view but never create.
+    if (user.companyRole === "read_only") {
+      return NextResponse.json(
+        {
+          error: {
+            code: "forbidden",
+            message: "Tu rol es de solo lectura y no puede generar documentos.",
+          },
+        },
+        { status: 403 },
+      );
+    }
     owner = { createdByUserId: user.id, companyId: user.companyId };
   } else {
     const leadParsed = leadSchema.safeParse(body);

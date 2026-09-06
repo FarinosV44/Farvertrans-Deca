@@ -33,6 +33,30 @@ export default async function CrearPage({
   const { from } = await searchParams;
   const user = await getCurrentUser();
 
+  // PRODUCT #56: a read_only (Auditor) member can view history/documents but
+  // never reach the creator — enforced here (page-level) AND server-side on
+  // every mutating route (never trust the UI gate alone, security.md).
+  if (user?.companyRole === "read_only") {
+    const t = await getDictionary();
+    return (
+      <>
+        <SiteHeader authed companyName={user.company?.name} />
+        <main id="contenido" className="mx-auto max-w-[480px] px-4 py-16 text-center md:px-6">
+          <h1 className="text-2xl font-bold">{t.crear.readOnlyGate.title}</h1>
+          <p className="mt-3 text-sm text-[var(--color-text-muted)]">{t.crear.readOnlyGate.body}</p>
+          <Link
+            href="/panel/historico"
+            data-testid="read-only-gate-history"
+            className="mt-6 inline-flex min-h-12 items-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 font-medium text-[var(--color-primary-contrast)] no-underline"
+          >
+            {t.crear.readOnlyGate.cta}
+          </Link>
+        </main>
+        <SiteFooter />
+      </>
+    );
+  }
+
   // D-060 (owner directive): a browser that already created one lead-gated
   // DeCA is sent to full registration for the next one — never a second
   // silent anonymous DeCA.

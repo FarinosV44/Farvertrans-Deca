@@ -53,7 +53,7 @@ async function registerViaApi(request: APIRequestContext) {
   const res = await request.post("/api/auth/register", {
     data: {
       email: `compliance${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`,
-      password: "supersecret123",
+      password: "Supersecret123!",
       companyName: "Compliance SL",
       companyNif: "B12345674",
       acceptTerms: true,

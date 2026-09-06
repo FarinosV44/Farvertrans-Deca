@@ -30,6 +30,20 @@
 - **Fix / mitigation:** `retries: 1` in CI absorbs it; add a `waitForResponse` before navigating off
   a page whose POST must land first (login, register). Do not "fix" by loosening assertions.
 
+## E2E: recovery-code regeneration races under `--workers=3` (same shared seeded admin)
+
+- **Symptom:** `admin-2fa.spec.ts`'s "a recovery code works once and is then rejected on replay"
+  occasionally fails under `--workers=3`; always passes in isolation or at `--workers=1`.
+- **Cause:** every admin e2e test shares the ONE seeded `admin@farvertrans.local` account
+  (`tests/e2e/helpers/admin-auth.ts`) — pre-existing convention, fine while the account's state was
+  static. Recovery-code regeneration is now genuinely mutable shared state:
+  `generateRecoveryCodes()` deletes-then-recreates the set, so two tests regenerating concurrently
+  can race (one test's freshly-generated code gets invalidated by another's regenerate call before
+  it's consumed).
+- **Fix / mitigation:** same as the existing heavy-parallel-run lesson below — `retries: 1` in CI
+  absorbs it. Do not "fix" by loosening the replay assertion or by giving every test its own admin
+  account (that would be a much larger change for a low-frequency, already-covered-by-retry flake).
+
 ## I18N: never default server-side locale from `Accept-Language`
 
 - **Symptom:** adding `lib/i18n/server.ts`'s locale resolver with an `Accept-Language`-based

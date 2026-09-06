@@ -1,15 +1,16 @@
-import { test, expect, type Browser, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@/prisma/generated/client";
+import { internalPage } from "./helpers/admin-auth";
 
 /**
  * SEO #32 — the content engine. An internal user creates a guide, previews the
  * draft privately, publishes it, and it becomes a public, indexable page with
- * the generator CTA. Customers cannot touch any of it.
+ * the generator CTA. Customers cannot touch any of it. Admin login goes
+ * through the mandatory TOTP 2FA challenge (SECURITY #53).
  */
 
-const ADMIN = { email: "admin@farvertrans.local", password: "admin-dev-only" };
-const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
 const rnd = () => `${Date.now()}${Math.floor(Math.random() * 1e5)}`;
+const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
 
 // The tests create real content; remove it so it doesn't pollute a dev /guias list.
 test.afterAll(async () => {
@@ -20,19 +21,6 @@ test.afterAll(async () => {
     await prisma.$disconnect();
   }
 });
-
-async function internalPage(browser: Browser): Promise<{ page: Page; close: () => Promise<void> }> {
-  const ctx = await browser.newContext({ baseURL });
-  const page = await ctx.newPage();
-  await page.goto("/entrar");
-  await page.fill("#email", ADMIN.email);
-  await page.fill("#password", ADMIN.password);
-  await Promise.all([
-    page.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
-    page.getByTestId("register-submit").click(),
-  ]);
-  return { page, close: () => ctx.close() };
-}
 
 test.describe("SEO #32 — content CMS", () => {
   test("a seeded guide renders publicly: SSR, one h1, canonical, generator CTA, JSON-LD", async ({

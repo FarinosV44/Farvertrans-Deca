@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 const schema = z.object({
   email: z.string().email(),
-  role: z.enum(["owner", "member"]).default("member"),
+  role: z.enum(["owner", "member", "read_only"]).default("member"),
 });
 
 /** Admin creates a workspace invite (TEAM #27). Emails the link and returns it. */

@@ -66,7 +66,7 @@ async function fillWizard(page: Page) {
 async function register(page: Page) {
   await page.goto("/registro");
   await page.fill("#email", `u${rnd()}@example.com`);
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", `Cockpit SL ${rnd()}`);
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();

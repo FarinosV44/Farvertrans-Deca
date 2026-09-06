@@ -39,6 +39,13 @@ export async function checkAbuse(
   headers: Headers,
   opts: { fingerprint?: string | null; challengeToken?: string | null; record?: boolean } = {},
 ): Promise<RateDecision & { challengePrefix?: string }> {
+  // Test seam ONLY (E2E, set via playwright.config.ts's webServer env). Never
+  // set in production: the e2e suite legitimately creates dozens of accounts
+  // from one machine inside one rate-limit window, which real abusers do too —
+  // the difference is intent, which this flag can't express, so it only ever
+  // runs against the local test server.
+  if (process.env.FVD_DISABLE_ABUSE_CHECKS === "1") return { verdict: "allow" };
+
   const hasFp = !!opts.fingerprint && opts.fingerprint.length > 4;
   const policy = hasFp ? POLICIES[action] : loosePolicy(action);
   const key = abuseKey(action, headers, opts.fingerprint);

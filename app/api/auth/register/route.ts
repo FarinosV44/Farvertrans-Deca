@@ -9,7 +9,10 @@ export const runtime = "nodejs";
 
 const schema = z.object({
   email: z.string().email(),
-  password: z.string().min(8).max(200),
+  // Real strength policy (length + complexity + email/company reuse) is
+  // enforced in `signup()` (SECURITY #53) — this is only a sanity bound, so
+  // a too-weak password surfaces its PRECISE reason, not a generic 422.
+  password: z.string().min(1).max(200),
   companyName: z.string().trim().max(200).optional().default(""),
   companyNif: z.string().trim().max(20).optional().default(""),
   companyAddress: z.string().trim().max(300).optional().default(""),
@@ -30,6 +33,17 @@ export async function POST(req: Request) {
     );
   }
   const b = parsed.data;
+
+  // SECURITY #53 P0: registration had NO rate limiting — unbounded mass
+  // account creation. Same shared "auth" policy as login/resend/password-reset.
+  const abuse = await import("@/lib/abuse");
+  const decision = await abuse.checkAbuse("auth", req.headers, {
+    fingerprint: req.headers.get("x-fvd-fp"),
+    challengeToken: req.headers.get("x-fvd-challenge"),
+  });
+  const { abuseResponse } = await import("@/lib/abuse/response");
+  const blocked = abuseResponse(decision);
+  if (blocked) return blocked;
 
   let created;
   try {

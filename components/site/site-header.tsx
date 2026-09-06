@@ -4,6 +4,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 import { AccountMenu } from "@/components/auth/account-menu";
 import { Wordmark } from "@/components/brand/wordmark";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { CommandPalette } from "@/components/panel/command-palette";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
 
 /**
@@ -59,7 +60,8 @@ export async function SiteHeader({
           </nav>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1">
+          {authed && companyName && <CommandPalette />}
           <LanguageSwitcher current={locale} />
           {authed ? (
             companyName ? (
@@ -68,7 +70,7 @@ export async function SiteHeader({
               <Link
                 href="/panel"
                 data-testid="header-panel"
-                className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm font-medium no-underline hover:border-[var(--color-primary)]"
+                className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-2 text-sm font-medium no-underline hover:border-[var(--color-primary)]"
               >
                 {es.common.panelCta}
               </Link>
@@ -78,12 +80,12 @@ export async function SiteHeader({
               href="/entrar"
               event="login_click"
               data-testid="header-login"
-              className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] px-3 text-sm font-medium no-underline hover:text-[var(--color-primary)]"
+              className="inline-flex min-h-10 items-center rounded-[var(--radius-md)] px-2 text-sm font-medium no-underline hover:text-[var(--color-primary)]"
             >
               {es.common.loginCta}
             </TrackedLink>
           )}
-          <CtaButton event="header_cta" className="!min-h-10 !px-4 text-sm">
+          <CtaButton event="header_cta" className="!min-h-10 !px-3 text-sm">
             {es.common.headerCta}
           </CtaButton>
         </div>

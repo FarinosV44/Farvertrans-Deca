@@ -15,6 +15,9 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user?.companyId)
     return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
+  // PRODUCT #56: a read_only (Auditor) member can view but never create.
+  if (user.companyRole === "read_only")
+    return NextResponse.json({ error: { code: "forbidden" } }, { status: 403 });
   try {
     const row = await createTemplate(user.companyId, await req.json().catch(() => ({})));
     return NextResponse.json({ template: row }, { status: 201 });

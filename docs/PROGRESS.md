@@ -611,6 +611,19 @@ migration. See D-058 for the full pre-merge evidence and what remains.
   screens on the translated path). See `decisions.md` D-062 for the full file list. Issue #50 stays
   OPEN with this slice's scope commented — most of the epic remains for future sessions.
 
+## D-063: SECURITY #53 P0 block 1 — auth/session hardening
+Owner filed #51-#54 (desktop, legal, security incl. mandatory admin 2FA, multilingual UI) with an
+explicit execution order and "keep moving, don't ask" instruction. Working through it in priority
+order, P0 security first. This block: login/register now rate-limited (previously ZERO — real gap),
+mailer logs the real provider error on failure (found the placeholder `RESEND_API_KEY` is why local
+delivery doesn't work), password reset invalidates the prior token, sessions are now revocable
+(`User.sessionVersion`, migration `20260905204705_user_session_version`) — a stolen cookie or a
+session opened before a password reset now actually dies, plus a "log out everywhere" button —
+and the password policy is 12+ chars/complexity/no-common/no-email-or-company-name, enforced
+identically client + server via one isomorphic module. Gate: 141 e2e + 133 unit, all green
+(content-cms.spec.ts reconfirmed as the pre-existing --workers=3-only flake). See `decisions.md`
+D-063. **Continuing immediately** to mandatory admin TOTP 2FA (next P0 item) — not stopping to ask.
+
 Last updated: 2026-09-04 — Product V3 (#29–#38) complete, merged to `main`; D-040 nav discoverability;
 D-041 fixed the /blog + /guias production crash (unguarded Prisma calls → the generic error
 boundary) + the same unclassified-500 class of bug in DeCA generation, rebuilt /blog + /guias as
@@ -627,3 +640,358 @@ production `db: "down"` health check to a Supabase session-pooler connection-lim
 (no `directUrl` split between app runtime and migrations) — fixed in `prisma/schema.prisma` +
 env docs; needs the user to set `DATABASE_URL`(6543,pgbouncer)+`DIRECT_URL`(5432) on Hostinger and
 redeploy. Added an unverified-email reminder banner to `/panel` (`a4a28bb`, on `develop` only).
+
+## D-064: SECURITY #53 P0 block 2 — mandatory admin TOTP 2FA
+Continuing the owner's #51-#54 execution order right after D-063, no pause. Admin `/admin` access
+(pages AND every `/api/admin/*` route) now requires real TOTP 2FA — RFC 6238, no new dependency,
+QR + manual-secret enrollment, one-time recovery codes, step-up re-auth for destructive actions.
+Found and fixed a real gap while wiring it: every existing admin API route only checked the
+`internal` role, never 2FA — a compromised password alone could already reach them. Migration
+`20260905211042_admin_2fa_and_audit_log` (also adds the append-only `SecurityAuditLog` table, not
+yet wired to real events beyond the 2FA routes themselves — follow-up). Moved the existing admin
+pages into an `(protected)` route group (URLs unchanged) so the new 2FA pages don't inherit the
+gate they're supposed to satisfy. Gate: 148 e2e + 139 unit, all green — plus a real-browser
+enrollment walkthrough (QR, wrong-code rejection, recovery codes, landing on `/admin`). See
+`decisions.md` D-064. **Continuing immediately** to step-up wiring for real destructive actions,
+audit-log event coverage, backup/recovery review, and a security-headers pass.
+
+## D-065: SECURITY #53 P0 block 3 — audit log wired to real events
+Audited what destructive admin actions actually exist before wiring anything (none of
+company/user-delete, role-change, security/legal-config, bulk-export exist yet — not a gap, a scope
+finding; `requireStepUp()` has no real caller beyond 2FA-code regeneration for now). Wired
+`recordAudit()` into what DOES exist: admin login success/failure (admin accounts only), password
+reset, and the content-CMS publish/unpublish/archive actions (already a soft archive, never a hard
+delete). Gate: 152 e2e + 139 unit, all green. One new documented parallel-only flake (recovery-code
+regeneration racing under `--workers=3`, shared seeded admin — passes in isolation, CI's `retries:1`
+absorbs it). See `decisions.md` D-065. **Continuing** to backup/recovery review and a
+security-headers pass, then #51/#52/#54.
+
+## D-066: SECURITY #53 P0 block 4 — re-authentication required to change primary email
+Found and fixed: the email-change endpoint changed the account's email with only an active
+session, no password check. Now requires `currentPassword` (constant-time verified), and an
+internal-role caller additionally needs a fresh TOTP check (step-up, D-064) — the first real
+caller of `requireStepUp()` outside the 2FA routes themselves. Zero prior test coverage on this
+flow; added it. Also fixed a genuine flake in D-065's own new admin-login-audit test (rescoped to
+the actor's own id instead of an unscoped "2 most recent rows", which another concurrent test could
+occupy under `--workers=3`). Gate: 154 e2e (2 pre-existing documented parallel-only flakes,
+unrelated) + 139 unit, all green. Session/authorization hardening (owner's P0 item 7) is now
+substantively complete — see `decisions.md` D-066 for exactly what remains not applicable (no
+idle-timeout distinct from the TOTP-freshness window; no admin-2FA-reset feature exists to
+invalidate sessions after). Owner sent #55 (premium product system) + #56 (multi-level control
+center: super-admin/company-admin/operator/read-only roles, invitations, route intelligence) —
+explicitly queued by the owner for AFTER the current security/legal/auth work; noted, continuing
+the P0 queue first per their own stated order.
+
+## D-067: SECURITY #53 P0 blocks 5+6 — backup/recovery, security headers, document-loss protection
+All three turned out to be audit findings, not code changes. Backup/recovery: wrote an honest
+runbook in `docs/07-release.md` §6 stating plainly what can't be verified from code (Supabase's
+actual plan tier / PITR / bucket-versioning settings — dashboard-only, never guessed at), a genuine
+independent recovery path that already exists (DeCA PDFs are re-renderable from the `dataJson`
+stored alongside them, not just the rendered bytes), a restore procedure, and an explicitly-empty
+"restoration-test log" — no claim of a tested backup exists because none has been tested. Security
+headers: already solid from an earlier session (CSP/HSTS/Permissions-Policy on pages via
+`middleware.ts`, X-Content-Type-Options/Referrer-Policy/X-Frame-Options on EVERY route including
+API/PDF via `next.config.ts`, no permissive CORS anywhere) — reviewed against the fuller P0 list,
+no gaps found, no changes made. Document-loss protection: grepped the whole API surface for any
+delete touching `deca`/`deca_version`/`company`/`user` — none exist; combined with `deca_version`
+already being append-only, the owner's requirements are satisfied by the absence of any such
+feature, not a gap to close. See `decisions.md` D-067. **Continuing** to #51 (desktop visual
+overhaul), #52 (legal identity/liability), #54 (Spanish-first i18n expansion) per the owner's
+execution order — #55/#56 remain queued after.
+
+## D-068: LEGAL #52 — real legal identity, custody/liability/jurisdiction framework, GDPR controller/processor split
+Real registered address + dedicated support email replace the earlier placeholders in
+`lib/legal-entity.ts`/`lib/brand.ts`; fixed two stale-prose bugs found in the sweep (a placeholder-
+dependent address sentence, and a false "account always required for first DeCA" claim contradicting
+D-061). `app/terminos/page.tsx` rewritten with the substantive content the owner's #52 spec required:
+tri-party responsibility split (PRAETORIA/customer/transport parties), explicit custody ≠
+certification-of-truth framing, a lawful B2B limitation-of-liability clause with the owner's exact
+enumerated non-verified-items list (preserving liability for fraud/gross negligence/non-waivable
+duties), a free-launch-phase caveat (promotional/temporary, no perpetual-free promise), and a
+Valencia jurisdiction clause qualified against mandatory/consumer rules. `app/privacidad/page.tsx`
+gained a GDPR controller (account/auth/security/billing) vs processor (Art. 28, data inside generated
+DeCA documents) section. Checked and confirmed adequate without changes: `TermsAcceptance` already
+versioned/timestamped/append-only; the landing page's free-launch line already secondary, not
+dominant; `app/cookies/page.tsx` accurate as-is. Found and fixed one real regression during the gate:
+new GDPR prose made a `trust-registration-v2.spec.ts` `getByText` assertion ambiguous
+(case-insensitive substring match hit both a heading and new bold text) — fixed by scoping it to
+`getByRole("heading", ...)`. Full gate green: typecheck/lint/prettier clean, 139/139 unit, 151 e2e
+passed + the 2 already-documented parallel-only flakes (unrelated to this change) + the one
+regression above fixed and re-verified. See `decisions.md` D-068. Pushed to `develop` only.
+**Continuing** to #51 (desktop visual overhaul) next, per the owner's execution order.
+
+## D-069: DESIGN #51 slice 1 — fake-QR artwork removed, result screen widened for desktop
+Fetched issue #51's full text via `gh issue view 51` for its exact acceptance criteria.
+`components/site/deca-preview.tsx` (landing hero/product-proof illustration, not the real result
+screen) had its 4×4 fake-QR-style grid replaced with the existing `DocumentIcon` in a tinted badge —
+satisfies the explicit "remove the fake QR square" acceptance item. `app/crear/[id]/page.tsx` (the
+real `DeCA generado` screen) widened from a centered 680px single column to a 1120px two-column
+desktop layout (data + history left, actions + real QR sidebar right, mobile unchanged) with a new
+reference/version/status chip row. Gate: typecheck/lint/prettier clean, the 29 e2e tests covering this
+screen + landing (incl. 360/768/1280px overflow checks) all passed, plus a real Chrome walkthrough of
+the full wizard → result screen at 1440px confirming the visual fix. Landing's broader visual richness
+(personas/steps/showcase sections), registration, wizard-step chrome and `/panel` are the rest of #51
+and are NOT done yet — deliberately sequenced behind this concrete, testable slice. See `decisions.md`
+D-069. **Continuing** with the rest of #51 next.
+
+## D-070: DESIGN #51 slice 2 — `/panel` widened to a two-column desktop layout
+`app/panel/page.tsx` widened from a centered 900px single column to a 1200px two-column desktop
+split (quick actions + recent documents left, saved-data summary cards as a sidebar right); mobile
+unchanged. `AppNav`'s horizontal tab bar (shared by every `/panel/*` route) deliberately left as-is —
+a sidebar-nav rework is a separate, larger, higher-risk slice, not silently dropped. Hit and diagnosed
+a false-failure flake: a stray `npm run dev` from the prior manual browser check was still on port
+3000, causing 8 unrelated e2e failures until killed via `netstat`/`taskkill`; re-ran clean, 16/16
+passed incl. the `/panel` a11y check. Verified visually by registering a real throwaway account and
+viewing `/panel` at 1440px. See `decisions.md` D-070. **Continuing** with the rest of #51.
+
+## D-071: I18N #54 slice 1 — full English coverage of the landing page
+Moved from #51 to #54 after #51's objective/checkable acceptance items were met — its remaining scope
+is open-ended aesthetic polish rather than bounded fixes. Closed D-062's named follow-up: translated
+every remaining landing section (3 steps, product benefits, all 4 personas, the 8-item daily-use grid,
+7 regulation points, all 10 FAQ entries, every heading/CTA) into `lib/i18n/dictionaries/en.ts`,
+key-parity enforced by `satisfies Messages` against `es.ts`. Deliberately left untranslated (and
+explained inline): PRAETORIA's own legal-identity sentence (`OPERATOR_TRUST.body`) — translating a
+legal entity's own wording is legal-review territory, not a landing-copy task — plus the footer and
+page metadata (no `generateMetadata` wiring yet). Fixed two real locale bugs found while wiring this:
+two CTA buttons were hardcoded to the Spanish `HERO.cta` regardless of locale. Gate: typecheck (the
+`satisfies Messages` parity check), lint, prettier, `vitest run` 139/139, and the Spanish-path e2e
+specs (`landing.spec.ts`, `auth-entrypoints.spec.ts`, `creator-ux31.spec.ts`) all green and unchanged.
+No e2e coverage exists yet for the English locale at all (noted as a gap, not fixed here) — verified
+instead by a full manual Chrome walkthrough of the entire English landing page section by section.
+See `decisions.md` D-071. **Next:** further #54 language expansion (CA/EU/GL, then FR/DE/IT) is a
+much larger and higher-risk effort, especially translating the legal pages accurately — flagged to
+the owner rather than started speculatively.
+
+## D-072: I18N #54 slice 2 — Catalan added; landing scales to any locale; legal pages stay Spanish-only (owner decision)
+Owner decided (asked via AskUserQuestion): translate product UI into remaining #54 languages
+(Catalan, Basque, Galician, French, German, Italian); legal pages (`/terminos`, `/privacidad`,
+`/aviso-legal`) stay Spanish in every locale until a professional legal review exists — standing rule
+for the rest of #54. Refactored `app/page.tsx` to read the landing unconditionally from
+`getDictionary(locale)` instead of D-071's `isEn ? x : y` branching, since `es`'s dictionary content
+now matches `lib/content/landing.ts` exactly — adding a locale is now a dictionaries-only change, no
+page edits. Discovered `crear`/`panel`/`historico`/`result`/`auth`/`emails` were already fully
+bilingual from an earlier session (not just landing) — so a new locale dictionary makes the entire
+product UI available in that language immediately. Added `lib/i18n/dictionaries/ca.ts` (Catalan, full
+`satisfies Messages` parity), wired into both `DICTS` maps (`lib/i18n/server.ts` AND
+`lib/i18n/client.tsx` — two separate maps that must stay in sync) plus `LOCALES`. Found and fixed a
+real regression: a 3rd language-switcher button broke the 360px no-overflow test — root cause was
+this project's Tailwind `--breakpoint-sm` being redefined to 360px, making `sm:` fire exactly at the
+test's viewport rather than acting as a "wider screens" escape hatch (documented as a lesson for next
+time). Fixed by dropping the `sm:` variants and shrinking header padding unconditionally. Gate:
+typecheck/lint/prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing documented flake). Verified
+live: toggled to Catalan, confirmed the landing AND the full `/crear` wizard render correctly with
+zero page-level code for the new locale. See `decisions.md` D-072. **Not done, explicitly deferred by
+owner's own scope decision:** Basque/Galician/French/German/Italian dictionaries, and all legal-page
+translation. Basque flagged as needing extra translation-quality scrutiny (language isolate, lower
+confidence than the Romance languages here).
+
+## D-073: I18N #54 slice 3 — Galician added; fixed a keyboard-reachability test that breaks with every new locale
+Added `lib/i18n/dictionaries/gl.ts` following the exact Catalan pattern (D-072) — no `app/page.tsx`
+changes needed at all, confirming the dictionary-only scaling claim. Found and fixed a structural
+regression: `tests/e2e/a11y.spec.ts`'s keyboard-reachability test had a hardcoded 12-Tab-press budget
+to reach the header CTA, and each new language switcher button eats one more tab stop — Catalan had
+already pushed it to the edge, Galician broke it outright. Raised the budget once to 30 (covers the
+full 8-locale target: es/ca/eu/gl/en/fr/de/it) instead of re-tuning it per locale. Gate: typecheck
+(parity check), lint, prettier clean, 139/139 unit, 154/154 e2e with zero flakes this run. Verified
+live: Galician renders correctly, 4-button switcher fits with no overflow at 1440px. See
+`decisions.md` D-073. **Continuing** with Basque next (flagged for extra scrutiny — language isolate,
+lower translation confidence than the Romance languages done so far), then French, German, Italian.
+
+## D-074: I18N #54 slice 4 — Basque added (flagged, lower confidence); language switcher fixed permanently
+Added `lib/i18n/dictionaries/eu.ts` (Basque), slotted into `LOCALES` between Catalan and Galician per
+the owner's specified order. **Explicit caveat, not glossed over:** Basque is a language isolate with
+grammar nothing like the Romance languages already done (ergative case, agglutinative morphology) —
+this session's translation confidence here is meaningfully lower, and a native-speaker review is
+recommended before treating it as equally trustworthy. Also fixed the language-switcher overflow
+problem PERMANENTLY instead of patching it a third time: D-072 and D-073 each hit a 360px overflow
+regression from one more switcher button; the switcher now has a fixed max-width with internal
+horizontal scroll (`overflow-x-auto`), decoupling its width from how many locales exist — French,
+German, and Italian can be added later with zero header changes. Gate: typecheck (parity), lint,
+prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing flake, unrelated). Verified live: Basque
+renders correctly, switcher's internal scroll works at 1440px. See `decisions.md` D-074. **Continuing**
+with French, German, Italian next — all well-resourced languages with high translation confidence,
+unlike Basque.
+
+## D-075: I18N #54 slice 5 — French added
+Added `lib/i18n/dictionaries/fr.ts` following the same pattern as Catalan/Galician. Zero header/page
+changes needed for the 6th switcher button — confirms D-074's fixed-width, internally-scrolling
+switcher absorbs new locales with no further changes. Gate: typecheck (parity), lint, prettier clean,
+139/139 unit, 152/154 e2e (2 pre-existing flakes, unrelated, no new regression). Verified live: French
+renders correctly across nav/hero/trust-row/CTA. See `decisions.md` D-075. **Continuing** with German,
+then Italian.
+
+## D-076: I18N #54 slice 6 — German added
+Added `lib/i18n/dictionaries/de.ts` following the same pattern. Zero header/page changes needed for
+the 7th switcher button. Gate: typecheck (parity), lint, prettier clean, 139/139 unit, 153/154 e2e
+(1 pre-existing flake, unrelated). Verified live: German renders correctly. See `decisions.md` D-076.
+**Continuing** with Italian — the last of the six UI-only languages from the owner's D-072 scope
+decision.
+
+## D-077: I18N #54 slice 7 (final) — Italian added, completing the 8-locale set; fixed a WCAG target-size regression
+Added `lib/i18n/dictionaries/it.ts`, completing the full es/ca/eu/gl/en/fr/de/it locale set the owner
+specified. **Found and fixed a real accessibility regression, not a flake:** the 8th switcher button
+pushed individual button touch targets under WCAG 2.2's 24×24px minimum (axe `target-size`/
+`target-offset`), caught by 4 a11y test failures across `/`, `/crear`, an SEO page, and `/panel/*`.
+Fixed by widening buttons to `px-2` + `min-w-8`, which the D-074 fixed-width/internal-scroll switcher
+absorbs without reintroducing the earlier page-overflow problem — width cap solves overflow, size
+floor solves touch-target a11y, both now satisfied together. Gate: typecheck (8-locale parity),
+lint, prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing flake). Verified live: Italian renders
+correctly, 8-button switcher touch targets properly sized. See `decisions.md` D-077.
+
+**I18N #54 status:** product UI (landing, wizard, panel, auth, emails) now available in all 8 target
+locales. Legal pages stay Spanish-only everywhere (owner decision, D-072). Basque carries an explicit
+lower-confidence caveat pending native-speaker review. No automated i18n smoke test exists yet across
+locales (only manual verification per slice) — flagged as a reasonable follow-up, not done this
+session to keep slices bounded.
+
+## D-078: PRODUCT #56 slice 1 — `read_only` (Auditor) company role, enforced server-side
+Owner said "continue, you set the priority." Reviewed #55 (premium visual/component system — largely
+superseded by the #51 work already done this session) vs #56 (multi-level control center: roles,
+invitations, super-admin, route intelligence, search) and started #56 as the more foundational,
+bounded next step. Audited the existing role model first: platform-level "Super Admin" is already
+satisfied by `Role.internal` + mandatory 2FA (#53); company-level `owner`/`member` already map onto
+#56's Company Admin/Operator. The one real gap was a Read-only/Auditor role — built it as this slice.
+
+`CompanyRole` enum extended with `read_only` (additive migration, applied to local dev DB). `lib/team.ts`
+gained a `canWrite()` helper and widened types. **Found and fixed a real bug** while extending the
+"keep ≥1 owner" invariant in `changeRole()` — it only guarded owner→member demotion, not owner→
+read_only, which would have silently zeroed out a company's admins. Server-side 403 checks added to
+every mutating route a read_only member could reach (DeCA create/correct, saved-data create/delete,
+templates create/delete) — the real security boundary. UI: role now selectable at invite time, "Solo
+lectura" label added, `/crear` shows a dedicated read-only gate screen (translated into all 8 locales),
+`/panel` hides create/duplicate actions for read_only users. Explicitly deferred, not dropped:
+`/panel/datos`'s SavedDataManager still shows add/delete UI to read_only users (server rejects it
+correctly, just a rougher UX) — noted as a follow-up. The external-carrier-vs-employee invite
+distinction from #56 was NOT tackled — no external-invite mechanism exists yet, so there's no current
+risk to fix, just a bigger future feature to build carefully.
+
+Gate: typecheck, lint, prettier clean, 139/139 unit. New e2e test in `team.spec.ts` covers the full
+flow: invite-time role selection, member-list label, history/detail view still works, `/crear` gate
+renders, `/panel` hides create button, and a direct API call returns 403 regardless of any UI gate.
+Full suite 154/154 passed. See `decisions.md` D-078.
+
+## D-079: PRODUCT #56 slice 2 — company-scoped global search + Cmd/Ctrl+K command palette
+Continued #56's "power-user UX" list. Reused `listHistory`'s existing free-text filter instead of a
+second search path — new `lib/data/search.ts` wraps it, capped to top 8 hits. New `GET /api/search`
+(company-scoped, available to `read_only` too — viewing isn't a write) backs a new
+`components/panel/command-palette.tsx`: Cmd/Ctrl+K modal, debounced search, arrow-key nav, Enter to
+navigate. Mounted in `SiteHeader` (gated on `authed && companyName`) rather than a new panel layout
+file. Re-verified against the exact 360px-overflow and target-size tests that earlier i18n slices had
+already found regressions in — both held with the new icon-only trigger. Found and fixed a real
+test-hydration race (not a product bug): `Control+k` pressed before the client component's listener
+attached, only visible under parallel workers — fixed with the same `networkidle` wait pattern already
+used elsewhere in the suite. Also corrected three stale "owner only" doc claims in `docs/api/INDEX.md`
+that predated this session (those routes never actually checked ownership, only company membership).
+Gate: typecheck, lint, prettier clean, 139/139 unit, 154/154 e2e (2 pre-existing unrelated flakes). See
+`decisions.md` D-079.
+
+## D-080: PRODUCT #56 slice 3 — company-level route intelligence on the panel home
+Found the entire data layer already existed from DATA #45 (commercial route-matching): `DecaRouteIntel`
+rows have been written on every DeCA creation all along, just never read back for the company's own
+use. New `lib/data/route-intel.ts`'s `getTopRoutes()` reads that data (fetch-then-group in JS, same
+pattern as `lib/data/history.ts`), tracking each route's count and most-recent DeCA id. `/panel`
+sidebar gained a "Rutas frecuentes" section with a real "quick create from route" link
+(`/crear?from=<lastDecaId>`, reusing the existing duplicate-prefill path — no new prefill logic).
+Respects the D-078 `read_only` gate. Deliberately shipped only this one item from #56's six-item route-
+intelligence list (frequent routes + quick-create) rather than a shallow pass across all of them.
+Gate: typecheck, lint, prettier clean, 139/139 unit, **157/157 e2e passed with zero flakes this run**.
+New e2e test creates two DeCAs on the same route and verifies the count and quick-create prefill.
+See `decisions.md` D-080. **Continuing** with the next #56 piece next.
+
+## D-081: DESIGN #55 (landing-only per owner's explicit boundary vs #51/#56) — brand renamed "DeCA Profesional"; language switcher redesigned as a globe dropdown
+Owner sent a large #55 directive with an explicit scope boundary: #51 = broad component/visual system,
+#55 = landing page only, #56 = control center (already in progress). Renamed the brand from "DeCA
+Fácil" to "DeCA Profesional" (owner's explicit current direction, reversing D-039's specific string
+choice, not its no-attribution policy) — `lib/brand.ts` plus 3 hardcoded references now derive from
+`BRAND.name`. This broke the header's 360px budget again (longer wordmark) — the same regression class
+D-072/D-073/D-074 had already hit three times from the switcher growing. Fixed it properly this time by
+implementing #55 §4 (language selector) instead of patching padding again: the switcher is now a
+`<details>` globe-icon dropdown (reusing `AccountMenu`'s proven pattern) listing all 8 locales by
+native name, with a footprint that can't regress regardless of locale count or brand-name length.
+Gate: typecheck, lint, prettier clean, 139/139 unit, 155/157 e2e (2 flakes re-ran green in isolation,
+confirmed unrelated). **This is the first of several #55 slices** — hero visual, free-value sections,
+persona/trust/FAQ/footer polish, and full responsive re-verification remain. See `decisions.md` D-081.
+**Continuing** with the #55 hero-visual slice next.
+
+## D-082: DESIGN #55 slice 2 — hero visual richness (real QR, layered cards) + "Sin tarjeta" + footer address
+Rebuilt `components/site/deca-preview.tsx` as two overlapping cards (creator behind, generated-result
+in front) with a genuinely real server-generated QR (same `lib/pdf/qr.ts` the actual PDF uses, pointing
+at the site's base URL) — never a decorative pattern. Added `hero.noCardNote` ("Sin tarjeta · Sin
+límite de documentos durante la fase de lanzamiento.") to all 8 dictionaries, placed under the CTA.
+Added the full registered address to the footer. Found and fixed two real regressions before shipping:
+a WCAG color-contrast failure on the new status badge, and a CSS Grid intrinsic-min-width overflow at
+768px (classic `min-width: auto` grid gotcha) — fixed with one `min-w-0`, verified with zero overflow
+across all ten widths the owner's directive listed (375–1920px). Gate: typecheck, lint, prettier clean,
+139/139 unit, 155/157 e2e (2 pre-existing flakes, unrelated). See `decisions.md` D-082. **Remaining
+#55 work** (free-value section, visual storytelling sections, persona/trust/regulation/FAQ/final-CTA
+polish) continues in subsequent slices — not attempted in one block.
+
+## D-083: DESIGN #55 slice 3 — "Todo incluido durante el lanzamiento" free-value section
+New section right after the "3 steps" section: a checklist grid of 12 features, 10 marked available
+(including "Rutas frecuentes", the #56 feature shipped earlier this session) with a green check, 2
+explicitly marked "Próximamente" (Modo inspección, Acceso API/ERP) with a dashed/empty-circle
+treatment — never presented as if live, per the owner's hard constraint against advertising
+unshipped features. `available` is a fact in `lib/content/landing.ts`, never localized; labels come
+from a new `freeValueItems` dictionary key across all 8 locales. Hit and fixed the same class of
+flex-overflow regression as D-082 (a `flex-1` label needing `min-w-0` to shrink under a badge) —
+re-verified across the same 10 widths (375–1920px), zero overflow. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 156/157 e2e (1 pre-existing flake). See `decisions.md` D-083. **Continuing**
+with the remaining #55 sections (visual storytelling, persona/trust/regulation/FAQ/final-CTA polish)
+next.
+
+## D-084: DESIGN #55 slice 4 — "por qué usarlo cada día" reframed; final CTA rebuilt
+Two copy-focused sections using the owner's own suggested wording near-verbatim, across all 8
+dictionaries. §7: heading → "Cada DeCA te cuesta menos tiempo que el anterior.", subhead → "Guarda
+una vez. Reutiliza siempre." (value copy only — the section's existing feature-tile content
+unchanged). §11: final CTA rebuilt with "Empieza ahora. Sin tarjeta." + a new supporting subhead + a
+new microcopy line under the button ("Gratis durante la fase de lanzamiento · Sin tarjeta").
+Found and fixed two real regressions: an e2e test hardcoding the old heading text (legitimate update,
+not a weakened assertion), and a third contrast-on-translucent-background failure this session — fixed
+by matching the already-passing `/90` opacity instead of the new `/80`. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 155/157 e2e (2 pre-existing flakes). See `decisions.md` D-084. **Remaining #55**:
+visual storytelling (§5), persona cards (§6), trust/regulation/FAQ polish (§8-§10), micro-interactions
+and density pass (§14-§15).
+
+## D-085: LEGAL #52/#54 — legal pages stay Spanish-only; translated disclaimer added
+Owner's own message this slice ("continue... if you dont know something just ask the legal paages are
+very important") explicitly invited a clarifying question on legal-page translation (deliberately
+deferred at D-072 over real liability/GDPR risk) and flagged it as important — asked via
+`AskUserQuestion` rather than assumed. Owner's explicit choice: **"Keep Spanish-only, add a
+disclaimer"** — legal content in `/aviso-legal`, `/privacidad`, `/terminos`, `/cookies` stays
+Spanish-only in every locale (zero legal-accuracy risk, nothing legal machine-translated); a new
+short, safe-to-translate `legalNotice.notTranslated` key (all 8 dictionaries) explains to non-Spanish
+visitors that the binding version is in Spanish. `components/site/legal-page.tsx` (the one shared
+wrapper used by all 4 pages) converted to an async Server Component, notice gated on `locale !== "es"`
+— no per-page caller changes needed. Gate: typecheck, lint, prettier clean, 139/139 unit, **157/157
+e2e, no flakes this run**. Manually verified in a real dev-server session across all 8 locales × all 4
+legal pages: notice absent under `es`, present with the correct translated text under every other
+locale. See `decisions.md` D-085. D-072's Spanish-only scope is reaffirmed, not reversed.
+**Continuing** with the remaining #55 items (§5, §6, §8-§10, §14-§15) next.
+
+## D-086: DESIGN #55 slice 5 — normative card (§9), trust card (§8), persona icons (§6), micro-interactions (§14)
+Bundled four polish items on existing sections: the 7-point normative checklist now sits in one
+bordered card with the same `CheckIcon` visual language as the free-value section; the PRAETORIA
+trust blurb now sits in a small quiet card with a muted shield icon (deliberately still secondary —
+no new colour/size, matching the owner's "not law-firm-like" constraint); each persona card now leads
+with a job-matched icon (`PERSONA_ICONS`) plus a restrained hover-elevation shadow, reused on the
+daily-use cards and free-value items for one consistent hover language; the FAQ accordion gained a
+hover highlight and a short fade-in on the opened answer (new `fade-in-up` keyframe, already covered
+by the existing global reduced-motion override). Gate: typecheck, lint, prettier clean, 139/139 unit,
+18/18 targeted landing+a11y e2e. Full suite 154/157 (3 pre-existing parallel-only flakes, all
+reconfirmed passing with `--workers=1`, none touching this slice's files). Manually verified in a
+real browser at 1440px. See `decisions.md` D-086. **Remaining #55**: §5 (visual storytelling), §10
+(FAQ grouping — needs new content structure), §15 (density/hierarchy pass).
+
+## D-087: DESIGN #55 slice 6 — visual storytelling (§5), scoped to 2 highest-impact visuals
+Asked the owner how to scope §5 (5 possible visuals listed in the directive); owner picked "highest-
+impact 1-2" over building all five thin or skipping it. Added a decorative connecting line across the
+3-steps section (turns it into an actual flow diagram, desktop only) and a new
+`components/site/workspace-preview.tsx` — a non-interactive mock of the real `/panel/historico` table
+(search bar, filter chip, 4 rows with route/plate/date/status), same "real layout, generic values"
+rule as the hero's `DecaPreview`. Placed in the "Daily use" section, restructured to a 2-column
+layout (icons left, workspace preview right) pairing the §7 speed-copy with concrete visual proof.
+Gate: typecheck, lint, prettier clean, 139/139 unit, 18/18 targeted landing+a11y e2e, a custom
+10-width overflow script (375–1920px) at zero overflow, full suite 155/157 (2 pre-existing flakes,
+reconfirmed unrelated). Manually verified in a real browser at 1440px. See `decisions.md` D-087.
+**Remaining #55**: §10 (FAQ grouping), §15 (density/hierarchy pass) — #55 is substantially complete
+otherwise.

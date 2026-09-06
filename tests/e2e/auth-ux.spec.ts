@@ -21,13 +21,13 @@ test.describe("AUTH #30 — premium auth card", () => {
     await expect(page.getByText("disponible muy pronto")).toBeVisible();
 
     // The brand wordmark links home.
-    await expect(page.getByRole("link", { name: "DeCA Fácil — inicio" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "DeCA Profesional — inicio" })).toBeVisible();
   });
 
   test("password show/hide toggles the field type", async ({ page }) => {
     await page.goto("/entrar");
     const pw = page.locator("#password");
-    await pw.fill("supersecret123");
+    await pw.fill("Supersecret123!");
     await expect(pw).toHaveAttribute("type", "password");
     await page.getByTestId("password-toggle").click();
     await expect(pw).toHaveAttribute("type", "text");

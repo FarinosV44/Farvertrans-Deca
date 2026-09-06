@@ -3,20 +3,20 @@
  * contact detail comes from here — changing the brand is a one-file edit, not a
  * repo-wide find-and-replace.
  *
- * The product stands on its own as "DeCA Fácil" — it carries no company
- * attribution on any public surface (decision 2026-09-04). NOT verified for
- * trademark/domain availability — that check happens before the domain is
- * bought (see issue #21 naming gate).
+ * The product stands on its own as "DeCA Profesional" — it carries no company
+ * attribution on any public surface (decision 2026-09-04, renamed from "DeCA
+ * Fácil" per D-081). NOT verified for trademark/domain availability — that
+ * check happens before the domain is bought (see issue #21 naming gate).
  */
 export const BRAND = {
   /** Full product name — headers, titles, metadata, PDF. */
-  name: "DeCA Fácil",
+  name: "DeCA Profesional",
   /** Short name — favicon alt, tight spaces, mobile. */
-  shortName: "DeCA Fácil",
+  shortName: "DeCA Profesional",
   /** One-line value proposition. */
   tagline: "Genera tu Documento Electrónico de Control en menos de 2 minutos.",
-  /** Support / operational contact. */
-  supportEmail: "hola@decafacil.es",
+  /** Support / operational contact (LEGAL #52 — PRAETORIA's dedicated DeCA address). */
+  supportEmail: "Deca@praetoriaabogados.es",
   /** Canonical base URL comes from the environment (NEXT_PUBLIC_FVD_BASE_URL). */
   get baseUrl(): string {
     return process.env.NEXT_PUBLIC_FVD_BASE_URL ?? "http://localhost:3000";
@@ -25,5 +25,5 @@ export const BRAND = {
   color: "#0b5cff",
 } as const;
 
-/** `"<title> | DeCA Fácil"` — the metadata title template. */
+/** `"<title> | DeCA Profesional"` — the metadata title template. */
 export const titleTemplate = `%s | ${BRAND.name}`;

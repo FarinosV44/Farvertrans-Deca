@@ -2,10 +2,16 @@ import "server-only";
 import { cookies } from "next/headers";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "./locale";
 import { es } from "./dictionaries/es";
+import { ca } from "./dictionaries/ca";
+import { eu } from "./dictionaries/eu";
+import { gl } from "./dictionaries/gl";
 import { en } from "./dictionaries/en";
+import { fr } from "./dictionaries/fr";
+import { de } from "./dictionaries/de";
+import { it } from "./dictionaries/it";
 import type { Messages } from "./dictionaries/es";
 
-const DICTS: Record<Locale, Messages> = { es, en };
+const DICTS: Record<Locale, Messages> = { es, ca, eu, gl, en, fr, de, it };
 
 /**
  * Server-side locale resolution: the explicit `fvd_locale` cookie (set by the

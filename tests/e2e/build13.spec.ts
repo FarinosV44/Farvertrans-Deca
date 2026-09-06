@@ -43,7 +43,7 @@ function email() {
 async function registerAndCreate(page: Page): Promise<string> {
   await page.goto("/registro");
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Correcciones SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -174,7 +174,7 @@ async function registerViaApi(request: APIRequestContext) {
   const res = await request.post("/api/auth/register", {
     data: {
       email: email(),
-      password: "supersecret123",
+      password: "Supersecret123!",
       companyName: "Abuse SL",
       companyNif: "B12345674",
       acceptTerms: true,

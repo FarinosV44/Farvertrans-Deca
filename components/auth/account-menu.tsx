@@ -21,6 +21,15 @@ export function AccountMenu({ companyName }: { companyName: string }) {
     router.refresh();
   }
 
+  async function logoutAll() {
+    try {
+      await fetch("/api/auth/logout-all", { method: "POST" });
+    } catch {
+      /* ignore */
+    }
+    router.refresh();
+  }
+
   return (
     <details className="relative" data-testid="account-menu">
       <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm font-medium">
@@ -48,9 +57,17 @@ export function AccountMenu({ companyName }: { companyName: string }) {
         </Link>
         <button
           type="button"
+          onClick={logoutAll}
+          data-testid="logout-all"
+          className="mt-1 block w-full rounded-[6px] px-3 py-2 text-left text-sm hover:bg-[var(--color-surface)]"
+        >
+          Cerrar sesión en todos los dispositivos
+        </button>
+        <button
+          type="button"
           onClick={logout}
           data-testid="logout"
-          className="mt-1 block w-full rounded-[6px] px-3 py-2 text-left text-sm text-[var(--color-danger)] hover:bg-[var(--color-surface)]"
+          className="block w-full rounded-[6px] px-3 py-2 text-left text-sm text-[var(--color-danger)] hover:bg-[var(--color-surface)]"
         >
           Cerrar sesión
         </button>

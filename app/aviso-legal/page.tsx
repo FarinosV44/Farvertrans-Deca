@@ -21,8 +21,8 @@ export default function AvisoLegalPage() {
       <p>
         El Servicio está operado por <strong>{LEGAL_ENTITY.name}</strong>, con CIF{" "}
         {LEGAL_ENTITY.cif}, conforme a la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad
-        de la Información y de Comercio Electrónico (LSSI-CE). {LEGAL_ENTITY.address} — se publicará
-        en cuanto esté disponible.
+        de la Información y de Comercio Electrónico (LSSI-CE). Domicilio social:{" "}
+        {LEGAL_ENTITY.address}.
       </p>
       <h2>Objeto</h2>
       <p>

@@ -94,7 +94,9 @@ test.describe("BUILD 06 — production landing", () => {
     await expect(
       page.getByRole("heading", { name: "Hecho para quien mueve mercancía" }),
     ).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Por qué usarlo cada día" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Cada DeCA te cuesta menos tiempo que el anterior." }),
+    ).toBeVisible();
     // multiple CTAs down the page (hero + section + persona) + a final one
     expect(await page.getByTestId("cta-crear").count()).toBeGreaterThanOrEqual(2);
     const final = page.getByTestId("cta-final");

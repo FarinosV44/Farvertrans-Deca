@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { isInternalRequest } from "@/lib/admin/guard";
+import { recordAudit } from "@/lib/admin/audit";
 import { contentInputSchema, updateContent, setStatus, SlugTakenError } from "@/lib/content/cms";
 
 export const runtime = "nodejs";
@@ -36,9 +38,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   try {
     await updateContent(id, parsed.data);
-    if (action?.publish) await setStatus(id, "published");
-    else if (action?.unpublish) await setStatus(id, "draft");
-    else if (action?.archive) await setStatus(id, "archived");
+    let statusChange: "published" | "draft" | "archived" | undefined;
+    if (action?.publish) statusChange = "published";
+    else if (action?.unpublish) statusChange = "draft";
+    else if (action?.archive) statusChange = "archived";
+    if (statusChange) await setStatus(id, statusChange);
+
+    const user = await getCurrentUser();
+    await recordAudit({
+      actorId: user?.id,
+      action: statusChange ? `content_${statusChange}` : "content_updated",
+      targetType: "content",
+      targetId: id,
+      result: "success",
+      headers: req.headers,
+    });
     return NextResponse.json({ id });
   } catch (e) {
     if (e instanceof SlugTakenError)
@@ -60,6 +74,15 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const { id } = await params;
   try {
     await setStatus(id, "archived");
+    const user = await getCurrentUser();
+    await recordAudit({
+      actorId: user?.id,
+      action: "content_archived",
+      targetType: "content",
+      targetId: id,
+      result: "success",
+      headers: req.headers,
+    });
     return NextResponse.json({ id });
   } catch {
     return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });

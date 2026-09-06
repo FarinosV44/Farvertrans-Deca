@@ -69,7 +69,7 @@ function writeTempPng(name: string, r: number, g: number, b: number): string {
 async function register(page: Page) {
   await page.goto("/registro");
   await page.fill("#email", email());
-  await page.fill("#password", "supersecret123");
+  await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Logo Test SL");
   await page.fill("#companyNif", "B12345674");
   await page.getByTestId("accept-terms").check();
@@ -208,7 +208,7 @@ test.describe("PRODUCT #39 — company logo on the DeCA PDF", () => {
     const member = await memberCtx.newPage();
     await member.goto(inviteLink.replace(/^https?:\/\/[^/]+/, ""));
     await member.fill("#email", memberEmail);
-    await member.fill("#password", "supersecret123");
+    await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel/empresa");
