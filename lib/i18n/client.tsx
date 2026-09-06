@@ -6,10 +6,11 @@ import { eu } from "./dictionaries/eu";
 import { gl } from "./dictionaries/gl";
 import { en } from "./dictionaries/en";
 import { fr } from "./dictionaries/fr";
+import { de } from "./dictionaries/de";
 import type { Messages } from "./dictionaries/es";
 import type { Locale } from "./locale";
 
-const DICTS: Record<Locale, Messages> = { es, ca, eu, gl, en, fr };
+const DICTS: Record<Locale, Messages> = { es, ca, eu, gl, en, fr, de };
 
 const LocaleContext = createContext<{ locale: Locale; dict: Messages }>({
   locale: "es",

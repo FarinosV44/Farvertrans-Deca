@@ -1947,3 +1947,17 @@
   the switcher pill): nav, hero, subhead, trust row and CTA all render correctly in French at 1440px.
 - **Not done:** German, Italian — continuing next.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-074.
+
+## D-076 — I18N #54 slice 6: German added
+- Date / phase: 2026-09-06, same session, immediately after D-075. Same registration pattern:
+  `lib/i18n/dictionaries/de.ts` (`satisfies Messages`), added to `LOCALES` and both `DICTS` maps. High
+  translation confidence (well-resourced language). No header/page changes needed for the 7th switcher
+  button — the D-074 fix continues to hold.
+- Verification: `tsc --noEmit` clean (parity confirmed), ESLint clean, Prettier clean (after
+  `prettier --write`), `vitest run` 139/139, full `playwright test --workers=3` — 153/154 passed, the
+  1 failure being the same already-documented `content-cms` preview-race flake (unrelated). Manually
+  verified in a real Chrome session (set the `de` cookie via the locale API): nav, hero, subhead,
+  trust row and CTA all render correctly in German at 1440px.
+- **Not done:** Italian — the last of the six UI-only languages from the owner's D-072 scope decision.
+  Continuing next.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-075.

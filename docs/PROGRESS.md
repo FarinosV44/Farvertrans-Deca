@@ -819,3 +819,10 @@ switcher absorbs new locales with no further changes. Gate: typecheck (parity), 
 139/139 unit, 152/154 e2e (2 pre-existing flakes, unrelated, no new regression). Verified live: French
 renders correctly across nav/hero/trust-row/CTA. See `decisions.md` D-075. **Continuing** with German,
 then Italian.
+
+## D-076: I18N #54 slice 6 — German added
+Added `lib/i18n/dictionaries/de.ts` following the same pattern. Zero header/page changes needed for
+the 7th switcher button. Gate: typecheck (parity), lint, prettier clean, 139/139 unit, 153/154 e2e
+(1 pre-existing flake, unrelated). Verified live: German renders correctly. See `decisions.md` D-076.
+**Continuing** with Italian — the last of the six UI-only languages from the owner's D-072 scope
+decision.
