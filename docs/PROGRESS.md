@@ -761,3 +761,26 @@ instead by a full manual Chrome walkthrough of the entire English landing page s
 See `decisions.md` D-071. **Next:** further #54 language expansion (CA/EU/GL, then FR/DE/IT) is a
 much larger and higher-risk effort, especially translating the legal pages accurately — flagged to
 the owner rather than started speculatively.
+
+## D-072: I18N #54 slice 2 — Catalan added; landing scales to any locale; legal pages stay Spanish-only (owner decision)
+Owner decided (asked via AskUserQuestion): translate product UI into remaining #54 languages
+(Catalan, Basque, Galician, French, German, Italian); legal pages (`/terminos`, `/privacidad`,
+`/aviso-legal`) stay Spanish in every locale until a professional legal review exists — standing rule
+for the rest of #54. Refactored `app/page.tsx` to read the landing unconditionally from
+`getDictionary(locale)` instead of D-071's `isEn ? x : y` branching, since `es`'s dictionary content
+now matches `lib/content/landing.ts` exactly — adding a locale is now a dictionaries-only change, no
+page edits. Discovered `crear`/`panel`/`historico`/`result`/`auth`/`emails` were already fully
+bilingual from an earlier session (not just landing) — so a new locale dictionary makes the entire
+product UI available in that language immediately. Added `lib/i18n/dictionaries/ca.ts` (Catalan, full
+`satisfies Messages` parity), wired into both `DICTS` maps (`lib/i18n/server.ts` AND
+`lib/i18n/client.tsx` — two separate maps that must stay in sync) plus `LOCALES`. Found and fixed a
+real regression: a 3rd language-switcher button broke the 360px no-overflow test — root cause was
+this project's Tailwind `--breakpoint-sm` being redefined to 360px, making `sm:` fire exactly at the
+test's viewport rather than acting as a "wider screens" escape hatch (documented as a lesson for next
+time). Fixed by dropping the `sm:` variants and shrinking header padding unconditionally. Gate:
+typecheck/lint/prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing documented flake). Verified
+live: toggled to Catalan, confirmed the landing AND the full `/crear` wizard render correctly with
+zero page-level code for the new locale. See `decisions.md` D-072. **Not done, explicitly deferred by
+owner's own scope decision:** Basque/Galician/French/German/Italian dictionaries, and all legal-page
+translation. Basque flagged as needing extra translation-quality scrutiny (language isolate, lower
+confidence than the Romance languages here).

@@ -44,7 +44,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
           aria-pressed={current === l}
           disabled={pending || busy === l}
           onClick={() => void switchTo(l)}
-          className={`min-h-8 px-2.5 uppercase transition-colors disabled:opacity-60 ${
+          className={`min-h-8 px-1.5 uppercase transition-colors disabled:opacity-60 ${
             current === l
               ? "bg-[var(--color-primary)] text-[var(--color-primary-contrast)]"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"

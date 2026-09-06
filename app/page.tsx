@@ -24,15 +24,11 @@ import {
   IconBadge,
 } from "@/components/panel/icons";
 import {
-  HERO,
-  TRUST_ROW,
   STEPS,
   PERSONAS,
   BENEFITS,
-  LEGAL_POINTS,
   LEGAL_SOURCE,
   OPERATOR_TRUST,
-  FAQ,
   landingJsonLd,
 } from "@/lib/content/landing";
 
@@ -55,51 +51,45 @@ export const dynamic = "force-dynamic";
 
 const wrap = "mx-auto max-w-[1120px] px-4 md:px-6";
 
-/** Visual product showcase (PRIORITY 5) — the same icon language as the workspace, not text bullets. */
+/**
+ * Visual product showcase (PRIORITY 5) — the same icon language as the workspace,
+ * not text bullets. Icons only: the label/body text is locale text, sourced
+ * positionally from `dict.landing.dailyUse` (kept in this exact order in every
+ * dictionary — see `lib/i18n/dictionaries/*.ts`).
+ */
 const PRODUCT_SHOWCASE = [
-  { Icon: PlusIcon, label: "Generar DeCA", body: "Formulario guiado en 3 pasos." },
-  { Icon: QrIcon, label: "PDF + QR", body: "Documento nativo con QR de verificación." },
-  { Icon: HistoryIcon, label: "Histórico", body: "Todos tus documentos, siempre a mano." },
-  { Icon: CopyIcon, label: "Duplicar", body: "Repite un DeCA anterior en segundos." },
-  { Icon: TruckIcon, label: "Vehículos guardados", body: "Tractora y remolque en un clic." },
-  {
-    Icon: BuildingIcon,
-    label: "Empresas habituales",
-    body: "Cargadores y transportistas reutilizables.",
-  },
-  { Icon: MapPinIcon, label: "Lugares habituales", body: "Carga y descarga listos para elegir." },
-  {
-    Icon: ShieldIcon,
-    label: "Custodia digital",
-    body: "Conservación conforme a la normativa vigente.",
-  },
+  { Icon: PlusIcon },
+  { Icon: QrIcon },
+  { Icon: HistoryIcon },
+  { Icon: CopyIcon },
+  { Icon: TruckIcon },
+  { Icon: BuildingIcon },
+  { Icon: MapPinIcon },
+  { Icon: ShieldIcon },
 ] as const;
 
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
   const authed = !!user?.companyId;
 
-  // I18N #54: the whole landing is now locale-branched — `en` reads every
-  // section from the dictionary, `es` keeps the original `lib/content/landing.ts`
-  // constants (still the source of truth for non-translatable bits: persona
-  // slugs/tracking events, the legal source URL, JSON-LD). Legal-entity trust
-  // copy (`OPERATOR_TRUST.body`) is deliberately NOT translated here — it's
-  // PRAETORIA's own legal-identity wording, translating it is #52/legal-review
-  // territory, not a landing-copy task.
+  // I18N #54: the whole landing reads from `getDictionary(locale)` unconditionally
+  // now — `lib/content/landing.ts` only supplies the non-translatable bits that
+  // stay identical across every locale (persona slugs/tracking events, the legal
+  // source URL/label, JSON-LD). Adding a new locale to `lib/i18n/dictionaries/`
+  // and `DICTS` in `lib/i18n/server.ts` is enough for the landing to pick it up —
+  // no page-level branching needed. Legal-entity trust copy (`OPERATOR_TRUST.body`)
+  // is deliberately NEVER translated — it's PRAETORIA's own legal-identity
+  // wording, translating it is #52/legal-review territory, not a landing-copy
+  // task, and it stays Spanish in every locale.
   const locale = await getLocale();
   const dict = await getDictionary(locale);
-  const isEn = locale === "en";
-  const hero = isEn ? dict.landing.hero : HERO;
-  const trustRow = isEn ? dict.landing.trustRow : TRUST_ROW;
-  const steps = isEn ? STEPS.map((s, i) => ({ ...s, ...dict.landing.steps[i] })) : STEPS;
-  const benefits = isEn
-    ? BENEFITS.map((b, i) => ({ ...b, ...dict.landing.benefits[i] }))
-    : BENEFITS;
-  const personas = isEn
-    ? PERSONAS.map((p, i) => ({ ...p, ...dict.landing.personas[i] }))
-    : PERSONAS;
-  const legalPoints = isEn ? dict.landing.legalPoints : LEGAL_POINTS;
-  const faq = isEn ? dict.landing.faq : FAQ;
+  const hero = dict.landing.hero;
+  const trustRow = dict.landing.trustRow;
+  const steps = STEPS.map((s, i) => ({ ...s, ...dict.landing.steps[i] }));
+  const benefits = BENEFITS.map((b, i) => ({ ...b, ...dict.landing.benefits[i] }));
+  const personas = PERSONAS.map((p, i) => ({ ...p, ...dict.landing.personas[i] }));
+  const legalPoints = dict.landing.legalPoints;
+  const faq = dict.landing.faq;
 
   return (
     <>
@@ -164,7 +154,7 @@ export default async function HomePage() {
           aria-labelledby="pasos"
         >
           <h2 id="pasos" className="text-2xl font-bold md:text-3xl">
-            {isEn ? dict.landing.stepsHeading : "Crea tu DeCA en 3 pasos"}
+            {dict.landing.stepsHeading}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {steps.map((s) => (
@@ -187,9 +177,7 @@ export default async function HomePage() {
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div>
               <h2 id="producto" className="text-2xl font-bold md:text-3xl">
-                {isEn
-                  ? dict.landing.productHeading
-                  : "Del formulario al PDF con QR, sin pasos de más"}
+                {dict.landing.productHeading}
               </h2>
               <ul className="mt-5 space-y-3 text-sm">
                 {benefits.map((b) => (
@@ -213,7 +201,7 @@ export default async function HomePage() {
           aria-labelledby="para-quien"
         >
           <h2 id="para-quien" className="text-2xl font-bold md:text-3xl">
-            {isEn ? dict.landing.personasHeading : "Hecho para quien mueve mercancía"}
+            {dict.landing.personasHeading}
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {personas.map((p) => (
@@ -239,8 +227,7 @@ export default async function HomePage() {
                   data-testid={`persona-cta-${p.slug}`}
                   className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
                 >
-                  {isEn ? dict.landing.personaCtaPrefix : "Cómo funciona para"}{" "}
-                  {p.title.toLowerCase()} →
+                  {dict.landing.personaCtaPrefix} {p.title.toLowerCase()} →
                 </TrackedLink>
               </div>
             ))}
@@ -256,19 +243,17 @@ export default async function HomePage() {
           aria-labelledby="cada-dia"
         >
           <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
-            {isEn ? dict.landing.dailyUseHeading : "Por qué usarlo cada día"}
+            {dict.landing.dailyUseHeading}
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
-            {isEn
-              ? dict.landing.dailyUseSubhead
-              : "Todo lo que necesitas para no volver a escribir los mismos datos."}
+            {dict.landing.dailyUseSubhead}
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PRODUCT_SHOWCASE.map(({ Icon, label, body }, i) => {
-              const item = isEn ? dict.landing.dailyUse[i] : { label, body };
+            {PRODUCT_SHOWCASE.map(({ Icon }, i) => {
+              const item = dict.landing.dailyUse[i];
               return (
                 <div
-                  key={label}
+                  key={item.label}
                   className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
                 >
                   <IconBadge size={44}>
@@ -283,19 +268,9 @@ export default async function HomePage() {
             })}
           </div>
           <p className="mt-6 text-sm text-[var(--color-text-muted)]">
-            {isEn ? (
-              <>
-                {dict.landing.dailyUseFooter}{" "}
-                <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
-                {dict.landing.dailyUseFooterAfterLink}
-              </>
-            ) : (
-              <>
-                Empieza a rellenar tu DeCA sin compromiso; solo pedimos crear una cuenta gratuita al
-                final, para generarlo. Desde entonces, <Link href="/entrar">tu empresa</Link> guarda
-                todo esto para que el siguiente DeCA sea cuestión de segundos.
-              </>
-            )}
+            {dict.landing.dailyUseFooter}{" "}
+            <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
+            {dict.landing.dailyUseFooterAfterLink}
           </p>
         </section>
 
@@ -305,7 +280,7 @@ export default async function HomePage() {
           aria-labelledby="normativa"
         >
           <h2 id="normativa" className="text-2xl font-bold md:text-3xl">
-            {isEn ? dict.landing.regulationHeading : "Qué exige la normativa"}
+            {dict.landing.regulationHeading}
           </h2>
           <ul className="mt-6 grid gap-2 md:grid-cols-2">
             {legalPoints.map((p) => (
@@ -318,7 +293,7 @@ export default async function HomePage() {
             ))}
           </ul>
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">
-            {isEn ? dict.landing.legalSourceLabel : "Fuente:"}{" "}
+            {dict.landing.legalSourceLabel}{" "}
             <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
               {LEGAL_SOURCE.label}
             </a>
@@ -326,14 +301,14 @@ export default async function HomePage() {
         </section>
 
         {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) — body is
-            PRAETORIA's own legal-identity wording and is intentionally NOT translated
-            here (see the i18n note above the locale branches). */}
+            PRAETORIA's own legal-identity wording and is intentionally NEVER translated
+            (see the i18n note above), whatever the locale. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-12`}
           aria-labelledby="operador"
         >
           <h2 id="operador" className="text-lg font-bold text-[var(--color-text-muted)]">
-            {isEn ? dict.landing.operatorTrustHeading : OPERATOR_TRUST.heading}
+            {dict.landing.operatorTrustHeading}
           </h2>
           <p
             className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]"
@@ -349,7 +324,7 @@ export default async function HomePage() {
           aria-labelledby="faq"
         >
           <h2 id="faq" className="text-2xl font-bold md:text-3xl">
-            {isEn ? dict.landing.faqHeading : "Preguntas frecuentes"}
+            {dict.landing.faqHeading}
           </h2>
           <FaqAccordion items={faq} />
         </section>
@@ -358,11 +333,9 @@ export default async function HomePage() {
         <section className="bg-[var(--color-primary)]">
           <div className={`${wrap} py-16 text-center`}>
             <h2 className="text-2xl font-bold text-white md:text-3xl">
-              {isEn ? dict.landing.finalCtaHeading : "Haz tu primer DeCA gratis"}
+              {dict.landing.finalCtaHeading}
             </h2>
-            <p className="mt-2 text-white/90">
-              {isEn ? dict.landing.finalCtaSubhead : "Sin demo. Sin comercial. Sin tarjeta."}
-            </p>
+            <p className="mt-2 text-white/90">{dict.landing.finalCtaSubhead}</p>
             <div className="mt-7">
               <CtaButton
                 event="final_cta"

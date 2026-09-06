@@ -1801,3 +1801,67 @@
   for a future slice — this session did not add one to keep this slice bounded to content, matching
   the "test after every meaningful block" spirit via the manual walkthrough instead.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-070.
+
+## D-072 — I18N #54 slice 2: Catalan added; landing refactored to scale to any locale; legal-pages-stay-Spanish scope decision
+- Date / phase: 2026-09-06, same session, immediately after D-071. The owner was explicitly asked how
+  to handle the remaining #54 languages (Catalan, Basque, Galician, French, German, Italian) and chose:
+  **translate product UI (landing, wizard, panel, emails) into each remaining language; leave the
+  legal pages (`/terminos`, `/privacidad`, `/aviso-legal`) in Spanish for every locale until a
+  professional/legal review exists.** This is now the standing scope rule for all of #54's remaining
+  locales — recorded here so a future session doesn't re-litigate it. Structurally this decision was
+  already free: those three pages render fixed Spanish JSX and were never wired to the dictionary, so
+  "skip legal pages" requires no code change, only NOT wiring them later.
+- **`app/page.tsx` refactored to read the landing unconditionally from `getDictionary(locale)`**,
+  replacing the `isEn ? dict.landing.x : SPANISH_CONSTANT` branching added in D-071. Since the `es`
+  dictionary's `landing` section is now content-identical to `lib/content/landing.ts`'s exported
+  constants (established in D-071), the ternaries were redundant — and worse, they meant every NEW
+  locale would need its own branch added to this file by hand. Now the page just does
+  `dict.landing.x` everywhere; `lib/content/landing.ts` only supplies what can never vary by locale
+  (persona slugs/tracking event names, the legal source URL/label, JSON-LD). Adding a locale is now
+  purely a `lib/i18n/dictionaries/` + `DICTS` registration change — zero page-level code.
+- **Discovered while doing this: `crear`/`panel`/`historico`/`result`/`auth`/`emails` were ALREADY
+  fully bilingual** (an earlier session, before this one, had already built out the complete
+  `Messages` shape in `en.ts`, not just landing) — those pages already call `getDictionary()`
+  unconditionally and were never Spanish-hardcoded the way the landing page was. This means adding a
+  properly-typed new locale dictionary makes the ENTIRE product UI (wizard, panel, result screen,
+  auth flows, emails) available in that language immediately, confirmed live in the walkthrough below
+  — not just the landing page.
+- **New: `lib/i18n/dictionaries/ca.ts`** — full Catalan translation, `satisfies Messages` enforcing
+  exact structural parity with `es.ts` (same guarantee `en.ts` already relies on). `lib/i18n/locale.ts`
+  (`LOCALES`), `lib/i18n/server.ts` and `lib/i18n/client.tsx` (both `DICTS` maps — there are two,
+  server and client, and both must be updated together or the client-side `useT()` hook silently
+  falls out of sync with the server-rendered page) all updated to register `ca` between `es` and `en`,
+  matching the owner's originally-specified switcher order (ES/CA/EU/GL/EN/FR/DE/IT).
+- **Regression found and fixed during the gate — a real one, not a flake:** adding a third
+  language-switcher button (ES/CA/EN) pushed `tests/e2e/landing.spec.ts`'s "renders without horizontal
+  overflow at 360px" check from passing to a 10px overflow. Root cause, found via a Playwright debug
+  script measuring per-element widths: this project's Tailwind theme redefines `--breakpoint-sm` to
+  **360px** (`app/globals.css`), not Tailwind's default 640px — so an `sm:` variant is not a "wider
+  screens only" escape hatch here, it fires AT the exact width this test checks. Two rounds of
+  attempted fixes using `sm:` variants (smaller padding below `sm`, normal padding at `sm` and up)
+  therefore did nothing at 360px, because `sm:` was active at 360px too, overriding the smaller
+  padding. Fixed by dropping the `sm:` variants entirely and just shrinking the language-switcher
+  buttons, the header login/panel link, and the header CTA button's padding UNCONDITIONALLY (a few px
+  less at every width, not just mobile) — `components/i18n/language-switcher.tsx`,
+  `components/site/site-header.tsx`. Verified the fix numerically (a small Playwright script measuring
+  `document.documentElement.scrollWidth` before committing to the full suite) before re-running
+  Playwright. **Lesson for next time this project's responsive classes matter:** `sm:` here means
+  "≥360px", effectively "almost always" on real devices — treat it as such, not as Tailwind's
+  conventional ~640px tablet breakpoint.
+- Verification: `tsc --noEmit` clean (`ca.ts satisfies Messages` parity confirmed); ESLint clean;
+  Prettier clean; `vitest run` 139/139; full `playwright test --workers=3` — 153 passed + the single
+  already-documented `content-cms.spec.ts` preview-race flake (unrelated, pre-existing per
+  `lessons-learned.md`); the previously-seen `admin-2fa` recovery-code-replay flake did NOT recur this
+  run (still an accepted parallel-only flake per its own D-070 entry, not re-litigated here). Manually
+  verified in a real Chrome session: toggled to `ca`, confirmed the full landing page (nav, hero, trust
+  row, product-proof section) renders in Catalan, then navigated to `/crear` with `ca` still active and
+  confirmed the ENTIRE wizard (step headings, field labels, hints, button text) rendered in Catalan
+  with no additional code changes — validating the "adding a locale is now dictionary-only" claim
+  above against the real app, not just the landing page.
+- **Not done, and explicitly out of scope per the owner's decision:** Basque, Galician, French, German,
+  Italian dictionaries; any legal-page translation in any language. Flagging that Basque (Euskera) is
+  a language isolate unrelated to Spanish/Catalan/Galician — this session has meaningfully lower
+  translation-quality confidence there than for the Romance languages, and that dictionary should get
+  extra scrutiny (native speaker review, if available) before being trusted at the same level as this
+  one.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-071.

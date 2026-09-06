@@ -1,11 +1,12 @@
 "use client";
 import { createContext, useContext, useMemo } from "react";
 import { es } from "./dictionaries/es";
+import { ca } from "./dictionaries/ca";
 import { en } from "./dictionaries/en";
 import type { Messages } from "./dictionaries/es";
 import type { Locale } from "./locale";
 
-const DICTS: Record<Locale, Messages> = { es, en };
+const DICTS: Record<Locale, Messages> = { es, ca, en };
 
 const LocaleContext = createContext<{ locale: Locale; dict: Messages }>({
   locale: "es",
