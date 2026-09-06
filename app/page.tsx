@@ -9,6 +9,7 @@ import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
+import { WorkspacePreview } from "@/components/site/workspace-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
@@ -176,10 +177,17 @@ export default async function HomePage() {
           <h2 id="pasos" className="text-2xl font-bold md:text-3xl">
             {dict.landing.stepsHeading}
           </h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          {/* DESIGN #55 §5: a connecting line turns the 3 numbered circles into an
+              actual flow, not just a 3-column list — desktop only, since the
+              stacked mobile layout already reads top-to-bottom as a sequence. */}
+          <div className="relative mt-8 grid gap-6 md:grid-cols-3">
+            <div
+              aria-hidden
+              className="absolute top-[18px] right-[calc(16.6%+18px)] left-[calc(16.6%+18px)] hidden h-px bg-[var(--color-border)] md:block"
+            />
             {steps.map((s) => (
               <div key={s.n} className="relative">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
+                <span className="relative z-10 grid h-9 w-9 place-items-center rounded-full bg-[var(--color-primary)] font-bold text-white">
                   {s.n}
                 </span>
                 <h3 className="mt-3 text-lg font-bold">{s.title}</h3>
@@ -305,41 +313,49 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Daily use */}
+        {/* Daily use — DESIGN #55 §5: paired with a real workspace-history visual
+            (`WorkspacePreview`, same product-led-graphics rule as the hero's
+            `DecaPreview`) so "empresa trabaja más rápido" has a concrete visual,
+            not just an icon list. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="cada-dia"
         >
-          <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
-            {dict.landing.dailyUseHeading}
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
-            {dict.landing.dailyUseSubhead}
-          </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PRODUCT_SHOWCASE.map(({ Icon }, i) => {
-              const item = dict.landing.dailyUse[i];
-              return (
-                <div
-                  key={item.label}
-                  className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
-                >
-                  <IconBadge size={44}>
-                    <Icon width={20} height={20} />
-                  </IconBadge>
-                  <div>
-                    <p className="text-sm font-bold">{item.label}</p>
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">{item.body}</p>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid items-start gap-10 md:grid-cols-2 md:gap-14">
+            <div>
+              <h2 id="cada-dia" className="text-2xl font-bold md:text-3xl">
+                {dict.landing.dailyUseHeading}
+              </h2>
+              <p className="mt-2 max-w-md text-sm text-[var(--color-text-muted)]">
+                {dict.landing.dailyUseSubhead}
+              </p>
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                {PRODUCT_SHOWCASE.map(({ Icon }, i) => {
+                  const item = dict.landing.dailyUse[i];
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
+                    >
+                      <IconBadge size={40}>
+                        <Icon width={18} height={18} />
+                      </IconBadge>
+                      <div>
+                        <p className="text-sm font-bold">{item.label}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">{item.body}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-6 text-sm text-[var(--color-text-muted)]">
+                {dict.landing.dailyUseFooter}{" "}
+                <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
+                {dict.landing.dailyUseFooterAfterLink}
+              </p>
+            </div>
+            <WorkspacePreview />
           </div>
-          <p className="mt-6 text-sm text-[var(--color-text-muted)]">
-            {dict.landing.dailyUseFooter}{" "}
-            <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
-            {dict.landing.dailyUseFooterAfterLink}
-          </p>
         </section>
 
         {/* Legal / trust — DESIGN #55 §9: grouped in one scannable card instead of

@@ -2423,3 +2423,43 @@
   not attempted here since it needs new content structure, not just visual polish), and §15
   (overall density/hierarchy pass) remain, tracked as further slices.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-085.
+
+## D-087 — DESIGN #55 slice 6: visual storytelling (§5), scoped to the two highest-impact visuals
+- Date / phase: 2026-09-06, same session, immediately after D-086. §5 lists five possible visuals
+  (creator/document preview, "así funciona" flow, panel/table preview, inspection-ready, teamwork);
+  building all five as new graphics was judged too large for one slice. Asked the owner directly via
+  `AskUserQuestion` how to scope it; owner chose the recommended option: pick the 1-2 highest-impact
+  visuals rather than five thin ones or skipping the section entirely.
+- **Picked: the 3-steps flow, and a new workspace/history preview** — the creator/document preview
+  (§5's first suggestion) was judged already covered by the hero's `DecaPreview` (D-082); an
+  inspection-ready visual is already covered by the §9 normative card (D-086); a teamwork visual was
+  judged lower-impact for the primary conversion path than showing the product actually working.
+- **3-steps flow**: added a single decorative connecting line (`aria-hidden`, `hidden md:block`)
+  behind the 3 numbered circles in the existing "Crea tu DeCA en 3 pasos" section, turning a plain
+  3-column list into an actual flow diagram. Mobile is untouched (the stacked layout already reads
+  top-to-bottom as a sequence, so no line was needed there).
+- **New `components/site/workspace-preview.tsx`**: a non-interactive, `aria-hidden` mock of the real
+  `/panel/historico` table — search bar, filter chip, 4 rows (route/plate/date/status, one shown
+  "Corregida" to also surface the versioning feature) — same product-led-graphics rule as
+  `DecaPreview` (§1/D-082): the LAYOUT mirrors the real history table exactly, only the route/plate/
+  date VALUES are generic placeholders (matching `DecaPreview`'s own precedent of a fictional
+  "Valencia → Madrid" route), never a real customer's data. Placed in the existing "Daily use"
+  section (`app/page.tsx`), which was restructured from a full-width icon grid into a 2-column
+  layout (text+icons left, `WorkspacePreview` right, same pattern as the "Product proof" section) —
+  pairs the §7 "cada DeCA cuesta menos tiempo" copy with a concrete visual proof of it, rather than
+  adding a whole new section (keeps §15 density in mind).
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean. `vitest run` 139/139.
+  `playwright test tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed, including axe
+  and the 360/768/1280px overflow checks (the restructured "Daily use" grid — `grid-cols-2` for 8
+  icons inside a half-width column — was a specific overflow risk, checked and clean). A custom
+  10-width overflow script (375/390/412/768/1024/1280/1366/1440/1600/1920, same practice as D-082/
+  D-083) confirmed zero horizontal overflow at every width, not just the 3 the automated suite
+  checks. Full `playwright test --workers=3` — 155/157 passed; the 2 failures (`admin-2fa`,
+  `content-cms`) are the same already-documented parallel-only flakes, reconfirmed passing with
+  `--workers=1`. Manually verified in a real browser at 1440px: the flow line renders correctly
+  between the 3 step circles, and the workspace-history card renders with clean spacing next to the
+  2-column icon grid.
+- **Scope note:** §10 (FAQ grouping into categories — needs new content structure, not attempted
+  here) and §15 (an overall density/hierarchy pass across the whole landing) remain. This closes out
+  the visual-storytelling item; #55 is now substantially complete bar those two.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-086.

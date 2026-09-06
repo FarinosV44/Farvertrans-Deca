@@ -981,3 +981,17 @@ by the existing global reduced-motion override). Gate: typecheck, lint, prettier
 reconfirmed passing with `--workers=1`, none touching this slice's files). Manually verified in a
 real browser at 1440px. See `decisions.md` D-086. **Remaining #55**: §5 (visual storytelling), §10
 (FAQ grouping — needs new content structure), §15 (density/hierarchy pass).
+
+## D-087: DESIGN #55 slice 6 — visual storytelling (§5), scoped to 2 highest-impact visuals
+Asked the owner how to scope §5 (5 possible visuals listed in the directive); owner picked "highest-
+impact 1-2" over building all five thin or skipping it. Added a decorative connecting line across the
+3-steps section (turns it into an actual flow diagram, desktop only) and a new
+`components/site/workspace-preview.tsx` — a non-interactive mock of the real `/panel/historico` table
+(search bar, filter chip, 4 rows with route/plate/date/status), same "real layout, generic values"
+rule as the hero's `DecaPreview`. Placed in the "Daily use" section, restructured to a 2-column
+layout (icons left, workspace preview right) pairing the §7 speed-copy with concrete visual proof.
+Gate: typecheck, lint, prettier clean, 139/139 unit, 18/18 targeted landing+a11y e2e, a custom
+10-width overflow script (375–1920px) at zero overflow, full suite 155/157 (2 pre-existing flakes,
+reconfirmed unrelated). Manually verified in a real browser at 1440px. See `decisions.md` D-087.
+**Remaining #55**: §10 (FAQ grouping), §15 (density/hierarchy pass) — #55 is substantially complete
+otherwise.
