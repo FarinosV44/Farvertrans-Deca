@@ -597,6 +597,10 @@ export const it = {
     generic: "Qualcosa è andato storto. Riprova tra qualche secondo.",
     notFound: "Non abbiamo trovato questa pagina.",
   },
+  legalNotice: {
+    notTranslated:
+      "Questo documento ha validità legale solo nella sua versione in spagnolo. Una traduzione in questa lingua non è ancora disponibile.",
+  },
   emails: {
     verifySubject: (brand: string) => `Conferma la tua e-mail su ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

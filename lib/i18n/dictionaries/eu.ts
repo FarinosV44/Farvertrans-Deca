@@ -606,6 +606,10 @@ export const eu = {
     generic: "Zerbait ez da ondo joan. Saiatu berriro segundo batzuen buruan.",
     notFound: "Ez dugu orri hau aurkitu.",
   },
+  legalNotice: {
+    notTranslated:
+      "Dokumentu honek balio legala du soilik gaztelaniazko bertsioan. Hizkuntza honetarako itzulpena oraindik ez dago eskuragarri.",
+  },
   emails: {
     verifySubject: (brand: string) => `Berretsi zure posta ${brand}-n`,
     verifyTextInitial: (brand: string, link: string) =>

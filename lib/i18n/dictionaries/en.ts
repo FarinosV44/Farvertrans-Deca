@@ -588,6 +588,10 @@ export const en = {
     generic: "Something went wrong. Please try again in a few seconds.",
     notFound: "We couldn't find this page.",
   },
+  legalNotice: {
+    notTranslated:
+      "This document is only legally valid in its Spanish version. A translation into this language is not yet available.",
+  },
   emails: {
     verifySubject: (brand: string) => `Confirm your email at ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

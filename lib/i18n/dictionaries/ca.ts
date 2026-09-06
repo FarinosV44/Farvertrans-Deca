@@ -598,6 +598,10 @@ export const ca = {
     generic: "Alguna cosa no ha anat bé. Torna-ho a intentar d'aquí uns segons.",
     notFound: "No hem trobat aquesta pàgina.",
   },
+  legalNotice: {
+    notTranslated:
+      "Aquest document només té validesa legal en la seva versió en espanyol. Encara no hi ha una traducció disponible en aquest idioma.",
+  },
   emails: {
     verifySubject: (brand: string) => `Confirma el teu correu a ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

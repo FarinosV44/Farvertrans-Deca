@@ -598,6 +598,10 @@ export const gl = {
     generic: "Algo non foi ben. Téntao de novo nuns segundos.",
     notFound: "Non atopamos esta páxina.",
   },
+  legalNotice: {
+    notTranslated:
+      "Este documento só ten validez legal na súa versión en español. Aínda non hai unha tradución dispoñible neste idioma.",
+  },
   emails: {
     verifySubject: (brand: string) => `Confirma o teu correo en ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

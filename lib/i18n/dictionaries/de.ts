@@ -607,6 +607,10 @@ export const de = {
     generic: "Etwas ist schiefgelaufen. Versuchen Sie es in wenigen Sekunden erneut.",
     notFound: "Wir haben diese Seite nicht gefunden.",
   },
+  legalNotice: {
+    notTranslated:
+      "Dieses Dokument ist nur in seiner spanischen Fassung rechtsverbindlich. Eine Übersetzung in diese Sprache ist noch nicht verfügbar.",
+  },
   emails: {
     verifySubject: (brand: string) => `Bestätigen Sie Ihre E-Mail-Adresse bei ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

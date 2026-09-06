@@ -604,6 +604,10 @@ export const fr = {
     generic: "Une erreur s'est produite. Réessayez dans quelques secondes.",
     notFound: "Nous n'avons pas trouvé cette page.",
   },
+  legalNotice: {
+    notTranslated:
+      "Ce document n'a de valeur juridique que dans sa version espagnole. Une traduction dans cette langue n'est pas encore disponible.",
+  },
   emails: {
     verifySubject: (brand: string) => `Confirmez votre e-mail sur ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

@@ -2346,3 +2346,39 @@
   §6 (persona card polish), §8 (trust section), §9 (regulation section), §10 (FAQ), §14
   (micro-interactions), §15 (density/hierarchy pass) remain, tracked as further slices.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-083.
+
+## D-085 — LEGAL #52/#54: legal pages stay Spanish-only in every locale; a translated notice explains why
+- Date / phase: 2026-09-06, same session, right after D-084. Explicitly asked the owner rather than
+  deciding unilaterally: legal-page translation was deliberately deferred at D-072 (legal pages
+  `/aviso-legal`, `/privacidad`, `/terminos`, `/cookies` stay Spanish-only in every locale until a
+  professional legal review of any translation exists — a mistranslated liability or GDPR clause
+  carries real legal risk). The owner's own message this slice ("continue with the rest of the
+  remaining issues if you dont know something just ask the legal paages are very important")
+  explicitly invited a clarifying question and flagged legal pages as important, so this was asked via
+  `AskUserQuestion` rather than assumed. Owner's explicit choice: **"Keep Spanish-only, add a
+  disclaimer"** — leave the legal pages' actual content exactly as-is (Spanish, already reviewed this
+  session), add a visible notice on non-Spanish locales that the binding version is in Spanish and no
+  translation exists yet. Zero legal-accuracy risk, since no legal content itself is translated.
+- **Implementation:** new `legalNotice.notTranslated` dictionary key added to all 8 locale
+  dictionaries (`es` through `it`) — a short, non-technical, safe-to-translate sentence, NOT a
+  translation of any clause. `components/site/legal-page.tsx` (the single shared wrapper used
+  unchanged by all 4 legal pages) converted to an `async` Server Component calling `getLocale()`/
+  `getDictionary()`, rendering the notice (`data-testid="legal-not-translated-notice"`) between the
+  page `<h1>` and its Spanish body content, gated on `locale !== "es"` — Spanish visitors see nothing
+  new, every other locale sees the notice, and the legal body text itself is never touched or
+  translated in any locale.
+- **D-072 is not reversed, only reaffirmed directly by the owner** — the append-only decision log
+  records this as a new entry per the standing rule ("only the user reverses a decision — append the
+  reversal as a new entry"), and D-072's original Spanish-only scope stands unchanged.
+- Verification: `tsc --noEmit` clean (8-locale `legalNotice` key parity confirmed by `satisfies
+  Messages`); ESLint clean; Prettier clean; `vitest run` 139/139. Full `playwright test --workers=3`
+  — **157/157 passed**, no flakes this run (the `admin-2fa`/`content-cms` flakes noted in D-083/D-084
+  did not reproduce). Manual verification in a real dev-server session across all 8 locales and all 4
+  legal pages: `/terminos`, `/privacidad`, `/aviso-legal`, `/cookies` each confirmed to show NO notice
+  under the default `es` locale and the correctly translated notice text under `en`/`fr`/`de`/`it`/
+  `ca`/`eu`/`gl` (verified by inspecting the rendered `data-testid="legal-not-translated-notice"`
+  element's exact text per locale, not just its presence).
+- **Scope note:** this closes the one open legal-translation question from D-072; it does not start a
+  professional legal review of a translated version, which remains a distinct, unstarted future task
+  if the owner ever wants the legal pages themselves translated rather than disclaimed.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-084.

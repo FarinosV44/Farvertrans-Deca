@@ -591,6 +591,20 @@ export const es = {
     generic: "Algo no ha ido bien. Vuelve a intentarlo en unos segundos.",
     notFound: "No hemos encontrado esta página.",
   },
+  /**
+   * LEGAL #52/#54: the legal pages themselves (aviso legal, privacidad,
+   * términos, cookies) are deliberately Spanish-only in every locale — a
+   * mistranslated liability/GDPR clause carries real legal risk, and no
+   * translation of that content has had a professional legal review (owner
+   * decision, D-072, reaffirmed by the owner directly per D-085). This ONE
+   * string is the exception: a short, non-technical notice — safe to
+   * translate — shown on those pages in every non-Spanish locale so a visitor
+   * knows why the page in front of them is in Spanish.
+   */
+  legalNotice: {
+    notTranslated:
+      "Este documento solo tiene validez legal en su versión en español. Aún no hay una traducción disponible en este idioma.",
+  },
   emails: {
     verifySubject: (brand: string) => `Confirma tu correo en ${brand}`,
     verifyTextInitial: (brand: string, link: string) =>

@@ -951,3 +951,19 @@ by matching the already-passing `/90` opacity instead of the new `/80`. Gate: ty
 clean, 139/139 unit, 155/157 e2e (2 pre-existing flakes). See `decisions.md` D-084. **Remaining #55**:
 visual storytelling (§5), persona cards (§6), trust/regulation/FAQ polish (§8-§10), micro-interactions
 and density pass (§14-§15).
+
+## D-085: LEGAL #52/#54 — legal pages stay Spanish-only; translated disclaimer added
+Owner's own message this slice ("continue... if you dont know something just ask the legal paages are
+very important") explicitly invited a clarifying question on legal-page translation (deliberately
+deferred at D-072 over real liability/GDPR risk) and flagged it as important — asked via
+`AskUserQuestion` rather than assumed. Owner's explicit choice: **"Keep Spanish-only, add a
+disclaimer"** — legal content in `/aviso-legal`, `/privacidad`, `/terminos`, `/cookies` stays
+Spanish-only in every locale (zero legal-accuracy risk, nothing legal machine-translated); a new
+short, safe-to-translate `legalNotice.notTranslated` key (all 8 dictionaries) explains to non-Spanish
+visitors that the binding version is in Spanish. `components/site/legal-page.tsx` (the one shared
+wrapper used by all 4 pages) converted to an async Server Component, notice gated on `locale !== "es"`
+— no per-page caller changes needed. Gate: typecheck, lint, prettier clean, 139/139 unit, **157/157
+e2e, no flakes this run**. Manually verified in a real dev-server session across all 8 locales × all 4
+legal pages: notice absent under `es`, present with the correct translated text under every other
+locale. See `decisions.md` D-085. D-072's Spanish-only scope is reaffirmed, not reversed.
+**Continuing** with the remaining #55 items (§5, §6, §8-§10, §14-§15) next.
