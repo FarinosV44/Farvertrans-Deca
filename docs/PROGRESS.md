@@ -1038,3 +1038,10 @@ direct request that the app sends the correct `.../api/auth/google/callback` URI
 Cloud Console had the segments swapped (`.../api/auth/callback/google`, a NextAuth.js-style path this
 app's hand-rolled OAuth client doesn't use). Told the user the exact fix — external account setting,
 not a code issue.
+
+## D-091: `develop` (D-089…D-090) merged to `main` at `5ba21c4`, on the user's explicit request ("done complete issue 55 and push to main")
+`--no-ff` merge, no conflicts, 14 files. **Issue #55 (DESIGN — landing overhaul) is now closed on
+`main`** — all 15 numbered items from the owner's directive shipped across D-081 through D-090. No
+new Prisma migrations in this merge (D-089/D-090 were UI-only), so unlike D-088 this one needs no
+`prisma migrate deploy` — a production redeploy to actually serve the new code is still a separate,
+not-yet-done action. See `decisions.md` D-091.

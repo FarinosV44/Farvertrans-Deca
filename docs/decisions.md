@@ -2577,3 +2577,23 @@
   OAuth client per D-046). Told the user the exact string to correct in the Google Cloud Console
   "Authorized redirect URIs" field; this is an external account setting only the user can change —
   no code or documentation change was needed or made.
+
+## D-091 — `develop` (D-089…D-090) merged to `main` at `5ba21c4`, on the user's explicit request ("done complete issue 55 and push to main")
+- Date / phase: 2026-09-06, same session, immediately after D-090. `--no-ff` merge from `develop` at
+  `9272ebc`, pushed to `origin/main` at `d7792d6..5ba21c4`. 14 files changed, no conflicts.
+- Brings `main` current with the rest of DESIGN #55: FAQ grouping (§10), the hero-spacing/second-
+  visual follow-up, and the density/hierarchy pass (§15) — on top of everything D-088 already merged
+  (I18N #54, SECURITY #53, LEGAL #52/#54, PRODUCT #56 slices 1-3, the earlier #55 slices).
+- **Issue #55 (DESIGN — landing overhaul) is now closed in code and on `main`.** All 15 numbered
+  items from the owner's original directive have shipped: hero visual (§1), free-value competitive
+  positioning (§2/§3), multilingual header (§4), visual storytelling (§5), persona polish (§6), daily-
+  use differentiator reframe (§7), trust section (§8), normative scannability (§9), FAQ polish (§10),
+  final CTA (§11), footer legal identity (§12), brand consistency (§13), micro-interactions (§14),
+  and the density/hierarchy pass (§15).
+- Pre-merge state was already gate-verified in D-090 (typecheck/lint/prettier/139 unit/156-157 e2e
+  with 1 reconfirmed-unrelated flake) — not re-run a second time since no code changed between that
+  verification and this merge.
+- **No new Prisma migrations in this merge** (D-089/D-090 were UI-only) — unlike D-088, this merge
+  needs no `prisma migrate deploy` step. A production redeploy (to actually serve the new landing
+  code) is still a separate action from this git-level merge, same standing distinction as D-088.
+- CI triggered on the `main` push (queued at push time).
