@@ -183,46 +183,61 @@ export const eu = {
     legalSourceLabel: "Iturria:",
     operatorTrustHeading: "Nor dago zerbitzuaren atzean",
     faqHeading: "Ohiko galderak",
-    faq: [
+    faqGroups: [
       {
-        q: "Zer da DeCA?",
-        a: "Kontrolerako Dokumentu Administratibo Elektronikoa errepideko salgai-garraioaren kontrol-dokumentuaren nahitaezko bertsio digitala da. Paperezko dokumentua ordezten du.",
+        heading: "Araudia eta betebeharra",
+        items: [
+          {
+            q: "Zer da DeCA?",
+            a: "Kontrolerako Dokumentu Administratibo Elektronikoa errepideko salgai-garraioaren kontrol-dokumentuaren nahitaezko bertsio digitala da. Paperezko dokumentua ordezten du.",
+          },
+          {
+            q: "Noiz da nahitaezkoa?",
+            a: "2026ko urriaren 5etik aurrera barne-garraiorako. Ez dago luzapenik ez trantsizio-epealdirik: paperak ez du balio izango.",
+          },
+          {
+            q: "Nork egin behar du?",
+            a: "Bidaltzaile kontratugileak eta errepideko salgai-garraio publikoaren garraiolari eragileak, aplikagarri den araudiaren arabera.",
+          },
+          {
+            q: "Nahitaezkoa al da garraio-agentzientzat?",
+            a: "Bai, bidaltzaile kontratugile edo garraioa kontratatzen duen operadore gisa jarduten dutenean, sortze- eta kontserbazio-betebehar berekin.",
+          },
+        ],
       },
       {
-        q: "Noiz da nahitaezkoa?",
-        a: "2026ko urriaren 5etik aurrera barne-garraiorako. Ez dago luzapenik ez trantsizio-epealdirik: paperak ez du balio izango.",
+        heading: "Dokumentua",
+        items: [
+          {
+            q: "PDF eskaneatu batek balio al du?",
+            a: "Ez. Fitxategia datu egituratuetatik sortutako PDF natibo digitala izan behar da. Eskaneatu bat edo irudi digitalizatu bat ez da baliozkoa.",
+          },
+          {
+            q: "Sinatu behar al da?",
+            a: "Ebazpenak ez du sinadura elektronikorik eskatzen. Bai eskatzen ditu PDF natiboa, QR kodea, deskarga zuzeneko URL HTTPSa eta sorrera eta aldaketen erregistroa.",
+          },
+          {
+            q: "Zer datu izan behar ditu?",
+            a: "Gutxienez: bidaltzaile kontratugilea (izena edo sozietate-izena, IFZ eta helbidea), garraiolari eragilea (izena edo sozietate-izena eta IFZ), karga-lekua eta -data, deskarga-lekua eta -data, salgaiaren izaera eta pisua, eta ibilgailuaren matrikula (traktorea eta atoia, atoi artikulatua bada).",
+          },
+        ],
       },
       {
-        q: "Nork egin behar du?",
-        a: "Bidaltzaile kontratugileak eta errepideko salgai-garraio publikoaren garraiolari eragileak, aplikagarri den araudiaren arabera.",
-      },
-      {
-        q: "Nahitaezkoa al da garraio-agentzientzat?",
-        a: "Bai, bidaltzaile kontratugile edo garraioa kontratatzen duen operadore gisa jarduten dutenean, sortze- eta kontserbazio-betebehar berekin.",
-      },
-      {
-        q: "PDF eskaneatu batek balio al du?",
-        a: "Ez. Fitxategia datu egituratuetatik sortutako PDF natibo digitala izan behar da. Eskaneatu bat edo irudi digitalizatu bat ez da baliozkoa.",
-      },
-      {
-        q: "Sinatu behar al da?",
-        a: "Ebazpenak ez du sinadura elektronikorik eskatzen. Bai eskatzen ditu PDF natiboa, QR kodea, deskarga zuzeneko URL HTTPSa eta sorrera eta aldaketen erregistroa.",
-      },
-      {
-        q: "Zer datu izan behar ditu?",
-        a: "Gutxienez: bidaltzaile kontratugilea (izena edo sozietate-izena, IFZ eta helbidea), garraiolari eragilea (izena edo sozietate-izena eta IFZ), karga-lekua eta -data, deskarga-lekua eta -data, salgaiaren izaera eta pisua, eta ibilgailuaren matrikula (traktorea eta atoia, atoi artikulatua bada).",
-      },
-      {
-        q: "Nola eramaten du gidariak?",
-        a: "Zerbitzua hasi aurretik, mugikorrean ikusgai dagoen kopia elektronikoan edo kopia inprimatuan, QR-a beti eskuragarri dutela.",
-      },
-      {
-        q: `Doakoa al da ${BRAND.name}?`,
-        a: "Bai. Dokumentuak sortu eta deskargatu ditzakezu txartelik eta mugarik gabe 2026ko abenduaren 31ra arte.",
-      },
-      {
-        q: "Nahi ditudan dokumentu guztiak sortu ditzaket?",
-        a: "Bai. Ez dago hileroko muga. Erabilera normala edo ikuskapena eragozten ez duten erabilera abusiboen aurkako kontrol automatikoak baino ez ditugu aplikatzen.",
+        heading: "Erabilera eta kostua",
+        items: [
+          {
+            q: "Nola eramaten du gidariak?",
+            a: "Zerbitzua hasi aurretik, mugikorrean ikusgai dagoen kopia elektronikoan edo kopia inprimatuan, QR-a beti eskuragarri dutela.",
+          },
+          {
+            q: `Doakoa al da ${BRAND.name}?`,
+            a: "Bai. Dokumentuak sortu eta deskargatu ditzakezu txartelik eta mugarik gabe 2026ko abenduaren 31ra arte.",
+          },
+          {
+            q: "Nahi ditudan dokumentu guztiak sortu ditzaket?",
+            a: "Bai. Ez dago hileroko muga. Erabilera normala edo ikuskapena eragozten ez duten erabilera abusiboen aurkako kontrol automatikoak baino ez ditugu aplikatzen.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Hasi orain. Txartelik gabe.",

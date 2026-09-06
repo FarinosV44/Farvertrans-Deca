@@ -167,46 +167,61 @@ export const en = {
     legalSourceLabel: "Source:",
     operatorTrustHeading: "Who is behind the service",
     faqHeading: "Frequently asked questions",
-    faq: [
+    faqGroups: [
       {
-        q: "What is the DeCA?",
-        a: "The Electronic Administrative Control Document is the mandatory digital version of the road-freight control document. It replaces the paper document.",
+        heading: "Regulation and obligation",
+        items: [
+          {
+            q: "What is the DeCA?",
+            a: "The Electronic Administrative Control Document is the mandatory digital version of the road-freight control document. It replaces the paper document.",
+          },
+          {
+            q: "When does it become mandatory?",
+            a: "From 5 October 2026 for domestic transport. There is no extension or transitional period: paper is no longer accepted.",
+          },
+          {
+            q: "Who has to issue it?",
+            a: "The contracting shipper and the actual carrier of the public road freight transport, under the terms of the applicable regulation.",
+          },
+          {
+            q: "Is it mandatory for transport agencies?",
+            a: "Yes, when they act as the contracting shipper or as the operator contracting the transport, with the same generation and retention obligations.",
+          },
+        ],
       },
       {
-        q: "When does it become mandatory?",
-        a: "From 5 October 2026 for domestic transport. There is no extension or transitional period: paper is no longer accepted.",
+        heading: "The document",
+        items: [
+          {
+            q: "Does a scanned PDF work?",
+            a: "No. The file must be a native digital PDF generated from structured data. A scan or a digitised image is not valid.",
+          },
+          {
+            q: "Does it need to be signed?",
+            a: "The resolution does not require an electronic signature. It does require a native PDF, a QR code, a direct-download HTTPS URL, and a record of creation and changes.",
+          },
+          {
+            q: "What data must it contain?",
+            a: "At minimum: the contracting shipper (name, tax ID and address), the actual carrier (name and tax ID), the loading place and date, the unloading place and date, the nature and weight of the goods, and the vehicle's plate (tractor unit and trailer if it's an articulated combination).",
+          },
+        ],
       },
       {
-        q: "Who has to issue it?",
-        a: "The contracting shipper and the actual carrier of the public road freight transport, under the terms of the applicable regulation.",
-      },
-      {
-        q: "Is it mandatory for transport agencies?",
-        a: "Yes, when they act as the contracting shipper or as the operator contracting the transport, with the same generation and retention obligations.",
-      },
-      {
-        q: "Does a scanned PDF work?",
-        a: "No. The file must be a native digital PDF generated from structured data. A scan or a digitised image is not valid.",
-      },
-      {
-        q: "Does it need to be signed?",
-        a: "The resolution does not require an electronic signature. It does require a native PDF, a QR code, a direct-download HTTPS URL, and a record of creation and changes.",
-      },
-      {
-        q: "What data must it contain?",
-        a: "At minimum: the contracting shipper (name, tax ID and address), the actual carrier (name and tax ID), the loading place and date, the unloading place and date, the nature and weight of the goods, and the vehicle's plate (tractor unit and trailer if it's an articulated combination).",
-      },
-      {
-        q: "How does the driver carry it?",
-        a: "Before the service starts, as a visible electronic copy on the phone or as a printed copy, always with the QR available.",
-      },
-      {
-        q: `Is ${BRAND.name} free?`,
-        a: "Yes. You can create and download documents with no card and no limit until 31 December 2026.",
-      },
-      {
-        q: "Can I generate as many documents as I want?",
-        a: "Yes. There is no monthly limit. We only apply automated controls against abusive use that don't affect normal use or inspection.",
+        heading: "Usage and cost",
+        items: [
+          {
+            q: "How does the driver carry it?",
+            a: "Before the service starts, as a visible electronic copy on the phone or as a printed copy, always with the QR available.",
+          },
+          {
+            q: `Is ${BRAND.name} free?`,
+            a: "Yes. You can create and download documents with no card and no limit until 31 December 2026.",
+          },
+          {
+            q: "Can I generate as many documents as I want?",
+            a: "Yes. There is no monthly limit. We only apply automated controls against abusive use that don't affect normal use or inspection.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Start now. No card.",

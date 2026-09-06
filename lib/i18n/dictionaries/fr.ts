@@ -176,46 +176,61 @@ export const fr = {
     legalSourceLabel: "Source :",
     operatorTrustHeading: "Qui se trouve derrière le service",
     faqHeading: "Questions fréquentes",
-    faq: [
+    faqGroups: [
       {
-        q: "Qu'est-ce que le DeCA ?",
-        a: "Le Document Électronique de Contrôle Administratif est la version numérique obligatoire du document de contrôle du transport de marchandises par route. Il remplace le document papier.",
+        heading: "Réglementation et obligation",
+        items: [
+          {
+            q: "Qu'est-ce que le DeCA ?",
+            a: "Le Document Électronique de Contrôle Administratif est la version numérique obligatoire du document de contrôle du transport de marchandises par route. Il remplace le document papier.",
+          },
+          {
+            q: "Quand devient-il obligatoire ?",
+            a: "À partir du 5 octobre 2026 pour le transport intérieur. Il n'y a ni prorogation ni période transitoire : le papier ne sera plus accepté.",
+          },
+          {
+            q: "Qui doit l'établir ?",
+            a: "Le chargeur contractuel et le transporteur effectif du transport public de marchandises par route, selon les termes de la réglementation applicable.",
+          },
+          {
+            q: "Est-il obligatoire pour les agences de transport ?",
+            a: "Oui, lorsqu'elles agissent en tant que chargeur contractuel ou opérateur contractant le transport, avec les mêmes obligations de génération et de conservation.",
+          },
+        ],
       },
       {
-        q: "Quand devient-il obligatoire ?",
-        a: "À partir du 5 octobre 2026 pour le transport intérieur. Il n'y a ni prorogation ni période transitoire : le papier ne sera plus accepté.",
+        heading: "Le document",
+        items: [
+          {
+            q: "Un PDF scanné convient-il ?",
+            a: "Non. Le fichier doit être un PDF natif numérique généré à partir de données structurées. Un scan ou une image numérisée n'est pas valide.",
+          },
+          {
+            q: "Doit-il être signé ?",
+            a: "La résolution n'exige pas de signature électronique. Elle exige un PDF natif, un QR, une URL HTTPS de téléchargement direct et un enregistrement de la création et des modifications.",
+          },
+          {
+            q: "Quelles données doit-il contenir ?",
+            a: "Au minimum : le chargeur contractuel (nom ou raison sociale, numéro fiscal et adresse), le transporteur effectif (nom ou raison sociale et numéro fiscal), le lieu et la date de chargement, le lieu et la date de déchargement, la nature et le poids de la marchandise, et l'immatriculation du véhicule (tracteur et remorque s'il s'agit d'un ensemble articulé).",
+          },
+        ],
       },
       {
-        q: "Qui doit l'établir ?",
-        a: "Le chargeur contractuel et le transporteur effectif du transport public de marchandises par route, selon les termes de la réglementation applicable.",
-      },
-      {
-        q: "Est-il obligatoire pour les agences de transport ?",
-        a: "Oui, lorsqu'elles agissent en tant que chargeur contractuel ou opérateur contractant le transport, avec les mêmes obligations de génération et de conservation.",
-      },
-      {
-        q: "Un PDF scanné convient-il ?",
-        a: "Non. Le fichier doit être un PDF natif numérique généré à partir de données structurées. Un scan ou une image numérisée n'est pas valide.",
-      },
-      {
-        q: "Doit-il être signé ?",
-        a: "La résolution n'exige pas de signature électronique. Elle exige un PDF natif, un QR, une URL HTTPS de téléchargement direct et un enregistrement de la création et des modifications.",
-      },
-      {
-        q: "Quelles données doit-il contenir ?",
-        a: "Au minimum : le chargeur contractuel (nom ou raison sociale, numéro fiscal et adresse), le transporteur effectif (nom ou raison sociale et numéro fiscal), le lieu et la date de chargement, le lieu et la date de déchargement, la nature et le poids de la marchandise, et l'immatriculation du véhicule (tracteur et remorque s'il s'agit d'un ensemble articulé).",
-      },
-      {
-        q: "Comment le conducteur le transporte-t-il ?",
-        a: "Avant le début du service, sous forme de copie électronique visible sur le mobile ou de copie imprimée, avec le QR toujours disponible.",
-      },
-      {
-        q: `${BRAND.name} est-il gratuit ?`,
-        a: "Oui. Vous pouvez créer et télécharger des documents sans carte et sans limite jusqu'au 31 décembre 2026.",
-      },
-      {
-        q: "Puis-je générer autant de documents que je le souhaite ?",
-        a: "Oui. Il n'y a pas de limite mensuelle. Nous n'appliquons que des contrôles automatiques contre les usages abusifs qui n'affectent ni l'usage normal ni l'inspection.",
+        heading: "Utilisation et coût",
+        items: [
+          {
+            q: "Comment le conducteur le transporte-t-il ?",
+            a: "Avant le début du service, sous forme de copie électronique visible sur le mobile ou de copie imprimée, avec le QR toujours disponible.",
+          },
+          {
+            q: `${BRAND.name} est-il gratuit ?`,
+            a: "Oui. Vous pouvez créer et télécharger des documents sans carte et sans limite jusqu'au 31 décembre 2026.",
+          },
+          {
+            q: "Puis-je générer autant de documents que je le souhaite ?",
+            a: "Oui. Il n'y a pas de limite mensuelle. Nous n'appliquons que des contrôles automatiques contre les usages abusifs qui n'affectent ni l'usage normal ni l'inspection.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Commencez maintenant. Sans carte.",

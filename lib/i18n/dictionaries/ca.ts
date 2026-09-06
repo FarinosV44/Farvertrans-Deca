@@ -175,46 +175,61 @@ export const ca = {
     legalSourceLabel: "Font:",
     operatorTrustHeading: "Qui hi ha darrere del servei",
     faqHeading: "Preguntes freqüents",
-    faq: [
+    faqGroups: [
       {
-        q: "Què és el DeCA?",
-        a: "El Document Electrònic de Control Administratiu és la versió digital obligatòria del document de control del transport de mercaderies per carretera. Substitueix el document en paper.",
+        heading: "Normativa i obligació",
+        items: [
+          {
+            q: "Què és el DeCA?",
+            a: "El Document Electrònic de Control Administratiu és la versió digital obligatòria del document de control del transport de mercaderies per carretera. Substitueix el document en paper.",
+          },
+          {
+            q: "Quan és obligatori?",
+            a: "Des del 5 d'octubre de 2026 per al transport interior. No hi ha pròrroga ni període transitori: el paper deixa d'admetre's.",
+          },
+          {
+            q: "Qui l'ha de fer?",
+            a: "El carregador contractual i el transportista efectiu del transport públic de mercaderies per carretera, en els termes de la normativa aplicable.",
+          },
+          {
+            q: "És obligatori per a agències de transport?",
+            a: "Sí, quan actuen com a carregador contractual o operador que contracta el transport, amb les mateixes obligacions de generació i conservació.",
+          },
+        ],
       },
       {
-        q: "Quan és obligatori?",
-        a: "Des del 5 d'octubre de 2026 per al transport interior. No hi ha pròrroga ni període transitori: el paper deixa d'admetre's.",
+        heading: "El document",
+        items: [
+          {
+            q: "Serveix un PDF escanejat?",
+            a: "No. El fitxer ha de ser un PDF natiu digital generat a partir de dades estructurades. Un escaneig o una imatge digitalitzada no és vàlid.",
+          },
+          {
+            q: "S'ha de signar?",
+            a: "La resolució no exigeix signatura electrònica. Sí que exigeix PDF natiu, QR, URL HTTPS de descàrrega directa i registre de creació i modificacions.",
+          },
+          {
+            q: "Quines dades ha de contenir?",
+            a: "Com a mínim: carregador contractual (nom o raó social, NIF i domicili), transportista efectiu (nom o raó social i NIF), lloc i data de càrrega, lloc i data de descàrrega, naturalesa i pes de la mercaderia, i matrícula del vehicle (tractora i remolc si és un conjunt articulat).",
+          },
+        ],
       },
       {
-        q: "Qui l'ha de fer?",
-        a: "El carregador contractual i el transportista efectiu del transport públic de mercaderies per carretera, en els termes de la normativa aplicable.",
-      },
-      {
-        q: "És obligatori per a agències de transport?",
-        a: "Sí, quan actuen com a carregador contractual o operador que contracta el transport, amb les mateixes obligacions de generació i conservació.",
-      },
-      {
-        q: "Serveix un PDF escanejat?",
-        a: "No. El fitxer ha de ser un PDF natiu digital generat a partir de dades estructurades. Un escaneig o una imatge digitalitzada no és vàlid.",
-      },
-      {
-        q: "S'ha de signar?",
-        a: "La resolució no exigeix signatura electrònica. Sí que exigeix PDF natiu, QR, URL HTTPS de descàrrega directa i registre de creació i modificacions.",
-      },
-      {
-        q: "Quines dades ha de contenir?",
-        a: "Com a mínim: carregador contractual (nom o raó social, NIF i domicili), transportista efectiu (nom o raó social i NIF), lloc i data de càrrega, lloc i data de descàrrega, naturalesa i pes de la mercaderia, i matrícula del vehicle (tractora i remolc si és un conjunt articulat).",
-      },
-      {
-        q: "Com el porta el conductor?",
-        a: "Abans de l'inici del servei, en còpia electrònica visible al mòbil o en còpia impresa, sempre amb el QR disponible.",
-      },
-      {
-        q: `És gratis ${BRAND.name}?`,
-        a: "Sí. Pots crear i descarregar documents sense targeta i sense límit fins al 31 de desembre de 2026.",
-      },
-      {
-        q: "Puc generar tots els documents que vulgui?",
-        a: "Sí. No hi ha límit mensual. Només apliquem controls automàtics contra usos abusius que no afecten l'ús normal ni la inspecció.",
+        heading: "Ús i cost",
+        items: [
+          {
+            q: "Com el porta el conductor?",
+            a: "Abans de l'inici del servei, en còpia electrònica visible al mòbil o en còpia impresa, sempre amb el QR disponible.",
+          },
+          {
+            q: `És gratis ${BRAND.name}?`,
+            a: "Sí. Pots crear i descarregar documents sense targeta i sense límit fins al 31 de desembre de 2026.",
+          },
+          {
+            q: "Puc generar tots els documents que vulgui?",
+            a: "Sí. No hi ha límit mensual. Només apliquem controls automàtics contra usos abusius que no afecten l'ús normal ni la inspecció.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Comença ara. Sense targeta.",

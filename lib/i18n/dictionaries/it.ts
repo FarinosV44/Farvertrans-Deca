@@ -176,46 +176,61 @@ export const it = {
     legalSourceLabel: "Fonte:",
     operatorTrustHeading: "Chi c'è dietro il servizio",
     faqHeading: "Domande frequenti",
-    faq: [
+    faqGroups: [
       {
-        q: "Che cos'è il DeCA?",
-        a: "Il Documento Elettronico di Controllo Amministrativo è la versione digitale obbligatoria del documento di controllo del trasporto merci su strada. Sostituisce il documento cartaceo.",
+        heading: "Normativa e obbligo",
+        items: [
+          {
+            q: "Che cos'è il DeCA?",
+            a: "Il Documento Elettronico di Controllo Amministrativo è la versione digitale obbligatoria del documento di controllo del trasporto merci su strada. Sostituisce il documento cartaceo.",
+          },
+          {
+            q: "Quando diventa obbligatorio?",
+            a: "Dal 5 ottobre 2026 per il trasporto interno. Non ci sono proroghe né periodi transitori: la carta non sarà più accettata.",
+          },
+          {
+            q: "Chi deve emetterlo?",
+            a: "Il mittente contrattuale e il vettore effettivo del trasporto pubblico di merci su strada, secondo i termini della normativa applicabile.",
+          },
+          {
+            q: "È obbligatorio per le agenzie di trasporto?",
+            a: "Sì, quando agiscono come mittente contrattuale o operatore che contratta il trasporto, con gli stessi obblighi di generazione e conservazione.",
+          },
+        ],
       },
       {
-        q: "Quando diventa obbligatorio?",
-        a: "Dal 5 ottobre 2026 per il trasporto interno. Non ci sono proroghe né periodi transitori: la carta non sarà più accettata.",
+        heading: "Il documento",
+        items: [
+          {
+            q: "Va bene un PDF scansionato?",
+            a: "No. Il file deve essere un PDF nativo digitale generato da dati strutturati. Una scansione o un'immagine digitalizzata non è valida.",
+          },
+          {
+            q: "Deve essere firmato?",
+            a: "La risoluzione non richiede una firma elettronica. Richiede però un PDF nativo, un QR, un URL HTTPS di download diretto e la registrazione di creazione e modifiche.",
+          },
+          {
+            q: "Quali dati deve contenere?",
+            a: "Come minimo: mittente contrattuale (nome o ragione sociale, codice fiscale e indirizzo), vettore effettivo (nome o ragione sociale e codice fiscale), luogo e data di carico, luogo e data di scarico, natura e peso della merce, e targa del veicolo (trattore e rimorchio se si tratta di un complesso articolato).",
+          },
+        ],
       },
       {
-        q: "Chi deve emetterlo?",
-        a: "Il mittente contrattuale e il vettore effettivo del trasporto pubblico di merci su strada, secondo i termini della normativa applicabile.",
-      },
-      {
-        q: "È obbligatorio per le agenzie di trasporto?",
-        a: "Sì, quando agiscono come mittente contrattuale o operatore che contratta il trasporto, con gli stessi obblighi di generazione e conservazione.",
-      },
-      {
-        q: "Va bene un PDF scansionato?",
-        a: "No. Il file deve essere un PDF nativo digitale generato da dati strutturati. Una scansione o un'immagine digitalizzata non è valida.",
-      },
-      {
-        q: "Deve essere firmato?",
-        a: "La risoluzione non richiede una firma elettronica. Richiede però un PDF nativo, un QR, un URL HTTPS di download diretto e la registrazione di creazione e modifiche.",
-      },
-      {
-        q: "Quali dati deve contenere?",
-        a: "Come minimo: mittente contrattuale (nome o ragione sociale, codice fiscale e indirizzo), vettore effettivo (nome o ragione sociale e codice fiscale), luogo e data di carico, luogo e data di scarico, natura e peso della merce, e targa del veicolo (trattore e rimorchio se si tratta di un complesso articolato).",
-      },
-      {
-        q: "Come lo porta con sé l'autista?",
-        a: "Prima dell'inizio del servizio, come copia elettronica visibile sul cellulare o come copia stampata, sempre con il QR disponibile.",
-      },
-      {
-        q: `${BRAND.name} è gratis?`,
-        a: "Sì. Puoi creare e scaricare documenti senza carta e senza limiti fino al 31 dicembre 2026.",
-      },
-      {
-        q: "Posso generare tutti i documenti che voglio?",
-        a: "Sì. Non c'è un limite mensile. Applichiamo solo controlli automatici contro usi abusivi che non influiscono sull'uso normale né sull'ispezione.",
+        heading: "Utilizzo e costo",
+        items: [
+          {
+            q: "Come lo porta con sé l'autista?",
+            a: "Prima dell'inizio del servizio, come copia elettronica visibile sul cellulare o come copia stampata, sempre con il QR disponibile.",
+          },
+          {
+            q: `${BRAND.name} è gratis?`,
+            a: "Sì. Puoi creare e scaricare documenti senza carta e senza limiti fino al 31 dicembre 2026.",
+          },
+          {
+            q: "Posso generare tutti i documenti che voglio?",
+            a: "Sì. Non c'è un limite mensile. Applichiamo solo controlli automatici contro usi abusivi che non influiscono sull'uso normale né sull'ispezione.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Inizia ora. Senza carta.",

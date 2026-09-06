@@ -10,6 +10,7 @@ import { TrackView } from "@/components/analytics/track-view";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
 import { WorkspacePreview } from "@/components/site/workspace-preview";
+import { SavedDataPreview } from "@/components/site/saved-data-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
@@ -107,7 +108,7 @@ export default async function HomePage() {
     ...dict.landing.freeValueItems[i],
   }));
   const legalPoints = dict.landing.legalPoints;
-  const faq = dict.landing.faq;
+  const faqGroups = dict.landing.faqGroups;
 
   return (
     <>
@@ -239,7 +240,10 @@ export default async function HomePage() {
           </ul>
         </section>
 
-        {/* Product proof */}
+        {/* Product proof — DESIGN #55 §15: benefits list now uses the same
+            success-check visual language as the free-value/normativa sections
+            (was plain "Title. body" text, the one remaining spot that read as
+            flatter than the rest of the redesigned page). */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="producto"
@@ -249,15 +253,22 @@ export default async function HomePage() {
               <h2 id="producto" className="text-2xl font-bold md:text-3xl">
                 {dict.landing.productHeading}
               </h2>
-              <ul className="mt-5 space-y-3 text-sm">
+              <ul className="mt-6 space-y-3 text-sm">
                 {benefits.map((b) => (
-                  <li key={b.title}>
-                    <span className="font-bold">{b.title}. </span>
-                    <span className="text-[var(--color-text-muted)]">{b.body}</span>
+                  <li key={b.title} className="flex items-start gap-3">
+                    <CheckIcon
+                      width={16}
+                      height={16}
+                      className="mt-0.5 shrink-0 text-[var(--color-success)]"
+                    />
+                    <span>
+                      <span className="font-bold">{b.title}. </span>
+                      <span className="text-[var(--color-text-muted)]">{b.body}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-7">
+              <div className="mt-8">
                 <CtaButton event="product_demo_cta">{hero.cta}</CtaButton>
               </div>
             </div>
@@ -313,10 +324,12 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Daily use — DESIGN #55 §5: paired with a real workspace-history visual
-            (`WorkspacePreview`, same product-led-graphics rule as the hero's
-            `DecaPreview`) so "empresa trabaja más rápido" has a concrete visual,
-            not just an icon list. */}
+        {/* Daily use — DESIGN #55 §5: paired with two real product visuals
+            (`WorkspacePreview` + `SavedDataPreview`, same product-led-graphics
+            rule as the hero's `DecaPreview`) so "Guarda una vez. Reutiliza
+            siempre." has concrete visual proof on both halves of that claim —
+            saved data on top, the reuse outcome (history) below it — instead
+            of one visual and empty space under it. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="cada-dia"
@@ -354,7 +367,10 @@ export default async function HomePage() {
                 {dict.landing.dailyUseFooterAfterLink}
               </p>
             </div>
-            <WorkspacePreview />
+            <div className="space-y-4">
+              <SavedDataPreview />
+              <WorkspacePreview />
+            </div>
           </div>
         </section>
 
@@ -428,7 +444,7 @@ export default async function HomePage() {
           <h2 id="faq" className="text-2xl font-bold md:text-3xl">
             {dict.landing.faqHeading}
           </h2>
-          <FaqAccordion items={faq} />
+          <FaqAccordion groups={faqGroups} />
         </section>
 
         {/* Final CTA */}

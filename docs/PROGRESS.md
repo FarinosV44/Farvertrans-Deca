@@ -995,3 +995,46 @@ Gate: typecheck, lint, prettier clean, 139/139 unit, 18/18 targeted landing+a11y
 reconfirmed unrelated). Manually verified in a real browser at 1440px. See `decisions.md` D-087.
 **Remaining #55**: §10 (FAQ grouping), §15 (density/hierarchy pass) — #55 is substantially complete
 otherwise.
+
+## D-088: `develop` (D-063…D-087) merged to `main` at `d7792d6`, on the user's explicit request ("push all... to main")
+Pre-merge gate re-verified on `develop` itself (not just trusting each slice's own prior gate):
+typecheck, `npm run lint` (project's real lint script — 2 pre-existing unrelated `<img>` warnings
+only), `prettier --check .` repo-wide, 139/139 unit, all clean. `--no-ff` merge, no conflicts, 138
+files changed. Brings `main` current with SECURITY #53 (2FA, session revocation, rate limiting,
+password policy, audit log), LEGAL #52/#54 (Praetoria identity, custody/liability/GDPR, Spanish-only
+legal pages + disclaimer), I18N #54 (8 locales), PRODUCT #56 slices 1-3 (read_only role, search
+palette, route intel), DESIGN #51/#55 (landing overhaul). Pushed to `origin/main`. **3 new
+migrations on `main` NOT yet applied to production**
+(`20260905204705_user_session_version`, `20260905211042_admin_2fa_and_audit_log`,
+`20260906094103_company_role_read_only`) — a redeploy + `prisma migrate deploy` is needed before any
+of this session's security/role work is live. See `decisions.md` D-088.
+**Continuing** with the remaining #55 items (§10, §15) and any other open issues next, per the
+user's "keep going on closing and finishing all the remaining issues" instruction.
+
+## D-089: DESIGN #55 slice 7 — FAQ grouping (§10 done, closes #55 bar §15), hero spacing fix, second "Cada DeCA" visual
+FAQ restructured from a flat 10-item list to 3 groups ("Normativa y obligación", "El documento",
+"Uso y coste") across all 8 dictionaries — `landing.faq` → `landing.faqGroups`, `FaqAccordion`
+rewritten to render group headings. Owner also sent a follow-up mid-slice with two landing-refinement
+requests: (1) the hero's `DecaPreview` cards were overlapping (`-mt-8` negative margin) — changed to
+a positive `mt-6 sm:mt-8` offset so the two cards read as separated, not stacked; (2) the "Cada DeCA"
+section's right column had visible empty space under the history-table visual — added a second real
+visual, `SavedDataPreview` (mock of `/panel/datos`), stacked above it, completing the "Guarda una
+vez. Reutiliza siempre." message with a save→reuse visual pair. Gate: typecheck, lint, prettier
+clean, 139/139 unit, 18/18 targeted landing+a11y e2e, 10-width overflow script at zero overflow, full
+suite 156/157 (1 pre-existing flake, reconfirmed unrelated). Manually verified in a real browser at
+1440px. See `decisions.md` D-089. **This closes DESIGN #55 except §15** (an overall density pass,
+non-blocking final polish).
+
+## D-090: DESIGN #55 §15 (density/hierarchy pass) — closes issue #55
+Full-page audit of `app/page.tsx` for cross-section spacing/visual-hierarchy consistency. Found one
+real gap: the "Product proof" benefits list was still plain text, the one section that hadn't gotten
+the success-check visual language used everywhere else (free-value, normativa). Fixed with the same
+`CheckIcon` treatment + normalized spacing to match sibling sections. Everything else audited was
+already consistent. **This is the last open #55 item — issue #55 (DESIGN landing overhaul) is now
+complete.** Gate: typecheck, lint, prettier clean, 139/139 unit, 18/18 targeted landing+a11y e2e,
+full suite 156/157 (1 pre-existing flake, reconfirmed unrelated). See `decisions.md` D-090.
+Also diagnosed (no code change) the user's live Google OAuth `redirect_uri_mismatch`: confirmed via
+direct request that the app sends the correct `.../api/auth/google/callback` URI; the user's Google
+Cloud Console had the segments swapped (`.../api/auth/callback/google`, a NextAuth.js-style path this
+app's hand-rolled OAuth client doesn't use). Told the user the exact fix — external account setting,
+not a code issue.

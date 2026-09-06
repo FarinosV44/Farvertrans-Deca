@@ -175,46 +175,61 @@ export const gl = {
     legalSourceLabel: "Fonte:",
     operatorTrustHeading: "Quen hai detrás do servizo",
     faqHeading: "Preguntas frecuentes",
-    faq: [
+    faqGroups: [
       {
-        q: "Que é o DeCA?",
-        a: "O Documento Electrónico de Control Administrativo é a versión dixital obrigatoria do documento de control do transporte de mercadorías por estrada. Substitúe o documento en papel.",
+        heading: "Normativa e obriga",
+        items: [
+          {
+            q: "Que é o DeCA?",
+            a: "O Documento Electrónico de Control Administrativo é a versión dixital obrigatoria do documento de control do transporte de mercadorías por estrada. Substitúe o documento en papel.",
+          },
+          {
+            q: "Cando é obrigatorio?",
+            a: "Desde o 5 de outubro de 2026 para o transporte interior. Non hai prórroga nin período transitorio: o papel deixa de admitirse.",
+          },
+          {
+            q: "Quen o ten que facer?",
+            a: "O cargador contractual e o transportista efectivo do transporte público de mercadorías por estrada, nos termos da normativa aplicable.",
+          },
+          {
+            q: "É obrigatorio para axencias de transporte?",
+            a: "Si, cando actúan como cargador contractual ou operador que contrata o transporte, coas mesmas obrigas de xeración e conservación.",
+          },
+        ],
       },
       {
-        q: "Cando é obrigatorio?",
-        a: "Desde o 5 de outubro de 2026 para o transporte interior. Non hai prórroga nin período transitorio: o papel deixa de admitirse.",
+        heading: "O documento",
+        items: [
+          {
+            q: "Serve un PDF escaneado?",
+            a: "Non. O ficheiro debe ser un PDF nativo dixital xerado a partir de datos estruturados. Un escaneo ou unha imaxe dixitalizada non é válido.",
+          },
+          {
+            q: "Ten que asinarse?",
+            a: "A resolución non esixe sinatura electrónica. Si que esixe PDF nativo, QR, URL HTTPS de descarga directa e rexistro de creación e modificacións.",
+          },
+          {
+            q: "Que datos debe conter?",
+            a: "Como mínimo: cargador contractual (nome ou razón social, NIF e domicilio), transportista efectivo (nome ou razón social e NIF), lugar e data de carga, lugar e data de descarga, natureza e peso da mercadoría, e matrícula do vehículo (tractora e remolque se é un conxunto articulado).",
+          },
+        ],
       },
       {
-        q: "Quen o ten que facer?",
-        a: "O cargador contractual e o transportista efectivo do transporte público de mercadorías por estrada, nos termos da normativa aplicable.",
-      },
-      {
-        q: "É obrigatorio para axencias de transporte?",
-        a: "Si, cando actúan como cargador contractual ou operador que contrata o transporte, coas mesmas obrigas de xeración e conservación.",
-      },
-      {
-        q: "Serve un PDF escaneado?",
-        a: "Non. O ficheiro debe ser un PDF nativo dixital xerado a partir de datos estruturados. Un escaneo ou unha imaxe dixitalizada non é válido.",
-      },
-      {
-        q: "Ten que asinarse?",
-        a: "A resolución non esixe sinatura electrónica. Si que esixe PDF nativo, QR, URL HTTPS de descarga directa e rexistro de creación e modificacións.",
-      },
-      {
-        q: "Que datos debe conter?",
-        a: "Como mínimo: cargador contractual (nome ou razón social, NIF e domicilio), transportista efectivo (nome ou razón social e NIF), lugar e data de carga, lugar e data de descarga, natureza e peso da mercadoría, e matrícula do vehículo (tractora e remolque se é un conxunto articulado).",
-      },
-      {
-        q: "Como o leva o condutor?",
-        a: "Antes do inicio do servizo, en copia electrónica visible no móbil ou en copia impresa, sempre co QR dispoñible.",
-      },
-      {
-        q: `É gratis ${BRAND.name}?`,
-        a: "Si. Podes crear e descargar documentos sen tarxeta e sen límite ata o 31 de decembro de 2026.",
-      },
-      {
-        q: "Podo xerar todos os documentos que queira?",
-        a: "Si. Non hai límite mensual. Só aplicamos controis automáticos fronte a usos abusivos que non afectan o uso normal nin a inspección.",
+        heading: "Uso e custo",
+        items: [
+          {
+            q: "Como o leva o condutor?",
+            a: "Antes do inicio do servizo, en copia electrónica visible no móbil ou en copia impresa, sempre co QR dispoñible.",
+          },
+          {
+            q: `É gratis ${BRAND.name}?`,
+            a: "Si. Podes crear e descargar documentos sen tarxeta e sen límite ata o 31 de decembro de 2026.",
+          },
+          {
+            q: "Podo xerar todos os documentos que queira?",
+            a: "Si. Non hai límite mensual. Só aplicamos controis automáticos fronte a usos abusivos que non afectan o uso normal nin a inspección.",
+          },
+        ],
       },
     ],
     finalCtaHeading: "Comeza agora. Sen tarxeta.",

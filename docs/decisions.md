@@ -2463,3 +2463,117 @@
   here) and §15 (an overall density/hierarchy pass across the whole landing) remain. This closes out
   the visual-storytelling item; #55 is now substantially complete bar those two.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-086.
+
+## D-088 — `develop` (D-063…D-087) merged to `main`, on the user's explicit request ("push all what is done... to main")
+- Date / phase: 2026-09-06, same session, immediately after D-087. Merge commit `d7792d6`
+  (fast-forward not possible — `main` had diverged since D-058 with unrelated hotfix commits merged
+  directly there in an earlier session), `--no-ff` merge from `develop` at `1360d0e`. Pushed to
+  `origin/main` at `f3e9cc9..d7792d6`. 138 files changed, no conflicts.
+- **Brings `main` up to date with everything from D-063 through D-087**: SECURITY #53 (rate limiting,
+  mandatory admin TOTP 2FA + recovery codes, revocable sessions, password policy, audit log), LEGAL
+  #52 (Praetoria legal identity, custody/liability/jurisdiction framework, GDPR split) + LEGAL #54
+  (legal pages stay Spanish-only, translated disclaimer for other locales), I18N #54 (full 8-locale
+  translation: es/ca/eu/gl/en/fr/de/it), PRODUCT #56 slices 1-3 (`read_only` company role, global
+  search + Cmd/Ctrl+K palette, route-intelligence "Rutas frecuentes"), and DESIGN #51 slice
+  1-2/DESIGN #55 (landing overhaul: brand renamed to "DeCA Profesional", language switcher redesigned
+  as a globe dropdown, real-QR hero visual, free-value section, copy reframe, normative/trust/persona
+  card polish, visual storytelling).
+- **Pre-merge verification, on `develop` before merging** (not just re-trusting each slice's own
+  gate): `tsc --noEmit` clean; `npm run lint` (the project's actual lint script, `next lint`) clean —
+  only 2 pre-existing `<img>` LCP warnings, unrelated to this session's work; `prettier --check .`
+  clean repo-wide; `vitest run` 139/139. Full e2e (`playwright test --workers=3`) had already been
+  run immediately after D-087 (155/157, 2 pre-existing parallel-only flakes reconfirmed unrelated) —
+  not re-run a second time since no code changed between that run and the merge.
+- **3 new Prisma migrations are on `main` now but NOT yet applied to production**:
+  `20260905204705_user_session_version`, `20260905211042_admin_2fa_and_audit_log`,
+  `20260906094103_company_role_read_only`. Per the project's own repeated incident history this
+  session (D-051, D-054, D-060), pushing to `main` is a GIT-level action only — it does not deploy or
+  migrate the live database. **Before any of D-063's security work (2FA, session revocation) or
+  D-071's read_only role is live on decaprofesional.es, the user needs to redeploy AND run `prisma
+  migrate deploy` against production** — flagged here explicitly rather than assumed.
+- CI triggered on the `main` push (run queued at push time — see the Actions tab for the result;
+  not blocked on here since Keel never merges/tags/releases beyond what was explicitly asked, and
+  the push itself was the explicit ask).
+- **Scope note — this is a code merge, not a production deploy.** No redeploy, no `prisma migrate
+  deploy`, and no DNS/infra action was taken as part of this decision.
+
+## D-089 — DESIGN #55 slice 7: FAQ grouping (§10 close-out), hero spacing refinement, second "Cada DeCA" visual
+- Date / phase: 2026-09-06, same session, immediately after D-088. Two separate triggers: (1)
+  continuing the "keep going" instruction toward the last open #55 item (§10), and (2) a follow-up
+  owner directive mid-slice, explicit that it is "a #55 landing refinement, not a new global
+  redesign" and not a duplicate of #51 — addressed directly rather than deferred.
+- **§10 — FAQ grouped into 3 categories** across all 8 locales: "Normativa y obligación" (what/when/
+  who/agencies), "El documento" (scanned PDF/signature/required data), "Uso y coste" (driver
+  carrying it/free/generation limits) — same 10 questions, same order, just grouped, so no content
+  was added or removed. `landing.faq` (flat array) restructured to `landing.faqGroups` (array of
+  `{heading, items}`) in all 8 dictionaries — mechanical, positionally identical restructuring,
+  `satisfies Messages` catches any dictionary that drifts. `FaqAccordion` (`components/site/
+  faq-accordion.tsx`) rewritten to render a heading per group; `app/page.tsx` updated to pass
+  `groups` instead of `items`. The separate Spanish-only `FAQ` constant in `lib/content/landing.ts`
+  (used only for the FAQPage JSON-LD structured-data block) was NOT touched — search engines still
+  get one flat canonical FAQ list, unaffected by the on-page visual grouping. This closes out #55
+  §10 — #55 is now fully complete.
+- **Hero spacing (owner's item 1)**: `DecaPreview`'s front ("DeCA generado") card previously
+  overlapped the back (creator) card via a negative top margin (`-mt-8`), which the owner correctly
+  read as "one card sitting on top of the other." Changed to a positive offset (`mt-6 sm:mt-8`,
+  keeping the existing `ml-6 sm:ml-16` rightward shift) — the two cards now read as a diagonal,
+  clearly-separated cascade instead of a literal stack. `DecaPreview` is shared by the hero AND the
+  "Product proof" section (both call sites use the same component), so this fix applies to both
+  automatically rather than needing a hero-only special case.
+- **"Cada DeCA" section rebalance (owner's item 2)**: the right column previously held only
+  `WorkspacePreview` (the history table, D-087), leaving visible empty space below it once the left
+  icon grid ran longer. Added a second real product visual, `components/site/saved-data-preview.tsx`
+  — a non-interactive mock of the real `/panel/datos` saved-data manager (saved company/vehicle/
+  location rows, each with a check mark implying one-click reuse), stacked above `WorkspacePreview`
+  in the right column. Chosen over the other options the owner listed (quick-duplicate panel, PDF
+  preview, quick-actions panel) because it visually completes the "Guarda una vez. Reutiliza
+  siempre." claim directly: saved data (guarda una vez) feeding into the history of documents it
+  produced (reutiliza siempre) — a before/after pair, not two disconnected UI snippets. Same
+  generic-values-on-real-layout rule as `DecaPreview`/`WorkspacePreview` — no real customer data.
+- Verification: `tsc --noEmit` clean (8-locale `faqGroups` parity confirmed via `satisfies
+  Messages`); ESLint clean; Prettier clean; `vitest run` 139/139. `playwright test
+  tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed, including the FAQ-content-in-SSR-
+  HTML test (still finds the answer text under the new grouped markup) and axe (group headings add
+  no accessibility violations). A custom 10-width overflow script (375–1920px) — zero overflow at
+  every width, specifically checked given the new stacked two-visual right column. Full `playwright
+  test --workers=3` — 156/157 passed; the 1 failure (`content-cms`) is the same already-documented
+  parallel-only flake, reconfirmed passing with `--workers=1`. Manually verified in a real browser at
+  1440px: the hero cards are now clearly separated with no overlap, and the "Cada DeCA" section's
+  right column now closely matches the left icon grid's height with the two stacked panels.
+- **Scope note:** this closes ALL of DESIGN #55 except §15 (an overall density/hierarchy pass across
+  the whole landing, which was never blocking — it's a final polish pass, not a missing feature).
+- Not committed to `main` yet at the time of writing — see the next entry for the follow-up merge.
+
+## D-090 — DESIGN #55 §15 (final item): density/hierarchy pass, closes issue #55; also documents the Google OAuth `redirect_uri_mismatch` root cause
+- Date / phase: 2026-09-06, same session, immediately after D-089, on the user's explicit "done
+  complete issue 55 and push to main" instruction.
+- **Audit method:** read the full `app/page.tsx` end to end (not per-section, since a density/
+  hierarchy pass is specifically about cross-section consistency that per-section review misses) —
+  checked vertical rhythm (`py-16`/`py-12` usage), heading-to-content spacing, CTA-button spacing,
+  and visual-list styling for consistency across all 10 landing sections.
+- **Found and fixed the one real inconsistency**: the "Product proof" section's benefits list (3
+  items: Gratis / Rápido / Preparado para inspección) was still plain "Title. body" text with no
+  icon — the one section that hadn't received the success-check visual language already established
+  everywhere else on the page (free-value D-083, normativa D-086). Added the same `CheckIcon` +
+  success-color treatment; bumped its heading-to-list spacing (`mt-5`→`mt-6`) and CTA-button spacing
+  (`mt-7`→`mt-8`) to match the equivalent spacing used in the neighbouring "3 steps"/"Personas"
+  sections. Everything else audited (section padding, heading sizes, card border-radius/shadow
+  tokens, icon-badge sizing) was already consistent — the deliberately smaller `py-12` and smaller
+  text on the operator-trust section (D-086) is an intentional exception (secondary/muted by design,
+  per the owner's own "not law-firm-like" instruction), not an inconsistency to fix.
+- **This is the last open item in DESIGN #55 — the issue is now complete.**
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139.
+  `playwright test tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed. Full
+  `playwright test --workers=3` — 156/157 passed; the 1 failure (`admin-2fa`) is the same already-
+  documented parallel-only flake, reconfirmed passing with `--workers=1`. Manually verified in a real
+  browser at 1440px: the Product-proof checklist now visually matches the rest of the page.
+- **Separately this session (not a code change): diagnosed the user's live "Continuar con Google" →
+  `Error 400: redirect_uri_mismatch`.** Confirmed via a direct request against
+  `https://decaprofesional.es/api/auth/google` that the app correctly sends
+  `redirect_uri=https://decaprofesional.es/api/auth/google/callback` (matches `googleRedirectUri()`
+  in `lib/auth/google.ts` and the `.env.example` comment exactly — no code bug). The user's Google
+  Cloud Console OAuth client had `.../api/auth/callback/google` registered instead (segments
+  swapped — a common NextAuth.js convention this app doesn't use, since it has its own hand-rolled
+  OAuth client per D-046). Told the user the exact string to correct in the Google Cloud Console
+  "Authorized redirect URIs" field; this is an external account setting only the user can change —
+  no code or documentation change was needed or made.
