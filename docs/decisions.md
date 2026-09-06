@@ -2836,3 +2836,10 @@
   during this diagnosis. It was used once, live, for the diagnostic fetch above, was never written to
   any file or included in any commit, and the user was told directly to rotate it. No other
   credential was exposed during this incident.
+
+## D-099 — `develop` (D-097…D-098) merged to `main` at `c3822f1`, user asked directly whether the fix was in `main`
+`--no-ff` merge, no conflicts, 12 files. Brings `main` current with D-097 (visible Google OAuth error
+message) and D-098 (incident-resolution record). D-096 was already on `main` from the prior merge —
+this closes the gap the user's question surfaced. The actual production fix (the `preferred_locale`
+column) is SQL applied directly to the database, not a git artifact, so it has no corresponding
+commit either way.
