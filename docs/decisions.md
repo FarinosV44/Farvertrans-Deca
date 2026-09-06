@@ -2791,3 +2791,48 @@
   ESLint clean; Prettier clean; `vitest run` 139/139; `playwright test tests/e2e/auth-ux.spec.ts` —
   4/4 passed including the new test. Full `playwright test --workers=3` — 159/160 passed; the 1
   failure (`admin-2fa`) is the same already-documented parallel-only flake.
+
+## D-098 — PRODUCTION INCIDENT D-096 RESOLVED: the real missing column was `user.preferred_locale`, not just `session_version`
+- Date / phase: 2026-09-06, same session, immediately after D-097. The user applied D-096's SQL
+  (`session_version`, `totp_secret`, `totp_enabled_at`, `admin_recovery_code`, `security_audit_log`,
+  the `read_only` enum value) and confirmed every piece present via direct `information_schema`
+  queries — but a live login test still returned the identical `{"code":"internal"}` 500. D-096's
+  root-cause diagnosis was directionally correct (a missing-migration column) but **named the wrong
+  column** — this entry corrects the record rather than leaving D-096 standing as the final word.
+- **Found the actual cause using the newly-hardened diagnostics from D-096 itself**: the user ran
+  `FVD_ADMIN_TOKEN=… npm run diagnose -- https://decaprofesional.es` (their own token, shared in
+  chat — flagged to them to rotate it, since it's now been exposed in a chat log) and the new
+  column-level schema check immediately named the real gap: `Faltan columnas: user.preferred_locale`.
+  This confirmed two things at once: (1) production IS already running the latest `main` build (the
+  diagnose output has D-096's new checks, which only exist in code merged after D-096), so the
+  earlier confusion was never a stale-deploy issue; (2) the actual missing column was from a
+  DIFFERENT, EARLIER migration (`20260905190509_user_preferred_locale`, I18N #54/#62) that neither
+  D-088's "3 pending migrations" note nor D-096's diagnosis had flagged as still outstanding on
+  production — `login()`'s `prisma.user.findFirst({ where: { email } })` selects every model field
+  including `preferredLocale`, so a missing column there crashes identically to a missing
+  `session_version`, with the same generic 500. This is exactly why D-096's own newly-added
+  `REQUIRED_COLUMNS` check (which already included `user.preferred_locale`, foreseeing this exact
+  class of gap) was the tool that actually found it — the fix from the previous incident directly
+  solved this one.
+- **User applied**: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "preferred_locale" TEXT NOT NULL
+  DEFAULT 'es';` — confirmed via a second clean `npm run diagnose` run: **all checks green**,
+  including "Esquema y migraciones."
+- **Verified live, not just via diagnose**: a wrong-password login attempt now correctly returns
+  `{"code":"invalid_credentials"}` at 401 (not a 500); a real registration attempt against
+  production returned `201 Created` with a real account made (`emailSent: false` — see the open
+  item below).
+- **Not yet resolved: real email delivery.** The registration response's `emailSent: false` shows
+  the verification email did not actually send, despite `npm run diagnose`'s "Proveedor de email:
+  Configurado" reporting green — that check only verifies `RESEND_API_KEY`/`FVD_MAIL_FROM` are
+  non-empty strings, never that Resend actually accepts the key or that the sending domain is
+  verified. Asked the user to check both directly in their Resend dashboard. **`npm run diagnose`'s
+  mail check is itself a real, if minor, gap** — it can report "Configurado" while email delivery is
+  silently broken, which is exactly the false-confidence class of bug D-096 was written to eliminate
+  for the schema check. Worth hardening the same way in a future slice (an actual test-send or a
+  Resend API key validation call, not just an env-var presence check) — not done in this pass since
+  the user's immediate blocker (login/registration) is resolved and this is now a secondary,
+  independent gap.
+- **Credential hygiene note**: the user's `FVD_ADMIN_TOKEN` value was pasted in plain text in chat
+  during this diagnosis. It was used once, live, for the diagnostic fetch above, was never written to
+  any file or included in any commit, and the user was told directly to rotate it. No other
+  credential was exposed during this incident.

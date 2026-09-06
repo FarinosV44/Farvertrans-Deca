@@ -1132,3 +1132,19 @@ doesn't fix the underlying crash (still needs D-096's migration). Gate: typechec
 clean, 139/139 unit, 4/4 targeted auth-ux e2e (new test), full suite 159/160 (1 pre-existing flake).
 See `decisions.md` D-097. Also answered the user's email-env-var question: `RESEND_API_KEY` (real
 key, not the placeholder) + `FVD_MAIL_FROM`, both already in `.env.example`.
+
+## D-098: PRODUCTION INCIDENT RESOLVED — login/registration/Google auth all working again
+D-096 correctly diagnosed "a missing migration column" but named the wrong one. After the user
+applied D-096's SQL and it still crashed, the user ran `npm run diagnose` against production with
+their own admin token — D-096's own newly-added column check immediately named the REAL gap:
+`user.preferred_locale` (a different, earlier migration neither D-088 nor D-096 had flagged). User
+applied `ALTER TABLE "user" ADD COLUMN preferred_locale TEXT NOT NULL DEFAULT 'es'`. **Confirmed live:
+`npm run diagnose` fully green, a wrong-password login now correctly returns 401
+`invalid_credentials` (not a 500), and a real registration against production succeeded (201,
+real account created).** See `decisions.md` D-098 for full detail.
+**Still open: real email delivery.** Registration returned `emailSent: false` despite diagnose
+reporting the mail provider "Configurado" — that check only verifies the env vars are non-empty, not
+that Resend actually accepts the key. Asked the user to verify the key and sending domain directly in
+their Resend dashboard. Noted as a real (if secondary) gap in the diagnose tool itself for a future
+slice: it can report false-positive "ok" on mail exactly the way the schema check used to on columns.
+**#56 resumes now that production auth is confirmed restored.**
