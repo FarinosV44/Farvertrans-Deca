@@ -796,3 +796,18 @@ full 8-locale target: es/ca/eu/gl/en/fr/de/it) instead of re-tuning it per local
 live: Galician renders correctly, 4-button switcher fits with no overflow at 1440px. See
 `decisions.md` D-073. **Continuing** with Basque next (flagged for extra scrutiny — language isolate,
 lower translation confidence than the Romance languages done so far), then French, German, Italian.
+
+## D-074: I18N #54 slice 4 — Basque added (flagged, lower confidence); language switcher fixed permanently
+Added `lib/i18n/dictionaries/eu.ts` (Basque), slotted into `LOCALES` between Catalan and Galician per
+the owner's specified order. **Explicit caveat, not glossed over:** Basque is a language isolate with
+grammar nothing like the Romance languages already done (ergative case, agglutinative morphology) —
+this session's translation confidence here is meaningfully lower, and a native-speaker review is
+recommended before treating it as equally trustworthy. Also fixed the language-switcher overflow
+problem PERMANENTLY instead of patching it a third time: D-072 and D-073 each hit a 360px overflow
+regression from one more switcher button; the switcher now has a fixed max-width with internal
+horizontal scroll (`overflow-x-auto`), decoupling its width from how many locales exist — French,
+German, and Italian can be added later with zero header changes. Gate: typecheck (parity), lint,
+prettier clean, 139/139 unit, 153/154 e2e (1 pre-existing flake, unrelated). Verified live: Basque
+renders correctly, switcher's internal scroll works at 1440px. See `decisions.md` D-074. **Continuing**
+with French, German, Italian next — all well-resourced languages with high translation confidence,
+unlike Basque.

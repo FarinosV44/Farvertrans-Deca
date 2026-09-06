@@ -1895,3 +1895,40 @@
   needing extra translation-quality scrutiny before being trusted at the same level as the Romance
   languages done so far.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-072.
+
+## D-074 — I18N #54 slice 4: Basque added (flagged, lower confidence); language switcher fixed permanently against future growth
+- Date / phase: 2026-09-06, same session, immediately after D-073. Following the owner's specified
+  switcher order (ES/CA/EU/GL/EN/FR/DE/IT), Basque slots in between Catalan and Galician — added now
+  even though it was sequenced after the higher-confidence Romance languages in D-072/D-073's plan,
+  to keep `LOCALES`' order matching the owner's spec rather than leaving a gap to backfill later.
+- **Explicit translation-quality caveat, stated plainly rather than glossed over:** Basque (Euskera)
+  is a language isolate — no genetic relation to Spanish, Catalan, or Galician. Its grammar
+  (ergative-absolutive case marking, agglutinative morphology, verb agreement with up to three
+  arguments) is nothing like the Romance languages already done. This session's confidence in
+  `lib/i18n/dictionaries/eu.ts`'s accuracy is meaningfully lower than in `ca.ts`/`gl.ts`, and the file
+  carries a caveat comment saying so. **Recommending a native-speaker review before this is relied on
+  the same way as the Romance-language dictionaries** — not blocking its merge (the owner's own
+  instruction was to keep moving through the language queue), but this should not be treated as
+  equally trustworthy without that review.
+- **Fixed the language-switcher overflow problem permanently instead of patching it a third time.**
+  D-072 and D-073 each hit (and fixed) a 360px page-overflow regression triggered by adding one more
+  switcher button — a pattern that would have recurred for every remaining locale (fr, de, it — 3
+  more after this). Root-caused properly this time: `components/i18n/language-switcher.tsx`'s button
+  group now has a fixed `max-w-[104px]` with `overflow-x-auto` (each button `shrink-0`), so it scrolls
+  INTERNALLY once it has more buttons than fit, rather than growing the header row and pushing the
+  whole page's `scrollWidth` past the viewport. This decouples the switcher's width from `LOCALES`'
+  length entirely — adding French, German, and Italian later needs zero header/switcher changes.
+  Traded a small UX cost (narrow-viewport users scroll a small pill to reach some locale buttons,
+  with a visible partial-button + native scrollbar hinting there's more) for a fix that cannot recur.
+- Verification: `tsc --noEmit` clean (`eu.ts satisfies Messages` parity confirmed); ESLint clean;
+  Prettier clean; `vitest run` 139/139; a targeted Playwright viewport-measurement script re-confirmed
+  zero page overflow at 360px with 5 switcher buttons BEFORE re-running the full suite (faster
+  iteration than a full `playwright test` cycle per attempt, given this exact class of regression had
+  already cost two prior slices a full debug cycle each); full `playwright test --workers=3` —
+  153/154 passed (the single already-documented `admin-2fa` recovery-code-replay parallel-only flake,
+  unrelated). Manually verified in a real Chrome session: switched to `eu`, confirmed the nav, hero,
+  trust row, and CTA render in Basque, and confirmed the switcher's internal scrollbar is visible and
+  functional at 1440px (its capped width now applies at every viewport, not just mobile).
+- **Not done:** French, German, Italian — continuing next, in that order (all well-resourced languages
+  this session has high translation confidence in, unlike Basque).
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-073.
