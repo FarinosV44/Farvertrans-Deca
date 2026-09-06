@@ -897,3 +897,18 @@ intelligence list (frequent routes + quick-create) rather than a shallow pass ac
 Gate: typecheck, lint, prettier clean, 139/139 unit, **157/157 e2e passed with zero flakes this run**.
 New e2e test creates two DeCAs on the same route and verifies the count and quick-create prefill.
 See `decisions.md` D-080. **Continuing** with the next #56 piece next.
+
+## D-081: DESIGN #55 (landing-only per owner's explicit boundary vs #51/#56) — brand renamed "DeCA Profesional"; language switcher redesigned as a globe dropdown
+Owner sent a large #55 directive with an explicit scope boundary: #51 = broad component/visual system,
+#55 = landing page only, #56 = control center (already in progress). Renamed the brand from "DeCA
+Fácil" to "DeCA Profesional" (owner's explicit current direction, reversing D-039's specific string
+choice, not its no-attribution policy) — `lib/brand.ts` plus 3 hardcoded references now derive from
+`BRAND.name`. This broke the header's 360px budget again (longer wordmark) — the same regression class
+D-072/D-073/D-074 had already hit three times from the switcher growing. Fixed it properly this time by
+implementing #55 §4 (language selector) instead of patching padding again: the switcher is now a
+`<details>` globe-icon dropdown (reusing `AccountMenu`'s proven pattern) listing all 8 locales by
+native name, with a footprint that can't regress regardless of locale count or brand-name length.
+Gate: typecheck, lint, prettier clean, 139/139 unit, 155/157 e2e (2 flakes re-ran green in isolation,
+confirmed unrelated). **This is the first of several #55 slices** — hero visual, free-value sections,
+persona/trust/FAQ/footer polish, and full responsive re-verification remain. See `decisions.md` D-081.
+**Continuing** with the #55 hero-visual slice next.

@@ -2165,3 +2165,56 @@
   --workers=3` — **157/157 passed, zero flakes this run** (the two previously-documented parallel-only
   flakes did not reproduce).
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-079.
+
+## D-081 — DESIGN #55 (scoped to landing per owner's explicit boundary): brand renamed to "DeCA Profesional"; language switcher redesigned as a globe dropdown
+- Date / phase: 2026-09-06, same session. The owner sent a large, detailed #55 directive with an
+  explicit, deliberate boundary statement: **#51 = broad desktop/component visual system; #55 =
+  landing page only (conversion, messaging, visual storytelling, language-selector UX, landing
+  sections); #56 = control-center/roles/permissions (already in progress, D-078–D-080)** — "do not mix
+  these responsibilities" and "#55 must build on top of the design system from #51, not duplicate or
+  recreate it." This entry and the ones that follow it are scoped accordingly: landing-page work only.
+- **Brand rename, done first because everything else in #55 depends on it being settled:** the
+  directive states the product's current intended name is "DeCA Profesional", not "DeCA Fácil" (the
+  name D-039 had picked when the product was split from Farvertrans branding). Per Keel's own rule —
+  only the owner reverses a recorded decision, and this is the owner doing exactly that — updated the
+  single source of truth (`lib/brand.ts`'s `name`/`shortName`) and grepped the whole repo for the 3
+  places that had hardcoded "DeCA Fácil" text instead of deriving from `BRAND.name`
+  (`app/blog/page.tsx`'s title — now derives from `BRAND.name`; `components/auth/auth-shell.tsx`'s
+  wordmark aria-label — now derives from `BRAND.name`; a stale doc comment in `lib/brand.ts` itself).
+  Updated the one e2e assertion that hardcoded the old aria-label
+  (`tests/e2e/auth-ux.spec.ts`). D-039's "no company attribution" POLICY is unchanged and still
+  enforced by `tests/unit/brand.test.ts` — only the specific string picked under that policy changed.
+- **Found a real regression from the rename, fixed by doing #55 §4 (language selector) at the same
+  time rather than patching around it again:** "DeCA Profesional" is 5 characters longer than "DeCA
+  Fácil", which pushed the header back over the 360px no-overflow budget — the SAME class of
+  regression that D-072/D-073/D-074 had already hit three times as the 8-locale switcher grew, now
+  triggered by the wordmark instead of the switcher. Rather than shave padding a fourth time (the
+  pattern explicitly reasoned about and rejected in D-074's own writeup), implemented the language-
+  selector redesign the owner's #55 §4 explicitly asked for, which eliminates this entire class of
+  regression rather than mitigating it again: **`components/i18n/language-switcher.tsx` rewritten as a
+  `<details>/<summary>` popover** (the same zero-JS-state, closes-on-outside-click pattern already
+  used by `AccountMenu` — reusing an existing, proven pattern rather than inventing dropdown-open-state
+  management) — a globe icon + the current locale code as the closed-state trigger, expanding to a
+  menu of all 8 locales by native endonym (Español/Català/Euskara/Galego/English/Français/Deutsch/
+  Italiano — a new `LOCALE_NAMES` map in `lib/i18n/locale.ts`, the single source other than a per-
+  locale dictionary entry, since a language's own name for itself doesn't change based on which
+  language the UI is currently in). New `GlobeIcon`/`CheckIcon` added to `components/panel/icons.tsx`
+  following the existing stroke-icon convention. The trigger's footprint is now CONSTANT regardless of
+  `LOCALES`' length or the brand name's length — this cannot regress the same way again no matter how
+  many more locales or how long a future brand name gets.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139 (incl.
+  `brand.test.ts`'s structural checks, still green — it never asserted the specific string "DeCA
+  Fácil", only the no-attribution policy). `playwright test tests/e2e/landing.spec.ts` — the exact
+  360px overflow test that had failed with the longer wordmark before this fix — now passes, along
+  with 768/1280px and every other landing assertion (14/14). `a11y.spec.ts` + `auth-ux.spec.ts` — 7/7,
+  confirming the new dropdown didn't reintroduce the D-077 target-size problem either. Full
+  `playwright test --workers=3` — 155/157 passed; the 2 failures (`content-cms` preview race,
+  `export-csv` registration-under-load) both re-ran green in isolation, confirming parallel-timing
+  flakes unrelated to this change, not a regression.
+- **Scope note:** this entry covers only #55 §4 (language selector) plus the brand-name prerequisite.
+  The rest of the #55 directive (hero visual richness, the "free value" sections, persona-card polish,
+  the daily-use/trust/regulation/FAQ/final-CTA/footer sections, responsive re-verification at the
+  specific widths the owner listed) is tracked as separate, still-pending slices — see the entries that
+  follow and `docs/PROGRESS.md`'s running position. Not attempting the entire 18-section directive in
+  one slice, consistent with this session's established pattern.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-080.

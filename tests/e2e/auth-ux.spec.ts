@@ -21,7 +21,7 @@ test.describe("AUTH #30 — premium auth card", () => {
     await expect(page.getByText("disponible muy pronto")).toBeVisible();
 
     // The brand wordmark links home.
-    await expect(page.getByRole("link", { name: "DeCA Fácil — inicio" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "DeCA Profesional — inicio" })).toBeVisible();
   });
 
   test("password show/hide toggles the field type", async ({ page }) => {

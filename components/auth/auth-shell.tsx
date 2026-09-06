@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/wordmark";
+import { BRAND } from "@/lib/brand";
 
 /**
  * Focused auth surface (AUTH #30): one centered card on a calm branded ground,
@@ -9,7 +10,7 @@ import { Wordmark } from "@/components/brand/wordmark";
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="auth-ground flex min-h-screen flex-col items-center justify-center px-4 py-10">
-      <Link href="/" className="no-underline" aria-label="DeCA Fácil — inicio">
+      <Link href="/" className="no-underline" aria-label={`${BRAND.name} — inicio`}>
         <Wordmark size={30} />
       </Link>
       <main
