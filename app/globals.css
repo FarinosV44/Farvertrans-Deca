@@ -114,6 +114,20 @@
   }
 }
 
+/* DESIGN #55 §14: one restrained fade+lift used for content that appears on
+   user interaction (FAQ answers) — kept subtle, and already covered by the
+   prefers-reduced-motion override above. */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Calm branded ground for the focused auth screens (AUTH #30). */
 .auth-ground {
   background: radial-gradient(

@@ -2382,3 +2382,44 @@
   professional legal review of a translated version, which remains a distinct, unstarted future task
   if the owner ever wants the legal pages themselves translated rather than disclaimed.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-084.
+
+## D-086 — DESIGN #55 slice 5: normative scannability (§9), trust-section card (§8), persona card icons (§6), restrained micro-interactions (§14)
+- Date / phase: 2026-09-06, same session, immediately after D-085. Bundled four smaller, lower-risk
+  #55 items together rather than the larger §5 visual-storytelling rebuild, since all four are
+  polish passes on sections that already exist rather than new UI.
+- **§9 — normative section**: the 7-point compliance checklist is now grouped inside one bordered,
+  surface-tinted card instead of sitting as bare full-width text, each point led by the same
+  `CheckIcon` success-check visual already established for the free-value section (D-083), for one
+  consistent "checklist" visual language across the landing rather than two different check styles.
+- **§8 — trust section**: `OPERATOR_TRUST` content (PRAETORIA's own legal-identity wording, still
+  never translated) now sits in a small quiet bordered card with a muted `ShieldIcon`, kept
+  deliberately secondary in size/weight — per the owner's explicit "not law-firm-like, no gavels or
+  scales" constraint, this is the ONLY visual change: a card, not new iconography, colour, or size
+  that would make it compete with the primary brand.
+- **§6 — persona cards**: each of the 4 persona cards now leads with a job-matched icon in the same
+  `IconBadge` treatment already used elsewhere (autónomo→truck, empresa de transporte→building,
+  agencia/operador→route, cargador/expedidor→map-pin — `PERSONA_ICONS`, positionally matched to
+  `PERSONAS` in `lib/content/landing.ts`), plus a restrained hover-elevation shadow.
+- **§14 — micro-interactions, kept restrained per the owner's explicit instruction**: the same
+  hover-elevation shadow added to persona cards, the daily-use product-showcase cards, and the
+  free-value checklist items (available items only) for one consistent hover language across the
+  landing's card-shaped content. FAQ (`components/site/faq-accordion.tsx`) gained a hover highlight
+  on the summary row and a short (`0.2s`) fade+lift-in animation on the opened answer — a new
+  `fade-in-up` keyframe in `app/globals.css`, already covered by the existing global
+  `prefers-reduced-motion` override, so no separate reduced-motion guard was needed.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean (`app/page.tsx` needed a
+  `--write` pass after the persona-card edit); `vitest run` 139/139. `playwright test
+  tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed, including the axe accessibility
+  checks (icon-only badges are `aria-hidden`/decorative, so no new a11y surface) and the
+  360/768/1280px overflow checks. Full `playwright test --workers=3` — 154/157 passed; the 3
+  failures (`admin-2fa`, `attribution`, `content-cms`) all passed cleanly re-run with `--workers=1`,
+  confirming the same pre-existing parallel-only flake class already documented in D-083/D-084 —
+  none touch the landing page or any file this slice changed.
+  Manually verified in a real dev-server session at 1440px: persona-card icons render correctly,
+  the normative card and trust card both render with clean spacing and no overflow, and clicking a
+  FAQ item shows the hover highlight, the `+`→`×` rotation, and the answer's fade-in.
+- **Scope note:** #55 §5 (visual storytelling — creator/document preview, "así funciona" flow,
+  panel/table preview, inspection-ready, teamwork visuals), §10 (FAQ grouping into categories —
+  not attempted here since it needs new content structure, not just visual polish), and §15
+  (overall density/hierarchy pass) remain, tracked as further slices.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-085.

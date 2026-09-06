@@ -967,3 +967,17 @@ e2e, no flakes this run**. Manually verified in a real dev-server session across
 legal pages: notice absent under `es`, present with the correct translated text under every other
 locale. See `decisions.md` D-085. D-072's Spanish-only scope is reaffirmed, not reversed.
 **Continuing** with the remaining #55 items (§5, §6, §8-§10, §14-§15) next.
+
+## D-086: DESIGN #55 slice 5 — normative card (§9), trust card (§8), persona icons (§6), micro-interactions (§14)
+Bundled four polish items on existing sections: the 7-point normative checklist now sits in one
+bordered card with the same `CheckIcon` visual language as the free-value section; the PRAETORIA
+trust blurb now sits in a small quiet card with a muted shield icon (deliberately still secondary —
+no new colour/size, matching the owner's "not law-firm-like" constraint); each persona card now leads
+with a job-matched icon (`PERSONA_ICONS`) plus a restrained hover-elevation shadow, reused on the
+daily-use cards and free-value items for one consistent hover language; the FAQ accordion gained a
+hover highlight and a short fade-in on the opened answer (new `fade-in-up` keyframe, already covered
+by the existing global reduced-motion override). Gate: typecheck, lint, prettier clean, 139/139 unit,
+18/18 targeted landing+a11y e2e. Full suite 154/157 (3 pre-existing parallel-only flakes, all
+reconfirmed passing with `--workers=1`, none touching this slice's files). Manually verified in a
+real browser at 1440px. See `decisions.md` D-086. **Remaining #55**: §5 (visual storytelling), §10
+(FAQ grouping — needs new content structure), §15 (density/hierarchy pass).

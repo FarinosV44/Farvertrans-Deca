@@ -21,6 +21,7 @@ import {
   TruckIcon,
   BuildingIcon,
   MapPinIcon,
+  RouteIcon,
   ShieldIcon,
   IconBadge,
   CheckIcon,
@@ -70,6 +71,12 @@ const PRODUCT_SHOWCASE = [
   { Icon: MapPinIcon },
   { Icon: ShieldIcon },
 ] as const;
+
+/**
+ * DESIGN #55 §6: one icon per persona, matched to its job-to-be-done, in the
+ * same fixed order as `PERSONAS` in `lib/content/landing.ts`.
+ */
+const PERSONA_ICONS = [TruckIcon, BuildingIcon, RouteIcon, MapPinIcon] as const;
 
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
@@ -197,9 +204,9 @@ export default async function HomePage() {
             {freeValueItems.map((item) => (
               <li
                 key={item.label}
-                className={`flex items-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${
+                className={`flex items-center gap-2.5 rounded-[var(--radius-md)] border px-4 py-3 text-sm transition-shadow duration-200 ${
                   item.available
-                    ? "border-[var(--color-border)] bg-[var(--color-surface)]"
+                    ? "border-[var(--color-border)] bg-[var(--color-surface)] hover:shadow-[0_6px_20px_rgba(15,23,42,0.07)]"
                     : "border-dashed border-[var(--color-border)] text-[var(--color-text-muted)]"
                 }`}
               >
@@ -259,33 +266,39 @@ export default async function HomePage() {
             {dict.landing.personasHeading}
           </h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {personas.map((p) => (
-              <div
-                key={p.title}
-                className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
-              >
-                <h3 className="text-lg font-bold">{p.title}</h3>
-                <p className="mt-1 text-sm font-medium">{p.jobToBeDone}</p>
-                <ul className="mt-3 space-y-1 text-sm text-[var(--color-text-muted)]">
-                  {p.benefits.map((b) => (
-                    <li key={b} className="flex gap-2">
-                      <span aria-hidden className="text-[var(--color-success)]">
-                        ✓
-                      </span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-                <TrackedLink
-                  href={`/${p.slug}`}
-                  event={p.event}
-                  data-testid={`persona-cta-${p.slug}`}
-                  className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
+            {personas.map((p, i) => {
+              const Icon = PERSONA_ICONS[i];
+              return (
+                <div
+                  key={p.title}
+                  className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
                 >
-                  {dict.landing.personaCtaPrefix} {p.title.toLowerCase()} →
-                </TrackedLink>
-              </div>
-            ))}
+                  <IconBadge size={44}>
+                    <Icon width={20} height={20} />
+                  </IconBadge>
+                  <h3 className="mt-4 text-lg font-bold">{p.title}</h3>
+                  <p className="mt-1 text-sm font-medium">{p.jobToBeDone}</p>
+                  <ul className="mt-3 space-y-1 text-sm text-[var(--color-text-muted)]">
+                    {p.benefits.map((b) => (
+                      <li key={b} className="flex gap-2">
+                        <span aria-hidden className="text-[var(--color-success)]">
+                          ✓
+                        </span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <TrackedLink
+                    href={`/${p.slug}`}
+                    event={p.event}
+                    data-testid={`persona-cta-${p.slug}`}
+                    className="mt-4 inline-block self-start text-sm font-medium text-[var(--color-primary)]"
+                  >
+                    {dict.landing.personaCtaPrefix} {p.title.toLowerCase()} →
+                  </TrackedLink>
+                </div>
+              );
+            })}
           </div>
           <div className="mt-8">
             <CtaButton event="persona_section_cta">{hero.cta}</CtaButton>
@@ -309,7 +322,7 @@ export default async function HomePage() {
               return (
                 <div
                   key={item.label}
-                  className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+                  className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
                 >
                   <IconBadge size={44}>
                     <Icon width={20} height={20} />
@@ -329,7 +342,9 @@ export default async function HomePage() {
           </p>
         </section>
 
-        {/* Legal / trust */}
+        {/* Legal / trust — DESIGN #55 §9: grouped in one scannable card instead of
+            bare full-width text, each point led by the same success-check visual
+            language as the free-value section (D-083) for consistency. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="normativa"
@@ -337,16 +352,20 @@ export default async function HomePage() {
           <h2 id="normativa" className="text-2xl font-bold md:text-3xl">
             {dict.landing.regulationHeading}
           </h2>
-          <ul className="mt-6 grid gap-2 md:grid-cols-2">
-            {legalPoints.map((p) => (
-              <li key={p} className="flex gap-2 text-sm">
-                <span aria-hidden className="text-[var(--color-success)]">
-                  ✓
-                </span>
-                <span>{p}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+            <ul className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+              {legalPoints.map((p) => (
+                <li key={p} className="flex items-start gap-3 text-sm leading-relaxed">
+                  <CheckIcon
+                    width={16}
+                    height={16}
+                    className="mt-0.5 shrink-0 text-[var(--color-success)]"
+                  />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <p className="mt-4 text-sm text-[var(--color-text-muted)]">
             {dict.landing.legalSourceLabel}{" "}
             <a href={LEGAL_SOURCE.url} target="_blank" rel="noopener noreferrer">
@@ -357,20 +376,32 @@ export default async function HomePage() {
 
         {/* Operator / discreet legal-professional trust (TRUST #42 §2/§2A) — body is
             PRAETORIA's own legal-identity wording and is intentionally NEVER translated
-            (see the i18n note above), whatever the locale. */}
+            (see the i18n note above), whatever the locale.
+            DESIGN #55 §8: kept deliberately secondary/muted (no gavels, scales, or
+            law-firm visual cliché) — the only change is a quiet bordered card so it
+            reads as a trust footnote, not a wall of small text. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-12`}
           aria-labelledby="operador"
         >
-          <h2 id="operador" className="text-lg font-bold text-[var(--color-text-muted)]">
-            {dict.landing.operatorTrustHeading}
-          </h2>
-          <p
-            className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]"
-            data-testid="operator-trust"
-          >
-            {OPERATOR_TRUST.body}
-          </p>
+          <div className="flex max-w-2xl items-start gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-5">
+            <ShieldIcon
+              width={18}
+              height={18}
+              className="mt-0.5 shrink-0 text-[var(--color-text-muted)]"
+            />
+            <div>
+              <h2 id="operador" className="text-sm font-bold text-[var(--color-text-muted)]">
+                {dict.landing.operatorTrustHeading}
+              </h2>
+              <p
+                className="mt-1.5 text-sm text-[var(--color-text-muted)]"
+                data-testid="operator-trust"
+              >
+                {OPERATOR_TRUST.body}
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* FAQ */}
