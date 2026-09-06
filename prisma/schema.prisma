@@ -575,6 +575,10 @@ model ContentItem {
   tags              String[]      @default([])
   heroImage         String?       @map("hero_image")
   authorName        String?       @map("author_name")
+  // Optional named legal reviewer credit (e.g. a PRAETORIA lawyer), shown
+  // as `reviewedBy` in Article JSON-LD and as a visible credit line.
+  // Never auto-filled — only set explicitly, per-article, on real review.
+  legalReviewerName String?       @map("legal_reviewer_name")
   focusKeyword      String?       @map("focus_keyword")
   seoTitle          String?       @map("seo_title")
   metaDescription   String?       @map("meta_description")

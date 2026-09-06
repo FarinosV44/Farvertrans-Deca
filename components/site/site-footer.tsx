@@ -26,6 +26,7 @@ const LEGAL: FooterLink[] = [
   { label: "Términos", href: "/terminos" },
   { label: "Cookies", href: "/cookies" },
   { label: "Contacto", href: "/contacto" },
+  { label: "Autoría y revisión legal", href: "/revision-legal" },
 ];
 
 function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) {

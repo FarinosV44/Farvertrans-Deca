@@ -8,6 +8,10 @@ export type SeoPage = {
   description: string; // meta description
   intent: string; // the single search intent this page answers
   lastReviewed: string; // ISO date of the last normative review
+  // Optional named legal reviewer credit (e.g. a PRAETORIA lawyer), shown in
+  // the page's Article JSON-LD (`reviewedBy`) and as a visible credit line.
+  // Only set on pages that received a genuine legal review — never invented.
+  legalReviewer?: string;
   intro: string[];
   sections: SeoSection[];
   faq: { q: string; a: string }[];
@@ -40,7 +44,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Quiero generar un DeCA sin pagar.",
     lastReviewed: REVIEWED,
     intro: [
-      "Con DeCA Fácil puedes crear y descargar el Documento Electrónico de Control Administrativo sin coste, sin tarjeta y sin límite de documentos, al menos hasta el 31 de diciembre de 2026.",
+      "Con DeCA Profesional puedes crear y descargar el Documento Electrónico de Control Administrativo sin coste, sin tarjeta y sin límite de documentos, al menos hasta el 31 de diciembre de 2026.",
       "El documento que se genera cumple los requisitos técnicos de la resolución vigente: PDF nativo digital, código QR y una URL única HTTPS que permite la descarga directa del fichero sin registro ni contraseña.",
     ],
     sections: [
@@ -81,6 +85,7 @@ export const SEO_PAGES: SeoPage[] = [
       "El DeCA es la versión digital obligatoria del documento de control del transporte de mercancías por carretera. Qué es, para qué sirve y desde cuándo es obligatorio.",
     intent: "Qué es exactamente el DeCA.",
     lastReviewed: REVIEWED,
+    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
     intro: [
       "El DeCA (Documento Electrónico de Control Administrativo) es la versión digital del documento de control que ampara el transporte público de mercancías por carretera. Sustituye al documento en papel.",
       "Se genera a partir de datos estructurados, incorpora un código QR y una URL única, y debe conservarse al menos un año.",
@@ -122,6 +127,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Desde el 5 de octubre de 2026 el documento de control del transporte interior de mercancías por carretera debe ser electrónico (DeCA). Sin prórroga ni periodo transitorio.",
     intent: "Desde cuándo es obligatorio el DeCA.",
     lastReviewed: REVIEWED,
+    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
     intro: [
       "El 5 de octubre de 2026 entra en vigor la obligación de que el documento de control administrativo del transporte interior de mercancías por carretera sea electrónico.",
       "No hay prórroga ni periodo transitorio: a partir de esa fecha el papel deja de admitirse.",
@@ -211,6 +217,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Requisitos que debe cumplir el DeCA según la resolución vigente: PDF nativo, tamaño máximo 5 MB, QR, URL HTTPS de descarga directa, registro de cambios y conservación mínima de 1 año.",
     intent: "Qué requisitos debe cumplir el DeCA.",
     lastReviewed: REVIEWED,
+    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
     intro: [
       "Estos son los requisitos técnicos exigibles al DeCA para el transporte interior de mercancías.",
     ],
@@ -260,6 +267,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Datos mínimos que debe contener el DeCA según el artículo 6 de la Orden FOM/2861/2012: cargador, transportista, origen y destino, mercancía y peso, fecha y matrículas.",
     intent: "Qué datos lleva un DeCA.",
     lastReviewed: REVIEWED,
+    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
     intro: [
       "El DeCA debe contener, como mínimo, los datos del artículo 6 de la Orden FOM/2861/2012.",
     ],
@@ -343,6 +351,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Quién debe generar y conservar el DeCA en el transporte público de mercancías por carretera: cargador contractual y transportista efectivo, con excepciones.",
     intent: "Si estoy obligado a hacer el DeCA.",
     lastReviewed: REVIEWED,
+    legalReviewer: "Juan José Farinós Ibáñez — Abogado ICAV 13.981, PRAETORIA",
     intro: [
       "La obligación recae sobre el cargador contractual y el transportista efectivo del transporte público de mercancías por carretera, en los términos de la normativa aplicable.",
       "Ambos deben conservar el fichero al menos un año.",
@@ -433,7 +442,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Necesito un generador de DeCA.",
     lastReviewed: REVIEWED,
     intro: [
-      "DeCA Fácil es un generador online del Documento Electrónico de Control Administrativo. No necesitas instalar nada ni pasar por un comercial.",
+      "DeCA Profesional es un generador online del Documento Electrónico de Control Administrativo. No necesitas instalar nada ni pasar por un comercial.",
       "Introduces los datos del servicio, generas el DeCA y lo compartes con el conductor. El documento cumple los requisitos técnicos de la resolución vigente.",
     ],
     sections: [
@@ -477,7 +486,7 @@ export const SEO_PAGES: SeoPage[] = [
     intent: "Soy transportista autónomo y necesito hacer el DeCA de mis portes.",
     lastReviewed: REVIEWED,
     intro: [
-      "Si trabajas por tu cuenta con una o dos cabezas tractoras, el DeCA es una obligación más que resolver antes de salir. Con DeCA Fácil lo generas en el móvil en un par de minutos, sin instalar nada y sin cuota mensual.",
+      "Si trabajas por tu cuenta con una o dos cabezas tractoras, el DeCA es una obligación más que resolver antes de salir. Con DeCA Profesional lo generas en el móvil en un par de minutos, sin instalar nada y sin cuota mensual.",
       "El primer documento no requiere registro. Si te creas una cuenta gratuita, tus datos de empresa y tu vehículo quedan guardados y se autocompletan en el siguiente DeCA.",
     ],
     sections: [
@@ -528,7 +537,7 @@ export const SEO_PAGES: SeoPage[] = [
       "Somos una empresa de transporte con varios operadores de tráfico y queremos gestionar los DeCA en común.",
     lastReviewed: REVIEWED,
     intro: [
-      "En una empresa de transporte, varias personas emiten documentos a lo largo del día. DeCA Fácil da a tu empresa un espacio de trabajo único: todos los operadores comparten el historial, los datos maestros y las plantillas.",
+      "En una empresa de transporte, varias personas emiten documentos a lo largo del día. DeCA Profesional da a tu empresa un espacio de trabajo único: todos los operadores comparten el historial, los datos maestros y las plantillas.",
       "Cada DeCA guarda quién lo generó y quién lo corrigió, con fecha y hora, para que la trazabilidad interna sea clara.",
     ],
     sections: [
@@ -580,7 +589,7 @@ export const SEO_PAGES: SeoPage[] = [
     lastReviewed: REVIEWED,
     intro: [
       "Cuando una agencia u operador de transporte contrata el porte, actúa como cargador contractual y tiene las mismas obligaciones de generación y conservación del DeCA que cualquier otro cargador.",
-      "DeCA Fácil te deja emitir el documento en cada contratación sin montar un proceso nuevo y sin depender de que lo haga el transportista: tú controlas el documento, su conservación y su URL de inspección.",
+      "DeCA Profesional te deja emitir el documento en cada contratación sin montar un proceso nuevo y sin depender de que lo haga el transportista: tú controlas el documento, su conservación y su URL de inspección.",
     ],
     sections: [
       {
@@ -625,7 +634,7 @@ export const SEO_PAGES: SeoPage[] = [
     lastReviewed: REVIEWED,
     intro: [
       "El cargador contractual es uno de los dos obligados a generar y conservar el DeCA. Si eres una empresa industrial o comercial que expide mercancía, necesitas una forma sencilla de cumplir sin cambiar tus sistemas.",
-      "Con DeCA Fácil generas el documento por servicio, lo conservas en el historial durante el plazo legal y lo compartes con el transportista y con el conductor.",
+      "Con DeCA Profesional generas el documento por servicio, lo conservas en el historial durante el plazo legal y lo compartes con el transportista y con el conductor.",
     ],
     sections: [
       {

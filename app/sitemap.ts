@@ -5,16 +5,44 @@ import { listPublished } from "@/lib/content/cms";
 
 export const dynamic = "force-dynamic";
 
-/** Public, indexable pages only — never /admin, /panel, /api, /d/ or PDFs. Published CMS content only. */
+/**
+ * Genuine last-modified dates for the core static routes (not the SEO
+ * cluster, which carries its own `lastReviewed` per page). These are the
+ * real dates each route's content last changed, taken from git history —
+ * NOT the deploy timestamp. Update the relevant entry only when that
+ * route's actual content changes.
+ */
+const CORE_LAST_MODIFIED: Record<string, string> = {
+  "/": "2026-09-06",
+  "/soy-obligado": "2026-09-03",
+  "/guias": "2026-09-04",
+  "/blog": "2026-09-06",
+  "/revision-legal": "2026-09-06",
+};
+
+/**
+ * Public, indexable pages only — never /admin, /panel, /api, /d/ or PDFs.
+ * Published CMS content only.
+ *
+ * `/crear` is intentionally excluded: it is an application/form screen
+ * (`noindex, follow`), not a canonical landing page — `/generador-deca`
+ * is the indexable transactional equivalent and stays listed via
+ * `SEO_PAGES`.
+ *
+ * `priority`/`changeFrequency` are not emitted: Google has long stated it
+ * ignores both as ranking/crawl signals, so they are noise rather than an
+ * SEO lever.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-  const core = ["/", "/crear", "/soy-obligado", "/guias", "/blog"];
-  const seo = SEO_PAGES.map((p) => `/${p.slug}`);
-  const staticEntries = [...core, ...seo].map((path) => ({
+  const core = Object.keys(CORE_LAST_MODIFIED);
+  const staticEntries = core.map((path) => ({
     url: `${publicEnv.baseUrl}${path}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: path === "/" ? 1 : path === "/crear" || path === "/generador-deca" ? 0.9 : 0.7,
+    lastModified: CORE_LAST_MODIFIED[path],
+  }));
+
+  const seoEntries = SEO_PAGES.map((p) => ({
+    url: `${publicEnv.baseUrl}/${p.slug}`,
+    lastModified: p.lastReviewed,
   }));
 
   let content: MetadataRoute.Sitemap = [];
@@ -23,12 +51,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     content = published.map((c) => ({
       url: `${publicEnv.baseUrl}/${c.type === "guide" ? "guias" : "blog"}/${c.slug}`,
       lastModified: c.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
     }));
   } catch {
     // DB unavailable at build/prerender — the static entries still ship.
   }
 
-  return [...staticEntries, ...content];
+  return [...staticEntries, ...seoEntries, ...content];
 }

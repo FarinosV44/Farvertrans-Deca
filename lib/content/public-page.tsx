@@ -96,6 +96,11 @@ export async function ContentPage({
       dateModified: item.updatedAt.toISOString(),
       author: { "@type": "Organization", name: item.authorName || BRAND.name },
       publisher: { "@type": "Organization", name: BRAND.name },
+      // Optional named legal reviewer credit (D-081/#33) — only present when
+      // an editor explicitly set one; never invented.
+      ...(item.legalReviewerName
+        ? { reviewedBy: { "@type": "Person", name: item.legalReviewerName } }
+        : {}),
       mainEntityOfPage: url,
     },
     {

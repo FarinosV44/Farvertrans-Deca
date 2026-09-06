@@ -1192,3 +1192,30 @@ fixed a real regression in `nav-links.spec.ts` (the footer link-checker didn't k
 links — first one in the product). Gate: typecheck, lint, prettier clean, 139/139 unit, 10/10
 targeted e2e, full suite 163/164 (1 pre-existing flake, reconfirmed unrelated). See `decisions.md`
 D-104. **Production still needs the migration applied** before this feature works live.
+
+## D-105/D-106: Technical SEO audit of decaprofesional.es (canonical host, sitemap, cannibalisation, legal reviewer)
+Full technical SEO audit requested directly by the user, on branch `seo/technical-audit-2026-09`
+(off `develop`, not merged to `main`). Chose `decaprofesional.es` (no `www`) as the single canonical
+host and added a permanent redirect from `www` (`next.config.ts`). Fixed `app/sitemap.ts`: removed
+`/crear` (now `noindex, follow` — it's the wizard, not a landing page; `/generador-deca` stays as the
+indexable equivalent), replaced every `lastModified: new Date()` with genuine per-page dates, and
+dropped `priority`/`changeFrequency` (not real ranking signals). Resolved a homepage vs
+`/deca-gratis` title/description cannibalisation by giving the homepage a distinct "DeCA Profesional
+generador" intent (H1 was already fine, untouched). Reviewed `/deca-obligatorio-2026` vs the blog
+countdown post, kept both (different intents), cross-linked them instead. Completed D-081's brand
+rename in the two files it had missed (`prisma/content-seed.ts`, `content/seo/pages.ts`) and added a
+migration to backfill already-seeded rows. Added an optional `legalReviewer`/`legalReviewerName`
+field (SEO cluster + CMS + Prisma + Zod), set the user's given PRAETORIA-reviewer credential on 5
+normative pages, and built a new `/revision-legal` page (only from the already-approved
+`LEGAL_ENTITY` copy, consistent with D-043) linked from the footer. Added `nav` to every SiteHeader
+call missing it, renamed "Sigue leyendo" to "Guías relacionadas" with the 3 cornerstone guides always
+offered, and added Article/BreadcrumbList/Organization JSON-LD where missing. `robots.ts` already
+covered every private route — no change needed.
+**Verification, honestly bounded by this sandbox**: this environment blocks `binaries.prisma.sh` and
+`fonts.googleapis.com` (confirmed pre-existing via an unmodified baseline before any edit), so
+`prisma migrate deploy` and `next build`/`test:e2e` cannot complete here. Verified everything that
+could run: `tsc --noEmit` — byte-identical 86 pre-existing errors before/after (none newly
+introduced); lint clean on every touched file; `prettier --check` clean; `vitest run` 139/139
+unchanged. See `decisions.md` D-105/D-106 for the full reasoning and the two migrations left for the
+user/CI to apply. **Not merged to `main` and not deployed**, per the task's explicit instruction —
+ready for review on the branch.

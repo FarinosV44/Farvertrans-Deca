@@ -39,7 +39,7 @@ export const CONTENT_SEED: Seed[] = [
     excerpt:
       "Un DeCA no se edita: cada corrección crea una versión nueva con su propio QR y URL, y la anterior se conserva. Cómo hacerlo bien.",
     category: "Uso del producto",
-    authorName: "Equipo DeCA Fácil",
+    authorName: "Equipo DeCA Profesional",
     seoTitle: "Cómo corregir un DeCA: versión nueva, QR nuevo",
     metaDescription:
       "Corregir un DeCA genera una versión nueva con QR y URL propios; la versión anterior se conserva. Guía paso a paso y qué debe recibir el conductor.",
@@ -78,7 +78,7 @@ A: Sí, mientras conserves el acceso. La corrección no reinicia el plazo de con
     excerpt:
       "Qué tiene que poder enseñar el conductor en una inspección y cómo preparar el documento para que se abra sin depender de la cobertura.",
     category: "Uso del producto",
-    authorName: "Equipo DeCA Fácil",
+    authorName: "Equipo DeCA Profesional",
     seoTitle: "Cómo llevar el DeCA en el móvil en carretera",
     metaDescription:
       "El conductor lleva el DeCA en copia electrónica o impresa, siempre con el QR visible. Cómo compartirlo y qué comprobar antes de salir.",
@@ -112,7 +112,7 @@ La URL del QR abre el PDF **directamente**, sin registro ni contraseña. El agen
     excerpt:
       "NIF mal escrito, confundir cargador y transportista, dejar el peso en blanco: los fallos que más se repiten y cómo no cometerlos.",
     category: "Uso del producto",
-    authorName: "Equipo DeCA Fácil",
+    authorName: "Equipo DeCA Profesional",
     seoTitle: "Errores frecuentes al hacer el DeCA",
     metaDescription:
       "Los errores más comunes al generar el DeCA: cargador vs transportista, NIF, peso, matrícula del remolque. Cómo detectarlos antes de generar.",
@@ -149,7 +149,7 @@ El formulario acepta identificadores extranjeros. Revisa letra inicial y dígito
     excerpt:
       "El documento de control del transporte interior deja de admitirse en papel el 5 de octubre de 2026. Checklist para llegar preparado.",
     category: "Normativa",
-    authorName: "Equipo DeCA Fácil",
+    authorName: "Equipo DeCA Profesional",
     seoTitle: "DeCA obligatorio 5 de octubre de 2026: checklist",
     metaDescription:
       "El 5 de octubre de 2026 el documento de control del transporte interior debe ser electrónico. Qué necesitas tener listo, sin prórroga ni transición.",
@@ -157,6 +157,8 @@ El formulario acepta identificadores extranjeros. Revisa letra inicial y dígito
     relatedSlugs: ["como-corregir-un-deca", "como-llevar-el-deca-en-el-movil"],
     lastReviewedAt: REVIEWED,
     body: `El **5 de octubre de 2026** entra en vigor la obligación de que el documento de control administrativo del transporte interior de mercancías por carretera sea electrónico. **No hay prórroga ni periodo transitorio**: a partir de esa fecha el papel deja de admitirse.
+
+> Esta es la cuenta atrás práctica. Para el detalle normativo completo — ámbito, sanciones y quién está obligado — consulta [DeCA obligatorio desde el 5 de octubre de 2026](/deca-obligatorio-2026).
 
 ## Checklist
 
