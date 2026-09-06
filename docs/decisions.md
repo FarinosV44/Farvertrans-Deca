@@ -2218,3 +2218,55 @@
   follow and `docs/PROGRESS.md`'s running position. Not attempting the entire 18-section directive in
   one slice, consistent with this session's established pattern.
 - Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-080.
+
+## D-082 — DESIGN #55 slice 2: hero visual richness (real QR, layered product cards) + "Sin tarjeta" microcopy + footer address
+- Date / phase: 2026-09-06, same session, immediately after D-081. Continuing #55 §1 (hero must
+  become much stronger — realistic product visual, never a fake QR) and §2 (free must be a real,
+  visible competitive advantage — "Sin tarjeta" alongside "Gratis durante la fase de lanzamiento").
+- **`components/site/deca-preview.tsx` rebuilt as two layered, overlapping cards** — the creator step
+  (unchanged content) behind, a NEW generated-document result card in front: reference/route, a
+  "Vigente" status badge, and — the important part — **a genuinely real, server-generated QR code**
+  (`qrPngDataUriCached` from `lib/pdf/qr.ts`, the exact same QR library the actual PDF uses), pointing
+  at the site's own public base URL. This satisfies the owner's explicit constraint literally: never a
+  decorative pixel grid, and if a QR is shown it must represent the real QR mechanism, not fabricate a
+  specific document's identity. Also added a "Descargar PDF"/"Compartir" action row to the front card
+  so it reads as a real completion state, not just a static badge.
+- **`app/page.tsx`** now generates that QR server-side once per render (`const heroQr =
+  await qrPngDataUriCached(publicEnv.baseUrl)`) and passes it to both `<DecaPreview>` usages (hero +
+  product-proof section) — `DecaPreview` gained a required `qrDataUri` prop, no longer generates any
+  QR-shaped content of its own.
+- **"Sin tarjeta" microcopy**, per the owner's suggested wording: added `hero.noCardNote` ("Sin
+  tarjeta · Sin límite de documentos durante la fase de lanzamiento.") to all 8 dictionaries and
+  rendered it directly under the CTA row, above the trust-row checklist — exactly where the owner's
+  spec placed it ("free/no-card reassurance" in the hero's left column, near the CTA).
+- **Footer**, per #55 §12: added the full registered address (`LEGAL_ENTITY.address`) beneath the
+  existing operator line — the footer already had the correct brand name (after D-081), the correct
+  PRAETORIA/CIF identity, and the correct `Deca@praetoriaabogados.es` email (all from earlier #52
+  work); the address was the one item from the owner's explicit footer checklist not yet shown there.
+- **Two real regressions found and fixed before this could be called done, not shipped broken:**
+  (1) a WCAG color-contrast failure (axe `color-contrast`, "serious") on the new "Vigente" badge —
+  `color-mix` tinted-background-plus-colored-text combo measured 4.07:1 against the required 4.5:1 at
+  10px text; fixed by switching to solid success-color background with white text, which is
+  guaranteed-compliant rather than a fragile contrast calculation. (2) A CSS Grid intrinsic-min-width
+  overflow at exactly 768px (axe/overflow tests both caught it) — the hero's `grid-cols-[1.05fr_0.95fr]`
+  column sizing couldn't shrink the new, richer card content below its content-driven minimum width,
+  a classic "grid items default to `min-width: auto`" gotcha. Fixed with a single `min-w-0` on the
+  component's outer wrapper — confirmed via a direct Playwright measurement script across the owner's
+  full requested width list (375/390/412/768/1024/1280/1366/1440/1600/1920) that this is not a
+  narrow patch but a real fix: **zero overflow at every one of those ten widths**, not just the two
+  the automated test suite happens to check.
+- Verification: `tsc --noEmit` clean; ESLint clean; Prettier clean; `vitest run` 139/139 (dictionary
+  parity across all 8 locales confirmed by the `satisfies Messages` compile check). `playwright test
+  tests/e2e/landing.spec.ts tests/e2e/a11y.spec.ts` — 18/18 passed, including the exact color-contrast
+  and 768px-overflow checks that had failed before the two fixes above. Full `playwright test
+  --workers=3` — 155/157 passed, the 2 failures being the same already-documented parallel-only flakes
+  (`admin-2fa`, `content-cms`), unrelated. Manually verified in a real Chrome session at 1440px: the
+  layered hero cards render correctly, the QR is visibly a real scannable code (not a pattern), the
+  "Sin tarjeta" line sits directly under the CTA as specified.
+- **Scope note, same as D-081:** this covers #55 §1 (hero), part of §2 (no-card copy), and part of
+  §12 (footer address). Remaining: §3 (free-value-communication section), §5 (visual storytelling
+  across the daily-use/panel-preview/inspection/teamwork sections), §6 (persona card polish), §7
+  (reframe "por qué usarlo cada día"), §8 (trust section), §9 (regulation section), §10 (FAQ
+  grouping/polish), §11 (final CTA composition), §14 (micro-interactions), §15 (overall density/
+  hierarchy pass). Continuing in subsequent slices, not attempted in one block.
+- Not committed to `main` — pushed to `develop` only, same standing reason as D-068 through D-081.

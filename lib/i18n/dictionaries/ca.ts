@@ -40,6 +40,7 @@ export const ca = {
         "Mercaderies · PDF + QR · Custòdia digital · Historial · Multiusuari · Gratis durant la fase de llançament",
       cta: "CREA UN DECA GRATIS",
       ctaSecondary: "ENTRA",
+      noCardNote: "Sense targeta · Sense límit de documents durant la fase de llançament.",
     },
     trustRow: [
       "Sense registre per al teu primer DeCA",

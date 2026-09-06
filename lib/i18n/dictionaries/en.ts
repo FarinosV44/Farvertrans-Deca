@@ -36,6 +36,7 @@ export const en = {
         "Goods · PDF + QR · Digital custody · History · Multi-user · Free during the launch phase",
       cta: "CREATE FREE DECA",
       ctaSecondary: "LOG IN",
+      noCardNote: "No card · No document limit during the launch phase.",
     },
     trustRow: ["No sign-up for your first DeCA", "PDF + QR", "Digital custody", "History"],
     stepsHeading: "Create your DeCA in 3 steps",

@@ -912,3 +912,16 @@ Gate: typecheck, lint, prettier clean, 139/139 unit, 155/157 e2e (2 flakes re-ra
 confirmed unrelated). **This is the first of several #55 slices** — hero visual, free-value sections,
 persona/trust/FAQ/footer polish, and full responsive re-verification remain. See `decisions.md` D-081.
 **Continuing** with the #55 hero-visual slice next.
+
+## D-082: DESIGN #55 slice 2 — hero visual richness (real QR, layered cards) + "Sin tarjeta" + footer address
+Rebuilt `components/site/deca-preview.tsx` as two overlapping cards (creator behind, generated-result
+in front) with a genuinely real server-generated QR (same `lib/pdf/qr.ts` the actual PDF uses, pointing
+at the site's base URL) — never a decorative pattern. Added `hero.noCardNote` ("Sin tarjeta · Sin
+límite de documentos durante la fase de lanzamiento.") to all 8 dictionaries, placed under the CTA.
+Added the full registered address to the footer. Found and fixed two real regressions before shipping:
+a WCAG color-contrast failure on the new status badge, and a CSS Grid intrinsic-min-width overflow at
+768px (classic `min-width: auto` grid gotcha) — fixed with one `min-w-0`, verified with zero overflow
+across all ten widths the owner's directive listed (375–1920px). Gate: typecheck, lint, prettier clean,
+139/139 unit, 155/157 e2e (2 pre-existing flakes, unrelated). See `decisions.md` D-082. **Remaining
+#55 work** (free-value section, visual storytelling sections, persona/trust/regulation/FAQ/final-CTA
+polish) continues in subsequent slices — not attempted in one block.

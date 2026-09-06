@@ -94,6 +94,7 @@ export function SiteFooter() {
           <p className="mt-3 text-xs text-[var(--color-text-muted)]" data-testid="footer-operator">
             {LEGAL_ENTITY.operatorLine}
           </p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">{LEGAL_ENTITY.address}</p>
         </div>
       </div>
     </footer>

@@ -47,6 +47,7 @@ export const eu = {
         "Salgaiak · PDF + QR · Zaintza digitala · Historiala · Erabiltzaile anitz · Doan abiaraztearen fasean",
       cta: "SORTU DECA DOAN",
       ctaSecondary: "SARTU",
+      noCardNote: "Txartelik gabe · Dokumentu-mugarik gabe abiaraztearen fasean zehar.",
     },
     trustRow: [
       "Erregistrorik gabe zure lehen DeCArako",

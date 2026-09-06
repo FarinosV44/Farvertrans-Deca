@@ -40,6 +40,7 @@ export const fr = {
         "Marchandises · PDF + QR · Conservation numérique · Historique · Multi-utilisateur · Gratuit pendant la phase de lancement",
       cta: "CRÉER UN DECA GRATUIT",
       ctaSecondary: "CONNEXION",
+      noCardNote: "Sans carte · Sans limite de documents pendant la phase de lancement.",
     },
     trustRow: [
       "Sans inscription pour votre premier DeCA",

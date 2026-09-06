@@ -40,6 +40,7 @@ export const it = {
         "Merci · PDF + QR · Conservazione digitale · Cronologia · Multiutente · Gratis durante la fase di lancio",
       cta: "CREA UN DECA GRATIS",
       ctaSecondary: "ACCEDI",
+      noCardNote: "Senza carta · Nessun limite di documenti durante la fase di lancio.",
     },
     trustRow: [
       "Nessuna registrazione per il tuo primo DeCA",

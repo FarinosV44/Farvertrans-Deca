@@ -12,6 +12,7 @@ import { DecaPreview } from "@/components/site/deca-preview";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
+import { qrPngDataUriCached } from "@/lib/pdf/qr";
 import {
   PlusIcon,
   QrIcon,
@@ -71,6 +72,9 @@ const PRODUCT_SHOWCASE = [
 export default async function HomePage() {
   const user = await getCurrentUser().catch(() => null);
   const authed = !!user?.companyId;
+  // DESIGN #55 §1: a REAL QR (same `lib/pdf/qr.ts` used for the actual PDF),
+  // pointing at the site's own base URL — never a decorative pixel grid.
+  const heroQr = await qrPngDataUriCached(publicEnv.baseUrl);
 
   // I18N #54: the whole landing reads from `getDictionary(locale)` unconditionally
   // now — `lib/content/landing.ts` only supplies the non-translatable bits that
@@ -133,7 +137,10 @@ export default async function HomePage() {
                   </Link>
                 )}
               </div>
-              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-muted)]">
+              <p className="mt-3 text-sm font-medium text-[var(--color-text-muted)]">
+                {hero.noCardNote}
+              </p>
+              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-text-muted)]">
                 {trustRow.map((t) => (
                   <li key={t} className="flex items-center gap-1.5">
                     <span aria-hidden className="text-[var(--color-success)]">
@@ -144,7 +151,7 @@ export default async function HomePage() {
                 ))}
               </ul>
             </div>
-            <DecaPreview />
+            <DecaPreview qrDataUri={heroQr} />
           </div>
         </section>
 
@@ -191,7 +198,7 @@ export default async function HomePage() {
                 <CtaButton event="product_demo_cta">{hero.cta}</CtaButton>
               </div>
             </div>
-            <DecaPreview />
+            <DecaPreview qrDataUri={heroQr} />
           </div>
         </section>
 

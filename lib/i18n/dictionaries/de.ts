@@ -40,6 +40,7 @@ export const de = {
         "Güter · PDF + QR · Digitale Aufbewahrung · Verlauf · Mehrere Nutzer · Kostenlos während der Startphase",
       cta: "DECA KOSTENLOS ERSTELLEN",
       ctaSecondary: "ANMELDEN",
+      noCardNote: "Ohne Kreditkarte · Kein Dokumentenlimit während der Startphase.",
     },
     trustRow: [
       "Keine Registrierung für Ihr erstes DeCA",
