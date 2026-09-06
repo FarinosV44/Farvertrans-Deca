@@ -401,6 +401,15 @@ export const it = {
       equipo: "Team",
       empresa: "La mia azienda",
     },
+    teamActivity: {
+      heading: "Attività del team",
+      invited: (actor: string) => `${actor} ha inviato un invito`,
+      joined: (actor: string) => `${actor} si è unito al team`,
+      roleChanged: (actor: string, target: string, role: string) =>
+        `${actor} ha cambiato il ruolo di ${target} in ${role}`,
+      removed: (actor: string, target: string) => `${actor} ha rimosso ${target} dal team`,
+      roleLabel: { owner: "Amministratore", member: "Operatore", read_only: "Sola lettura" },
+    },
   },
   historico: {
     title: "Cronologia",
