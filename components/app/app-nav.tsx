@@ -45,7 +45,7 @@ export async function AppNav({
   return (
     <nav
       aria-label="Secciones de la cuenta"
-      className="mt-4 flex gap-1 overflow-x-auto border-b border-[var(--color-border)] pb-2"
+      className="mt-4 flex gap-1 overflow-x-auto border-b-2 border-[var(--color-text)]"
     >
       {TABS.map(({ key, href, label, Icon }) => {
         const active = current === key;
@@ -54,10 +54,10 @@ export async function AppNav({
             key={key}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] px-3 py-2 text-sm no-underline transition-colors ${
+            className={`-mb-0.5 flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm no-underline transition-colors ${
               active
-                ? "bg-[var(--color-surface)] font-medium text-[var(--color-primary)]"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                ? "border-[var(--color-primary)] font-semibold text-[var(--color-primary)]"
+                : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
             }`}
           >
             <Icon width={18} height={18} strokeWidth={active ? 2 : 1.75} />

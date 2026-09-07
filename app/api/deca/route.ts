@@ -70,15 +70,18 @@ export async function POST(req: Request) {
     }
     // #59 soft gate: a company registered before the full-ficha requirement
     // must complete its data before creating a new DeCA. Login and existing
-    // documents are never blocked — only new generation.
-    const { companyDataComplete } = await import("@/lib/company/completeness");
-    if (!companyDataComplete(user.company)) {
+    // documents are never blocked — only new generation. Lenient on the
+    // CIF/NIF checksum (the owner cannot edit it — the superadmin does, #62).
+    const { companyDataComplete, missingCompanyFields, describeMissingFields } = await import(
+      "@/lib/company/completeness"
+    );
+    if (!companyDataComplete(user.company, false)) {
+      const missing = describeMissingFields(missingCompanyFields(user.company, false));
       return NextResponse.json(
         {
           error: {
             code: "company_data_incomplete",
-            message:
-              "Completa los datos de tu empresa (dirección, código postal, población, contacto) antes de generar un DeCA.",
+            message: `Completa los datos de tu empresa antes de generar un DeCA. Falta o no es válido: ${missing}.`,
           },
         },
         { status: 409 },

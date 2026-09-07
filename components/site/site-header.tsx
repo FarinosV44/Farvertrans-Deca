@@ -30,7 +30,7 @@ export async function SiteHeader({
   const locale = await getLocale();
   const es = await getDictionary(locale);
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg)_92%,transparent)] backdrop-blur">
+    <header className="sticky top-0 z-40 border-b-2 border-[var(--color-text)] bg-[color-mix(in_srgb,var(--color-bg)_92%,transparent)] backdrop-blur">
       <div className="mx-auto flex max-w-[1120px] items-center gap-4 px-4 py-3 md:px-6">
         <Link
           href="/"

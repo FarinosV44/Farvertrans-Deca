@@ -3663,3 +3663,80 @@ remaining scope.
   gains a FUTURE billing-data row.
 - Verification: `tsc` + prettier + `vitest` (unchanged count — no test, it is design) clean. No app
   change. Commit `<pending>` on `develop`. **#59–#64 batch complete.**
+
+## D-121 — #59–#64 batch merged to `main` and migrations applied to production
+- Date / phase: 2026-09-07, on the user's standing instruction ("when finish all issues push to
+  main and apply all migrations").
+- **Merge:** `develop` → `main` at `b4638b1` (`--no-ff`, 100 files, +3853/−183). Carries D-114…D-120
+  (#61 terminology, #59 company ficha, #62 account lifecycle, #63 help centre, #60 backup, #64
+  billing design). CI triggered on the `main` push.
+- **Production migrations applied** (`prisma migrate deploy` against `DIRECT_URL`, the ledger was
+  already clean from D-112 — no phantom rows this time):
+  `20260907150000_company_full_ficha_fields`, `20260907170000_account_lifecycle_status`.
+  `prisma migrate status` → "Database schema is up to date!" (26/26).
+- **Verified in production** (read-only introspection): all 10 new columns present on `company` +
+  `user`; `AccountStatus` enum = `active/blocked/deactivated/anonymized`; every existing row
+  defaults to `active` (0 non-active) — additive, nothing broken.
+- **Still the user's:** (1) redeploy Hostinger so the new code runs against the new schema — until
+  then production serves the pre-batch build against a schema that is ahead of it (additive columns
+  with defaults, harmless); (2) the 9 existing companies will hit the #59 soft gate on their next
+  DeCA and must complete their ficha (or the superadmin fills it in `/admin/empresas/[id]`);
+  (3) #60's object-store + `age` key + repo secrets, then the first backup run + full restore-test;
+  (4) rotate `FVD_ADMIN_TOKEN` + the Supabase DB password (both were pasted in chat this session).
+- Beat-1 comments posted on #59–#64. Awaiting the user's live verification, then beat-3, then the
+  user closes the issues.
+
+## D-122 — #67/#65/#66 design bundle: "Sistema Vía" proposal published for approval
+- Date / phase: 2026-09-07, Phase 3-style design step inside Phase 5 maintenance. User asked to
+  "draft the #67 proposal first" (AskUserQuestion).
+- The three new issues form one design project: **#67** (a whole new Vignelli-inspired visual
+  identity) is the keystone; **#65** (admin redesign) and **#66** (PDF redesign) both say "reuse the
+  general visual system", i.e. they depend on #67. All three require an approved visual proposal
+  before implementation.
+- **Deliverable:** `docs/design/sistema-via.md` (implementation source of truth) + a published
+  proposal artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 —
+  palette (6 "líneas", each colour = one fixed meaning), typography (`Archivo` + `IBM Plex Mono`,
+  short scale), the "línea" signature motif, a component gallery, and 4 representative screen
+  mockups (panel, `/crear`, admin list+detail, the PDF) rendered in the system.
+- **Direction, in brief:** warm paper ground + near-black ink; `--color-primary` moves from the
+  generic `#0b5cff` to an institutional `#0A3D91`; a `--color-route` burnt orange used ONLY for the
+  DeCA-creation flow; `ok/warn/danger/rest` become named status lines shown as icon+text pills
+  everywhere (table, detail, PDF); hairline borders, 2px radius, shadows removed; the existing
+  `--color-*` / `--radius-*` tokens keep their role, only their values change + the functional set
+  is added.
+- **Not implemented** — awaiting the user's approval of the direction. On approval: #67 first
+  (tokens + `components/ui/` + nav + `/crear` flow + states + icons + mobile, verified per screen
+  with axe + the guided a11y pass), then #65 on that base, then #66 (with PDF snapshot tests and an
+  old-vs-new comparison). No legal/business logic changes in any of the three (each issue's AC).
+- Older open issues (#1–4 epics, #24, #33, #40–47, #56) remain as recorded — worked in
+  D-042…D-111, awaiting the user's live verification and close; Keel never closes an issue on its
+  own reading of the code.
+
+## D-123 — #59 soft-gate bug fix + #67 "Sistema Vía" implementation started
+- Date / phase: 2026-09-07. User reported: a company with código postal + población filled still
+  showed "faltan datos". User also approved the D-122 design proposal.
+- **#59 fix (`f218fb3`, ships to `main`):** the soft gate for existing companies was re-running the
+  CIF/NIF checksum, which the owner cannot fix (the identifier is locked, #59). A pre-#59 company
+  with a malformed `nif` (found in production: `praetoria sl` has `nif = "praetoria sl"`) was
+  permanently trapped, and the generic message named fields that were already correct.
+  - `companyDataComplete(company, strict=false)` — the soft gate now requires all 8 fields present
+    + a valid postal code / email / phone, but accepts any non-empty `name` / `nif`. New
+    registration (`validatedCompanyData` in `lib/auth/index.ts`) keeps the full hard `companyDataSchema`.
+  - `missingCompanyFields` + `describeMissingFields` + `COMPANY_FIELD_LABELS` — the 409 response and
+    the `/panel/empresa` banner now name the actual missing/invalid fields; if `name`/`nif` itself
+    is wrong the banner tells the user to contact support (the superadmin corrects it via #62).
+  - Regression test added for the exact case. 168 unit + a11y green.
+  - Follow-up (user's call): the production `praetoria sl` company's `nif` should be corrected to
+    PRAETORIA's real CIF `B21810452` via `/admin/empresas/[id]`.
+- **#67 foundation (`9cdcfba`, on `develop`):** `app/globals.css` `@theme` redefined to Sistema Vía
+  (warm paper `#FBFAF7`, ink `#16181D`, primary `#0A3D91`, `--color-route #C8531E`, functional
+  status set `success/warn/danger/rest` + `-bg` tints, radii 2/3/4px); `Archivo` + `IBM Plex Mono`
+  wired in `app/layout.tsx`. Token names keep their roles; app stays light-only. a11y verified on
+  `/`, `/crear`, `/registro`.
+- **#67 remaining:** `components/ui/` primitives (Button/Pill/Field/Alert/Progress/EmptyState/
+  Kicker/Card/DataTable), then migrate nav → `/crear` flow → states/alerts → icons → mobile, per
+  `docs/design/sistema-via.md`. Then #65 (admin, on the same primitives), then #66 (PDF, CMR-grid +
+  snapshot tests). No legal/business logic changes.
+- Session-infra note: a stray-`next-dev`-process pile-up (leftover from ad-hoc curl tests; `pkill`
+  is a no-op on Windows) was causing port-3000 conflicts and intermittent e2e failures throughout
+  the session. Killed the tree + cleared `.next`; use `taskkill //F //IM node.exe //T` on Windows.

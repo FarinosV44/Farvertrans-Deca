@@ -59,7 +59,8 @@ export async function PATCH(req: Request) {
     city: b.city,
     contactName: b.contactName,
   };
-  const nowComplete = companyDataComplete(merged);
+  // Lenient on the locked identifier (see lib/company/completeness.ts).
+  const nowComplete = companyDataComplete(merged, false);
 
   const company = await prisma.company.update({
     where: { id: user.companyId },

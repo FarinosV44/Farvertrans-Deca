@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Badge } from "@/components/admin/ui";
+import { Button, Pill, type PillTone } from "@/components/ui";
 
 type Kind = "usuarios" | "empresas";
 type Status = "active" | "blocked" | "deactivated" | "anonymized";
@@ -13,11 +13,11 @@ const STATUS_LABEL: Record<Status, string> = {
   deactivated: "Baja",
   anonymized: "Anonimizada",
 };
-const STATUS_TONE: Record<Status, string> = {
-  active: "green",
-  blocked: "yellow",
-  deactivated: "muted",
-  anonymized: "muted",
+const STATUS_TONE: Record<Status, PillTone> = {
+  active: "ok",
+  blocked: "stop",
+  deactivated: "rest",
+  anonymized: "rest",
 };
 
 /**
@@ -77,7 +77,7 @@ export function AccountActions({
     <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
       <div className="flex items-center gap-2">
         <span className="text-sm font-bold">Estado de la cuenta</span>
-        <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
+        <Pill tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Pill>
       </div>
       {reason && <p className="mt-1 text-xs text-[var(--color-text-muted)]">Motivo: {reason}</p>}
 
@@ -103,37 +103,34 @@ export function AccountActions({
       ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           {status !== "blocked" && (
-            <button
-              type="button"
+            <Button
+              tier="secondary"
               disabled={busy}
               data-testid="account-block"
               onClick={() => call({ action: "block" })}
-              className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm disabled:opacity-55"
             >
               Bloquear
-            </button>
+            </Button>
           )}
           {status !== "deactivated" && (
-            <button
-              type="button"
+            <Button
+              tier="secondary"
               disabled={busy}
               data-testid="account-deactivate"
               onClick={() => call({ action: "deactivate" })}
-              className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm disabled:opacity-55"
             >
               Dar de baja
-            </button>
+            </Button>
           )}
           {status !== "active" && (
-            <button
-              type="button"
+            <Button
+              tier="primary"
               disabled={busy}
               data-testid="account-reactivate"
               onClick={() => call({ action: "reactivate" })}
-              className="min-h-9 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 text-sm text-[var(--color-primary-contrast)] disabled:opacity-55"
             >
               Reactivar
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -155,15 +152,14 @@ export function AccountActions({
               placeholder="ANONIMIZAR"
               className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
             />
-            <button
-              type="button"
+            <Button
+              tier="danger"
               disabled={busy || confirmAnon !== "ANONIMIZAR"}
               data-testid="account-anonymize"
               onClick={() => call({ action: "anonymize", confirm: confirmAnon })}
-              className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-danger)] px-3 text-sm text-[var(--color-danger)] disabled:opacity-40"
             >
               Anonimizar definitivamente
-            </button>
+            </Button>
           </div>
         </details>
       )}

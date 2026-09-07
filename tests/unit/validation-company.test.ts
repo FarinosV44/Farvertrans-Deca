@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { companyDataSchema } from "@/lib/validation/company";
-import { companyDataComplete, missingCompanyFields } from "@/lib/company/completeness";
+import {
+  companyDataComplete,
+  missingCompanyFields,
+  describeMissingFields,
+} from "@/lib/company/completeness";
 
 const valid = {
   name: "Transportes Ejemplo SL",
@@ -48,5 +52,34 @@ describe("companyDataComplete / missingCompanyFields (#59 soft gate)", () => {
   it("is false for null / undefined", () => {
     expect(companyDataComplete(null)).toBe(false);
     expect(companyDataComplete(undefined)).toBe(false);
+  });
+});
+
+describe("soft gate is lenient on a locked, pre-#59 identifier (#59 bug fix)", () => {
+  // A company created before #59 with a garbage NIF the owner CANNOT edit.
+  const preExisting = { ...valid, nif: "praetoria sl" };
+
+  it("strict still rejects the invalid NIF (new-registration bar)", () => {
+    expect(companyDataComplete(preExisting, true)).toBe(false);
+    expect(missingCompanyFields(preExisting, true)).toContain("nif");
+  });
+
+  it("the soft gate (strict:false) passes once every editable field is filled", () => {
+    expect(companyDataComplete(preExisting, false)).toBe(true);
+    expect(missingCompanyFields(preExisting, false)).toEqual([]);
+  });
+
+  it("the soft gate still catches a genuinely missing / malformed editable field", () => {
+    expect(companyDataComplete({ ...preExisting, postalCode: "99999" }, false)).toBe(false);
+    expect(missingCompanyFields({ ...preExisting, phone: "" }, false)).toContain("phone");
+    expect(missingCompanyFields({ ...preExisting, city: "" }, false)).toContain("city");
+  });
+
+  it("describeMissingFields is a readable Spanish list, not a fixed string", () => {
+    expect(describeMissingFields(["postalCode"])).toBe("código postal");
+    expect(describeMissingFields(["postalCode", "city"])).toBe("código postal y población");
+    expect(describeMissingFields(["phone", "email", "city"])).toBe(
+      "teléfono, correo electrónico y población",
+    );
   });
 });
