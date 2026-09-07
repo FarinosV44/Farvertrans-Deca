@@ -3711,3 +3711,32 @@ remaining scope.
 - Older open issues (#1–4 epics, #24, #33, #40–47, #56) remain as recorded — worked in
   D-042…D-111, awaiting the user's live verification and close; Keel never closes an issue on its
   own reading of the code.
+
+## D-123 — #59 soft-gate bug fix + #67 "Sistema Vía" implementation started
+- Date / phase: 2026-09-07. User reported: a company with código postal + población filled still
+  showed "faltan datos". User also approved the D-122 design proposal.
+- **#59 fix (`f218fb3`, ships to `main`):** the soft gate for existing companies was re-running the
+  CIF/NIF checksum, which the owner cannot fix (the identifier is locked, #59). A pre-#59 company
+  with a malformed `nif` (found in production: `praetoria sl` has `nif = "praetoria sl"`) was
+  permanently trapped, and the generic message named fields that were already correct.
+  - `companyDataComplete(company, strict=false)` — the soft gate now requires all 8 fields present
+    + a valid postal code / email / phone, but accepts any non-empty `name` / `nif`. New
+    registration (`validatedCompanyData` in `lib/auth/index.ts`) keeps the full hard `companyDataSchema`.
+  - `missingCompanyFields` + `describeMissingFields` + `COMPANY_FIELD_LABELS` — the 409 response and
+    the `/panel/empresa` banner now name the actual missing/invalid fields; if `name`/`nif` itself
+    is wrong the banner tells the user to contact support (the superadmin corrects it via #62).
+  - Regression test added for the exact case. 168 unit + a11y green.
+  - Follow-up (user's call): the production `praetoria sl` company's `nif` should be corrected to
+    PRAETORIA's real CIF `B21810452` via `/admin/empresas/[id]`.
+- **#67 foundation (`9cdcfba`, on `develop`):** `app/globals.css` `@theme` redefined to Sistema Vía
+  (warm paper `#FBFAF7`, ink `#16181D`, primary `#0A3D91`, `--color-route #C8531E`, functional
+  status set `success/warn/danger/rest` + `-bg` tints, radii 2/3/4px); `Archivo` + `IBM Plex Mono`
+  wired in `app/layout.tsx`. Token names keep their roles; app stays light-only. a11y verified on
+  `/`, `/crear`, `/registro`.
+- **#67 remaining:** `components/ui/` primitives (Button/Pill/Field/Alert/Progress/EmptyState/
+  Kicker/Card/DataTable), then migrate nav → `/crear` flow → states/alerts → icons → mobile, per
+  `docs/design/sistema-via.md`. Then #65 (admin, on the same primitives), then #66 (PDF, CMR-grid +
+  snapshot tests). No legal/business logic changes.
+- Session-infra note: a stray-`next-dev`-process pile-up (leftover from ad-hoc curl tests; `pkill`
+  is a no-op on Windows) was causing port-3000 conflicts and intermittent e2e failures throughout
+  the session. Killed the tree + cleared `.next`; use `taskkill //F //IM node.exe //T` on Windows.
