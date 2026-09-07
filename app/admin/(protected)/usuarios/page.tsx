@@ -39,10 +39,14 @@ export default async function AdminUsuarios({ searchParams }: { searchParams: Pr
       {rows.length === 0 ? (
         <Empty>Ningún usuario{q ? ` para "${q}"` : ""}.</Empty>
       ) : (
-        <Table head={["Email", "Proveedor", "Empresa", "Rol workspace", "Rol", "Alta"]}>
+        <Table head={["Email", "Proveedor", "Empresa", "Rol workspace", "Estado", "Alta"]}>
           {rows.map((u) => (
             <Row key={u.id}>
-              <Cell>{u.email}</Cell>
+              <Cell>
+                <Link href={`/admin/usuarios/${u.id}`} className="no-underline">
+                  {u.email}
+                </Link>
+              </Cell>
               <Cell>
                 <Badge tone="muted">{u.provider === "google" ? "Google" : "email"}</Badge>
               </Cell>
@@ -57,7 +61,11 @@ export default async function AdminUsuarios({ searchParams }: { searchParams: Pr
               </Cell>
               <Cell>{u.companyRole === "owner" ? "administrador" : "miembro"}</Cell>
               <Cell>
-                {u.role === "internal" ? <Badge tone="yellow">interno</Badge> : "cliente"}
+                {u.status === "active" ? (
+                  <Badge tone="green">activa</Badge>
+                ) : (
+                  <Badge tone="muted">{u.status}</Badge>
+                )}
               </Cell>
               <Cell mono>{fmt(u.createdAt)}</Cell>
             </Row>

@@ -1364,3 +1364,12 @@ page, client action components (first `/admin` mutation UI), status badges, `t.a
 `admin-account-lifecycle.spec.ts`. Then sprints D (#63), E (#60), F (#64).
 **Production migrations pending** (apply when merged to `main`): `20260907150000` (#59),
 `20260907170000` (#62). #64's stays dormant.
+
+### Sprint C (#62) part 2 — DONE, on `develop` (D-117)
+2026-09-07, commit `<pending>`. `lib/admin/lifecycle.ts` + `lib/admin/anonymize.ts`, `PATCH
+/api/admin/{empresas,usuarios}/[id]` (getInternalUser→404 then requireStepUp→401), `getUserAdmin` +
+new `/admin/usuarios/[id]` page, `<AccountActions>` (first client-interactive `/admin` component) on
+both detail pages, status badges + links on the list pages. 157 unit + `admin-account-lifecycle`
+3/3 + `account-status` 2/2. No new migration (uses `20260907170000` from part 1). t.admin i18n
+deliberately skipped (admin area is ES-only by convention). **#62 COMPLETE.**
+**Next:** sprint D (#63 support channels), E (#60 backup), F (#64 billing design).

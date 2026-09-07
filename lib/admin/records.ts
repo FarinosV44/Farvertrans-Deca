@@ -379,3 +379,44 @@ export async function listUsersAdmin(q?: string, take = 400): Promise<UserAdminR
     createdAt: u.createdAt,
   }));
 }
+
+/** Full detail for one user — the `/admin/usuarios/[id]` sheet (#62). */
+export async function getUserAdmin(id: string) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      company: { select: { id: true, name: true, nif: true, status: true } },
+      _count: { select: { createdDecas: true } },
+    },
+  });
+  if (!user) return null;
+
+  const auditRows = await prisma.securityAuditLog.findMany({
+    where: { OR: [{ actorId: id }, { targetId: id }] },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    select: { action: true, result: true, actorId: true, targetType: true, createdAt: true },
+  });
+
+  return {
+    id: user.id,
+    email: user.email,
+    provider: user.passwordHash ? ("email" as const) : ("google" as const),
+    role: user.role,
+    companyRole: user.companyRole,
+    status: user.status,
+    statusReason: user.statusReason,
+    statusChangedAt: user.statusChangedAt,
+    anonymizedAt: user.anonymizedAt,
+    emailVerifiedAt: user.emailVerifiedAt,
+    createdAt: user.createdAt,
+    company: user.company,
+    createdDeca: user._count.createdDecas,
+    audit: auditRows.map((r) => ({
+      action: r.action,
+      result: r.result,
+      role: r.actorId === id ? ("actor" as const) : ("target" as const),
+      at: r.createdAt,
+    })),
+  };
+}

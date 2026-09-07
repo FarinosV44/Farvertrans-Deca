@@ -3544,3 +3544,41 @@ remaining scope.
 - Verification: `tsc` clean; new `tests/e2e/account-status.spec.ts` (block kills the session +
   refuses login; company deactivation blocks members) 2/2; admin/account/audit e2e subset 31/32
   (the 1 is the documented admin-2fa parallel flake). Commit `<pending>` on `develop`.
+
+## D-117 — #62 part 2: the superadmin lifecycle surface (states, anonymize, admin UI)
+- Date / phase: 2026-09-07, Phase 5, sprint C (part 2) of the #59–#64 batch. Completes #62 on top
+  of the D-116 enforcement layer.
+- **`lib/admin/lifecycle.ts`** — `setUserStatus` / `setCompanyStatus` (`active`/`blocked`/
+  `deactivated`): writes `status`+`statusReason`+`statusChangedAt`, on block/deactivate bumps every
+  affected member's `sessionVersion` (instant logout, belt-and-braces with the D-116 session check),
+  `recordAudit({action: "user_status_changed" | "company_status_changed"})`. Refuses to transition
+  an `anonymized` account.
+- **`lib/admin/anonymize.ts`** (+ pure `anonymize-fields.ts` for the test) — `anonymizeUser` /
+  `anonymizeCompany`: overwrites PII IN PLACE (`email` → `anon+<id>@anonymized.invalid`, company
+  ficha fields → null/tombstone), sets `status="anonymized"` + `anonymizedAt`. **Never** deletes a
+  row, a `Deca`/`DecaVersion`, or a `SecurityAuditLog` (D-067) — the historical `creatorName`/
+  `creatorEmail` on a `Deca` and the `dataJson` in a version are part of the immutable legal record
+  and are left untouched. Anonymising a company anonymises its members too (one transaction).
+- **`PATCH /api/admin/{empresas,usuarios}/[id]`** — actions `block`/`deactivate`/`reactivate`/
+  `anonymize` (+ `edit` on the company: the superadmin is the only actor that may fix `name`/`nif`,
+  which are locked for the company's own users). **Gated: `getInternalUser()` (non-internal → 404,
+  the area does not exist) then `requireStepUp()` (internal but stale 2FA → 401 `step_up_required`)**
+  — `requireStepUp` was purpose-built for this in SECURITY #53 and had never been wired to a route.
+  Anonymise needs `confirm: "ANONIMIZAR"`.
+- **`lib/admin/records.ts`** — `getUserAdmin(id)` (new: detail + the user's audit rows). `status`
+  surfaced on `listCompaniesAdmin`/`listUsersAdmin`/`getCompanyAdmin` + the #59 ficha fields on the
+  company detail. `lib/admin/search.ts` user hits now point at `/admin/usuarios/<id>`.
+- **UI** — new `app/admin/(protected)/usuarios/[id]/page.tsx`; `<AccountActions>`
+  (`components/admin/account-actions.tsx`) on both detail pages — the **first client-interactive
+  component in `/admin`**: status badge, block/deactivate/reactivate buttons, a collapsed
+  irreversible-anonymise section with a typed confirmation, and a "verifica tu identidad" link when
+  the server returns `step_up_required`. Status badges + detail links added to the two list pages.
+- `/d/[token]` is untouched. Verified: a blocked company's already-issued DeCA still serves a PDF.
+- **Deliberately NOT done:** `t.admin.*` i18n. The entire `/admin` area is hardcoded Spanish
+  server components (internal-only, ES-only by convention) — adding i18n for just the new pieces
+  would be inconsistent. A full admin i18n pass is separate work if ever wanted.
+- Verification: `tsc` + prettier + 157 unit (`admin-anonymize.test.ts` field contract) +
+  `tests/e2e/admin-account-lifecycle.spec.ts` 3/3 (block → session dead + `/d/` still 200 →
+  reactivate; anonymise → PII null, DeCA count unchanged, `/d/` still 200, audit row present;
+  routes 404 for anon) + `account-status.spec.ts` 2/2. Full e2e: <pending>. Migration for #62 is
+  `20260907170000_account_lifecycle_status` (D-116) — no new migration in part 2. Commit `<pending>`.

@@ -162,9 +162,20 @@
   a follow-up, not #59 scope.
 - Replies: beat 1 pending.
 
-### I-062 — #62 Superadmin lifecycle · P0 · part 1 on `develop` (D-116); part 2 pending
-- Enforcement layer done: AccountStatus enum, session + login reject suspended (713bc31). Admin
-  mutation UI/API + anonymize helper are part 2.
+### I-062 — #62 Superadmin lifecycle · P0 · **DONE, on `develop`**
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/62
+- Resolution: part 1 (D-116, `713bc31`) — `AccountStatus` enum on `User`/`Company` (migration
+  `20260907170000`), `getCurrentSession()` + `login()` reject a suspended user/company. Part 2
+  (D-117) — `lib/admin/lifecycle.ts` + `anonymize.ts` (in-place PII overwrite, never deletes a row /
+  DeCA / audit row — D-067), `PATCH /api/admin/{empresas,usuarios}/[id]` (`getInternalUser` → 404,
+  then `requireStepUp` → 401), new `/admin/usuarios/[id]` page + `<AccountActions>` (first
+  client-interactive `/admin` component) + status badges on the list pages. `/d/[token]` untouched —
+  a blocked company's DeCA stays verifiable.
+- Commits: `713bc31` + `<pending>` on `develop`. No production migration yet.
+- Verification: 157 unit + `admin-account-lifecycle.spec.ts` 3/3 + `account-status.spec.ts` 2/2 +
+  full e2e.
+- Deferred: `t.admin.*` i18n (the whole admin area is ES-only server components by convention).
+- Replies: beat 1 pending.
 ### I-063 — #63 Visible support + legal-assistance channels · P1 · queued (sprint D)
 ### I-060 — #60 Backup & restore of DeCA documents · P0 · queued (sprint E)
 ### I-064 — #64 Subscription/billing model — DESIGN ONLY · P2 · queued (sprint F)
