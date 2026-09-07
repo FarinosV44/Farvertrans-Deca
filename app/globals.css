@@ -113,6 +113,12 @@
   outline-offset: 2px;
   border-radius: 2px;
 }
+/* A programmatic focus target (e.g. the wizard heading `tabindex="-1"` that
+   receives focus on step change) must not paint a keyboard focus ring —
+   it's not a keyboard focus. Real interactive controls never carry -1. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 
 /* Skip link */
 .skip-link {
