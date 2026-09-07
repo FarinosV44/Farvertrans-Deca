@@ -625,6 +625,14 @@ export const gl = {
     generic: "Algo non foi ben. Téntao de novo nuns segundos.",
     notFound: "Non atopamos esta páxina.",
   },
+  legal: {
+    roles: {
+      shipper: "Cargador contractual",
+      carrier: "Transportista efectivo",
+      shipperShort: "Cargador",
+      carrierShort: "Transportista",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Este documento só ten validez legal na súa versión en español. Aínda non hai unha tradución dispoñible neste idioma.",

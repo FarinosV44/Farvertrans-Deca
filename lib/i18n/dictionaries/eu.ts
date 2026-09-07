@@ -637,6 +637,14 @@ export const eu = {
     generic: "Zerbait ez da ondo joan. Saiatu berriro segundo batzuen buruan.",
     notFound: "Ez dugu orri hau aurkitu.",
   },
+  legal: {
+    roles: {
+      shipper: "Bidaltzaile kontratugilea",
+      carrier: "Garraiolari eragilea",
+      shipperShort: "Bidaltzailea",
+      carrierShort: "Garraiolaria",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Dokumentu honek balio legala du soilik gaztelaniazko bertsioan. Hizkuntza honetarako itzulpena oraindik ez dago eskuragarri.",

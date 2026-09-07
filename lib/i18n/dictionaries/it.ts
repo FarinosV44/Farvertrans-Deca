@@ -624,6 +624,14 @@ export const it = {
     generic: "Qualcosa è andato storto. Riprova tra qualche secondo.",
     notFound: "Non abbiamo trovato questa pagina.",
   },
+  legal: {
+    roles: {
+      shipper: "Mittente contrattuale",
+      carrier: "Vettore effettivo",
+      shipperShort: "Mittente",
+      carrierShort: "Vettore",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Questo documento ha validità legale solo nella sua versione in spagnolo. Una traduzione in questa lingua non è ancora disponibile.",

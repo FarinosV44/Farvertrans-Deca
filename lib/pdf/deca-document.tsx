@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import type { DecaPayload } from "@/lib/deca/schema";
 import { BRAND } from "@/lib/brand";
+import { DECA_ROLES } from "@/lib/deca/roles";
 
 /**
  * Premium corporate layout (PRODUCT #49). Structural inspiration only from
@@ -311,13 +312,13 @@ export function DecaDocument(p: DecaDocProps) {
             <Text style={s.sectionHeading}>Partes del transporte</Text>
             <View style={s.cardsRow}>
               <PartyCard
-                role="Cargador contractual"
+                role={DECA_ROLES.shipper.title}
                 name={p.data.shipper.name}
                 nif={p.data.shipper.nif}
                 address={p.data.shipper.address}
               />
               <PartyCard
-                role="Transportista efectivo"
+                role={DECA_ROLES.carrier.title}
                 name={p.data.carrier.name}
                 nif={p.data.carrier.nif}
                 address={p.data.carrier.address}

@@ -1320,3 +1320,14 @@ See `decisions.md` D-112 (and the Correction notes it adds to D-096/D-098/D-111)
 2026-09-07, on the user's explicit instruction. Docs-only merge (PROGRESS.md + decisions.md).
 `develop` == `main` again except this record commit. Production DB reconciled per D-112; Hostinger
 redeploy still the user's action. See `decisions.md` D-113.
+
+## D-114: #61 unify DeCA-party terminology (launch batch #59–#64, sprint A)
+2026-09-07. Started the #59–#64 launch batch (plan `.claude/plans/sunny-greeting-snowflake.md`,
+approved). #61: new `lib/deca/roles.ts` (`DECA_ROLES`) + `t.legal.roles` in all 8 dictionaries as
+the single source for the DeCA parties' names; wired the PDF, correction-diff, zod messages and the
+cockpit summary (fixed a real shipper/carrier asymmetry there). The issue's two literal phrases live
+only in the CompanyProfile picker (business-type categories, not the parties) — left alone.
+No schema change, nothing to deploy. Deliberately did not rewrite the ~50 SEO-prose short-form uses
+(issue says no mechanical substitution). 142 unit + typecheck + prettier green; full e2e pending
+local Docker. `docs/issues.md` swept (open: #1–4, #24, #33, #40–43, #46, #47, #56, #59–64).
+**Next:** sprint B = #59 (mandatory company data + hard CIF block + soft gate for existing).

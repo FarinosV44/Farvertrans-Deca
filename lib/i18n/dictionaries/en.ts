@@ -615,6 +615,14 @@ export const en = {
     generic: "Something went wrong. Please try again in a few seconds.",
     notFound: "We couldn't find this page.",
   },
+  legal: {
+    roles: {
+      shipper: "Contracting shipper",
+      carrier: "Effective carrier",
+      shipperShort: "Shipper",
+      carrierShort: "Carrier",
+    },
+  },
   legalNotice: {
     notTranslated:
       "This document is only legally valid in its Spanish version. A translation into this language is not yet available.",

@@ -634,6 +634,14 @@ export const de = {
     generic: "Etwas ist schiefgelaufen. Versuchen Sie es in wenigen Sekunden erneut.",
     notFound: "Wir haben diese Seite nicht gefunden.",
   },
+  legal: {
+    roles: {
+      shipper: "Vertraglicher Verlader",
+      carrier: "Tatsächlicher Frachtführer",
+      shipperShort: "Verlader",
+      carrierShort: "Frachtführer",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Dieses Dokument ist nur in seiner spanischen Fassung rechtsverbindlich. Eine Übersetzung in diese Sprache ist noch nicht verfügbar.",

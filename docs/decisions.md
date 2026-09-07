@@ -3431,3 +3431,44 @@ remaining scope.
   migration-ledger reconciliation (plus the Correction notes on D-096/D-098/D-111).
 - CI triggered on the `main` push (doc-only — expected green).
 - Production DB is already reconciled (D-112); the Hostinger redeploy remains the user's action.
+
+## D-114 — #61 Unify DeCA-party legal terminology: a single source, not a find-and-replace
+- Date / phase: 2026-09-07, Phase 5 maintenance. First of the #59–#64 launch batch
+  (plan `.claude/plans/sunny-greeting-snowflake.md`, approved by the user).
+- **What the issue actually needed.** Its two literal substitutions
+  ("transportista de mercancías" → "…efectivo", "empresa cargadora" → "…contractual") only
+  physically occur in the `CompanyProfile` onboarding picker, where those are **business-type
+  self-classification categories** (parallel set with "operador" / "transportista de viajeros"),
+  NOT the DeCA document parties — mechanically substituting there would mislabel a passenger carrier
+  and break the parallel set. Left unchanged. The real need was consistency of the *document-party*
+  denomination, which D-107 had already half-done (PDF, review screen, FAQ, most legal prose) but
+  without a central source, so other surfaces had drifted.
+- **Decision:** one canonical source per audience.
+  - `lib/deca/roles.ts` — `DECA_ROLES.{shipper,carrier}.{title,inline,short,upper}` for the
+    Spanish-only, non-i18n surfaces: the generated PDF, the correction-diff row labels, the zod
+    validation messages.
+  - `t.legal.roles.{shipper,carrier,shipperShort,carrierShort}` added to all 8 i18n dictionaries
+    for translated UI copy; the `es` values are the source of truth and `deca-roles.test.ts`
+    asserts `lib/deca/roles.ts` stays in lockstep with them.
+- **Wired:** `lib/pdf/deca-document.tsx` (was hardcoded strings — same wording, now from the
+  constant), `lib/deca/detail.ts` (6 diff labels: "Cargador — …" → "Cargador contractual — …"),
+  `lib/deca/schema.ts` (2 zod messages), `lib/deca/validate.ts` (NIF warning labels),
+  `components/deca/doc-summary.tsx` — **fixed a real asymmetry**: the shipper card was titled
+  "Empresa que contrata el transporte" while the carrier card already said "Transportista
+  efectivo"; both now use the canonical pair.
+- **Deliberately NOT changed** (per the issue's own "no mechanical substitution" instruction and
+  scope discipline): ~50 SEO-prose lines in `content/seo/pages.ts` (most already pair the terms; the
+  rest use "cargador"/"transportista" as natural short forms, not the old incorrect phrases), the
+  short-form table headers in `/panel/historico` and the admin DeCA table, and the review-step
+  descriptive titles ("Empresa que contrata el transporte" / "Transportista que realiza el
+  transporte" — plain-language helpers at the confirm step). The seeded `content_item` rows
+  (`errores-frecuentes-al-generar-un-deca`, `cuenta-atras-deca-5-octubre-2026`) already name the
+  roles correctly, so **no backfill migration** was needed (unlike D-107).
+- **No schema change, no migration, nothing to deploy** for #61 — pure code + i18n.
+- Verification: `tsc --noEmit` clean; `prettier --check` clean; `vitest run` 142/142 (3 new in
+  `deca-roles.test.ts`; `deca-diff.test.ts` label assertion updated to the new *intentional* wording
+  per "never weaken a test — a wording change is a spec change"). Full e2e + a real generated-PDF
+  eye check are pending local Docker (down this session); the changed e2e-adjacent assertions
+  (`crear.spec.ts`, `deca-validate.test.ts`, `doc-cockpit.spec.ts`, `creator-ux31.spec.ts`) were
+  checked by hand to still hold — "transportista efectivo" still contains "transportista", and the
+  cockpit still renders "Transportista efectivo".

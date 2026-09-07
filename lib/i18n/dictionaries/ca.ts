@@ -625,6 +625,14 @@ export const ca = {
     generic: "Alguna cosa no ha anat bé. Torna-ho a intentar d'aquí uns segons.",
     notFound: "No hem trobat aquesta pàgina.",
   },
+  legal: {
+    roles: {
+      shipper: "Carregador contractual",
+      carrier: "Transportista efectiu",
+      shipperShort: "Carregador",
+      carrierShort: "Transportista",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Aquest document només té validesa legal en la seva versió en espanyol. Encara no hi ha una traducció disponible en aquest idioma.",

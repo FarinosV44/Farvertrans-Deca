@@ -628,6 +628,20 @@ export const es = {
    * translate — shown on those pages in every non-Spanish locale so a visitor
    * knows why the page in front of them is in Spanish.
    */
+  /**
+   * Canonical names for the two DeCA parties (LEGAL #61). Kept in lockstep
+   * with `lib/deca/roles.ts` (which serves the Spanish-only PDF / diff / zod
+   * surfaces); the `es` values here are the source of truth for the wording.
+   * `*Short` = the bare form for tight table headers only.
+   */
+  legal: {
+    roles: {
+      shipper: "Cargador contractual",
+      carrier: "Transportista efectivo",
+      shipperShort: "Cargador",
+      carrierShort: "Transportista",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Este documento solo tiene validez legal en su versión en español. Aún no hay una traducción disponible en este idioma.",

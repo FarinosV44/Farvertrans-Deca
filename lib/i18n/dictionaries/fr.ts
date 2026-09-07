@@ -631,6 +631,14 @@ export const fr = {
     generic: "Une erreur s'est produite. Réessayez dans quelques secondes.",
     notFound: "Nous n'avons pas trouvé cette page.",
   },
+  legal: {
+    roles: {
+      shipper: "Chargeur contractuel",
+      carrier: "Transporteur effectif",
+      shipperShort: "Chargeur",
+      carrierShort: "Transporteur",
+    },
+  },
   legalNotice: {
     notTranslated:
       "Ce document n'a de valeur juridique que dans sa version espagnole. Une traduction dans cette langue n'est pas encore disponible.",
