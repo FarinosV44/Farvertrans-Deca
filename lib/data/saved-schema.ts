@@ -38,7 +38,11 @@ export const savedLocationSchema = z.object({
   address: z.string().trim().min(4).max(300),
   postalCode: z.string().trim().min(3).max(12),
   city: z.string().trim().min(2).max(120),
-  province: z.string().trim().min(2).max(120),
+  // Optional, like the DeCA location schema (#75).
+  province: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() !== "" ? v.trim() : undefined),
+    z.string().min(2).max(120).optional(),
+  ),
   country: z.string().trim().min(2).max(80).optional().default("España"),
   type: z.enum(savedLocationTypes).optional().default("both"),
 });

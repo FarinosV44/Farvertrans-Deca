@@ -74,7 +74,6 @@ describe("validateDeca (R-2 / AC-09)", () => {
       { ...valid, loadLocation: { ...valid.loadLocation, address: "" } },
       { ...valid, loadLocation: { ...valid.loadLocation, postalCode: "" } },
       { ...valid, loadLocation: { ...valid.loadLocation, city: "" } },
-      { ...valid, loadLocation: { ...valid.loadLocation, province: "" } },
       { ...valid, loadLocation: { ...valid.loadLocation, country: "" } },
       { ...valid, unloadLocation: { ...valid.unloadLocation, name: "" } },
       { ...valid, unloadLocation: { ...valid.unloadLocation, address: "" } },
@@ -88,6 +87,33 @@ describe("validateDeca (R-2 / AC-09)", () => {
     ]) {
       expect(() => validateDeca(missing)).toThrow(DecaValidationError);
     }
+  });
+
+  it("accepts a location with no province — Spanish or foreign (#75)", () => {
+    const noProvince = {
+      ...valid,
+      loadLocation: { ...valid.loadLocation, province: "" },
+      unloadLocation: {
+        name: "Dépôt Lyon Est",
+        address: "12 rue de la Logistique",
+        postalCode: "69120",
+        city: "Vaulx-en-Velin",
+        country: "Francia",
+      },
+    };
+    const r = validateDeca(noProvince);
+    expect(r.data.loadLocation.province).toBeUndefined();
+    expect(r.data.unloadLocation.province).toBeUndefined();
+  });
+
+  it("trims a real province and rejects a 1-char one (#75)", () => {
+    expect(
+      validateDeca({ ...valid, loadLocation: { ...valid.loadLocation, province: " Valencia " } })
+        .data.loadLocation.province,
+    ).toBe("Valencia");
+    expect(() =>
+      validateDeca({ ...valid, loadLocation: { ...valid.loadLocation, province: "x" } }),
+    ).toThrow(DecaValidationError);
   });
 
   it("rejects a malformed load/unload date", () => {

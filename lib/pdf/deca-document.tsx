@@ -2,6 +2,7 @@ import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/render
 import type { DecaPayload } from "@/lib/deca/schema";
 import { BRAND } from "@/lib/brand";
 import { DECA_ROLES } from "@/lib/deca/roles";
+import { formatLocationCityLine } from "@/lib/deca/location";
 
 /**
  * Premium corporate layout (PRODUCT #49). Structural inspiration only from
@@ -249,7 +250,7 @@ function RouteCard({
   address: string;
   postalCode: string;
   city: string;
-  province: string;
+  province?: string;
   country: string;
   dateLabel: string;
   dateValue: string;
@@ -263,7 +264,7 @@ function RouteCard({
       <Text style={s.routeName}>{name}</Text>
       <Text style={s.routeAddress}>{address}</Text>
       <Text style={s.routeAddress}>
-        {postalCode} {city} — {province}, {country}
+        {formatLocationCityLine({ postalCode, city, province, country })}
       </Text>
       <Text style={s.routeDate}>{dateLabel}</Text>
       <Text style={s.routeDateValue}>{dateValue}</Text>

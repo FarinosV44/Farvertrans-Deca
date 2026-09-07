@@ -2,10 +2,11 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-07 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56 (worked
-> in D-042…D-111, awaiting the user's close after live verification), plus the new launch batch
-> **#59–#64**. No third-party comments on any issue. #29–#38 closed. Working #59–#64 now
-> (plan: `.claude/plans/sunny-greeting-snowflake.md`), one sprint per issue on `develop`.
+> Last inbound sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
+> (worked in D-042…D-111, awaiting the user's close), and the launch batches **#59–#68** (all
+> implemented + on `main`, awaiting the user's close) and **#69–#83** (in progress this run —
+> user: "start working and don't stop till you finish them all"). No third-party comments on any
+> issue. #29–#38 closed.
 >
 > Earlier note (2026-09-04): #1–#28 all merged to `main`; every issue commented (beat 1); awaiting
 > the user's deploy + verification, then beat 3, then the user closes them.
@@ -200,7 +201,17 @@ anonymize-in-place (no hard delete, D-067).
 
 ---
 
-## Design bundle #65–#68 (triaged 2026-09-07)
+## Launch batch #69–#83 (triaged 2026-09-08)
+
+### I-075 — #75 P0 Bug: "Soltero" in the PDF address · **DONE, on `main`** (D-129)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/75
+- `province` was a mandatory free-text field + a fixed `{pc} {city} — {province}, {country}` template
+  → junk in, junk printed. Fix: `province` optional across DeCA + saved-location schemas + wizard;
+  new `formatLocationCityLine()` composes only informed parts, never a dangling separator, never a
+  substitute. Historical payloads untouched. `deca-location.test.ts` (new) + validate + pdf-snapshot
+  regressions. 180 unit + 19 DeCA e2e. No migration.
+
+
 
 ### I-068 — #68 Landing "Cada DeCA te cuesta menos tiempo" composition · P2 · **DONE, on `main`** (D-128)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/68

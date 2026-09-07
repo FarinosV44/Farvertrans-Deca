@@ -988,6 +988,7 @@ export function CrearWizard({
                   onChange={set("loadLocationProvince")}
                   error={errors.loadLocationProvince}
                   autoComplete="address-level1"
+                  required={false}
                 />
                 <Field
                   id="loadLocationCountry"
@@ -1091,6 +1092,7 @@ export function CrearWizard({
                   onChange={set("unloadLocationProvince")}
                   error={errors.unloadLocationProvince}
                   autoComplete="address-level1"
+                  required={false}
                 />
                 <Field
                   id="unloadLocationCountry"

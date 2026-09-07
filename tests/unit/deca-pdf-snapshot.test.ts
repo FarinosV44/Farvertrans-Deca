@@ -105,6 +105,39 @@ describe("#66 — generated DeCA structural snapshot", () => {
     expect(t).toMatch(/28028.*Madrid/);
   });
 
+  it("renders a location with no province cleanly — no stray separators (#75)", async () => {
+    const noProv: DecaPayload = {
+      ...payload,
+      loadLocation: { ...payload.loadLocation, province: undefined },
+      unloadLocation: {
+        name: "Dépôt Lyon Est",
+        address: "12 rue de la Logistique",
+        postalCode: "69120",
+        city: "Vaulx-en-Velin",
+        country: "Francia",
+      },
+    };
+    const buf = await renderDecaPdf({
+      data: noProv,
+      publicUrl: "https://decaprofesional.es/d/A4F2C9E1",
+      reference: "DECA-A4F2C9E1",
+      versionNo: 1,
+      createdAt: new Date("2026-10-06T08:41:00Z"),
+    });
+    const doc = await getDocument({ data: new Uint8Array(buf) }).promise;
+    let out = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const c = await (await doc.getPage(i)).getTextContent();
+      out += " " + c.items.map((it) => ("str" in it ? it.str : "")).join(" ");
+    }
+    out = out.replace(/\s+/g, " ");
+    expect(out).not.toContain("— ,");
+    expect(out).not.toContain(", ,");
+    expect(out).toMatch(/46023 Valencia . España/); // load: no province, still clean
+    expect(out).toContain("Vaulx-en-Velin");
+    expect(out).toContain("Francia");
+  });
+
   it("numbers the cells CMR-style (1–8)", async () => {
     const t = await text();
     // the eight cell numbers appear as standalone tokens

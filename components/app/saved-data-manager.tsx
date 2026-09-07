@@ -384,6 +384,7 @@ function LocationForm({
         label="Provincia"
         value={f.province}
         onChange={(v) => setF((s) => ({ ...s, province: v }))}
+        required={false}
       />
       <Field
         id="l-country"

@@ -1440,3 +1440,13 @@ carries the #59/#62 additive columns from D-112-pattern deploys — safe); #60 c
 bucket + `age` key + repo secrets, run the workflow, do a full restore-test, log it in
 07-release §6; rotate `FVD_ADMIN_TOKEN` + Supabase DB password; fix the `praetoria sl` company NIF
 to `B21810452` via `/admin/empresas/[id]`.
+
+### #69–#83 launch batch (in progress, 2026-09-08) — user: "don't stop till you finish them all"
+- **#75 P0 bug — DONE, on `main` (D-129):** "Soltero" in a real PDF's load address. `province` was a
+  mandatory free-text field composed via a fixed template; made it optional across the DeCA +
+  saved-location schemas + wizard, added `formatLocationCityLine()` that joins only informed parts
+  (no dangling `— `/`, `, no substitution). Historical payloads untouched. `deca-location.test.ts`
+  new. 180 unit + 19 DeCA e2e. No migration.
+- Order: #75 ✓ → #70 (panel nav) → #71 (pre-gen checklist) → #69 (Modo Inspección) → #76 #77 #78
+  (panel features) → #80 (admin shell) → #72 #73 #81 #82 #83 #74 (admin cluster) → #79 (final
+  regression checklist).

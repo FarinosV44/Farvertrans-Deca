@@ -3856,3 +3856,31 @@ remaining scope.
   `max-w-[calc(100vw-1.5rem)]`. Regression check added to `landing.spec.ts:201` at 360/768/1280:
   the open menu is anchored to the switcher (|Δx| ≤ 8), on-screen, and adds no scrollbar — it was
   red at all three widths before.
+
+## D-129 — #75 P0: `province` is optional; the DeCA address is built only from informed fields
+- Date / phase: 2026-09-08, Phase 5. User filed a P0: a real PDF showed
+  `46540 El Puig (Valencia) — Soltero, España` — "Soltero" is not a province/region/country and
+  must never appear inside a transport address.
+- **Diagnosis:** no code path maps a personal field into `province`. The field was **mandatory
+  free text** (`locationSchema.province = trimmed(2,120)`), and the renderer composed the line as a
+  fixed template `{postalCode} {city} — {province}, {country}`. A mandatory field with no valid
+  answer (a foreign address, or an operator who doesn't know/care) invites junk, and the fixed
+  template then prints whatever is there. This is a spec + composition defect, not a mapping bug.
+- **Change (spec):** `province` becomes **optional** across the DeCA location schema
+  (`lib/deca/location.ts`), the saved-location schema (`lib/data/saved-schema.ts`) and the wizard
+  fields (`required={false}`). `z.preprocess` turns blank/whitespace into `undefined` before
+  validation; a non-empty value must still be 2–120 chars. `docs/legal-data-model.md` c1/c2 updated
+  — the Orden FOM/2861/2012 requires the *lugar* (name + address + locality); a Spanish province is
+  a refinement and foreign addresses have no equivalent.
+- **Change (composition):** new `formatLocationCityLine()` in `lib/deca/location.ts` — joins the
+  informed parts only, never emits a dangling `— ` or `, `, never substitutes anything. The PDF
+  `RouteCard` uses it (`lib/pdf/deca-document.tsx`); `formatLocationFull` already filtered blanks.
+- **Historical payloads are NOT touched** — a stored DeCA whose payload already carries a bad
+  `province` keeps its emitted PDF (append-only, D-... ). Only new emissions and corrections get the
+  clean composition. Scope of the existing bad data: any DeCA whose operator typed junk into the
+  old mandatory field; not automatically detectable, not rewritten.
+- **Tests:** `deca-location.test.ts` (new — the compose rules incl. the exact El Puig shape),
+  `deca-validate.test.ts` ("accepts a location with no province — Spanish or foreign",
+  "trims a real province and rejects a 1-char one"), `deca-pdf-snapshot.test.ts` ("renders a
+  location with no province cleanly — no stray separators"). 180 unit + 19 DeCA-creation e2e green.
+- No migration (`DecaRouteIntel.loadProvince` was already `String?`).
