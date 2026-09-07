@@ -1380,3 +1380,11 @@ disclaimer), "Ayuda" tab in AppNav + account-menu link, `lib/support/channels.ts
 whatsapp/hours (empty until dirección confirms), JSON-LD contactPoint, `t.panel.help.*` ×8.
 160 unit + `support-channels` 3/3 + `panel-help` 2/2 + full e2e 186/187 (1 = admin-2fa flake).
 No schema change. **Next:** sprint E (#60 backup), F (#64 billing design).
+
+### Sprint E (#60) + F (#64) — DONE, on `develop` (D-119, D-120)
+2026-09-07. #60: `scripts/backup.mjs` + `restore.mjs` + `.github/workflows/backup.yml` +
+`docs/backup-and-restore.md` (RPO ≤24h / RTO ≤4h) + a real executed DB-half restore-test (logged in
+07-release §6). #64: `docs/design/billing-model.md` + `lib/billing/plans.ts` — design only, no
+schema, no migration, no UI. 164 unit + tsc + lint + prettier green.
+**#59–#64 BATCH COMPLETE on `develop`.** Next per the user: merge to `main` + apply all pending
+migrations to production.

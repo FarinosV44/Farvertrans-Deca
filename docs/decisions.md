@@ -3639,3 +3639,27 @@ remaining scope.
 - Verification: 164 unit (`backup-target.test.ts` 4/4) + `tsc` + prettier + `next lint` clean +
   `node -c` on both scripts + the restore guard smoke-refuses a prod URL. No app-runtime code
   changed → e2e unaffected. Commit `<pending>` on `develop`.
+
+## D-120 — #64 Subscription / dunning / billing model — DESIGN ONLY
+- Date / phase: 2026-09-07, Phase 5, sprint F (last) of the #59–#64 batch.
+- **Nothing built, nothing migrated, nothing shipped.** Pricing/plans/checkout stay forbidden for
+  v1 (D-007 row 32, EPIC 01, execution scope guard). The enabling clause is D-068 (Terms already
+  reserve "future paid plans possible").
+- **Deliverable:** `docs/design/billing-model.md` — the full data-model design the issue's
+  acceptance criteria ask for: paste-ready Prisma models (`Subscription`, `SubscriptionEvent`,
+  `Invoice`, `Payment`) + `SubscriptionStatus` enum (`trialing/active/past_due/grace/suspended/
+  canceled/expired`), the state machine with retries (3 over ~7 days) and a ~7-day courtesy period,
+  general contact vs `billingEmail` separated, invoice numbering / IVA / rectificativas / indefinite
+  retention, owner-only permissions + audit, no card data ever (provider references only), and a
+  section proving `User`/`Company` need no rework later (every table hangs off `companyId`,
+  `Company` gains one optional relation). `lib/billing/plans.ts` — plans as a TS constant, imported
+  by nothing.
+- **Deliberately NOT done** (vs the plan's "dormant migration" option): no change to
+  `prisma/schema.prisma`, no migration file. A dormant migration would show as pending in
+  `migrate status`, risk being applied by a routine `migrate deploy`, and force the client to carry
+  unused models — for zero benefit over a paste-ready snippet in the doc. This is genuinely
+  design-only.
+- `docs/sprints/deferred.md` D-32 row updated ("design done, own phase later"); `docs/threat-model.md`
+  gains a FUTURE billing-data row.
+- Verification: `tsc` + prettier + `vitest` (unchanged count — no test, it is design) clean. No app
+  change. Commit `<pending>` on `develop`. **#59–#64 batch complete.**

@@ -13,5 +13,5 @@
 | D-29 | eCMR / CMR / ADR interop feature | null | SEO content page in v1; feature later (confrontation #29) |
 | D-30 | Paid WhatsApp Business API delivery | never | contradicts "gratis, sin coste" (confrontation #30, D-007) |
 | D-31 | AI/LLM assistant | never | forced filler; legal-accuracy risk (confrontation #31, D-007) |
-| D-32 | Pricing / plans / checkout | never | forbidden by EPIC 01 (confrontation #32, D-007) |
+| D-32 | Pricing / plans / checkout | later (own phase) | Data-model DESIGN done — `docs/design/billing-model.md` (#64, D-120). No schema, no UI. Still forbidden for v1 (D-007 row 32); a paid tier is a future decision + its own build. |
 | D-33 | Dark mode | null | `prefers-color-scheme` hook left in place; values not defined yet |
