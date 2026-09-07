@@ -24,17 +24,19 @@ export function ActivitySnapshot() {
       className="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-4 shadow-[0_4px_16px_rgba(15,23,32,0.08)]"
     >
       <p className="text-sm font-bold">Tu actividad</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-2.5 grid grid-cols-2 gap-2">
         {TILES.map((t) => (
           <div
             key={t.label}
-            className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2.5 py-2"
+            className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2.5 py-2"
           >
-            <t.Icon width={14} height={14} className="text-[var(--color-text-muted)]" />
-            <p className="mt-1.5 text-base font-bold tabular-nums leading-none">{t.value}</p>
-            <p className="mt-1 text-[11px] leading-tight text-[var(--color-text-muted)]">
-              {t.label}
-            </p>
+            <t.Icon width={14} height={14} className="shrink-0 text-[var(--color-text-muted)]" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold tabular-nums leading-none">{t.value}</p>
+              <p className="mt-0.5 text-[11px] leading-tight text-[var(--color-text-muted)]">
+                {t.label}
+              </p>
+            </div>
           </div>
         ))}
       </div>

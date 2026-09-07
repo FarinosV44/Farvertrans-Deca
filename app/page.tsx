@@ -346,20 +346,20 @@ export default async function HomePage() {
               <p className="mt-2 max-w-md text-sm text-[var(--color-text-muted)]">
                 {dict.landing.dailyUseSubhead}
               </p>
-              <div className="mt-6 grid grid-cols-2 gap-2.5 lg:grid-cols-3">
+              <div className="mt-8 grid grid-cols-2 gap-3 min-[1024px]:grid-cols-3">
                 {PRODUCT_SHOWCASE.map(({ Icon }, i) => {
                   const item = dict.landing.dailyUse[i];
                   return (
                     <div
                       key={item.label}
-                      className="flex flex-col items-start gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+                      className="flex flex-col items-start gap-2.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5"
                     >
-                      <IconBadge size={30}>
-                        <Icon width={15} height={15} />
+                      <IconBadge size={32}>
+                        <Icon width={16} height={16} />
                       </IconBadge>
                       <div>
-                        <p className="text-[13px] font-bold leading-tight">{item.label}</p>
-                        <p className="mt-1 text-[11px] leading-snug text-[var(--color-text-muted)]">
+                        <p className="text-sm font-bold leading-tight">{item.label}</p>
+                        <p className="mt-1 text-xs leading-snug text-[var(--color-text-muted)]">
                           {item.body}
                         </p>
                       </div>
@@ -373,7 +373,7 @@ export default async function HomePage() {
                 {dict.landing.dailyUseFooterAfterLink}
               </p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <SavedDataPreview />
               <WorkspacePreview />
               <ActivitySnapshot />
