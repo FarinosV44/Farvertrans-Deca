@@ -176,7 +176,10 @@
   full e2e.
 - Deferred: `t.admin.*` i18n (the whole admin area is ES-only server components by convention).
 - Replies: beat 1 pending.
-### I-063 — #63 Visible support + legal-assistance channels · P1 · queued (sprint D)
+### I-063 — #63 Visible support + legal-assistance channels · P1 · **DONE, on `develop`** (D-118)
+- `/panel/ayuda` (técnico + jurídico separated), "Ayuda" nav tab + account-menu link,
+  `lib/support/channels.ts`, `BRAND` whatsapp/hours empty-by-default, JSON-LD contactPoint,
+  `t.panel.help.*` ×8. 3 unit + 2 e2e + full e2e green. Beat 1 posted. No production migration.
 ### I-060 — #60 Backup & restore of DeCA documents · P0 · queued (sprint E)
 ### I-064 — #64 Subscription/billing model — DESIGN ONLY · P2 · queued (sprint F)
 - User decisions recorded 2026-09-07: #59 soft-gate + hard CIF block on own company; #60 GitHub

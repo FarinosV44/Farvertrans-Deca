@@ -258,7 +258,13 @@ pooler respectively — see step 1 above), run `prisma migrate deploy` against `
 - App logs go to stdout (`docker logs fvd`). No personal data or tokens are logged; a generation
   failure emits one JSON line with `evt: "deca_generation_failed"`.
 
-### 6. Backups (SECURITY #53 — reviewed 2026-09-06, see D-067)
+### 6. Backups (SECURITY #53 — reviewed 2026-09-06, D-067; automated #60 / D-119)
+
+**The full backup & restore design, RPO/RTO, retention, RGPD and the operator checklist now live
+in `docs/backup-and-restore.md`.** Automated by `scripts/backup.mjs` +
+`.github/workflows/backup.yml` (daily encrypted archive of Postgres + the PDF bucket to an
+independent S3-compatible store). The notes below stay as the manual fallback and the honesty rule.
+
 
 **Honesty rule for this section (owner's explicit requirement):** never write "backups are
 configured" or "PITR is enabled" here unless it has been checked in the actual Supabase dashboard
@@ -319,9 +325,14 @@ box; archive the storage volume:
    An untested restore procedure is not considered sufficient (owner's explicit requirement) — this
    step is not optional.
 
-**Restoration-test log** (append an entry every time a real restore is tested — empty means never
-tested, which is the current, honest state as of this section's last edit):
-- *(none yet)*
+**Restoration-test log** (append an entry every time a real restore is tested):
+- **2026-09-07 — DB half, local, PASS.** `pg_dump --format=custom` of the dev database →
+  `pg_restore --clean --if-exists` into a fresh scratch DB (`deca_restore_test`) → `prisma migrate
+  status` = "Database schema is up to date!" (26/26) → real row data present (`user`, 6555
+  `deca_version` rows) → scratch DB dropped. Proves the `scripts/backup.mjs` + `scripts/restore.mjs`
+  DB pipeline end to end. **Not yet tested:** the Supabase Storage half (needs the real project +
+  the operator's object-store setup — `docs/backup-and-restore.md` §7) and a full
+  archive→restore→PDF-hash check against production data.
 
 ## Merge to `main`
 

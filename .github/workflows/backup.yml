@@ -1,0 +1,68 @@
+name: Backup
+
+# #60 — independent, encrypted, off-machine backup of the DeCA data
+# (Postgres + the PDF bucket). Runs daily and on demand. A failed run is the
+# alert: watch this workflow's status, or wire a notification on failure.
+#
+# Required repository secrets (set once — see docs/backup-and-restore.md):
+#   BACKUP_DIRECT_URL           Supabase session pooler (:5432) connection string
+#   NEXT_PUBLIC_SUPABASE_URL    the project URL
+#   SUPABASE_SERVICE_ROLE_KEY   service role key (bucket read)
+#   FVD_PDF_BUCKET              usually "deca-pdfs"
+#   BACKUP_AGE_RECIPIENT        age public key ("age1...") — the archive is encrypted to this
+#   BACKUP_S3_ENDPOINT          S3-compatible endpoint (Cloudflare R2 / Backblaze B2 / AWS)
+#   BACKUP_S3_BUCKET            destination bucket name
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY   credentials for that bucket
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client age
+      - run: npm ci
+      - name: Create the backup archive
+        env:
+          BACKUP_DIRECT_URL: ${{ secrets.BACKUP_DIRECT_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FVD_PDF_BUCKET: ${{ secrets.FVD_PDF_BUCKET }}
+          BACKUP_AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+          BACKUP_DIR: ./backups
+        run: node scripts/backup.mjs
+      - name: Upload off-machine (S3-compatible)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          day=$(date -u +%F)
+          month=$(date -u +%Y-%m)
+          for f in backups/deca-backup-*; do
+            aws s3 cp "$f" "s3://${{ secrets.BACKUP_S3_BUCKET }}/daily/$day/" \
+              --endpoint-url "${{ secrets.BACKUP_S3_ENDPOINT }}"
+            # keep the 1st-of-month copy as a monthly (retention: 30 dailies + 12 monthlies,
+            # enforced by a lifecycle rule on the bucket — see docs/backup-and-restore.md)
+            if [ "$(date -u +%d)" = "01" ]; then
+              aws s3 cp "$f" "s3://${{ secrets.BACKUP_S3_BUCKET }}/monthly/$month/" \
+                --endpoint-url "${{ secrets.BACKUP_S3_ENDPOINT }}"
+            fi
+          done
+      - name: Fail loudly if nothing was produced
+        run: test -n "$(ls backups/deca-backup-* 2>/dev/null)" || (echo "no archive produced" && exit 1)

@@ -3608,3 +3608,34 @@ remaining scope.
   and skipped — the 8 panel pages compose their own shell and a wrapping layout would double-render
   it without a risky refactor; the "Ayuda" nav tab already satisfies "reachable from any
   authenticated area".
+
+## D-119 — #60 Backup & restore: automated, encrypted, off-machine
+- Date / phase: 2026-09-07, Phase 5, sprint E of the #59–#64 batch. User decision: GitHub Actions +
+  an external S3-compatible object store, RPO ≤24h.
+- **`scripts/backup.mjs`** — `pg_dump --format=custom` (via `BACKUP_DIRECT_URL`, the session pooler)
+  + downloads every object in the `deca-pdfs` bucket (service role) + `manifest.json` (SHA-256 of
+  every part) → `tar` → **`age`-encrypted** (the dump holds third-party personal data; unencrypted
+  is warned about loudly). `BACKUP_SKIP_STORAGE=1` for a DB-only dry run. Exits non-zero on any
+  failure — the red run is the alert.
+- **`scripts/restore.mjs`** — decrypt → untar → `pg_restore --clean --if-exists` into a **scratch**
+  target. **Refuses a production-looking target** (`pooler.supabase.com` / `supabase.co` /
+  `decaprofesional`, overridable only with `--force-production` AND
+  `I_UNDERSTAND=overwrite-production`). Guard is a pure module `lib/backup/target.mjs`
+  (`restoreAllowed`), unit-tested.
+- **`.github/workflows/backup.yml`** — daily cron (03:17 UTC) + `workflow_dispatch`; ubuntu, installs
+  `postgresql-client` + `age`, runs the script, `aws s3 cp` to an S3-compatible bucket under its own
+  credentials; keeps `daily/<date>/` + `monthly/<month>/` (retention via a bucket lifecycle rule —
+  30 dailies + 12 monthlies — not the workflow, so it survives an outage).
+- **`docs/backup-and-restore.md`** (new) — storage inventory, the account-lifecycle-vs-documents
+  matrix (ties to #62 — nothing cascades to a DeCA), **RPO ≤24h / RTO ≤4h** with justification,
+  retention & rotation, encryption in transit + at rest, the step-by-step restore, RGPD, and a
+  one-time operator checklist. `docs/07-release.md` §6 now points here; `docs/threat-model.md` gains
+  a "Data loss" row.
+- **Restore-test EXECUTED (DB half):** dev DB → `pg_dump` → `pg_restore` into a fresh scratch DB →
+  `prisma migrate status` "up to date" (26/26) → real rows present (6555 `deca_version`) → scratch
+  dropped. Logged in `docs/07-release.md` §6. **Not yet tested:** the Storage half + a full
+  production archive→restore→PDF-hash check — needs the operator's object-store + `age` key setup
+  (checklist in the doc). This is a `notify` item.
+- Verification: 164 unit (`backup-target.test.ts` 4/4) + `tsc` + prettier + `next lint` clean +
+  `node -c` on both scripts + the restore guard smoke-refuses a prod URL. No app-runtime code
+  changed → e2e unaffected. Commit `<pending>` on `develop`.
