@@ -1,24 +1,45 @@
 @import "tailwindcss";
 
-/* Design tokens — docs/design/IMPLEMENTATION-BRIEF.md */
+/* Design tokens — Sistema Vía (docs/design/sistema-via.md, #67).
+   Vignelli-inspired: warm paper ground, near-black ink, and colour as CODE —
+   each value below has one fixed meaning and only that meaning. The token
+   NAMES keep their existing roles; #67 changes their VALUES and adds the
+   functional set (--color-route, --color-warn, --color-rest, the *-bg tints).
+   The app ships light-only, as before. */
 @theme {
-  --color-bg: #ffffff;
-  --color-surface: #f6f8fa;
-  --color-border: #d8dee4;
-  --color-text: #0f1720;
-  --color-text-muted: #5b6673;
-  --color-primary: #0b5cff;
-  --color-primary-hover: #0847c9;
+  --color-bg: #fbfaf7; /* paper — warm off-white */
+  --color-surface: #f1efe9; /* raised panels, table headers */
+  --color-border: #d8d4cb; /* hairline borders */
+  --color-border-soft: #e7e4dc; /* row rules */
+  --color-text: #16181d; /* ink — text, heavy rules */
+  --color-text-muted: #5c5f66;
+
+  --color-primary: #0a3d91; /* línea DeCA — primary action, links, active nav */
+  --color-primary-hover: #082f70;
   --color-primary-contrast: #ffffff;
-  --color-success: #12805c;
-  --color-danger: #c0261d;
-  --color-focus: #1a73e8;
+  --color-primary-bg: #e1e8f4;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --color-route: #c8531e; /* línea de creación — ONLY the /crear flow + progress */
+  --color-route-bg: #f5e4da;
 
-  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-success: #1b7a47; /* vigente · activa · verificación correcta */
+  --color-success-bg: #e4f0e8;
+  --color-warn: #b26b00; /* pendiente · datos incompletos · periodo de cortesía */
+  --color-warn-bg: #f5ebd8;
+  --color-danger: #b4271f; /* bloqueada · error · acción destructiva */
+  --color-danger-bg: #f5e1df;
+  --color-rest: #6b7178; /* baja · deshabilitado · dato ausente */
+  --color-rest-bg: #e8e7e4;
+
+  --color-focus: #0a3d91;
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+
+  --font-sans: var(--font-archivo), var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   --breakpoint-sm: 360px;
   --breakpoint-md: 768px;
@@ -57,8 +78,10 @@
   h1,
   h2,
   h3 {
-    line-height: 1.2;
+    line-height: 1.14;
     font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
     margin: 0;
   }
 
