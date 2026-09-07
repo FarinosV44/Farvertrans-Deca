@@ -32,9 +32,12 @@ export function AccountMenu({ companyName }: { companyName: string }) {
 
   return (
     <details className="relative" data-testid="account-menu">
-      <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-sm font-medium">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] px-2.5 text-sm font-medium">
         <BrandGlyph size={18} />
-        <span className="max-w-[10rem] truncate">{companyName}</span>
+        {/* the name is dropped on a narrow phone so the authed header never
+            overflows (#70); the glyph + menu are enough to find it */}
+        <span className="hidden max-w-[10rem] truncate min-[460px]:inline">{companyName}</span>
+        <span className="sr-only">{companyName}</span>
       </summary>
       <div className="absolute right-0 z-50 mt-2 w-52 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] p-1 shadow-[0_8px_24px_rgba(15,23,32,0.12)]">
         <Link

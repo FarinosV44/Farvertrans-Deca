@@ -203,6 +203,13 @@ anonymize-in-place (no hard delete, D-067).
 
 ## Launch batch #69–#83 (triaged 2026-09-08)
 
+### I-070 — #70 P0 UX: panel nav horizontal scroll · **DONE, on `main`** (D-130)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/70
+- `app-nav.tsx` rewritten: grouped (work / company / help), wrap-safe pill row ≥768px, `<details>`
+  disclosure <768px — no `overflow-x-auto` anywhere. Authed header made to fit 360px (AccountMenu
+  name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
+  `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
+
 ### I-075 — #75 P0 Bug: "Soltero" in the PDF address · **DONE, on `main`** (D-129)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/75
 - `province` was a mandatory free-text field + a fixed `{pc} {city} — {province}, {country}` template

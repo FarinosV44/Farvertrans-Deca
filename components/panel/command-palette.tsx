@@ -92,7 +92,9 @@ export function CommandPalette() {
         data-testid="command-palette-trigger"
         aria-label="Buscar (Ctrl+K)"
         title="Buscar (Ctrl+K)"
-        className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+        // hidden on a narrow phone (Ctrl+K still works); keeps the authed header
+        // within a 360px viewport (#70)
+        className="hidden min-h-10 min-w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] min-[520px]:inline-flex"
       >
         <SearchIcon width={18} height={18} />
       </button>

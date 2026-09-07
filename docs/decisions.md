@@ -3884,3 +3884,26 @@ remaining scope.
   "trims a real province and rejects a 1-char one"), `deca-pdf-snapshot.test.ts` ("renders a
   location with no province cleanly — no stray separators"). 180 unit + 19 DeCA-creation e2e green.
 - No migration (`DecaRouteIntel.loadProvince` was already `String?`).
+
+## D-130 — #70 P0: panel section nav — no horizontal scroll, grouped, disclosure on mobile
+- Date / phase: 2026-09-08, Phase 5. User: several panel screens (Plantillas / Datos habituales /
+  Equipo / Mi empresa / Ayuda — the `max-w-[720px]` ones) showed a horizontal scrollbar + overflow
+  arrows on the section tab strip; the authed header also overflowed a 360px viewport.
+- **`components/app/app-nav.tsx` rewritten:** the 7 tabs are grouped in fixed order — daily work
+  (Mis DeCA / Historial / Plantillas / Datos habituales), company admin (Equipo / Mi empresa), help
+  (Ayuda). Two renderings, no `overflow-x-auto` anywhere:
+  - **≥768px:** a wrap-safe pill row with a hairline rule between groups; active pill on
+    `--color-primary-bg`. It reflows to a second line in the 720px columns instead of scrolling; a
+    single line on the wide pages.
+  - **<768px:** a native `<details>` disclosure ("Secciones · <current>") opening a grouped
+    vertical list. No JS, keyboard-operable, closes on navigation.
+  Drop-in — every page still calls `<AppNav current="…" />`; no layout refactor.
+- **Authed header fit (`#70` "CTA visible", "no scroll"):** `AccountMenu` drops the company-name
+  text below 460px (glyph + `sr-only` name kept); the command-palette button is hidden below 520px
+  (Ctrl+K still works — the listener is document-level). Header now fits 360px with the
+  "Crear DeCA" CTA visible.
+- **Test:** `tests/e2e/panel-nav.spec.ts` (new) — no horizontal scroll on all 7 panel pages at
+  360/768/1280/1440, the nav element itself never scrolls, the header CTA stays visible, and every
+  section is reachable in ≤2 actions (open disclosure + pick on mobile, one click on desktop).
+  Existing `workspace.spec.ts` a11y check on `/panel*` still green. 180 unit. No schema, no i18n
+  (labels already matched the issue's hierarchy names).
