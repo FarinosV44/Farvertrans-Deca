@@ -10,6 +10,7 @@ import {
   missingCompanyFields,
   describeMissingFields,
 } from "@/lib/company/completeness";
+import { Alert } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi empresa", robots: { index: false } };
@@ -33,28 +34,26 @@ export default async function EmpresaPage() {
         <AppNav current="empresa" />
 
         {!dataComplete && (
-          <div
-            role="status"
-            data-testid="company-data-incomplete"
-            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm"
-          >
-            <strong>Completa los datos de tu empresa</strong> para poder generar nuevos DeCA.
-            {editableMissing.length > 0 && (
-              <>
-                {" "}
-                {canEdit
-                  ? "Falta o no es válido, más abajo: "
-                  : "Pídele al responsable que complete: "}
-                {describeMissingFields(editableMissing)}.
-              </>
-            )}
-            {identifierMissing && (
-              <>
-                {" "}
-                La razón social o el CIF/NIF de la empresa no son correctos; escríbenos a soporte
-                para corregirlos.
-              </>
-            )}
+          <div className="mt-4">
+            <Alert tone="warn" data-testid="company-data-incomplete">
+              <strong>Completa los datos de tu empresa</strong> para poder generar nuevos DeCA.
+              {editableMissing.length > 0 && (
+                <>
+                  {" "}
+                  {canEdit
+                    ? "Falta o no es válido, más abajo: "
+                    : "Pídele al responsable que complete: "}
+                  {describeMissingFields(editableMissing)}.
+                </>
+              )}
+              {identifierMissing && (
+                <>
+                  {" "}
+                  La razón social o el CIF/NIF de la empresa no son correctos; escríbenos a soporte
+                  para corregirlos.
+                </>
+              )}
+            </Alert>
           </div>
         )}
 
