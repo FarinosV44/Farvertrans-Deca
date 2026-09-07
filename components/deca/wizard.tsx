@@ -584,11 +584,17 @@ export function CrearWizard({
 
   return (
     <div>
-      <p className="text-sm font-medium text-[var(--color-text-muted)]">
+      {/* Sistema Vía (#67): the DeCA-creation flow carries the "línea de
+          creación" (route colour), distinct from the primary blue. */}
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-[var(--color-text-muted)]">
+        <span
+          aria-hidden
+          className="mr-0.5 inline-block h-[3px] w-7 flex-none bg-[var(--color-route)] align-middle"
+        />
         {t.crear.stepOf(step + 1)} <span className="text-[var(--color-text)]">{stepLabel}</span>
       </p>
       <div
-        className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-border)]"
+        className="mt-2 h-1.5 w-full overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-border)]"
         role="progressbar"
         aria-label={t.crear.stepOfAria(step + 1, stepLabel)}
         aria-valuenow={step + 1}
@@ -596,7 +602,7 @@ export function CrearWizard({
         aria-valuemax={3}
       >
         <div
-          className="h-full bg-[var(--color-primary)] transition-[width]"
+          className="h-full bg-[var(--color-route)] transition-[width]"
           style={{ width: `${((step + 1) / 3) * 100}%` }}
         />
       </div>
