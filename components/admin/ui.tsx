@@ -16,8 +16,15 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b-2 border-[var(--color-text)] pb-3">
       <div>
+        <p
+          aria-hidden
+          className="mb-1.5 flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]"
+        >
+          <span className="h-[3px] w-6 bg-[var(--color-primary)]" />
+          Superadministración
+        </p>
         <h1 className="text-xl font-bold">{title}</h1>
         {lead && <p className="mt-1 max-w-2xl text-sm text-[var(--color-text-muted)]">{lead}</p>}
       </div>
@@ -40,20 +47,25 @@ export function KpiGrid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{children}</div>;
 }
 
+// Sistema Vía (#67): the pill style — a tint + a hairline border in the
+// functional colour, not a soft rounded pill. `Badge` keeps its tone API.
 const STATE_STYLE: Record<string, string> = {
-  ok: "bg-[color-mix(in_srgb,var(--color-success)_15%,transparent)] text-[var(--color-success)]",
-  green: "bg-[color-mix(in_srgb,var(--color-success)_15%,transparent)] text-[var(--color-success)]",
-  warn: "bg-[color-mix(in_srgb,#b26a00_18%,transparent)] text-[#8a5200]",
-  yellow: "bg-[color-mix(in_srgb,#b26a00_18%,transparent)] text-[#8a5200]",
-  fail: "bg-[color-mix(in_srgb,var(--color-danger)_15%,transparent)] text-[var(--color-danger)]",
-  red: "bg-[color-mix(in_srgb,var(--color-danger)_15%,transparent)] text-[var(--color-danger)]",
-  muted: "bg-[var(--color-surface)] text-[var(--color-text-muted)]",
+  ok: "bg-[var(--color-success-bg)] text-[var(--color-success)] border-[color-mix(in_srgb,var(--color-success)_28%,transparent)]",
+  green:
+    "bg-[var(--color-success-bg)] text-[var(--color-success)] border-[color-mix(in_srgb,var(--color-success)_28%,transparent)]",
+  warn: "bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[color-mix(in_srgb,var(--color-warn)_28%,transparent)]",
+  yellow:
+    "bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[color-mix(in_srgb,var(--color-warn)_28%,transparent)]",
+  fail: "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[color-mix(in_srgb,var(--color-danger)_28%,transparent)]",
+  red: "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[color-mix(in_srgb,var(--color-danger)_28%,transparent)]",
+  muted:
+    "bg-[var(--color-rest-bg)] text-[var(--color-rest)] border-[color-mix(in_srgb,var(--color-rest)_24%,transparent)]",
 };
 
 export function Badge({ tone = "muted", children }: { tone?: string; children: ReactNode }) {
   return (
     <span
-      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${
+      className={`inline-block whitespace-nowrap rounded-[var(--radius-sm)] border px-2 py-0.5 text-xs font-semibold ${
         STATE_STYLE[tone] ?? STATE_STYLE.muted
       }`}
     >
@@ -67,9 +79,9 @@ export function Table({ head, children }: { head: string[]; children: ReactNode 
     <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[var(--color-border)]">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)] text-left text-xs text-[var(--color-text-muted)]">
+          <tr className="border-b-2 border-[var(--color-text)] bg-[var(--color-surface)] text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-muted)]">
             {head.map((h) => (
-              <th key={h} className="px-3 py-2 font-medium">
+              <th key={h} className="px-3 py-2">
                 {h}
               </th>
             ))}
@@ -82,7 +94,7 @@ export function Table({ head, children }: { head: string[]; children: ReactNode 
 }
 
 export function Row({ children }: { children: ReactNode }) {
-  return <tr className="border-b border-[var(--color-border)] last:border-0">{children}</tr>;
+  return <tr className="border-b border-[var(--color-border-soft)] last:border-0">{children}</tr>;
 }
 
 export function Cell({ children, mono }: { children: ReactNode; mono?: boolean }) {

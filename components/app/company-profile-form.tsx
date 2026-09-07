@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
 
 export type CompanyContact = {
   email: string | null;
@@ -145,16 +146,11 @@ export function CompanyProfileForm({
         </label>
       </div>
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          data-testid="company-profile-save"
-          disabled={busy}
-          className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
-        >
+        <Button type="submit" tier="primary" data-testid="company-profile-save" disabled={busy}>
           {busy ? "Guardando…" : "Guardar cambios"}
-        </button>
+        </Button>
         {saved && (
-          <span role="status" className="text-sm text-[var(--color-success)]">
+          <span role="status" className="text-sm font-semibold text-[var(--color-success)]">
             Guardado.
           </span>
         )}
