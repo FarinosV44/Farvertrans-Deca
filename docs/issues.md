@@ -210,6 +210,12 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-071 — #71 P0 Quality: pre-generation check · **DONE, on `main`** (D-131)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/71
+- `DecaCheck` on the review step: re-runs the same `step1/2/3Schema` + `validateDeca()` client-side.
+  Six rows, "Corregir" jumps to the field. Status `missing`/`review`/`ready`; disclaimer says it is
+  not a legal validation. `t.crear.check` ×8. `deca-check.spec.ts` new. No schema.
+
 ### I-075 — #75 P0 Bug: "Soltero" in the PDF address · **DONE, on `main`** (D-129)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/75
 - `province` was a mandatory free-text field + a fixed `{pc} {city} — {province}, {country}` template

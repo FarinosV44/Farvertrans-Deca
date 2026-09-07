@@ -608,6 +608,23 @@ export const gl = {
       generate: "XERAR DECA",
       saveCorrection: "GARDAR CORRECCIÓN",
     },
+    check: {
+      title: "Comprobación do DeCA",
+      ready: "Listo para xerar",
+      review: "Revisar os datos",
+      missing: "Faltan datos obrigatorios",
+      fix: "Corrixir",
+      disclaimer:
+        "Comproba que os datos obrigatorios están completos antes de xerar. Non é unha validación xurídica do transporte.",
+      items: {
+        shipper: "Cargador contractual identificado",
+        carrier: "Transportista efectivo identificado",
+        route: "Carga e descarga completas",
+        dates: "Datas de carga e descarga informadas",
+        goods: "Mercadoría e peso ou medida informados",
+        tractor: "Matrícula da tractora informada",
+      },
+    },
   },
   result: {
     heading: "DeCA xerado",

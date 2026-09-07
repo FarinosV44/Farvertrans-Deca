@@ -608,6 +608,23 @@ export const ca = {
       generate: "GENERAR DECA",
       saveCorrection: "DESAR CORRECCIÓ",
     },
+    check: {
+      title: "Comprovació del DeCA",
+      ready: "A punt per generar",
+      review: "Revisa les dades",
+      missing: "Falten dades obligatòries",
+      fix: "Corregeix",
+      disclaimer:
+        "Comprova que les dades obligatòries estan completes abans de generar. No és una validació jurídica del transport.",
+      items: {
+        shipper: "Carregador contractual identificat",
+        carrier: "Transportista efectiu identificat",
+        route: "Càrrega i descàrrega completes",
+        dates: "Dates de càrrega i descàrrega informades",
+        goods: "Mercaderia i pes o mesura informats",
+        tractor: "Matrícula de la tractora informada",
+      },
+    },
   },
   result: {
     heading: "DeCA generat",

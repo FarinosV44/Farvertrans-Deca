@@ -598,6 +598,23 @@ export const en = {
       generate: "GENERATE DECA",
       saveCorrection: "SAVE CORRECTION",
     },
+    check: {
+      title: "DeCA check",
+      ready: "Ready to generate",
+      review: "Review the data",
+      missing: "Mandatory data missing",
+      fix: "Fix",
+      disclaimer:
+        "Checks that the mandatory data is complete before generating. This is not a legal validation of the transport.",
+      items: {
+        shipper: "Contractual shipper identified",
+        carrier: "Actual carrier identified",
+        route: "Loading and unloading complete",
+        dates: "Loading and unloading dates provided",
+        goods: "Goods and weight or measure provided",
+        tractor: "Tractor unit plate provided",
+      },
+    },
   },
   result: {
     heading: "DeCA generated",

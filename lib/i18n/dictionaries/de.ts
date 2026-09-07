@@ -616,6 +616,23 @@ export const de = {
       generate: "DECA ERSTELLEN",
       saveCorrection: "KORREKTUR SPEICHERN",
     },
+    check: {
+      title: "DeCA-Prüfung",
+      ready: "Bereit zur Erstellung",
+      review: "Daten prüfen",
+      missing: "Pflichtangaben fehlen",
+      fix: "Korrigieren",
+      disclaimer:
+        "Prüft, ob die Pflichtangaben vor der Erstellung vollständig sind. Dies ist keine rechtliche Prüfung des Transports.",
+      items: {
+        shipper: "Vertraglicher Verlader angegeben",
+        carrier: "Tatsächlicher Frachtführer angegeben",
+        route: "Be- und Entladung vollständig",
+        dates: "Be- und Entladedatum angegeben",
+        goods: "Ware und Gewicht oder Maß angegeben",
+        tractor: "Kennzeichen der Zugmaschine angegeben",
+      },
+    },
   },
   result: {
     heading: "DeCA erstellt",

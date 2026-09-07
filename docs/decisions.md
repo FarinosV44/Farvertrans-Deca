@@ -3907,3 +3907,24 @@ remaining scope.
   section is reachable in ≤2 actions (open disclosure + pick on mobile, one click on desktop).
   Existing `workspace.spec.ts` a11y check on `/panel*` still green. 180 unit. No schema, no i18n
   (labels already matched the issue's hierarchy names).
+
+## D-131 — #71 P0: pre-generation "Comprobación del DeCA" check
+- Date / phase: 2026-09-08, Phase 5. A light confidence check on the review step.
+- **`DecaCheck` in `components/deca/wizard.tsx`** — re-runs `step1Schema` / `step2Schema` /
+  `step3Schema` + `validateDeca()` (all already client-safe, pure) on the live form. Same source
+  of truth as the server, so it can never green-light what `POST /api/deca` will 422, and there is
+  no second rule set to maintain. Six rows (cargador, transportista, carga+descarga, fechas,
+  mercancía+peso, matrícula tractora); a row with a schema issue shows the real message + a
+  "Corregir" button that jumps to the step and focuses the field.
+- **Status:** `Faltan datos obligatorios` (schema parse fails), `Revisar datos` (structurally
+  complete but `validateDeca` warns — foreign NIF, plate reuse), `Listo para generar` (clean).
+  `data-status` attribute for the tests. **No legal claim** — a `disclaimer` line says it is not a
+  legal validation of the transport; asserted in the test that the block never says "legalmente
+  válido" / "100 %".
+- i18n: `t.crear.check.*` added to all 8 dictionaries.
+- **Post-generation label deliberately NOT added** (the issue's "puede mostrarse"): every emitted
+  DeCA already passes `validateDeca` server-side, so a "datos obligatorios completos" badge would be
+  tautological; revisit if a real need appears.
+- **Tests:** `tests/e2e/deca-check.spec.ts` — missing → ready transition, the fix-jump focuses the
+  field, the foreign-NIF "Revisar datos" path. 180 unit + crear/creator-ux31/growth/master-data +
+  compliance 8/8. No schema, no migration.

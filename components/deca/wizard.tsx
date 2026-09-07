@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Field } from "./field";
 import { step1Schema, step2Schema, step3Schema } from "@/lib/deca/schema";
+import { validateDeca } from "@/lib/deca/validate";
 import { leadSchema } from "@/lib/deca/lead";
 import { track, getSessionId } from "@/lib/analytics/client";
 import { looksLikeSpanishPlate } from "@/lib/deca/plate";
@@ -282,6 +283,144 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+/**
+ * #71 — a light pre-generation check shown on the review step. It re-runs the
+ * SAME zod schemas the server validates with (`step1/2/3Schema` +
+ * `validateDeca`), so it can never green-light something the backend will
+ * reject and never needs a second set of rules. It makes no legal claim — just
+ * "the mandatory data is complete" — and every problem row jumps to its field.
+ */
+function DecaCheck({
+  form,
+  onFix,
+}: {
+  form: FormState;
+  onFix: (step: number, fieldId?: string) => void;
+}) {
+  const t = useT();
+  const c = t.crear.check;
+  const p = toPayload(form);
+
+  const s1 = step1Schema.safeParse({ shipper: p.shipper, carrier: p.carrier });
+  const s2 = step2Schema.safeParse({
+    loadLocation: p.loadLocation,
+    unloadLocation: p.unloadLocation,
+    loadDate: p.loadDate,
+    unloadDate: p.unloadDate,
+  });
+  const s3 = step3Schema.safeParse({
+    goods: p.goods,
+    weight: p.weight,
+    tractorPlate: p.tractorPlate,
+    trailerPlate: p.trailerPlate,
+    reference: p.reference,
+  });
+  const issues = (r: typeof s1 | typeof s2 | typeof s3): Record<string, string> =>
+    r.success
+      ? {}
+      : r.error.issues.reduce<Record<string, string>>((acc, i) => {
+          const k = i.path.join(".");
+          if (!(k in acc)) acc[k] = i.message;
+          return acc;
+        }, {});
+  const e1 = issues(s1);
+  const e2 = issues(s2);
+  const e3 = issues(s3);
+
+  const firstErr = (obj: Record<string, string>, ...prefixes: string[]) => {
+    for (const prefix of prefixes) {
+      const k = Object.keys(obj).find((x) => x === prefix || x.startsWith(`${prefix}.`));
+      if (k) return { msg: obj[k], fieldId: (FIELD_KEY_MAP[k] as string) ?? k };
+    }
+    return null;
+  };
+
+  const rows = [
+    { label: c.items.shipper, step: 0, err: firstErr(e1, "shipper") },
+    { label: c.items.carrier, step: 0, err: firstErr(e1, "carrier") },
+    { label: c.items.route, step: 1, err: firstErr(e2, "loadLocation", "unloadLocation") },
+    { label: c.items.dates, step: 1, err: firstErr(e2, "loadDate", "unloadDate") },
+    { label: c.items.goods, step: 2, err: firstErr(e3, "goods", "weight") },
+    { label: c.items.tractor, step: 2, err: firstErr(e3, "tractorPlate") },
+  ];
+
+  const hasError = rows.some((r) => r.err);
+  let warnings: string[] = [];
+  if (!hasError) {
+    try {
+      warnings = validateDeca(p).warnings;
+    } catch {
+      /* structurally complete but validateDeca threw — treat as an error state */
+    }
+  }
+  const status: "ready" | "review" | "missing" = hasError
+    ? "missing"
+    : warnings.length
+      ? "review"
+      : "ready";
+  // Static class strings — Tailwind cannot see an interpolated token name.
+  const PILL: Record<typeof status, string> = {
+    ready:
+      "bg-[var(--color-success-bg)] text-[var(--color-success)] border-[color-mix(in_srgb,var(--color-success)_28%,transparent)]",
+    review:
+      "bg-[var(--color-warn-bg)] text-[var(--color-warn)] border-[color-mix(in_srgb,var(--color-warn)_28%,transparent)]",
+    missing:
+      "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[color-mix(in_srgb,var(--color-danger)_28%,transparent)]",
+  };
+
+  return (
+    <section
+      data-testid="deca-check"
+      data-status={status}
+      aria-label={c.title}
+      className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-bold">{c.title}</h2>
+        <span
+          className={`rounded-[var(--radius-sm)] border px-2 py-0.5 text-xs font-semibold ${PILL[status]}`}
+        >
+          {c[status]}
+        </span>
+      </div>
+      <ul className="mt-3 space-y-1.5 text-sm">
+        {rows.map((row) => (
+          <li key={row.label} className="flex items-start gap-2">
+            <span
+              aria-hidden
+              className={row.err ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}
+            >
+              {row.err ? "✗" : "✓"}
+            </span>
+            <span className="flex-1">
+              {row.err ? row.err.msg : row.label}
+              {row.err && (
+                <button
+                  type="button"
+                  data-testid={`deca-check-fix-${row.step}`}
+                  onClick={() => onFix(row.step, row.err!.fieldId)}
+                  className="ml-2 font-medium text-[var(--color-primary)] underline"
+                >
+                  {c.fix}
+                </button>
+              )}
+            </span>
+          </li>
+        ))}
+        {warnings.map((w) => (
+          <li key={w} className="flex items-start gap-2">
+            <span aria-hidden className="text-[var(--color-warn)]">
+              ⚠
+            </span>
+            <span className="flex-1">{w}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-[var(--color-text-muted)]">{c.disclaimer}</p>
     </section>
   );
 }
@@ -1267,13 +1406,23 @@ export function CrearWizard({
         )}
 
         {step === 2 && !isCorrection && (
-          <ReviewSummary
-            form={form}
-            onEdit={(s) => {
-              setErrors({});
-              setStep(s);
-            }}
-          />
+          <>
+            <DecaCheck
+              form={form}
+              onFix={(s, fieldId) => {
+                setErrors({});
+                setStep(s);
+                if (fieldId) requestAnimationFrame(() => document.getElementById(fieldId)?.focus());
+              }}
+            />
+            <ReviewSummary
+              form={form}
+              onEdit={(s) => {
+                setErrors({});
+                setStep(s);
+              }}
+            />
+          </>
         )}
 
         {submitting && !isCorrection && (

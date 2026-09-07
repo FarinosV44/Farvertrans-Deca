@@ -620,6 +620,23 @@ export const eu = {
       generate: "SORTU DECA",
       saveCorrection: "GORDE ZUZENKETA",
     },
+    check: {
+      title: "DeCA egiaztapena",
+      ready: "Sortzeko prest",
+      review: "Berrikusi datuak",
+      missing: "Nahitaezko datuak falta dira",
+      fix: "Zuzendu",
+      disclaimer:
+        "Egiaztatu nahitaezko datuak osatuta daudela sortu aurretik. Ez da garraioaren balidazio juridikoa.",
+      items: {
+        shipper: "Kontratuko kargatzailea identifikatuta",
+        carrier: "Benetako garraiolaria identifikatuta",
+        route: "Karga eta deskarga osatuta",
+        dates: "Karga- eta deskarga-datak adierazita",
+        goods: "Salgaia eta pisua edo neurria adierazita",
+        tractor: "Traktorearen matrikula adierazita",
+      },
+    },
   },
   result: {
     heading: "DeCA sortuta",
