@@ -50,10 +50,16 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
         <GlobeIcon width={18} height={18} />
         <span className="text-xs font-medium uppercase">{current}</span>
       </summary>
+      {/* Anchored to the switcher's LEFT edge, not the right: the switcher is
+          never the rightmost header item (the login link + CTA sit after it),
+          so `right-0` threw the 176px menu leftward across the screen — on a
+          phone it covered half the viewport (#68 follow-up). `left-0` drops it
+          straight down from the globe; the max-width keeps it on screen at any
+          width. */}
       <ul
         role="menu"
         aria-label="Idioma / Language"
-        className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] py-1 text-sm shadow-[0_8px_24px_rgba(15,23,32,0.12)]"
+        className="absolute left-0 z-50 mt-2 w-44 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] py-1 text-sm shadow-[0_8px_24px_rgba(15,23,32,0.12)]"
       >
         {LOCALES.map((l) => (
           <li key={l}>

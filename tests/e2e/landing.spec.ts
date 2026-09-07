@@ -210,6 +210,30 @@ test.describe("BUILD 06 — production landing", () => {
       const mobileCta = page.locator("div.md\\:hidden [data-testid='cta-crear']");
       if (w < 768) await expect(mobileCta).toBeVisible();
       else await expect(mobileCta).toBeHidden();
+
+      // #68 follow-up: the language switcher is not the rightmost header item,
+      // so its menu must drop straight down from the globe — anchored to the
+      // switcher, on-screen, no new scrollbar. It used to fly left across the
+      // viewport from `right-0` and cover half a phone screen.
+      const summaryBox = await page
+        .getByTestId("language-switcher")
+        .locator("summary")
+        .boundingBox();
+      await page.getByTestId("language-switcher").locator("summary").click();
+      const menu = page.getByRole("menu", { name: "Idioma / Language" });
+      await expect(menu).toBeVisible();
+      const box = await menu.boundingBox();
+      expect(box, "switcher menu has a box").not.toBeNull();
+      expect(
+        Math.abs(box!.x - summaryBox!.x),
+        "menu is anchored to the switcher, not thrown across the screen",
+      ).toBeLessThanOrEqual(8);
+      expect(box!.x, "menu not off the left edge").toBeGreaterThanOrEqual(-1);
+      expect(box!.x + box!.width, "menu not off the right edge").toBeLessThanOrEqual(w + 1);
+      const overflowOpen = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflowOpen, "no horizontal scroll with the switcher open").toBeLessThanOrEqual(1);
     });
   }
 

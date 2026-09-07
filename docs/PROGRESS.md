@@ -1415,7 +1415,9 @@ progress, admin i18n — not blockers. Older open issues #1–4/#24/#33/#40–47
 `components/site/activity-snapshot.tsx` ("Tu actividad", aria-hidden) as a 3rd right-column visual
 to kill the desktop void under Histórico; footer line tied to the grid with the 2px línea rule.
 Fixed a pre-existing 768px header overflow (`site-header` section nav `md:flex`→`lg:flex`) that had
-`landing.spec.ts:201` red on `main`. 172 unit + 14/14 landing e2e + compliance 8/8. No i18n, no schema.
+`landing.spec.ts:201` red on `main`. Follow-up: `LanguageSwitcher` dropdown `right-0`→`left-0` (it's
+not the rightmost header item; on mobile the menu flew left and covered half the screen) + regression
+test. 172 unit + 14/14 landing e2e + compliance 8/8. No i18n, no schema.
 
 ### #62 gap fix — admin company-ficha edit form (D-127) — on `main`
 2026-09-07. The `edit` action of `PATCH /api/admin/empresas/[id]` existed since D-117 but no UI

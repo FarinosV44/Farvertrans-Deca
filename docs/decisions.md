@@ -3848,3 +3848,11 @@ remaining scope.
 - No i18n change (the feature-card text is unchanged; the previews are Spanish-only `aria-hidden`
   decoration by the same convention as their siblings). Verification: 172 unit + 14/14 landing e2e +
   nav-links + crear + launch-happy-path + compliance 8/8.
+- **Follow-up (user: the language menu "se come media pantalla" on mobile):** `LanguageSwitcher`'s
+  dropdown was `absolute right-0`, but the switcher is never the rightmost header item (the login
+  link + CTA sit after it), so `right-0` anchored the 176px menu's right edge to the switcher and
+  threw it leftward across the viewport — on a phone it covered ~half the screen and read as
+  detached from the globe. Fixed to `left-0` (drops straight down from the globe) +
+  `max-w-[calc(100vw-1.5rem)]`. Regression check added to `landing.spec.ts:201` at 360/768/1280:
+  the open menu is anchored to the switcher (|Δx| ≤ 8), on-screen, and adds no scrollbar — it was
+  red at all three widths before.

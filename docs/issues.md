@@ -210,7 +210,9 @@ anonymize-in-place (no hard delete, D-067).
   grid with the 2px "línea" rule. Also fixed a pre-existing 768px header overflow (section nav
   `md:flex` → `lg:flex`) that had `landing.spec.ts:201` red on `main`.
 - 172 unit + 14/14 landing e2e + nav-links + crear + launch-happy-path + compliance 8/8. No i18n,
-  no schema. Beat-1 comment pending. Awaiting the user's live-verification close.
+  no schema. Beat-1 commented. Awaiting the user's live-verification close.
+- Follow-up (D-128): fixed the `LanguageSwitcher` dropdown flying left across the viewport on
+  mobile (`right-0` → `left-0`, it's not the rightmost header item); regression test added.
 
 ### I-067 — #67 Own visual identity — "Sistema Vía" · P1 · **DONE, on `main`** (D-125/D-126)
 - Proposal approved 2026-09-07. Artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 · spec `docs/design/sistema-via.md` · D-122…D-126.
