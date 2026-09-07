@@ -24,7 +24,7 @@ export function CtaButton({
   testId?: string;
 }) {
   const base =
-    "inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] px-6 font-medium no-underline transition-colors";
+    "inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-[var(--radius-md)] px-6 font-medium no-underline transition-colors";
   const styles =
     variant === "inverse"
       ? "btn-inverse bg-white text-[var(--color-primary)] hover:bg-[var(--color-surface)]"

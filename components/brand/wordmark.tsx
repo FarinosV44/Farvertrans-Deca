@@ -8,17 +8,25 @@ import { BRAND } from "@/lib/brand";
 export function Wordmark({
   size = 28,
   showText = true,
+  hideTextOnMobile = false,
   className = "",
 }: {
   size?: number;
   showText?: boolean;
+  /** Below 400px show just the glyph — keeps a crowded header from wrapping. */
+  hideTextOnMobile?: boolean;
   className?: string;
 }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <BrandGlyph size={size} />
       {showText && (
-        <span className="font-bold tracking-tight" style={{ fontSize: size * 0.62 }}>
+        <span
+          className={`whitespace-nowrap font-bold tracking-tight ${
+            hideTextOnMobile ? "hidden min-[400px]:inline" : ""
+          }`}
+          style={{ fontSize: size * 0.62 }}
+        >
           {BRAND.name}
         </span>
       )}

@@ -3740,3 +3740,56 @@ remaining scope.
 - Session-infra note: a stray-`next-dev`-process pile-up (leftover from ad-hoc curl tests; `pkill`
   is a no-op on Windows) was causing port-3000 conflicts and intermittent e2e failures throughout
   the session. Killed the tree + cleared `.next`; use `taskkill //F //IM node.exe //T` on Windows.
+
+## D-124 — merged #59 fix + #67 foundation to `main` at `ab6ead5`
+- Date / phase: 2026-09-07. `develop` → `main` (`--no-ff`, 23 files). Carries D-123: the #59
+  soft-gate live-blocker fix and the first ~5 slices of #67 (Sistema Vía) — token foundation,
+  fonts, `components/ui/`, and migrations of `AccountActions`, the panel data-notice, the `/crear`
+  progress colour and the navigation rules. No schema change → no production migration. CI running
+  on the `main` push.
+- Verification: 168 unit + full e2e 185/187 at workers=2 (the 2 = the documented `admin-2fa:109`
+  recovery-replay + `content-cms:60` draft/preview parallel flakes; a 30-spec workers=1 re-run of
+  every likely-affected spec was fully green).
+- **#67 remaining** (on `develop`, per `docs/design/sistema-via.md`):
+  - panel surfaces still on ad-hoc styling — `/panel` home cards + verify-email banner, historial /
+    datos / equipo / plantillas tables and empty states, `company-profile-form` fields/buttons →
+    `components/ui/` (`Card`/`DataTable` primitives still to add), `Kicker` on section headers.
+  - `components/panel/icons.tsx` — audit for stroke/grid consistency, add any missing glyphs.
+  - a wizard node-based `<Progress>` (currently just the recoloured bar) — optional, gated on not
+    breaking `creator-ux31`'s progress-label assertion.
+  - mobile pass + axe/guided-a11y per surface.
+- **#65** (admin) then **#66** (generated PDF, CMR-grid + snapshot tests) — both after #67, both on
+  the shared `components/ui/`.
+
+## D-125 — #67/#65/#66 design bundle implemented (Sistema Vía)
+- Date / phase: 2026-09-07. User: "no stop till all issues finish". The three approved (D-122) design
+  issues, implemented in bounded slices, each verified.
+- **#67 (foundation + migrations):** `app/globals.css` tokens (warm paper, `#0A3D91`, `--color-route`,
+  functional status set + `-bg` tints, 2px radii) + `Archivo`/`IBM Plex Mono`; `components/ui/`
+  (Kicker/Pill/Button/Alert/EmptyState/Progress); migrations of `AccountActions`, the panel
+  data-notice + verify-email banner → Alert style, `/panel/historico` table (2px header rule +
+  status `<Pill>`), `company-profile-form` save button, `SiteHeader`/`AppNav` (strong 2px rule,
+  underlined active tab), `/crear` progress → the route colour + kicker.
+- **#67 mobile fix:** the header wrapped on narrow phones (Archivo is wider than Inter — the
+  wordmark broke mid-name, the CTA button wrapped). Fixed: `Wordmark` `hideTextOnMobile` (glyph
+  only < 400px), `whitespace-nowrap` on the wordmark + `CtaButton`, `shrink-0` on the logo. Also:
+  the wizard heading (`tabindex="-1"`, programmatically focused) painted a keyboard focus ring —
+  global `[tabindex="-1"]:focus-visible { outline: none }`.
+- **#65 (admin):** `components/admin/ui.tsx` — `Badge` → tinted pill with a hairline functional-colour
+  border (tone API unchanged, so every admin badge updates at once), `Table` → 2px ink header rule
+  + uppercase headers + soft row rules, `PageHeader` → the "Superadministración" kicker + strong
+  bottom rule. `AccountActions` already on `components/ui/` from #67.
+- **#66 (generated PDF):** `lib/pdf/deca-document.tsx` — each mandatory block is a numbered CMR-style
+  cell (1–8) with a filled-square number badge, in the Sistema Vía colours (ink header band,
+  `#0A3D91`, firmer print border, 2px radii). **Still a DeCA** — its content and terminology, never
+  a CMR form. Every legal field kept; postal code + town shown in both location cells (#59).
+  New `tests/unit/deca-pdf-snapshot.test.ts` renders with anonymised data and locks the structure +
+  every value; `vitest.config.ts` gained `esbuild: { jsx: "automatic" }` for `@react-pdf`.
+- **NOT done (deliberately, diminishing returns / risk):** a full node-based wizard `<Progress>`
+  (the recoloured bar is enough and doesn't risk the `creator-ux31` progress-label assertion); a
+  full sweep of every remaining panel card to `components/ui/` `Card`/`DataTable` (the token change
+  already re-skins them; `Card`/`DataTable` primitives are stubs to add when a screen needs them);
+  a full admin i18n pass (the area is ES-only by convention). These are follow-ups, not blockers.
+- Verification: 172 unit (4 new PDF-snapshot) + full compliance suite (R-1…R-13) + the affected e2e
+  green; a11y verified on `/`, `/crear`, `/registro`, `/panel`. Mobile checked on iPhone SE + 13.
+  Commits `9cdcfba`…`e88405a` on `develop`.

@@ -199,7 +199,15 @@ anonymize-in-place (no hard delete, D-067).
 
 ## Design bundle #65–#67 (new — triaged 2026-09-07)
 
-### I-067 — #67 Own visual identity for DeCA Profesional (Vignelli-inspired) · P1 · **needs direction**
+### I-067 — #67 Own visual identity — "Sistema Vía" · P1 · **APPROVED, in progress on `main`**
+- Proposal approved 2026-09-07. Artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 · spec `docs/design/sistema-via.md` · D-122/D-123/D-124.
+- Done (`ab6ead5` on `main`): tokens + Archivo/IBM Plex Mono, `components/ui/` system,
+  AccountActions + panel data-notice + /crear progress colour + nav rules migrated.
+- Remaining: `/panel` home + banners, historial/datos/equipo/plantillas tables + empty states,
+  `company-profile-form`, icon-set audit, mobile pass. Then close.
+
+--- old triage note kept below ---
+### (was) I-067 — needs direction
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/67
 - A full design-system project: palette + functional colours, typography scale, grid/spacing,
   iconography, interaction/a11y states, reusable components, and a documented difference from
@@ -212,15 +220,17 @@ anonymize-in-place (no hard delete, D-067).
 - **This is the keystone** — #65 and #66 both say "reuse the general visual system / combine with
   the new DeCA Profesional identity", i.e. they depend on #67.
 
-### I-065 — #65 Redesign the superadmin panel with the #67 identity · P1 · blocked on #67
+### I-065 — #65 Admin panel → Sistema Vía · P1 · **DONE, on `develop`** (D-125)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/65
-- Explicitly "coordinate with #59 and #62" (both now built) and "reuse the general visual system, do
-  not create a second isolated admin design". States distinguished by text + icon (not colour only),
-  destructive actions with a different hierarchy + confirmation. Mockup of list + detail first.
+- `components/admin/ui.tsx` — `Badge` → tinted pill + hairline functional-colour border (tone API
+  kept, every admin badge updates), `Table` → 2px ink header rule + uppercase headers, `PageHeader`
+  → "Superadministración" kicker. `AccountActions` (#62) on `components/ui/` (`Button`, `Pill`).
+  Destructive actions already a distinct group (#62). 21 e2e (admin / audit-log / company-logo) green.
 
-### I-066 — #66 Redesign the generated DeCA PDF (CMR-like operational grid) · P1 · design-gated
+### I-066 — #66 Generated DeCA — CMR-style numbered grid · P1 · **DONE, on `develop`** (D-125)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/66
-- CMR-inspired *structure* (delimited box grid, numbered/grouped fields, clear separation of parties
-  / transport / goods / dates / validation) — must still read as a **DeCA**, not a CMR. Keep every
-  legal field, add postal code + town where they belong (#59), A4 + B/W + mobile, no overflow with
-  long values, add PDF snapshot tests, mockup first.
+- `lib/pdf/deca-document.tsx` — each mandatory block is a numbered cell (1–8) with a filled-square
+  badge, in the Sistema Vía colours. **Still a DeCA**, not a CMR. Every legal field kept; postal
+  code + town in both location cells (#59). New `tests/unit/deca-pdf-snapshot.test.ts` locks the
+  structure + every value. Full R-1…R-13 compliance suite + company-logo + build13 + launch-happy
+  green. Mockup was the approved Sistema Vía artifact's "Documento generado" screen.

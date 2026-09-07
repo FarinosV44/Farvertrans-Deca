@@ -58,14 +58,12 @@ export default async function AppHome() {
           <div
             role="status"
             data-testid="panel-verify-email-banner"
-            className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm"
+            className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-r-[var(--radius-sm)] border-l-[3px] border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-3.5 text-sm"
           >
-            <p>
-              <span aria-hidden>✉️</span> {t.panel.verifyBanner.text(user.email)}
-            </p>
+            <p>{t.panel.verifyBanner.text(user.email)}</p>
             <Link
               href="/verificar-email?next=/panel"
-              className="font-medium text-[var(--color-primary)] underline"
+              className="font-semibold text-[var(--color-primary)] underline"
             >
               {t.panel.verifyBanner.cta}
             </Link>

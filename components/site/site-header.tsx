@@ -31,13 +31,13 @@ export async function SiteHeader({
   const es = await getDictionary(locale);
   return (
     <header className="sticky top-0 z-40 border-b-2 border-[var(--color-text)] bg-[color-mix(in_srgb,var(--color-bg)_92%,transparent)] backdrop-blur">
-      <div className="mx-auto flex max-w-[1120px] items-center gap-4 px-4 py-3 md:px-6">
+      <div className="mx-auto flex max-w-[1120px] items-center gap-3 px-4 py-3 md:gap-4 md:px-6">
         <Link
           href="/"
-          className="brand no-underline text-[var(--color-text)]"
+          className="brand shrink-0 no-underline text-[var(--color-text)]"
           aria-label={`${es.common.appName} — inicio`}
         >
-          <Wordmark size={26} />
+          <Wordmark size={26} hideTextOnMobile />
         </Link>
 
         {nav && (

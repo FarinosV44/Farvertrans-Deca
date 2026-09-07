@@ -12,12 +12,15 @@ import { DECA_ROLES } from "@/lib/deca/roles";
  * with generous quiet space, never sharing a line with body text.
  */
 
-const NAVY = "#0b1f3a";
+// Sistema Vía (#67/#66): the document reads as an operational sheet — a
+// precise grid of numbered cells (CMR conventions) in the DeCA Profesional
+// identity. Still a DeCA: its own content and terminology.
+const NAVY = "#16181d"; // ink header band
 const NAVY_SOFT = "#33455e";
-const ACCENT = "#0b5cff"; // BRAND.color
-const BORDER = "#d7dde6";
-const MUTED = "#5b6673";
-const BG_SOFT = "#f4f7fc";
+const ACCENT = "#0a3d91"; // línea DeCA
+const BORDER = "#c9c4b8"; // firmer hairline for print
+const MUTED = "#5c5f66";
+const BG_SOFT = "#f1efe9";
 
 const s = StyleSheet.create({
   page: {
@@ -95,13 +98,29 @@ const s = StyleSheet.create({
     borderBottomColor: ACCENT,
   },
 
+  // CMR-style numbered cell headers
+  cellHeadRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  cellNo: {
+    fontSize: 8,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    color: "#ffffff",
+    backgroundColor: ACCENT,
+    width: 15,
+    height: 15,
+    borderRadius: 2,
+    textAlign: "center",
+    marginRight: 7,
+    paddingTop: 2.5,
+  },
+
   // Two-column party cards
   cardsRow: { flexDirection: "row", gap: 12 },
   card: {
     flex: 1,
     borderWidth: 1,
     borderColor: BORDER,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: 12,
     backgroundColor: BG_SOFT,
   },
@@ -119,8 +138,7 @@ const s = StyleSheet.create({
 
   // Route timeline
   routeRow: { flexDirection: "row", gap: 12 },
-  routeCard: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 6, padding: 12 },
-  routeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: ACCENT, marginRight: 6 },
+  routeCard: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 3, padding: 12 },
   routeKind: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
   routeKindText: {
     fontSize: 8,
@@ -181,12 +199,18 @@ const s = StyleSheet.create({
   },
 });
 
+function CellNo({ n }: { n: number }) {
+  return <Text style={s.cellNo}>{n}</Text>;
+}
+
 function PartyCard({
+  n,
   role,
   name,
   nif,
   address,
 }: {
+  n: number;
   role: string;
   name: string;
   nif: string;
@@ -194,7 +218,10 @@ function PartyCard({
 }) {
   return (
     <View style={s.card}>
-      <Text style={s.cardLabel}>{role}</Text>
+      <View style={s.cellHeadRow}>
+        <CellNo n={n} />
+        <Text style={s.cardLabel}>{role}</Text>
+      </View>
       <Text style={s.cardValue}>{name}</Text>
       <Text style={s.fieldLabel}>NIF / VAT</Text>
       <Text style={s.fieldValue}>{nif}</Text>
@@ -205,6 +232,7 @@ function PartyCard({
 }
 
 function RouteCard({
+  n,
   kind,
   name,
   address,
@@ -215,6 +243,7 @@ function RouteCard({
   dateLabel,
   dateValue,
 }: {
+  n: number;
   kind: string;
   name: string;
   address: string;
@@ -228,7 +257,7 @@ function RouteCard({
   return (
     <View style={s.routeCard}>
       <View style={s.routeKind}>
-        <View style={s.routeDot} />
+        <CellNo n={n} />
         <Text style={s.routeKindText}>{kind}</Text>
       </View>
       <Text style={s.routeName}>{name}</Text>
@@ -242,10 +271,13 @@ function RouteCard({
   );
 }
 
-function GridField({ label, value }: { label: string; value: string }) {
+function GridField({ n, label, value }: { n: number; label: string; value: string }) {
   return (
     <View style={s.gridBlock}>
-      <Text style={s.gridLabel}>{label}</Text>
+      <View style={s.cellHeadRow}>
+        <CellNo n={n} />
+        <Text style={s.gridLabel}>{label}</Text>
+      </View>
       <Text style={s.gridValue}>{value}</Text>
     </View>
   );
@@ -312,12 +344,14 @@ export function DecaDocument(p: DecaDocProps) {
             <Text style={s.sectionHeading}>Partes del transporte</Text>
             <View style={s.cardsRow}>
               <PartyCard
+                n={1}
                 role={DECA_ROLES.shipper.title}
                 name={p.data.shipper.name}
                 nif={p.data.shipper.nif}
                 address={p.data.shipper.address}
               />
               <PartyCard
+                n={2}
                 role={DECA_ROLES.carrier.title}
                 name={p.data.carrier.name}
                 nif={p.data.carrier.nif}
@@ -331,6 +365,7 @@ export function DecaDocument(p: DecaDocProps) {
             <Text style={s.sectionHeading}>Ruta del transporte</Text>
             <View style={s.routeRow}>
               <RouteCard
+                n={3}
                 kind="Lugar de carga"
                 name={p.data.loadLocation.name}
                 address={p.data.loadLocation.address}
@@ -342,6 +377,7 @@ export function DecaDocument(p: DecaDocProps) {
                 dateValue={p.data.loadDate}
               />
               <RouteCard
+                n={4}
                 kind="Lugar de descarga"
                 name={p.data.unloadLocation.name}
                 address={p.data.unloadLocation.address}
@@ -359,10 +395,10 @@ export function DecaDocument(p: DecaDocProps) {
           <View style={s.section}>
             <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
             <View style={s.grid}>
-              <GridField label="Naturaleza de la mercancía" value={p.data.goods} />
-              <GridField label="Peso o medida" value={p.data.weight} />
-              <GridField label="Matrícula tractora" value={p.data.tractorPlate} />
-              <GridField label="Matrícula remolque" value={p.data.trailerPlate || "—"} />
+              <GridField n={5} label="Naturaleza de la mercancía" value={p.data.goods} />
+              <GridField n={6} label="Peso o medida" value={p.data.weight} />
+              <GridField n={7} label="Matrícula tractora" value={p.data.tractorPlate} />
+              <GridField n={8} label="Matrícula remolque" value={p.data.trailerPlate || "—"} />
             </View>
           </View>
 
