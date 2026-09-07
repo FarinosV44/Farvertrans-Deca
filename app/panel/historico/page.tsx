@@ -9,12 +9,21 @@ import { docWorkflowStatus } from "@/lib/deca/export";
 import { publicEnv } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n/server";
 import type { Messages } from "@/lib/i18n/dictionaries/es";
+import { Pill, type PillTone } from "@/components/ui";
 
 /** Maps the (Spanish, CSV-shared) `docWorkflowStatus()` word to the UI locale. */
 function statusLabel(raw: string, t: Messages): string {
   if (raw === "Vigente") return t.historico.statusActive;
   if (raw === "Corregida") return t.historico.statusCorrected;
   return t.historico.statusUnavailable;
+}
+const STATUS_TONE: Record<string, PillTone> = {
+  Vigente: "ok",
+  Corregida: "warn",
+  "No disponible": "rest",
+};
+function StatusPill({ raw, t }: { raw: string; t: Messages }) {
+  return <Pill tone={STATUS_TONE[raw] ?? "rest"}>{statusLabel(raw, t)}</Pill>;
 }
 
 export const dynamic = "force-dynamic";
@@ -168,32 +177,40 @@ export default async function HistoricoPage({
         <div className="mt-2 overflow-x-auto">
           <table className="hidden w-full text-sm md:table" data-testid="historico-table">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-left text-xs text-[var(--color-text-muted)]">
-                <th className="py-2">{t.historico.colDate}</th>
-                <th>{t.historico.colRoute}</th>
-                <th>{t.historico.colShipper}</th>
-                <th>{t.historico.colCarrier}</th>
-                <th>{t.historico.colPlate}</th>
-                <th>{t.historico.colStatus}</th>
+              <tr className="border-b-2 border-[var(--color-text)] text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-muted)]">
+                <th className="py-2 pr-3">{t.historico.colDate}</th>
+                <th className="pr-3">{t.historico.colRoute}</th>
+                <th className="pr-3">{t.historico.colShipper}</th>
+                <th className="pr-3">{t.historico.colCarrier}</th>
+                <th className="pr-3">{t.historico.colPlate}</th>
+                <th className="pr-3">{t.historico.colStatus}</th>
                 <th>{t.historico.colActions}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-b border-[var(--color-border)]">
-                  <td className="py-2">{r.loadDate || r.createdAt.toISOString().slice(0, 10)}</td>
-                  <td>
+                <tr key={r.id} className="border-b border-[var(--color-border-soft)]">
+                  <td className="py-2.5 pr-3">
+                    {r.loadDate || r.createdAt.toISOString().slice(0, 10)}
+                  </td>
+                  <td className="pr-3">
                     {r.loadLocation} → {r.unloadLocation}
                   </td>
-                  <td>{r.shipper}</td>
-                  <td>{r.carrier}</td>
-                  <td>
+                  <td className="pr-3">{r.shipper}</td>
+                  <td className="pr-3">{r.carrier}</td>
+                  <td className="pr-3">
                     {r.tractorPlate}
                     {r.trailerPlate ? ` + ${r.trailerPlate}` : ""}
                   </td>
-                  <td>
-                    {statusLabel(docWorkflowStatus(r), t)}
-                    {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
+                  <td className="pr-3">
+                    <span className="inline-flex items-center gap-1.5">
+                      <StatusPill raw={docWorkflowStatus(r)} t={t} />
+                      {r.versionNo > 1 ? (
+                        <span className="text-xs text-[var(--color-text-muted)]">
+                          v{r.versionNo}
+                        </span>
+                      ) : null}
+                    </span>
                   </td>
                   <td className="whitespace-nowrap">
                     <Link href={`/panel/deca/${r.id}`}>{t.historico.detail}</Link> ·{" "}
@@ -221,10 +238,14 @@ export default async function HistoricoPage({
                 <p className="font-medium">
                   {r.loadLocation} → {r.unloadLocation}
                 </p>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
-                  {r.tractorPlate} · {statusLabel(docWorkflowStatus(r), t)}
-                  {r.versionNo > 1 ? ` · v${r.versionNo}` : ""}
+                <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[var(--color-text-muted)]">
+                  <span>{r.loadDate || r.createdAt.toISOString().slice(0, 10)}</span>
+                  <span aria-hidden>·</span>
+                  <span>{r.carrier}</span>
+                  <span aria-hidden>·</span>
+                  <span>{r.tractorPlate}</span>
+                  <StatusPill raw={docWorkflowStatus(r)} t={t} />
+                  {r.versionNo > 1 ? <span>v{r.versionNo}</span> : null}
                 </p>
                 <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                   <Link href={`/panel/deca/${r.id}`}>{t.historico.detail}</Link>
