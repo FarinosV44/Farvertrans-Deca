@@ -459,6 +459,7 @@ export const ca = {
     duplicate: "Duplicar",
     pdf: "PDF",
     inspection: "Inspecció",
+    share: "Compartir",
     noResults: "Sense resultats.",
     createOne: "Crear un DeCA",
   },

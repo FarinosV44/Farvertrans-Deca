@@ -449,6 +449,7 @@ export const en = {
     duplicate: "Duplicate",
     pdf: "PDF",
     inspection: "Inspection",
+    share: "Share",
     noResults: "No results.",
     createOne: "Create a DeCA",
   },

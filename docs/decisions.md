@@ -3953,3 +3953,17 @@ remaining scope.
   internal data, no h-scroll), the correction-follows-current-version case, `/d/[token]` still a
   direct PDF. 180 unit + doc-cockpit/driver-delivery/historico/workspace + compliance 8/8. No
   schema, no migration.
+
+## D-133 — #77 P1: one-tap share from the history list
+- Date / phase: 2026-09-08, Phase 5. The detail + result pages already had `ResultActions` (full
+  share); the gap was sharing from the history list without opening the document.
+- **`components/deca/row-share.tsx`** (new, client) — a compact "Compartir" that uses Web Share
+  when available, otherwise an inline WhatsApp + copy-link menu ("Enlace copiado" feedback). The
+  `publicUrl` is always built from the row's `currentVersion` token, so a corrected/superseded
+  version is never the default (the history row only ever exposes the current token anyway).
+- Added to the `/panel/historico` table + mobile-card rows and the `/panel` recent-docs rows.
+  `t.historico.share` ×8. No new PDF interstitial; fits a 360px row with no horizontal scroll
+  (asserted).
+- **Tests:** `tests/e2e/row-share.spec.ts` — from the history list at 360px: one tap opens the
+  menu, WhatsApp href carries the `/d/token`, copy writes the current-version URL, no h-scroll.
+  180 unit + historico/workspace/panel-nav/driver-delivery green. No schema.

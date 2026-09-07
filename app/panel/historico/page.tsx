@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
+import { RowShare } from "@/components/deca/row-share";
 import { getCurrentUser } from "@/lib/auth";
 import { listHistory, listHistoryCarriers } from "@/lib/data/history";
 import { docWorkflowStatus } from "@/lib/deca/export";
@@ -215,7 +216,11 @@ export default async function HistoricoPage({
                   <td className="whitespace-nowrap">
                     <Link href={`/panel/deca/${r.id}`}>{t.historico.detail}</Link> ·{" "}
                     <Link href={`/panel/deca/${r.id}/inspeccion`}>{t.historico.inspection}</Link> ·{" "}
-                    <Link href={`/panel/deca/${r.id}/corregir`}>{t.historico.correct}</Link> ·{" "}
+                    <RowShare
+                      publicUrl={`${publicEnv.baseUrl.replace(/\/$/, "")}/d/${r.token}`}
+                      reference={r.reference}
+                    />{" "}
+                    · <Link href={`/panel/deca/${r.id}/corregir`}>{t.historico.correct}</Link> ·{" "}
                     <Link href={`/crear?from=${r.id}`}>{t.historico.duplicate}</Link> ·{" "}
                     <a
                       href={`${publicEnv.baseUrl}/d/${r.token}`}
@@ -248,9 +253,13 @@ export default async function HistoricoPage({
                   <StatusPill raw={docWorkflowStatus(r)} t={t} />
                   {r.versionNo > 1 ? <span>v{r.versionNo}</span> : null}
                 </p>
-                <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <Link href={`/panel/deca/${r.id}`}>{t.historico.detail}</Link>
                   <Link href={`/panel/deca/${r.id}/inspeccion`}>{t.historico.inspection}</Link>
+                  <RowShare
+                    publicUrl={`${publicEnv.baseUrl.replace(/\/$/, "")}/d/${r.token}`}
+                    reference={r.reference}
+                  />
                   <Link href={`/panel/deca/${r.id}/corregir`}>{t.historico.correct}</Link>
                   <Link href={`/crear?from=${r.id}`}>{t.historico.duplicate}</Link>
                   <a

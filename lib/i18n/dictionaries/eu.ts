@@ -472,6 +472,7 @@ export const eu = {
     duplicate: "Bikoiztu",
     pdf: "PDF",
     inspection: "Ikuskapena",
+    share: "Partekatu",
     noResults: "Emaitzarik ez.",
     createOne: "Sortu DeCA bat",
   },

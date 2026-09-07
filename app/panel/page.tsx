@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
+import { RowShare } from "@/components/deca/row-share";
 import { getCurrentUser } from "@/lib/auth";
 import { listHistory } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
@@ -137,8 +138,12 @@ export default async function AppHome() {
                           {r.tractorPlate}
                         </p>
                       </div>
-                      <div className="flex shrink-0 gap-3 text-xs">
+                      <div className="flex shrink-0 items-center gap-3 text-xs">
                         <Link href={`/panel/deca/${r.id}`}>{t.panel.detail}</Link>
+                        <RowShare
+                          publicUrl={`${publicEnv.baseUrl.replace(/\/$/, "")}/d/${r.token}`}
+                          reference={r.reference}
+                        />
                         {canCreate && <Link href={`/crear?from=${r.id}`}>{t.panel.duplicate}</Link>}
                         <a
                           href={`${publicEnv.baseUrl}/d/${r.token}`}

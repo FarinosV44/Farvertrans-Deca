@@ -459,6 +459,7 @@ export const gl = {
     duplicate: "Duplicar",
     pdf: "PDF",
     inspection: "Inspección",
+    share: "Compartir",
     noResults: "Sen resultados.",
     createOne: "Crear un DeCA",
   },

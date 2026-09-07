@@ -461,6 +461,7 @@ export const it = {
     duplicate: "Duplica",
     pdf: "PDF",
     inspection: "Ispezione",
+    share: "Condividi",
     noResults: "Nessun risultato.",
     createOne: "Crea un DeCA",
   },
