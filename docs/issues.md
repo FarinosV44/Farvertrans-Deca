@@ -194,3 +194,33 @@
 **Batch #59–#64: all six done on `develop`.** User decisions (2026-09-07): #59 soft-gate + hard CIF
 block on own company; #60 GitHub Actions + external object store, RPO ≤24h; #62 states 1–3 built +
 anonymize-in-place (no hard delete, D-067).
+
+---
+
+## Design bundle #65–#67 (new — triaged 2026-09-07)
+
+### I-067 — #67 Own visual identity for DeCA Profesional (Vignelli-inspired) · P1 · **needs direction**
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/67
+- A full design-system project: palette + functional colours, typography scale, grid/spacing,
+  iconography, interaction/a11y states, reusable components, and a documented difference from
+  Farvertrans — applied across nav, dashboard, forms, the DeCA flow, states/alerts, buttons,
+  cards/tables, empty/confirmation screens, icons, mobile. Acceptance criteria require a **visual
+  proposal approved before implementation**.
+- Current state: there IS a token system (`app/globals.css` — `--color-primary #0b5cff`, Inter,
+  simple radii) and `docs/design/IMPLEMENTATION-BRIEF.md`. #67 replaces the *look*, not the tokens'
+  role.
+- **This is the keystone** — #65 and #66 both say "reuse the general visual system / combine with
+  the new DeCA Profesional identity", i.e. they depend on #67.
+
+### I-065 — #65 Redesign the superadmin panel with the #67 identity · P1 · blocked on #67
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/65
+- Explicitly "coordinate with #59 and #62" (both now built) and "reuse the general visual system, do
+  not create a second isolated admin design". States distinguished by text + icon (not colour only),
+  destructive actions with a different hierarchy + confirmation. Mockup of list + detail first.
+
+### I-066 — #66 Redesign the generated DeCA PDF (CMR-like operational grid) · P1 · design-gated
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/66
+- CMR-inspired *structure* (delimited box grid, numbered/grouped fields, clear separation of parties
+  / transport / goods / dates / validation) — must still read as a **DeCA**, not a CMR. Keep every
+  legal field, add postal code + town where they belong (#59), A4 + B/W + mobile, no overflow with
+  long values, add PDF snapshot tests, mockup first.
