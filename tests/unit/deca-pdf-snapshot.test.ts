@@ -63,7 +63,7 @@ async function text() {
   let out = "";
   for (let i = 1; i <= doc.numPages; i++) {
     const c = await (await doc.getPage(i)).getTextContent();
-    out += " " + c.items.map((it: { str?: string }) => it.str ?? "").join(" ");
+    out += " " + c.items.map((it) => ("str" in it ? it.str : "")).join(" ");
   }
   return out.replace(/\s+/g, " ");
 }
