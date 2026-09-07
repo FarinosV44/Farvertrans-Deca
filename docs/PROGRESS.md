@@ -1409,3 +1409,17 @@ DeCA; new `deca-pdf-snapshot.test.ts`. 172 unit + full compliance + affected e2e
 `develop` (`9cdcfba`…`e88405a`); merge to `main` once the final full e2e confirms.
 **Deferred follow-ups:** `Card`/`DataTable` primitives + remaining panel cards, node-based wizard
 progress, admin i18n — not blockers. Older open issues #1–4/#24/#33/#40–47/#56 await the user's close.
+
+### #65/#66/#67 merged to `main` (D-125) — released
+2026-09-07, merge `5848cb9` (`main`), `develop` fast-forwarded and pushed. Final verification before
+the merge: typecheck clean (fixed a `pdfjs` `TextItem` union type in `deca-pdf-snapshot.test.ts`,
+`fbad991`), 172 unit, compliance R-1…R-13 (8/8), `keel:verify` ok, full e2e 187 (185 + the two
+documented parallel flakes `admin-2fa.spec.ts:109` / `content-cms.spec.ts:60`, both green at
+`--workers=1`). **No production migration in this batch** — UI/PDF/docs only; production DB unchanged.
+Beat-1 comments posted on #65/#66/#67 (Spanish). All of #59–#67 are now implemented and on `main`;
+they await the user's live-verification close (Keel: never close on own reading).
+**Still outstanding for the user (D-121, ops — not code):** redeploy Hostinger (prod DB already
+carries the #59/#62 additive columns from D-112-pattern deploys — safe); #60 create the object-store
+bucket + `age` key + repo secrets, run the workflow, do a full restore-test, log it in
+07-release §6; rotate `FVD_ADMIN_TOKEN` + Supabase DB password; fix the `praetoria sl` company NIF
+to `B21810452` via `/admin/empresas/[id]`.

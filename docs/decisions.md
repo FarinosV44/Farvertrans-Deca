@@ -3793,3 +3793,17 @@ remaining scope.
 - Verification: 172 unit (4 new PDF-snapshot) + full compliance suite (R-1…R-13) + the affected e2e
   green; a11y verified on `/`, `/crear`, `/registro`, `/panel`. Mobile checked on iPhone SE + 13.
   Commits `9cdcfba`…`e88405a` on `develop`.
+
+## D-126 — #65/#66/#67 merged to `main` at `5848cb9`
+- Date / phase: 2026-09-07. Phase 5. `develop` → `main` (`--no-ff`), `develop` then fast-forwarded
+  to `5848cb9` and both pushed. Carries D-125 (Sistema Vía for #67/#65/#66) plus the pre-merge
+  typecheck fix `fbad991` (`pdfjs` `TextItem`/`TextMarkedContent` union in `deca-pdf-snapshot.test.ts`
+  — `"str" in it` guard).
+- **No production migration.** This batch is UI + PDF layout + docs only; the production schema is
+  unchanged and the deployed build can be rolled forward without a DB step.
+- Full-suite state at merge: typecheck clean, lint (pre-existing `<img>` warnings only), 172 unit,
+  compliance 8/8, `keel:verify` ok, e2e 187 (185 + the two documented parallel flakes
+  `admin-2fa.spec.ts:109` / `content-cms.spec.ts:60`, both green at `--workers=1`).
+- Beat-1 comments posted on #65/#66/#67 in Spanish (forge-reply-language rule). #59–#67 are all
+  implemented and on `main`; none closed — they await the user's live-verification (Keel: never
+  close an issue on my own reading of the code).

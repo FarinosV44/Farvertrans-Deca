@@ -199,12 +199,15 @@ anonymize-in-place (no hard delete, D-067).
 
 ## Design bundle #65–#67 (new — triaged 2026-09-07)
 
-### I-067 — #67 Own visual identity — "Sistema Vía" · P1 · **APPROVED, in progress on `main`**
-- Proposal approved 2026-09-07. Artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 · spec `docs/design/sistema-via.md` · D-122/D-123/D-124.
-- Done (`ab6ead5` on `main`): tokens + Archivo/IBM Plex Mono, `components/ui/` system,
-  AccountActions + panel data-notice + /crear progress colour + nav rules migrated.
-- Remaining: `/panel` home + banners, historial/datos/equipo/plantillas tables + empty states,
-  `company-profile-form`, icon-set audit, mobile pass. Then close.
+### I-067 — #67 Own visual identity — "Sistema Vía" · P1 · **DONE, on `main`** (D-125/D-126)
+- Proposal approved 2026-09-07. Artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 · spec `docs/design/sistema-via.md` · D-122…D-126.
+- Done (`5848cb9` on `main`): tokens + Archivo/IBM Plex Mono, `components/ui/` system
+  (Kicker/Pill/Button/Alert/EmptyState/Progress); site header, panel + admin nav, verify-email
+  notice, historial table, company-profile-form, admin badges/tables/headers, wizard progress bar
+  all migrated; mobile header framing fix (wordmark/CTA wrap, stray heading focus box).
+- Beat-1 comment posted (ES). Awaiting the user's live-verification close.
+- Deferred follow-ups (not blockers): `Card`/`DataTable` primitives + remaining panel cards,
+  node-based wizard progress, admin i18n pass.
 
 --- old triage note kept below ---
 ### (was) I-067 — needs direction
@@ -220,14 +223,14 @@ anonymize-in-place (no hard delete, D-067).
 - **This is the keystone** — #65 and #66 both say "reuse the general visual system / combine with
   the new DeCA Profesional identity", i.e. they depend on #67.
 
-### I-065 — #65 Admin panel → Sistema Vía · P1 · **DONE, on `develop`** (D-125)
+### I-065 — #65 Admin panel → Sistema Vía · P1 · **DONE, on `main`** (D-125/D-126)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/65
 - `components/admin/ui.tsx` — `Badge` → tinted pill + hairline functional-colour border (tone API
   kept, every admin badge updates), `Table` → 2px ink header rule + uppercase headers, `PageHeader`
   → "Superadministración" kicker. `AccountActions` (#62) on `components/ui/` (`Button`, `Pill`).
   Destructive actions already a distinct group (#62). 21 e2e (admin / audit-log / company-logo) green.
 
-### I-066 — #66 Generated DeCA — CMR-style numbered grid · P1 · **DONE, on `develop`** (D-125)
+### I-066 — #66 Generated DeCA — CMR-style numbered grid · P1 · **DONE, on `main`** (D-125/D-126)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/66
 - `lib/pdf/deca-document.tsx` — each mandatory block is a numbered cell (1–8) with a filled-square
   badge, in the Sistema Vía colours. **Still a DeCA**, not a CMR. Every legal field kept; postal
