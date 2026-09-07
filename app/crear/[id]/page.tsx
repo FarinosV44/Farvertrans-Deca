@@ -11,6 +11,7 @@ import { getDecaCockpit } from "@/lib/deca/detail";
 import { qrPngDataUriCached } from "@/lib/pdf/qr";
 import { formatLocationShort } from "@/lib/deca/location";
 import { getDictionary } from "@/lib/i18n/server";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,10 @@ export default async function ResultPage({
   const c = doc.current;
   const qr = await qrPngDataUriCached(c.publicUrl);
   const t = await getDictionary();
+  // Modo inspección (#69) is a panel view — only surface it to a logged-in
+  // company user (an anonymous first-DeCA has no company scope).
+  const user = await getCurrentUser().catch(() => null);
+  const canInspect = !!user?.companyId && doc.scope === "empresa";
 
   return (
     <>
@@ -61,6 +66,15 @@ export default async function ResultPage({
           <span className="rounded-full bg-[color-mix(in_srgb,var(--color-success)_14%,transparent)] px-3 py-1 text-[var(--color-success)]">
             {t.result.versionGenerated(c.versionNo, fmt(doc.createdAt))}
           </span>
+          {canInspect && (
+            <Link
+              href={`/panel/deca/${doc.id}/inspeccion`}
+              data-testid="result-inspeccion"
+              className="rounded-full border border-[var(--color-primary)] px-3 py-1 text-[var(--color-primary)] no-underline"
+            >
+              Modo inspección
+            </Link>
+          )}
         </div>
 
         <div className="mt-8 grid gap-8 md:grid-cols-[1fr_380px] md:items-start md:gap-10">

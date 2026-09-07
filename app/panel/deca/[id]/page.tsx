@@ -69,6 +69,13 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
+            href={`/panel/deca/${doc.id}/inspeccion`}
+            data-testid="deca-inspeccion"
+            className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)] no-underline"
+          >
+            Modo inspección
+          </Link>
+          <Link
             href={`/panel/deca/${doc.id}/corregir`}
             data-testid="deca-corregir"
             className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 font-medium text-[var(--color-primary)] no-underline"

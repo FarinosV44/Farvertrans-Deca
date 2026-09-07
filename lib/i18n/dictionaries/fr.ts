@@ -461,6 +461,7 @@ export const fr = {
     correct: "Corriger",
     duplicate: "Dupliquer",
     pdf: "PDF",
+    inspection: "Inspection",
     noResults: "Aucun résultat.",
     createOne: "Créer un DeCA",
   },

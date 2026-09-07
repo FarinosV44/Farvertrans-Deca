@@ -210,6 +210,13 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-069 — #69 P0: Modo Inspección · **DONE, on `main`** (D-132)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/69
+- `/panel/deca/[id]/inspeccion` — clean card of the version in force (VIGENTE/CORREGIDO), real QR,
+  "Abrir PDF vigente" → current version's URL, no internal data. Entry points: detail, historico
+  (table + mobile), result page (authed). `/d/[token]` untouched. `inspection.spec.ts` new.
+  `t.historico.inspection` ×8. No schema.
+
 ### I-071 — #71 P0 Quality: pre-generation check · **DONE, on `main`** (D-131)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/71
 - `DecaCheck` on the review step: re-runs the same `step1/2/3Schema` + `validateDeca()` client-side.

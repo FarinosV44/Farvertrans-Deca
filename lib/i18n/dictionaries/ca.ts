@@ -458,6 +458,7 @@ export const ca = {
     correct: "Corregir",
     duplicate: "Duplicar",
     pdf: "PDF",
+    inspection: "Inspecció",
     noResults: "Sense resultats.",
     createOne: "Crear un DeCA",
   },

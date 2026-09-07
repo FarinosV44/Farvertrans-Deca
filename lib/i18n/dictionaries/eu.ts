@@ -471,6 +471,7 @@ export const eu = {
     correct: "Zuzendu",
     duplicate: "Bikoiztu",
     pdf: "PDF",
+    inspection: "Ikuskapena",
     noResults: "Emaitzarik ez.",
     createOne: "Sortu DeCA bat",
   },

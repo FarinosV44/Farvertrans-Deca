@@ -3928,3 +3928,28 @@ remaining scope.
 - **Tests:** `tests/e2e/deca-check.spec.ts` — missing → ready transition, the fix-jump focuses the
   field, the foreign-NIF "Revisar datos" path. 180 unit + crear/creator-ux31/growth/master-data +
   compliance 8/8. No schema, no migration.
+
+## D-132 — #69 P0: Modo Inspección
+- Date / phase: 2026-09-08, Phase 5. A clean, high-contrast, one-tap view of the DeCA version in
+  force, for showing to a road inspector.
+- **`app/panel/deca/[id]/inspeccion/page.tsx`** (new) — authenticated, company-scoped
+  (`getDecaCockpit(id, { companyId })`), `robots: noindex`. NO panel chrome: just a back link + a
+  small wordmark, then one bordered card. Reads only the stored current version — reference, big
+  status (`VIGENTE` at v1 / `CORREGIDO` at v>1, always with "Versión N · en vigor"), generation
+  date-time, cargador contractual + carrier (name + NIF), origen → destino (city + province),
+  transport date(s), tractor + trailer plate, a real QR of the current version's public URL, and
+  `InspectionActions`. No hashes, tokens, DB ids or support data. Spanish-only (legal-inspection
+  artifact, like the PDF / `DECA_ROLES`).
+- **`components/deca/inspection-actions.tsx`** (new, client) — "Abrir PDF vigente" (opens the
+  server-supplied `current.publicUrl`) + "Compartir/Copiar enlace" (Web Share when available, else
+  clipboard with "Enlace copiado"). New analytics events `inspection_*` added to `EVENT_NAMES`.
+- **Entry points:** the detail page (a primary button), `/panel/historico` (table + mobile card
+  rows — new `t.historico.inspection` ×8), and the post-generation result page (a chip, shown only
+  to a logged-in company user).
+- **`/d/[token]` is untouched** — no interstitial, the QR still targets the public URL, the PDF
+  still opens directly (asserted in the test). A correction moves the inspection view to the new
+  version and its new token — an old version is never shown as in force.
+- **Tests:** `tests/e2e/inspection.spec.ts` — one-tap from detail at 360px (all fields + QR, no
+  internal data, no h-scroll), the correction-follows-current-version case, `/d/[token]` still a
+  direct PDF. 180 unit + doc-cockpit/driver-delivery/historico/workspace + compliance 8/8. No
+  schema, no migration.

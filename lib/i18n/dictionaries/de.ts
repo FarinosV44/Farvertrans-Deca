@@ -464,6 +464,7 @@ export const de = {
     correct: "Korrigieren",
     duplicate: "Duplizieren",
     pdf: "PDF",
+    inspection: "Kontrolle",
     noResults: "Keine Ergebnisse.",
     createOne: "DeCA erstellen",
   },

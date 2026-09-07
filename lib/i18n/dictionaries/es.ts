@@ -450,6 +450,7 @@ export const es = {
     correct: "Corregir",
     duplicate: "Duplicar",
     pdf: "PDF",
+    inspection: "Inspección",
     noResults: "Sin resultados.",
     createOne: "Crear un DeCA",
   },

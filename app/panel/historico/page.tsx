@@ -214,6 +214,7 @@ export default async function HistoricoPage({
                   </td>
                   <td className="whitespace-nowrap">
                     <Link href={`/panel/deca/${r.id}`}>{t.historico.detail}</Link> ·{" "}
+                    <Link href={`/panel/deca/${r.id}/inspeccion`}>{t.historico.inspection}</Link> ·{" "}
                     <Link href={`/panel/deca/${r.id}/corregir`}>{t.historico.correct}</Link> ·{" "}
                     <Link href={`/crear?from=${r.id}`}>{t.historico.duplicate}</Link> ·{" "}
                     <a
@@ -249,6 +250,7 @@ export default async function HistoricoPage({
                 </p>
                 <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
                   <Link href={`/panel/deca/${r.id}`}>{t.historico.detail}</Link>
+                  <Link href={`/panel/deca/${r.id}/inspeccion`}>{t.historico.inspection}</Link>
                   <Link href={`/panel/deca/${r.id}/corregir`}>{t.historico.correct}</Link>
                   <Link href={`/crear?from=${r.id}`}>{t.historico.duplicate}</Link>
                   <a

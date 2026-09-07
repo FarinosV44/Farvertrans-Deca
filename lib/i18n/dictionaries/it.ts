@@ -460,6 +460,7 @@ export const it = {
     correct: "Correggi",
     duplicate: "Duplica",
     pdf: "PDF",
+    inspection: "Ispezione",
     noResults: "Nessun risultato.",
     createOne: "Crea un DeCA",
   },

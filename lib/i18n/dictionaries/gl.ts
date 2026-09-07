@@ -458,6 +458,7 @@ export const gl = {
     correct: "Corrixir",
     duplicate: "Duplicar",
     pdf: "PDF",
+    inspection: "Inspección",
     noResults: "Sen resultados.",
     createOne: "Crear un DeCA",
   },

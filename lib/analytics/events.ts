@@ -47,6 +47,11 @@ export const EVENT_NAMES = [
   "public_link_copied",
   "print_clicked",
   "qr_verify_opened",
+  // Modo Inspección (#69)
+  "inspection_opened",
+  "inspection_pdf_opened",
+  "inspection_shared",
+  "inspection_link_copied",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];
