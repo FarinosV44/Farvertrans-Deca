@@ -34,22 +34,30 @@ model Operator {
 
 /// The account's own transport company.
 model Company {
-  id          String          @id @default(cuid())
-  name        String
-  nif         String?
-  address     String?
-  contactName String?         @map("contact_name")
-  phone       String?
+  id              String          @id @default(cuid())
+  name            String
+  nif             String?
+  address         String?
+  /// Postal code and town, kept as their own fields (#59) rather than buried
+  /// in the free-text `address` line, so a complete, queryable ficha exists.
+  postalCode      String?         @map("postal_code")
+  city            String?
+  contactName     String?         @map("contact_name")
+  phone           String?
   /// Company contact email (distinct from any member's own login email) —
   /// editable on `/panel/empresa`, owner-only, for invoicing/support contact.
-  email       String?
-  profile     CompanyProfile?
+  email           String?
+  /// Set the first time the ficha passes the full mandatory-data check (#59).
+  /// Drives the soft gate for pre-#59 companies without re-validating on every
+  /// request. Columns stay nullable — "mandatory" is enforced in the app.
+  dataCompletedAt DateTime?       @map("data_completed_at")
+  profile         CompanyProfile?
   /// Optional PDF header logo (PRODUCT #39), stored as a data URI (PNG/JPEG,
   /// size-capped — see lib/company/logo.ts). Read at DOCUMENT CREATION time
   /// only: changing or removing it never alters an already-rendered PDF,
   /// since every version's bytes are already stored and immutable.
-  logoDataUri String?         @map("logo_data_uri")
-  createdAt   DateTime        @default(now()) @map("created_at")
+  logoDataUri     String?         @map("logo_data_uri")
+  createdAt       DateTime        @default(now()) @map("created_at")
 
   users             User[]
   decas             Deca[]
@@ -115,13 +123,13 @@ model User {
   totpEnabledAt   DateTime?   @map("totp_enabled_at")
   createdAt       DateTime    @default(now()) @map("created_at")
 
-  company        Company?            @relation(fields: [companyId], references: [id])
-  createdDecas   Deca[]              @relation("DecaCreatedBy")
-  acquisition    Acquisition?
-  savedCompanies SavedCompany[]
-  savedVehicles  SavedVehicle[]
-  savedLocations SavedLocation[]
-  recoveryCodes  AdminRecoveryCode[]
+  company             Company?             @relation(fields: [companyId], references: [id])
+  createdDecas        Deca[]               @relation("DecaCreatedBy")
+  acquisition         Acquisition?
+  savedCompanies      SavedCompany[]
+  savedVehicles       SavedVehicle[]
+  savedLocations      SavedLocation[]
+  recoveryCodes       AdminRecoveryCode[]
   webauthnCredentials WebAuthnCredential[]
   trustedDevices      TrustedDevice[]
 
@@ -135,25 +143,25 @@ model User {
 /// same `tv` session timestamp. Only the public key is ever stored; the
 /// private key never leaves the authenticator.
 model WebAuthnCredential {
-  id     String @id @default(cuid())
-  userId String @map("user_id")
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
   /// Base64url credential ID from the authenticator — how a login/step-up
   /// challenge finds which public key to verify against.
-  credentialId String @unique @map("credential_id")
-  publicKey    Bytes  @map("public_key")
+  credentialId String    @unique @map("credential_id")
+  publicKey    Bytes     @map("public_key")
   /// Signature counter — WebAuthn replay protection (must strictly increase
   /// on every use; a non-increasing counter means a cloned authenticator).
-  counter BigInt @default(0)
+  counter      BigInt    @default(0)
   /// "singleDevice" | "multiDevice" (a synced passkey, e.g. iCloud Keychain).
-  deviceType String  @map("device_type")
-  backedUp   Boolean @default(false) @map("backed_up")
+  deviceType   String    @map("device_type")
+  backedUp     Boolean   @default(false) @map("backed_up")
   /// Comma-separated AuthenticatorTransport hints ("internal,hybrid", …).
-  transports String?
+  transports   String?
   /// User-facing label ("iPhone de Ana") — set from the device/browser at
   /// registration time, editable nowhere yet (not required by the brief).
-  name       String?
-  createdAt  DateTime  @default(now()) @map("created_at")
-  lastUsedAt DateTime? @map("last_used_at")
+  name         String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastUsedAt   DateTime? @map("last_used_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
