@@ -3740,3 +3740,23 @@ remaining scope.
 - Session-infra note: a stray-`next-dev`-process pile-up (leftover from ad-hoc curl tests; `pkill`
   is a no-op on Windows) was causing port-3000 conflicts and intermittent e2e failures throughout
   the session. Killed the tree + cleared `.next`; use `taskkill //F //IM node.exe //T` on Windows.
+
+## D-124 — merged #59 fix + #67 foundation to `main` at `ab6ead5`
+- Date / phase: 2026-09-07. `develop` → `main` (`--no-ff`, 23 files). Carries D-123: the #59
+  soft-gate live-blocker fix and the first ~5 slices of #67 (Sistema Vía) — token foundation,
+  fonts, `components/ui/`, and migrations of `AccountActions`, the panel data-notice, the `/crear`
+  progress colour and the navigation rules. No schema change → no production migration. CI running
+  on the `main` push.
+- Verification: 168 unit + full e2e 185/187 at workers=2 (the 2 = the documented `admin-2fa:109`
+  recovery-replay + `content-cms:60` draft/preview parallel flakes; a 30-spec workers=1 re-run of
+  every likely-affected spec was fully green).
+- **#67 remaining** (on `develop`, per `docs/design/sistema-via.md`):
+  - panel surfaces still on ad-hoc styling — `/panel` home cards + verify-email banner, historial /
+    datos / equipo / plantillas tables and empty states, `company-profile-form` fields/buttons →
+    `components/ui/` (`Card`/`DataTable` primitives still to add), `Kicker` on section headers.
+  - `components/panel/icons.tsx` — audit for stroke/grid consistency, add any missing glyphs.
+  - a wizard node-based `<Progress>` (currently just the recoloured bar) — optional, gated on not
+    breaking `creator-ux31`'s progress-label assertion.
+  - mobile pass + axe/guided-a11y per surface.
+- **#65** (admin) then **#66** (generated PDF, CMR-grid + snapshot tests) — both after #67, both on
+  the shared `components/ui/`.
