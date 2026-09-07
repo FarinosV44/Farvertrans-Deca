@@ -2756,6 +2756,12 @@
   the pending migrations. No new Prisma migrations in this merge — the diagnostics fix is pure code,
   the actual database fix is the user's action described above. #56 resumes once the user confirms
   production auth is restored.
+- **Correction (D-112, 2026-09-07):** the "reconcile the `_prisma_migrations` ledger the same way
+  as D-060" step in this entry was NOT actually carried out on production (or did not persist). On
+  2026-09-07 the production ledger still ended at `20260905141620_company_logo` — none of
+  `user_session_version`, `admin_2fa_and_audit_log`, `company_role_read_only` (nor the earlier
+  `google_oauth` / `user_preferred_locale`) had a ledger row, even though their DDL was physically
+  present in the schema. Reconciled properly in D-112 via `prisma migrate resolve --applied`.
 
 ## D-097 — same incident, follow-up: Google OAuth failures were silently swallowed with no visible error
 - Date / phase: 2026-09-06, same session, immediately after D-096, while the user was live-testing
@@ -2836,6 +2842,13 @@
   during this diagnosis. It was used once, live, for the diagnostic fetch above, was never written to
   any file or included in any commit, and the user was told directly to rotate it. No other
   credential was exposed during this incident.
+- **Correction (D-112, 2026-09-07):** this entry states "production IS already running the latest
+  `main` build … so the earlier confusion was never a stale-deploy issue" and that the schema check
+  reported "all checks green, including 'Esquema y migraciones'." The column-level checks were green
+  because the columns really had been added by hand — but the `_prisma_migrations` **ledger was
+  never updated to match**, so `prisma migrate status` on 2026-09-07 still reported 10 migrations as
+  unapplied. `npm run diagnose`'s schema check inspects columns/tables, not the ledger, which is why
+  the drift stayed invisible. Fixed in D-112.
 
 ## D-099 — `develop` (D-097…D-098) merged to `main` at `c3822f1`, user asked directly whether the fix was in `main`
 `--no-ff` merge, no conflicts, 12 files. Brings `main` current with D-097 (visible Google OAuth error
@@ -3336,3 +3349,77 @@ remaining scope.
   `20260906190000_backfill_legal_correction_wording`) plus D-109's
   `20260906204958_webauthn_passkeys_and_trusted_devices` — all four are applied to local dev via
   this merge's `prisma migrate dev` but none are yet on production.
+
+## D-111 — merged `develop` into `main` at `11be387` (SEO audit D-105–D-108 + passkey admin 2FA D-109)
+- Date / phase: 2026-09-07. User explicitly asked to merge to `main` after D-110's merge left
+  `develop` fully green (typecheck/lint/prettier/build/vitest/full Playwright suite, 169/169).
+  Clean merge, no conflicts (`main` had not diverged from `develop` beyond earlier releases).
+  Re-ran the entire gate on `main` after the merge before pushing: `tsc --noEmit` clean, ESLint/
+  Prettier clean (same pre-existing baseline warnings only), `vitest run` 139/139, `npm run build`
+  clean, full `playwright test --workers=3` 169/169 with zero flakes. Pushed `main` at `11be387`.
+- **Production still needs 4 migrations applied, in this order**, before either feature works live:
+  `20260906120000_backfill_author_name_brand`, `20260906120500_content_item_legal_reviewer_name`,
+  `20260906190000_backfill_legal_correction_wording` (SEO audit), then
+  `20260906204958_webauthn_passkeys_and_trusted_devices` (D-109 passkeys). `prisma migrate deploy`
+  or the equivalent manual SQL, same standing pattern as every schema change this session.
+- **Correction (D-112, 2026-09-07):** this count of "4 migrations" was incomplete — it omitted
+  `20260906201940_company_contact_email` (D-104), which was also still unapplied on production. The
+  real pending set on 2026-09-07 was 5 real migrations plus 5 more that were physically applied but
+  missing from the ledger. All resolved in D-112.
+
+## D-112 — production DB migration reconciliation: ledger was 10 migrations behind the real schema; fixed properly
+- Date / phase: 2026-09-07, Phase 5 maintenance. The user asked to apply the migrations behind the
+  passkey/2FA work (D-109) to production. Before applying anything, ran `prisma migrate status` +
+  a direct read-only introspection of the production schema (`information_schema`, `pg_indexes`,
+  `pg_enum`, `pg_constraint`) against `DIRECT_URL` (Supabase session pooler, port 5432). Credentials
+  were supplied by the user in chat, used only as transient shell env vars, never written to any
+  file, log, or commit — the user was advised to reset the Supabase DB password afterward.
+- **What the state actually was.** Production's `_prisma_migrations` ledger ended at
+  `20260905141620_company_logo` (14 rows). `migrate status` reported 10 "not applied". Introspection
+  showed the truth was split three ways:
+  1. **Physically applied but absent from the ledger (5)** — the D-096/D-098 incident fixes, applied
+     by hand in the Supabase SQL Editor, whose ledger reconciliation (claimed in D-096/D-098) never
+     actually happened: `20260904225323_google_oauth`, `20260905190509_user_preferred_locale`,
+     `20260905204705_user_session_version`, `20260905211042_admin_2fa_and_audit_log`,
+     `20260906094103_company_role_read_only`. All their columns/tables/indexes/FKs/enum values were
+     verified present — **except** the unique index `user_google_id_key` from the google_oauth
+     migration, which had never been created (column present, index missing; 1 non-null `google_id`
+     value, no duplicates).
+  2. **Genuinely pending schema changes (3)** — `20260906120500_content_item_legal_reviewer_name`
+     (ADD COLUMN), `20260906201940_company_contact_email` (ADD COLUMN),
+     `20260906204958_webauthn_passkeys_and_trusted_devices` (2 CREATE TABLE + indexes + FKs).
+  3. **Genuinely pending data backfills (2)** — `20260906120000_backfill_author_name_brand`
+     (4 `content_item` rows still "Equipo DeCA Fácil"), `20260906190000_backfill_legal_correction_wording`
+     (2 rows: `como-corregir-un-deca`, `cuenta-atras-deca-5-octubre-2026`).
+  A blind `prisma migrate deploy` would have run `20260904225323_google_oauth` first, hit
+  `ADD COLUMN "google_id"` → "column already exists" → failed migration → locked ledger. This is the
+  4th missing-migration-on-production incident (D-054, D-060, D-096/D-098, now D-112).
+- **What was done, in order** (all against `DIRECT_URL`; `migrate resolve` worked fine over the
+  session pooler this time — no fallback INSERT needed):
+  1. Backup: exported `_prisma_migrations`, full `content_item`, a full schema snapshot
+     (columns/indexes/enums/constraints/tables) and row counts of all 26 tables to local JSON
+     (`pg_dump` is not available on this machine). Rollback reference only, not committed.
+  2. `CREATE UNIQUE INDEX "user_google_id_key" ON "user"("google_id")` — the one missing piece of
+     the google_oauth migration.
+  3. `prisma migrate resolve --applied` for the 5 physically-present migrations, in order.
+  4. `prisma migrate deploy` — applied the remaining 5 (2 backfills + 3 additive DDL) with no
+     object conflicts.
+- **Verification** (`prisma migrate status` + direct introspection):
+  - `Database schema is up to date!` — 24/24 migrations in the ledger, none failed or rolled back,
+    last = `20260906204958_webauthn_passkeys_and_trusted_devices`.
+  - `user_google_id_key` UNIQUE index present.
+  - `content_item.legal_reviewer_name` (text) present; `company.email` (text) present.
+  - `webauthn_credential` + `trusted_device` tables present, with all 5 indexes and both
+    `*_user_id_fkey` foreign keys to `user`.
+  - All 4 `content_item` rows now `author_name = 'Equipo DeCA Profesional'` (0 stale).
+  - Legal-wording backfill applied: `como-corregir-un-deca` seo_title = "Cómo corregir un DeCA: los
+    dos métodos válidos"; `cuenta-atras-deca-5-octubre-2026` excerpt/body/sources updated
+    (body contains "No hay prórroga ni periodo transitorio", sources include Ley 9/2025).
+- **Not done, deliberately:** Hostinger was NOT redeployed — the user will do that after confirming
+  the production DB is clean. Until the redeploy, `main`'s passkey/`company.email`/`legal_reviewer_name`
+  code is running against a DB that now has the schema for it, but the running build predates the code.
+- **Process gap this exposed:** `npm run diagnose` / `/admin/sistema` verify columns and tables but
+  never the `_prisma_migrations` ledger itself, so "code shipped, DDL hand-applied, ledger not
+  reconciled" passes every existing check silently. Worth a diagnostics addition (compare ledger
+  rows against `prisma/migrations/` folder names) in a future slice — not done here.
+- Corrections to the record: D-096, D-098, D-111 each gained a "Correction (D-112)" note above.

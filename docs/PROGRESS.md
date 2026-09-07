@@ -1295,3 +1295,23 @@ after merge + fixes: typecheck/lint/prettier clean, `npm run build` clean, 139/1
 `--workers=1`). `develop` now carries both the SEO audit and the passkey feature, fully green. See
 `decisions.md` D-110. **Production needs 4 migrations applied, in order**: the 3 from the SEO branch
 plus D-109's `webauthn_passkeys_and_trusted_devices`.
+
+## D-112: production DB migration ledger reconciled — was 10 behind the real schema
+2026-09-07. Applied the pending migrations to the production Supabase DB for the user (credentials
+supplied in chat, used only as transient env vars, never written/committed — user advised to reset
+the DB password). Pre-flight introspection found the `_prisma_migrations` ledger ended at
+`20260905141620_company_logo` while `migrate status` reported 10 unapplied — and the real schema was
+split: **5 migrations physically applied by hand during the D-096/D-098 incidents but never recorded
+in the ledger** (`google_oauth`, `user_preferred_locale`, `user_session_version`,
+`admin_2fa_and_audit_log`, `company_role_read_only` — the reconciliation D-096/D-098 claimed never
+actually happened), the unique index `user_google_id_key` missing entirely, plus **5 genuinely
+pending** (2 content backfills + `content_item.legal_reviewer_name` + `company.email` + the passkey
+tables). A blind `migrate deploy` would have failed on "column already exists" and locked the ledger.
+Fix, in order: created the missing index; `prisma migrate resolve --applied` for the 5 phantom
+migrations (worked over the session pooler, no manual INSERT); `prisma migrate deploy` for the real 5.
+Verified: `Database schema is up to date!`, 24/24 in the ledger none failed, `user_google_id_key`
+present, `company.email` + `content_item.legal_reviewer_name` present, `webauthn_credential` +
+`trusted_device` (with indexes + FKs) present, all 4 content rows backfilled to "Equipo DeCA
+Profesional", legal-wording backfill applied. **Hostinger NOT redeployed — the user does that next.**
+Local backup JSON of the ledger + `content_item` + schema snapshot kept in the session scratchpad.
+See `decisions.md` D-112 (and the Correction notes it adds to D-096/D-098/D-111).
