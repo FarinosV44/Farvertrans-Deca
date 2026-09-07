@@ -58,3 +58,19 @@
   cookie (set by the switcher, or restored from `User.preferredLocale` on login) and falls back to
   the hardcoded default locale (`es`) otherwise. English is opt-in only, never inferred from browser
   headers. See D-062.
+
+## 2026-09-07 — Windows: kill stray dev servers with taskkill, not pkill
+`pkill` / `killall` do not exist in the Git-Bash environment on this machine (they exit 127
+silently). Ad-hoc `npm run dev &` for curl testing therefore leaves `next dev` running; several
+accumulated over a long session and fought over port 3000, so `next` served `text/html` 400s for
+`/_next/static/*.js` and every form-based e2e test failed to hydrate → `waitForResponse` timeouts
+that looked like product bugs. Fix: `taskkill //F //IM node.exe //T` then `rm -rf .next` before
+re-running. Better: don't background a dev server for a one-off check — use the already-running
+Playwright webServer, or `curl` against a foreground `next start`.
+
+## 2026-09-07 — #59: never re-validate a locked field against an existing row
+The #59 soft gate re-ran the CIF/NIF checksum on companies that predate the requirement. Those
+companies can have a malformed identifier AND the owner cannot edit it (it is locked by design).
+Result: a permanent, unresolvable "completa tus datos". A retroactive check on an existing row must
+only assert what that row's owner can actually change; format/checksum rules belong on the
+create/edit path, not the gate. Also: a gate message must name the real blocker, never a fixed list.
