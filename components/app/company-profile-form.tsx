@@ -6,6 +6,8 @@ export type CompanyContact = {
   email: string | null;
   phone: string | null;
   address: string | null;
+  postalCode: string | null;
+  city: string | null;
   contactName: string | null;
 };
 
@@ -22,6 +24,8 @@ export function CompanyProfileForm({
     email: initial.email ?? "",
     phone: initial.phone ?? "",
     address: initial.address ?? "",
+    postalCode: initial.postalCode ?? "",
+    city: initial.city ?? "",
     contactName: initial.contactName ?? "",
   });
   const [busy, setBusy] = useState(false);
@@ -63,6 +67,8 @@ export function CompanyProfileForm({
         <Field label="Email de contacto" value={initial.email} />
         <Field label="Teléfono" value={initial.phone} />
         <Field label="Dirección" value={initial.address} />
+        <Field label="Código postal" value={initial.postalCode} />
+        <Field label="Población" value={initial.city} />
         <Field label="Persona de contacto" value={initial.contactName} />
       </dl>
     );
@@ -103,6 +109,27 @@ export function CompanyProfileForm({
             data-testid="company-address"
             value={f.address}
             onChange={(e) => set("address")(e.target.value)}
+            className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium">Código postal</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            data-testid="company-postal-code"
+            value={f.postalCode}
+            onChange={(e) => set("postalCode")(e.target.value)}
+            className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium">Población</span>
+          <input
+            type="text"
+            data-testid="company-city"
+            value={f.city}
+            onChange={(e) => set("city")(e.target.value)}
             className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
           />
         </label>

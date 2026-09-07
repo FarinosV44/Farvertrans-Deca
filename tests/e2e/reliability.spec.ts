@@ -63,6 +63,12 @@ async function registerViaApi(request: import("@playwright/test").APIRequestCont
       password: "Supersecret123!",
       companyName: "Reliability SL",
       companyNif: "B12345674",
+      companyContactName: "Ana Ejemplo",
+      companyPhone: "600111222",
+      companyEmail: "empresa@example.com",
+      companyAddress: "Calle Prueba 1",
+      companyPostalCode: "46540",
+      companyCity: "El Puig",
       acceptTerms: true,
     },
   });

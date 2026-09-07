@@ -145,6 +145,12 @@ test.describe("LAUNCH #20 — production happy path", () => {
     await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Titular Launch SL");
     await page.fill("#companyNif", DECA.carrierNif);
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
     await page.getByTestId("accept-terms").check();
     const [claimRes] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),

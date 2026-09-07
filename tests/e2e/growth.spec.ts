@@ -9,10 +9,16 @@ async function registerViaLink(page: Page, link: string, addr: string) {
   await page.goto(link.replace(/^https?:\/\/[^/]+/, ""));
   await page.fill("#email", addr);
   await page.fill("#password", "Supersecret123!");
-  // prospect link → company fields shown (prefilled); fill NIF if empty
-  if ((await page.locator("#companyNif").inputValue()) === "") {
-    await page.fill("#companyNif", "B12345674");
-  }
+  // prospect link → company fields shown (name prefilled from the prospect).
+  // The seeded NIF is a placeholder; a real registrant provides a valid one,
+  // and the whole #59 ficha is required.
+  await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   const [res] = await Promise.all([
     page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),

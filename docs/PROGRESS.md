@@ -1339,12 +1339,16 @@ Commit `c52f6f6`; beat-1 posted on #61.
   for every "our own company" surface), `lib/company/completeness.ts` (soft-gate check).
 - `prisma/schema.prisma`: `Company` + `postal_code`, `city`, `data_completed_at` (all nullable) +
   migration `20260907150000_company_full_ficha_fields` — **written, NOT applied** to local or prod.
-**Still to do for #59** (needs local Docker for e2e + migrate): wire `lib/auth/index.ts`
-(`signup` / `completeCompanyForUser`), `app/api/auth/register` + `complete-company` routes,
-`app/api/company/profile` route, `app/api/deca` soft gate, `components/auth/register-form.tsx` +
-`complete-company-form.tsx` (add the 4 new required fields + client validation; the latter also
-still needs i18n), `app/panel/empresa` edit, `t.auth.company.*` / `t.panel.companyData.*` in 8
-dictionaries, e2e specs. Then `prisma migrate deploy` to prod like D-112.
-**Next after B:** sprint C = #62 (superadmin lifecycle), D = #63, E = #60, F = #64.
-**BLOCKER:** Docker Desktop is down this session — Sprints B(rest)/C/D need it for e2e + migrations.
-#64 (design-only) and #60 (docs/scripts) could proceed Docker-free.
+### Sprint B (#59) — COMPLETE, on `develop` (D-115)
+2026-09-07, Docker back up. Wired every registration path (`lib/auth/index.ts` `signup` normal +
+prospect branches, `completeCompanyForUser`) + `register` / `complete-company` / `company/profile`
+routes + `POST /api/deca` soft gate (409 `company_data_incomplete`) + `register-form.tsx` /
+`complete-company-form.tsx` / `company-profile-form.tsx` / `/panel/empresa` (incomplete banner) +
+`t.auth.company.*` in all 8 dictionaries. Migration `20260907150000_company_full_ficha_fields`
+applied to local dev — **still needs `prisma migrate deploy` on production** (D-112 pattern).
+Ripple: ~29 e2e `register()` call sites across ~19 specs updated to send the full ficha; 2 real
+regressions caught + fixed (`doc-cockpit` #61 title assertion, `growth` prospect helper).
+154 unit + typecheck + prettier green; 2 new e2e specs; full e2e run <in progress>.
+`docs/api/INDEX.md` updated. Deferred: i18n pass on `complete-company-form.tsx`.
+**Next:** sprint C = #62 (superadmin lifecycle — first admin mutation UI), then D = #63, E = #60,
+F = #64. All need production `migrate deploy` for their migrations once merged, except #64 (dormant).

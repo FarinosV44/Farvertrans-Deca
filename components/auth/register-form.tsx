@@ -49,8 +49,11 @@ export function RegisterForm({
     companyName: prospectCompany?.name ?? "",
     companyNif: prospectCompany?.nif ?? "",
     companyAddress: "",
+    companyPostalCode: "",
+    companyCity: "",
     companyContactName: "",
     companyPhone: "",
+    companyEmail: "",
     companyProfile: "" as "" | (typeof PROFILE_VALUES)[number],
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -210,7 +213,6 @@ export function RegisterForm({
             <Field
               id="companyContactName"
               label={t.auth.company.contactName}
-              required={false}
               autoComplete="name"
               value={f.companyContactName}
               onChange={set("companyContactName")}
@@ -219,19 +221,42 @@ export function RegisterForm({
               id="companyPhone"
               label={t.auth.company.phone}
               type="tel"
-              required={false}
               autoComplete="tel"
               value={f.companyPhone}
               onChange={set("companyPhone")}
             />
             <Field
+              id="companyEmail"
+              label={t.auth.company.email}
+              type="email"
+              autoComplete="email"
+              value={f.companyEmail}
+              onChange={set("companyEmail")}
+            />
+            <Field
               id="companyAddress"
               label={t.auth.company.address}
-              required={false}
               autoComplete="street-address"
               value={f.companyAddress}
               onChange={set("companyAddress")}
             />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                id="companyPostalCode"
+                label={t.auth.company.postalCode}
+                inputMode="numeric"
+                autoComplete="postal-code"
+                value={f.companyPostalCode}
+                onChange={set("companyPostalCode")}
+              />
+              <Field
+                id="companyCity"
+                label={t.auth.company.city}
+                autoComplete="address-level2"
+                value={f.companyCity}
+                onChange={set("companyCity")}
+              />
+            </div>
           </fieldset>
         )}
 

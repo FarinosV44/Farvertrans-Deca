@@ -53,8 +53,11 @@ export function CompleteCompanyForm({
     companyName: "",
     companyNif: "",
     companyAddress: "",
+    companyPostalCode: "",
+    companyCity: "",
     companyContactName: "",
     companyPhone: "",
+    companyEmail: "",
     companyProfile: "" as "" | (typeof PROFILES)[number]["value"],
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -79,8 +82,11 @@ export function CompleteCompanyForm({
           companyName: f.companyName,
           companyNif: f.companyNif,
           companyAddress: f.companyAddress,
+          companyPostalCode: f.companyPostalCode,
+          companyCity: f.companyCity,
           companyContactName: f.companyContactName,
           companyPhone: f.companyPhone,
+          companyEmail: f.companyEmail,
           companyProfile: f.companyProfile || undefined,
           acceptTerms,
           invite,
@@ -139,29 +145,51 @@ export function CompleteCompanyForm({
             />
             <Field
               id="companyContactName"
-              label="Persona de contacto (opcional)"
-              required={false}
+              label="Persona de contacto"
               autoComplete="name"
               value={f.companyContactName}
               onChange={set("companyContactName")}
             />
             <Field
               id="companyPhone"
-              label="Teléfono (opcional)"
+              label="Teléfono"
               type="tel"
-              required={false}
               autoComplete="tel"
               value={f.companyPhone}
               onChange={set("companyPhone")}
             />
             <Field
+              id="companyEmail"
+              label="Correo electrónico de la empresa"
+              type="email"
+              autoComplete="email"
+              value={f.companyEmail}
+              onChange={set("companyEmail")}
+            />
+            <Field
               id="companyAddress"
-              label="Domicilio (opcional)"
-              required={false}
+              label="Dirección"
               autoComplete="street-address"
               value={f.companyAddress}
               onChange={set("companyAddress")}
             />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                id="companyPostalCode"
+                label="Código postal"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                value={f.companyPostalCode}
+                onChange={set("companyPostalCode")}
+              />
+              <Field
+                id="companyCity"
+                label="Población"
+                autoComplete="address-level2"
+                value={f.companyCity}
+                onChange={set("companyCity")}
+              />
+            </div>
           </fieldset>
         )}
 

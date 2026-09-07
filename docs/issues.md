@@ -141,7 +141,27 @@
   pending local Docker.
 - Replies: beat 1 pending.
 
-### I-059 — #59 Mandatory complete company + contact data · P0 · queued (sprint B)
+### I-059 — #59 Mandatory complete company + contact data · P0 · **worked, on `develop`**
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/59
+- Resolution (D-115): soft-gate approach (user decision). New signups must give the full ficha
+  (name, CIF/NIF with a valid control character, contact person, phone, email, address, postal code,
+  town); an invalid own CIF is a hard block (`isValidOwnNif` wrapping `checkNif`), while the DeCA
+  wizard's counterparty NIF stays a soft warning. Postal code + town became their own `Company`
+  columns (`postal_code`, `city`) + `data_completed_at`. Existing companies are handled by the soft
+  gate: `POST /api/deca` returns 409 `company_data_incomplete` for an authed create until the ficha
+  is complete, `/panel/empresa` shows a "Completa los datos de tu empresa" step — login and
+  `/d/[token]` are never blocked. Shared `companyDataSchema` now backs the register /
+  complete-company / profile routes (they each had their own before).
+- Commits: `c182ba0` (foundation), `<pending>` (wiring) on `develop`. Migration
+  `20260907150000_company_full_ficha_fields` — applied to local dev; **needs `prisma migrate deploy`
+  on production** (D-112 pattern).
+- Verification: 154 unit + typecheck + prettier; 2 new e2e specs (`registro-company-data`,
+  `panel-company-completeness`) 11/11; the ~29 existing e2e `register()` call sites updated to send
+  the full ficha (`B12345675` → the valid `B12345674`). Full e2e run <pending>.
+- Deferred: `complete-company-form.tsx` (Google step 2) still hardcodes ES strings — an i18n pass is
+  a follow-up, not #59 scope.
+- Replies: beat 1 pending.
+
 ### I-062 — #62 Superadmin view/edit/block/deactivate/anonymize · P0 · queued (sprint C)
 ### I-063 — #63 Visible support + legal-assistance channels · P1 · queued (sprint D)
 ### I-060 — #60 Backup & restore of DeCA documents · P0 · queued (sprint E)

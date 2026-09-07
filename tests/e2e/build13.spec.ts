@@ -46,6 +46,12 @@ async function registerAndCreate(page: Page): Promise<string> {
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Correcciones SL");
   await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   const [res] = await Promise.all([
     page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
@@ -177,6 +183,12 @@ async function registerViaApi(request: APIRequestContext) {
       password: "Supersecret123!",
       companyName: "Abuse SL",
       companyNif: "B12345674",
+      companyContactName: "Ana Ejemplo",
+      companyPhone: "600111222",
+      companyEmail: "empresa@example.com",
+      companyAddress: "Calle Prueba 1",
+      companyPostalCode: "46540",
+      companyCity: "El Puig",
       acceptTerms: true,
     },
   });

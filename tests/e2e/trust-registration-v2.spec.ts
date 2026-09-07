@@ -66,6 +66,12 @@ test.describe("TRUST #42 §5 — versioned terms acceptance", () => {
     await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Terminos SL");
     await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
     await page.getByTestId("register-submit").click();
     await expect(page.getByRole("alert").first()).toContainText("Términos y Condiciones");
     await expect(page).toHaveURL(/\/registro$/);
@@ -83,6 +89,12 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Confirmacion SL");
     await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
     await page.getByTestId("accept-terms").check();
     const [res] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
@@ -127,6 +139,12 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Reverifica SL");
     await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
     await page.getByTestId("accept-terms").check();
     const [res] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
@@ -154,6 +172,12 @@ test.describe("GROWTH #46 — email confirmation screen", () => {
     await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Sin Verificar SL");
     await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
     await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
     await expect(page).toHaveURL(/\/verificar-email/);
@@ -269,6 +293,12 @@ test.describe("D-060 — lightweight identity gate restored (reverses D-052's ha
     await page.fill("#password", "Supersecret123!");
     await page.fill("#companyName", "Gate SL");
     await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
     await page.getByTestId("accept-terms").check();
     await page.getByTestId("register-submit").click();
     await expect(page).toHaveURL(/\/verificar-email/);

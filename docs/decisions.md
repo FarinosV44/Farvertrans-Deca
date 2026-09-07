@@ -3472,3 +3472,43 @@ remaining scope.
   (`crear.spec.ts`, `deca-validate.test.ts`, `doc-cockpit.spec.ts`, `creator-ux31.spec.ts`) were
   checked by hand to still hold — "transportista efectivo" still contains "transportista", and the
   cockpit still renders "Transportista efectivo".
+
+## D-115 — #59 Mandatory complete company + contact data (soft gate + hard CIF block)
+- Date / phase: 2026-09-07, Phase 5 maintenance, sprint B of the #59–#64 batch.
+- **User decisions (recorded, not re-asked):** soft gate for existing companies; hard block on an
+  invalid CIF/NIF control character for the account's OWN company.
+- **Schema:** `Company` gains `postal_code`, `city` (their own fields, not buried in `address`) and
+  `data_completed_at` (stamped the first time the ficha passes the full check). All nullable — the
+  requirement lives in the app, not the database, so the 9 existing companies are never broken.
+  Migration `20260907150000_company_full_ficha_fields`, applied to local dev; **needs
+  `prisma migrate deploy` on production** (D-112 pattern).
+- **One schema, four call sites.** New `lib/validation/company.ts` (`companyDataSchema`) is now the
+  single validator for the register route, the Google complete-company route, the `/panel/empresa`
+  edit and (Sprint C) the superadmin edit — each had its own partial rules before.
+  `lib/validation/spanish.ts`: `isValidSpanishPostalCode` (5 digits, province 01–52),
+  `isValidPhone` (ES national or explicit international), `isValidOwnNif` — wraps the existing
+  `checkNif()` and, unlike every other caller, treats an unknown shape or bad checksum as invalid.
+  The DeCA wizard's *counterparty* NIF is untouched — it stays a soft warning (R-2 tolerates
+  foreign operators).
+- **Soft gate:** `lib/company/completeness.ts` (`companyDataComplete` / `missingCompanyFields`).
+  `POST /api/deca` returns `409 company_data_incomplete` for an authenticated create when the
+  company ficha is incomplete, alongside the existing `emailVerifiedAt` gate. `/panel/empresa`
+  shows a "Completa los datos de tu empresa" step. **Login and `/d/[token]` are never gated.**
+- **Every registration path requires the full ficha** — the normal signup, the Google step-2
+  completion, AND the operator-prospect onboarding link (a prospect who registers is a real
+  company; name/NIF fall back to the seeded prospect values, the rest is required).
+- **UI:** `register-form.tsx` + `complete-company-form.tsx` gained the required email / address /
+  postal-code / town fields (and lost the "(opcional)" markers on contact/phone).
+  `company-profile-form.tsx` + `/panel/empresa` gained postal-code / town and the incomplete banner.
+  `t.auth.company.*` extended (email/postalCode/city) in all 8 dictionaries.
+- **Deferred (not #59 scope):** `complete-company-form.tsx` still hardcodes its Spanish strings —
+  an i18n pass is a separate follow-up.
+- **e2e ripple:** ~29 `register()` call sites across ~19 spec files updated to send the full ficha
+  (the invalid placeholder `B12345675` → the valid `B12345674`). Two real regressions were caught
+  and fixed: `doc-cockpit.spec.ts` asserted the old "Empresa que contrata el transporte" cockpit
+  title (D-114 renamed it to "Cargador contractual" — assertion updated to the new intentional
+  wording), and `growth.spec.ts`'s prospect helper wasn't filling the new fields.
+- Verification: 154 unit + typecheck + prettier green. New `tests/e2e/registro-company-data.spec.ts`
+  (8 fields, invalid CIF, invalid postal code, form-required check) and
+  `tests/e2e/panel-company-completeness.spec.ts` (incomplete → 409 + banner → complete → 201).
+  Full e2e: <pending final run>. Commits `c182ba0` (foundation) + `<pending>` (wiring) on `develop`.

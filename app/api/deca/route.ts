@@ -68,6 +68,22 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+    // #59 soft gate: a company registered before the full-ficha requirement
+    // must complete its data before creating a new DeCA. Login and existing
+    // documents are never blocked — only new generation.
+    const { companyDataComplete } = await import("@/lib/company/completeness");
+    if (!companyDataComplete(user.company)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "company_data_incomplete",
+            message:
+              "Completa los datos de tu empresa (dirección, código postal, población, contacto) antes de generar un DeCA.",
+          },
+        },
+        { status: 409 },
+      );
+    }
     owner = { createdByUserId: user.id, companyId: user.companyId };
   } else {
     const leadParsed = leadSchema.safeParse(body);

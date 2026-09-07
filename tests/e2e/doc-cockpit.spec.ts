@@ -69,6 +69,12 @@ async function register(page: Page) {
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", `Cockpit SL ${rnd()}`);
   await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   const [res] = await Promise.all([
     page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
@@ -96,7 +102,7 @@ test.describe("PRODUCT #36 — document cockpit", () => {
     expect(url).toMatch(/^https?:\/\/.+\/d\/[A-Za-z0-9_-]+$/);
 
     // The structured summary mirrors the PDF sections.
-    await expect(page.getByText("Empresa que contrata el transporte")).toBeVisible();
+    await expect(page.getByText("Cargador contractual")).toBeVisible();
     await expect(page.getByText("Transportista efectivo")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Datos del documento" })).toBeVisible();
     await expect(page.locator("#contenido")).toContainText(V.goods);
