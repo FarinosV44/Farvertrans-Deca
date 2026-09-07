@@ -5,14 +5,21 @@ name: Backup
 # alert: watch this workflow's status, or wire a notification on failure.
 #
 # Required repository secrets (set once — see docs/backup-and-restore.md):
-#   BACKUP_DIRECT_URL           Supabase session pooler (:5432) connection string
+#   DIRECT_URL                  Supabase session pooler (:5432) connection string (reused from deploy)
 #   NEXT_PUBLIC_SUPABASE_URL    the project URL
 #   SUPABASE_SERVICE_ROLE_KEY   service role key (bucket read)
 #   FVD_PDF_BUCKET              usually "deca-pdfs"
 #   BACKUP_AGE_RECIPIENT        age public key ("age1...") — the archive is encrypted to this
-#   BACKUP_S3_ENDPOINT          S3-compatible endpoint (Cloudflare R2 / Backblaze B2 / AWS)
+#   BACKUP_S3_ENDPOINT          S3-compatible endpoint (Cloudflare R2 / Backblaze B2 / AWS / Supabase Storage)
 #   BACKUP_S3_BUCKET            destination bucket name
+#   BACKUP_S3_REGION            (optional) real region for the endpoint; leave unset for R2 ("auto"),
+#                               set to the project region for Supabase Storage (e.g. eu-west-1)
 #   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY   credentials for that bucket
+#
+# NOTE: Supabase Storage has no S3 lifecycle rules — with a Supabase destination the
+# retention (30 dailies + 12 monthlies) must be pruned separately. An independent
+# store (R2 / B2) is strongly preferred: a backup inside the same Supabase project
+# dies with it.
 
 on:
   schedule:
@@ -39,7 +46,7 @@ jobs:
       - run: npm ci
       - name: Create the backup archive
         env:
-          BACKUP_DIRECT_URL: ${{ secrets.BACKUP_DIRECT_URL }}
+          BACKUP_DIRECT_URL: ${{ secrets.DIRECT_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           FVD_PDF_BUCKET: ${{ secrets.FVD_PDF_BUCKET }}
@@ -50,7 +57,7 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: auto
+          AWS_DEFAULT_REGION: ${{ secrets.BACKUP_S3_REGION || 'auto' }}
         run: |
           day=$(date -u +%F)
           month=$(date -u +%Y-%m)

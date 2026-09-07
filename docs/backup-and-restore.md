@@ -76,9 +76,19 @@ The database dump contains third-party personal data (shippers, carriers, driver
 
 ## 7. Operator checklist (one-time, user)
 
-- [ ] Create an object-store bucket (R2 / B2 / S3) with its own access key.
-- [ ] Generate an `age` keypair; keep the private key OUT of the repo and CI logs; set the public key as `BACKUP_AGE_RECIPIENT`.
-- [ ] Set the repository secrets listed at the top of `.github/workflows/backup.yml`.
-- [ ] Add a bucket lifecycle rule: expire `daily/` after 30 days, `monthly/` after 400 days.
+- [ ] Create an object-store bucket **with its own access key**. Prefer an **independent** provider
+      (Cloudflare R2 free tier, Backblaze B2) — a bucket inside the same Supabase project is not an
+      independent backup and dies with the project. Supabase Storage's S3 endpoint
+      (`https://<ref>.storage.supabase.co/storage/v1/s3`) works as a stopgap but see the two caveats below.
+- [ ] Generate an `age` keypair (`age-keygen -o age-key.txt`); keep the private key OUT of the repo
+      and CI logs; set the public `age1…` key as `BACKUP_AGE_RECIPIENT`.
+- [ ] Set the repository secrets listed at the top of `.github/workflows/backup.yml`. `DIRECT_URL`,
+      `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `FVD_PDF_BUCKET` are reused from the
+      deploy config; the backup-only ones are `BACKUP_AGE_RECIPIENT`, `BACKUP_S3_ENDPOINT`,
+      `BACKUP_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and — for Supabase Storage or
+      any non-R2 endpoint — `BACKUP_S3_REGION` (the project region, e.g. `eu-west-1`).
+- [ ] Retention: on R2/B2/S3 add a bucket lifecycle rule (expire `daily/` after 30 days, `monthly/`
+      after 400). **Supabase Storage has no lifecycle rules** — prune manually or with a small
+      scheduled job until the destination is moved to an independent store.
 - [ ] Run the workflow once via `workflow_dispatch`; confirm an archive lands in the bucket.
 - [ ] Do one full restore-test into a scratch DB and record it in `docs/07-release.md` §6.
