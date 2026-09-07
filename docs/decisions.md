@@ -3512,3 +3512,35 @@ remaining scope.
   (8 fields, invalid CIF, invalid postal code, form-required check) and
   `tests/e2e/panel-company-completeness.spec.ts` (incomplete → 409 + banner → complete → 201).
   Full e2e: <pending final run>. Commits `c182ba0` (foundation) + `<pending>` (wiring) on `develop`.
+
+## D-116 — #62 part 1: account-lifecycle status + enforcement (schema, session, login)
+- Date / phase: 2026-09-07, Phase 5, sprint C of the #59–#64 batch. Split #62 into (1) the
+  status model + enforcement (this entry) and (2) the admin mutation UI/API + anonymize (next
+  session) — the enforcement is the security-critical core and is harmless while every account is
+  the default `active`.
+- **Schema:** one shared enum `AccountStatus { active, blocked, deactivated, anonymized }`. `User`
+  and `Company` each gain `status` (default `active`), `statusReason`, `statusChangedAt`,
+  `anonymizedAt`. Migration `20260907170000_account_lifecycle_status`, applied to local dev —
+  **needs `prisma migrate deploy` on production** when the batch merges.
+- **Enforcement, two layers:**
+  - `getCurrentSession()` returns null when `user.status !== "active"` OR
+    `user.company.status !== "active"` — same effect as a `sessionVersion` bump, and it also
+    catches a stale cookie that still has the right `sv`. So blocking takes effect on the target's
+    very next request, no explicit session-kill needed (though the admin action will still bump
+    `sessionVersion` for immediacy).
+  - `login()` (and the future Google callback) refuses a suspended user/company with a new
+    `AuthError("account_suspended", …)` — a plain "esta cuenta está suspendida", not "contraseña
+    incorrecta".
+- `/d/[token]` is deliberately untouched — a blocked company's already-issued DeCA stays verifiable
+  for inspection (R-6…R-9). Verified by the lifecycle spec once the admin UI lands.
+- Admin read models (`listCompaniesAdmin`, `listUsersAdmin`, `getCompanyAdmin`) now surface
+  `status` (+ the #59 `postalCode`/`city`/`email`/`dataComplete` on the company detail).
+- **Deferred to #62 part 2 (next session):** `lib/admin/lifecycle.ts` (`setUserStatus` /
+  `setCompanyStatus` with `recordAudit` + `bumpSessionVersion`), `lib/admin/anonymize.ts`
+  (in-place PII overwrite, never deletes rows / DeCA / audit — D-067), `PATCH
+  /api/admin/{empresas,usuarios}/[id]` gated with `requireStepUp()`, `getUserAdmin(id)` +
+  `/admin/usuarios/[id]` page, the client action components (first mutation UI in `/admin`), status
+  badges + row links, `t.admin.*` in 8 dicts, `tests/e2e/admin-account-lifecycle.spec.ts`.
+- Verification: `tsc` clean; new `tests/e2e/account-status.spec.ts` (block kills the session +
+  refuses login; company deactivation blocks members) 2/2; admin/account/audit e2e subset 31/32
+  (the 1 is the documented admin-2fa parallel flake). Commit `<pending>` on `develop`.

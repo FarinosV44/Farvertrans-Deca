@@ -76,7 +76,8 @@ export class AuthError extends Error {
       | "invalid_credentials"
       | "weak_password"
       | "bad_input"
-      | "terms_required",
+      | "terms_required"
+      | "account_suspended",
     message: string,
   ) {
     super(message);
@@ -320,9 +321,17 @@ export async function login(
   password: string,
 ): Promise<{ userId: string; preferredLocale: string; role: string }> {
   const email = normEmail(emailRaw);
-  const user = await prisma.user.findFirst({ where: { email } });
+  const user = await prisma.user.findFirst({ where: { email }, include: { company: true } });
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     throw new AuthError("invalid_credentials", "Email o contraseña incorrectos.");
+  }
+  // #62: a suspended account (or one whose company is suspended) cannot log in,
+  // and is told so plainly rather than "wrong password".
+  if (user.status !== "active" || (user.company && user.company.status !== "active")) {
+    throw new AuthError(
+      "account_suspended",
+      "Esta cuenta está suspendida. Contacta con soporte si crees que es un error.",
+    );
   }
   return { userId: user.id, preferredLocale: user.preferredLocale, role: user.role };
 }
@@ -380,6 +389,11 @@ export async function getCurrentSession() {
     include: { company: true },
   });
   if (!user || user.sessionVersion !== payload.sv) return null;
+  // #62: a blocked/deactivated/anonymized user — or one whose company is in
+  // any of those states — has no session. Same effect as a sessionVersion
+  // bump, but it also survives a stale cookie that still has the right sv.
+  if (user.status !== "active") return null;
+  if (user.company && user.company.status !== "active") return null;
   return { user, payload };
 }
 
