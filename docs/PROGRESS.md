@@ -1330,4 +1330,21 @@ only in the CompanyProfile picker (business-type categories, not the parties) �
 No schema change, nothing to deploy. Deliberately did not rewrite the ~50 SEO-prose short-form uses
 (issue says no mechanical substitution). 142 unit + typecheck + prettier green; full e2e pending
 local Docker. `docs/issues.md` swept (open: #1–4, #24, #33, #40–43, #46, #47, #56, #59–64).
-**Next:** sprint B = #59 (mandatory company data + hard CIF block + soft gate for existing).
+Commit `c52f6f6`; beat-1 posted on #61.
+
+### Sprint B (#59) — foundation landed, wiring blocked on Docker
+2026-09-07, commit `c182ba0`. Built and unit-tested (154 unit green) the parts that don't need a DB:
+- `lib/validation/spanish.ts` (`isValidSpanishPostalCode`, `isValidPhone`, `isValidOwnNif` — hard
+  NIF gate wrapping `checkNif`), `lib/validation/company.ts` (`companyDataSchema` — the one schema
+  for every "our own company" surface), `lib/company/completeness.ts` (soft-gate check).
+- `prisma/schema.prisma`: `Company` + `postal_code`, `city`, `data_completed_at` (all nullable) +
+  migration `20260907150000_company_full_ficha_fields` — **written, NOT applied** to local or prod.
+**Still to do for #59** (needs local Docker for e2e + migrate): wire `lib/auth/index.ts`
+(`signup` / `completeCompanyForUser`), `app/api/auth/register` + `complete-company` routes,
+`app/api/company/profile` route, `app/api/deca` soft gate, `components/auth/register-form.tsx` +
+`complete-company-form.tsx` (add the 4 new required fields + client validation; the latter also
+still needs i18n), `app/panel/empresa` edit, `t.auth.company.*` / `t.panel.companyData.*` in 8
+dictionaries, e2e specs. Then `prisma migrate deploy` to prod like D-112.
+**Next after B:** sprint C = #62 (superadmin lifecycle), D = #63, E = #60, F = #64.
+**BLOCKER:** Docker Desktop is down this session — Sprints B(rest)/C/D need it for e2e + migrations.
+#64 (design-only) and #60 (docs/scripts) could proceed Docker-free.
