@@ -407,6 +407,24 @@ export const de = {
       datos: "Übliche Daten",
       equipo: "Team",
       empresa: "Mein Unternehmen",
+      ayuda: "Hilfe",
+    },
+    help: {
+      title: "Hilfe und Support",
+      intro:
+        "Wählen Sie den passenden Kanal. Technischer Support und Rechtsberatung sind getrennte Leistungen.",
+      techHeading: "Technischer Support",
+      techIntro: "Bei Problemen mit der Plattform, der DeCA-Erstellung oder Ihrem Konto.",
+      legalHeading: "Rechtsberatung für Transport und Logistik",
+      legalIntro:
+        "Anwälte mit Erfahrung in Transport und Logistik – hilfreich bei Kontrollen, Bußgeldern, Forderungen, Vertragsstreitigkeiten und Gerichtsverfahren.",
+      legalDisclaimer:
+        "Leistung von PRAETORIA, S.L. Sie ersetzt nicht den technischen Support und garantiert kein Ergebnis.",
+      phoneLabel: "Telefon",
+      emailLabel: "Support-E-Mail",
+      whatsappTech: "WhatsApp · technischer Support",
+      whatsappLegal: "WhatsApp · Rechtsberatung",
+      hoursLabel: "Servicezeiten",
     },
     teamActivity: {
       heading: "Teamaktivität",

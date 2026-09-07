@@ -1373,3 +1373,10 @@ both detail pages, status badges + links on the list pages. 157 unit + `admin-ac
 3/3 + `account-status` 2/2. No new migration (uses `20260907170000` from part 1). t.admin i18n
 deliberately skipped (admin area is ES-only by convention). **#62 COMPLETE.**
 **Next:** sprint D (#63 support channels), E (#60 backup), F (#64 billing design).
+
+### Sprint D (#63) — DONE, on `develop` (D-118)
+2026-09-07, commit `<pending>`. Help centre `/panel/ayuda` (técnico vs jurídico separated, prudent
+disclaimer), "Ayuda" tab in AppNav + account-menu link, `lib/support/channels.ts`, `BRAND`
+whatsapp/hours (empty until dirección confirms), JSON-LD contactPoint, `t.panel.help.*` ×8.
+160 unit + `support-channels` 3/3 + `panel-help` 2/2 + full e2e 186/187 (1 = admin-2fa flake).
+No schema change. **Next:** sprint E (#60 backup), F (#64 billing design).

@@ -401,6 +401,24 @@ export const gl = {
       datos: "Datos habituais",
       equipo: "Equipo",
       empresa: "A miña empresa",
+      ayuda: "Axuda",
+    },
+    help: {
+      title: "Axuda e soporte",
+      intro:
+        "Escolle a canle que precises. O soporte técnico e a asistencia xurídica son servizos distintos.",
+      techHeading: "Soporte técnico",
+      techIntro: "Para incidencias coa plataforma, a xeración do DeCA ou a túa conta.",
+      legalHeading: "Asistencia xurídica en transporte e loxística",
+      legalIntro:
+        "Avogados con experiencia en transporte e loxística, útiles ante inspeccións, sancións, reclamacións, conflitos contractuais e procedementos xudiciais.",
+      legalDisclaimer:
+        "Servizo prestado por PRAETORIA, S.L. Non substitúe o soporte técnico e non garante ningún resultado.",
+      phoneLabel: "Teléfono",
+      emailLabel: "Correo de soporte",
+      whatsappTech: "WhatsApp · soporte técnico",
+      whatsappLegal: "WhatsApp · asistencia xurídica",
+      hoursLabel: "Horario de atención",
     },
     teamActivity: {
       heading: "Actividade do equipo",

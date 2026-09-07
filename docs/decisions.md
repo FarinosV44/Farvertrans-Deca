@@ -3582,3 +3582,29 @@ remaining scope.
   reactivate; anonymise → PII null, DeCA count unchanged, `/d/` still 200, audit row present;
   routes 404 for anon) + `account-status.spec.ts` 2/2. Full e2e: <pending>. Migration for #62 is
   `20260907170000_account_lifecycle_status` (D-116) — no new migration in part 2. Commit `<pending>`.
+
+## D-118 — #63 Support + legal-assistance channels in the panel
+- Date / phase: 2026-09-07, Phase 5, sprint D of the #59–#64 batch.
+- **Config (one point):** `lib/brand.ts` gains `supportWhatsapp`, `legalWhatsapp`, `supportHours` —
+  all EMPTY by default. The WhatsApp buttons render only once a number is set, so nothing
+  unconfirmed goes live ("no publicar datos definitivos hasta que dirección confirme"). `lib/support/
+  channels.ts` shapes them: `techSupportChannels()` (always phone + email, WhatsApp if configured),
+  `legalAssistanceChannel()` (null until configured), `whatsappLink()` builds `wa.me` deep links
+  with a purpose-specific pre-filled message (distinct for técnico vs jurídico).
+- **UI:** new `app/panel/ayuda/page.tsx` — two clearly separated sections: **Soporte técnico**
+  (plataforma / generación / cuenta) and **Asistencia jurídica en transporte y logística**
+  (PRAETORIA — inspecciones, sanciones, reclamaciones, conflictos contractuales, procedimientos
+  judiciales) with a prudent disclaimer ("no sustituye al soporte técnico y no garantiza ningún
+  resultado"). Reachable from a new "Ayuda" tab in `AppNav` (on every panel page) and from the
+  account menu. `t.panel.help.*` + `t.panel.nav.ayuda` in all 8 dictionaries.
+- **SEO:** `app/layout.tsx` Organization JSON-LD gains a `contactPoint` (telephone + email).
+- **a11y:** real `<a href>` for tel/mailto/wa.me, `target=_blank rel=noopener noreferrer` on
+  WhatsApp, distinct `<h2>` per section (not colour-only separation), `min-h-11` targets.
+- The D-039 "no company attribution on public surfaces" rule is respected — showing PRAETORIA as
+  the legal-assistance provider is the established carve-out for the legal entity (D-108 area).
+- Verification: `tsc` + prettier + `support-channels.test.ts` 3/3 + `panel-help.spec.ts` 2/2 + full
+  e2e. No schema change. Commit `<pending>` on `develop`.
+- Deferred: a shared `app/panel/layout.tsx` to DRY the per-page header/main/footer was considered
+  and skipped — the 8 panel pages compose their own shell and a wrapping layout would double-render
+  it without a risky refactor; the "Ayuda" nav tab already satisfies "reachable from any
+  authenticated area".

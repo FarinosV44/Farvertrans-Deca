@@ -410,6 +410,24 @@ export const eu = {
       datos: "Ohiko datuak",
       equipo: "Taldea",
       empresa: "Nire enpresa",
+      ayuda: "Laguntza",
+    },
+    help: {
+      title: "Laguntza eta arreta",
+      intro:
+        "Aukeratu behar duzun kanala. Laguntza teknikoa eta lege-laguntza zerbitzu desberdinak dira.",
+      techHeading: "Laguntza teknikoa",
+      techIntro: "Plataformarekin, DeCA sortzearekin edo zure kontuarekin gorabeherak izanez gero.",
+      legalHeading: "Garraioko eta logistikako lege-laguntza",
+      legalIntro:
+        "Garraioan eta logistikan eskarmentua duten abokatuak: ikuskapenak, zehapenak, erreklamazioak, kontratu-gatazkak eta prozedura judizialak.",
+      legalDisclaimer:
+        "PRAETORIA, S.L.-k emandako zerbitzua. Ez du laguntza teknikoa ordezkatzen eta ez du emaitzarik bermatzen.",
+      phoneLabel: "Telefonoa",
+      emailLabel: "Laguntza-helbidea",
+      whatsappTech: "WhatsApp · laguntza teknikoa",
+      whatsappLegal: "WhatsApp · lege-laguntza",
+      hoursLabel: "Arreta-ordutegia",
     },
     teamActivity: {
       heading: "Taldearen jarduera",

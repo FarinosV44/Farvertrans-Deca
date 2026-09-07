@@ -404,6 +404,24 @@ export const fr = {
       datos: "Données habituelles",
       equipo: "Équipe",
       empresa: "Mon entreprise",
+      ayuda: "Aide",
+    },
+    help: {
+      title: "Aide et assistance",
+      intro:
+        "Choisissez le canal dont vous avez besoin. Le support technique et l'assistance juridique sont des services distincts.",
+      techHeading: "Support technique",
+      techIntro: "Pour tout problème avec la plateforme, la génération du DeCA ou votre compte.",
+      legalHeading: "Assistance juridique en transport et logistique",
+      legalIntro:
+        "Des avocats expérimentés en transport et logistique, utiles en cas de contrôles, sanctions, réclamations, litiges contractuels et procédures judiciaires.",
+      legalDisclaimer:
+        "Service fourni par PRAETORIA, S.L. Il ne remplace pas le support technique et ne garantit aucun résultat.",
+      phoneLabel: "Téléphone",
+      emailLabel: "E-mail d'assistance",
+      whatsappTech: "WhatsApp · support technique",
+      whatsappLegal: "WhatsApp · assistance juridique",
+      hoursLabel: "Horaires d'assistance",
     },
     teamActivity: {
       heading: "Activité de l'équipe",

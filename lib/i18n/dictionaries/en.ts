@@ -391,6 +391,24 @@ export const en = {
       datos: "Regular data",
       equipo: "Team",
       empresa: "My company",
+      ayuda: "Help",
+    },
+    help: {
+      title: "Help and support",
+      intro:
+        "Choose the channel you need. Technical support and legal assistance are separate services.",
+      techHeading: "Technical support",
+      techIntro: "For issues with the platform, DeCA generation or your account.",
+      legalHeading: "Legal assistance for transport and logistics",
+      legalIntro:
+        "Lawyers experienced in transport and logistics — useful for inspections, penalties, claims, contractual disputes and court proceedings.",
+      legalDisclaimer:
+        "Provided by PRAETORIA, S.L. It does not replace technical support and guarantees no outcome.",
+      phoneLabel: "Phone",
+      emailLabel: "Support email",
+      whatsappTech: "WhatsApp · technical support",
+      whatsappLegal: "WhatsApp · legal assistance",
+      hoursLabel: "Support hours",
     },
     teamActivity: {
       heading: "Team activity",
