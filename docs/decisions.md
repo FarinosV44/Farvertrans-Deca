@@ -3685,3 +3685,29 @@ remaining scope.
   (4) rotate `FVD_ADMIN_TOKEN` + the Supabase DB password (both were pasted in chat this session).
 - Beat-1 comments posted on #59–#64. Awaiting the user's live verification, then beat-3, then the
   user closes the issues.
+
+## D-122 — #67/#65/#66 design bundle: "Sistema Vía" proposal published for approval
+- Date / phase: 2026-09-07, Phase 3-style design step inside Phase 5 maintenance. User asked to
+  "draft the #67 proposal first" (AskUserQuestion).
+- The three new issues form one design project: **#67** (a whole new Vignelli-inspired visual
+  identity) is the keystone; **#65** (admin redesign) and **#66** (PDF redesign) both say "reuse the
+  general visual system", i.e. they depend on #67. All three require an approved visual proposal
+  before implementation.
+- **Deliverable:** `docs/design/sistema-via.md` (implementation source of truth) + a published
+  proposal artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 —
+  palette (6 "líneas", each colour = one fixed meaning), typography (`Archivo` + `IBM Plex Mono`,
+  short scale), the "línea" signature motif, a component gallery, and 4 representative screen
+  mockups (panel, `/crear`, admin list+detail, the PDF) rendered in the system.
+- **Direction, in brief:** warm paper ground + near-black ink; `--color-primary` moves from the
+  generic `#0b5cff` to an institutional `#0A3D91`; a `--color-route` burnt orange used ONLY for the
+  DeCA-creation flow; `ok/warn/danger/rest` become named status lines shown as icon+text pills
+  everywhere (table, detail, PDF); hairline borders, 2px radius, shadows removed; the existing
+  `--color-*` / `--radius-*` tokens keep their role, only their values change + the functional set
+  is added.
+- **Not implemented** — awaiting the user's approval of the direction. On approval: #67 first
+  (tokens + `components/ui/` + nav + `/crear` flow + states + icons + mobile, verified per screen
+  with axe + the guided a11y pass), then #65 on that base, then #66 (with PDF snapshot tests and an
+  old-vs-new comparison). No legal/business logic changes in any of the three (each issue's AC).
+- Older open issues (#1–4 epics, #24, #33, #40–47, #56) remain as recorded — worked in
+  D-042…D-111, awaiting the user's live verification and close; Keel never closes an issue on its
+  own reading of the code.
