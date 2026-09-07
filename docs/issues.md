@@ -220,15 +220,17 @@ anonymize-in-place (no hard delete, D-067).
 - **This is the keystone** — #65 and #66 both say "reuse the general visual system / combine with
   the new DeCA Profesional identity", i.e. they depend on #67.
 
-### I-065 — #65 Redesign the superadmin panel with the #67 identity · P1 · blocked on #67
+### I-065 — #65 Admin panel → Sistema Vía · P1 · **DONE, on `develop`** (D-125)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/65
-- Explicitly "coordinate with #59 and #62" (both now built) and "reuse the general visual system, do
-  not create a second isolated admin design". States distinguished by text + icon (not colour only),
-  destructive actions with a different hierarchy + confirmation. Mockup of list + detail first.
+- `components/admin/ui.tsx` — `Badge` → tinted pill + hairline functional-colour border (tone API
+  kept, every admin badge updates), `Table` → 2px ink header rule + uppercase headers, `PageHeader`
+  → "Superadministración" kicker. `AccountActions` (#62) on `components/ui/` (`Button`, `Pill`).
+  Destructive actions already a distinct group (#62). 21 e2e (admin / audit-log / company-logo) green.
 
-### I-066 — #66 Redesign the generated DeCA PDF (CMR-like operational grid) · P1 · design-gated
+### I-066 — #66 Generated DeCA — CMR-style numbered grid · P1 · **DONE, on `develop`** (D-125)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/66
-- CMR-inspired *structure* (delimited box grid, numbered/grouped fields, clear separation of parties
-  / transport / goods / dates / validation) — must still read as a **DeCA**, not a CMR. Keep every
-  legal field, add postal code + town where they belong (#59), A4 + B/W + mobile, no overflow with
-  long values, add PDF snapshot tests, mockup first.
+- `lib/pdf/deca-document.tsx` — each mandatory block is a numbered cell (1–8) with a filled-square
+  badge, in the Sistema Vía colours. **Still a DeCA**, not a CMR. Every legal field kept; postal
+  code + town in both location cells (#59). New `tests/unit/deca-pdf-snapshot.test.ts` locks the
+  structure + every value. Full R-1…R-13 compliance suite + company-logo + build13 + launch-happy
+  green. Mockup was the approved Sistema Vía artifact's "Documento generado" screen.

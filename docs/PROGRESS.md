@@ -1398,3 +1398,14 @@ Progress), migrations of AccountActions + panel data-notice + /crear route colou
 All merged to `main` at `ab6ead5`, 168 unit + full e2e green. No migration.
 **Next:** finish #67 (remaining panel surfaces + icons + mobile), then #65 (admin), then #66 (PDF).
 Older open issues #1–4/#24/#33/#40–47/#56 still awaiting the user's live-verification close.
+
+### #65/#66/#67 "Sistema Vía" implemented — on `develop` (D-125)
+2026-09-07 (user: "no stop till all issues finish"). #67: token foundation + Archivo/IBM Plex Mono
++ `components/ui/` + migrations (AccountActions, panel banners, historial table, nav, /crear
+colour, company-profile-form) + a mobile header fix (wordmark/CTA no longer wrap; wizard-heading
+focus box removed). #65: admin `Badge`/`Table`/`PageHeader` → Sistema Vía. #66: PDF is a
+CMR-style numbered-cell grid in the DeCA identity, every legal field + postal/town kept, still a
+DeCA; new `deca-pdf-snapshot.test.ts`. 172 unit + full compliance + affected e2e green. On
+`develop` (`9cdcfba`…`e88405a`); merge to `main` once the final full e2e confirms.
+**Deferred follow-ups:** `Card`/`DataTable` primitives + remaining panel cards, node-based wizard
+progress, admin i18n — not blockers. Older open issues #1–4/#24/#33/#40–47/#56 await the user's close.
