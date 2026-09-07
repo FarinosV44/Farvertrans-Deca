@@ -3663,3 +3663,25 @@ remaining scope.
   gains a FUTURE billing-data row.
 - Verification: `tsc` + prettier + `vitest` (unchanged count — no test, it is design) clean. No app
   change. Commit `<pending>` on `develop`. **#59–#64 batch complete.**
+
+## D-121 — #59–#64 batch merged to `main` and migrations applied to production
+- Date / phase: 2026-09-07, on the user's standing instruction ("when finish all issues push to
+  main and apply all migrations").
+- **Merge:** `develop` → `main` at `b4638b1` (`--no-ff`, 100 files, +3853/−183). Carries D-114…D-120
+  (#61 terminology, #59 company ficha, #62 account lifecycle, #63 help centre, #60 backup, #64
+  billing design). CI triggered on the `main` push.
+- **Production migrations applied** (`prisma migrate deploy` against `DIRECT_URL`, the ledger was
+  already clean from D-112 — no phantom rows this time):
+  `20260907150000_company_full_ficha_fields`, `20260907170000_account_lifecycle_status`.
+  `prisma migrate status` → "Database schema is up to date!" (26/26).
+- **Verified in production** (read-only introspection): all 10 new columns present on `company` +
+  `user`; `AccountStatus` enum = `active/blocked/deactivated/anonymized`; every existing row
+  defaults to `active` (0 non-active) — additive, nothing broken.
+- **Still the user's:** (1) redeploy Hostinger so the new code runs against the new schema — until
+  then production serves the pre-batch build against a schema that is ahead of it (additive columns
+  with defaults, harmless); (2) the 9 existing companies will hit the #59 soft gate on their next
+  DeCA and must complete their ficha (or the superadmin fills it in `/admin/empresas/[id]`);
+  (3) #60's object-store + `age` key + repo secrets, then the first backup run + full restore-test;
+  (4) rotate `FVD_ADMIN_TOKEN` + the Supabase DB password (both were pasted in chat this session).
+- Beat-1 comments posted on #59–#64. Awaiting the user's live verification, then beat-3, then the
+  user closes the issues.
