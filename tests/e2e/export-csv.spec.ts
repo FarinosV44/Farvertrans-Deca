@@ -13,6 +13,12 @@ async function registerAndCreate(page: Page, company: string, destination = "Mad
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", company);
   await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   const [res] = await Promise.all([
     page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),

@@ -19,7 +19,13 @@ async function registerOwner(page: Page, addr = email()) {
   await page.fill("#email", addr);
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Agencia Auditoria SL");
-  await page.fill("#companyNif", "B12345675");
+  await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   await Promise.all([
     page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
@@ -71,6 +77,12 @@ test.describe("SECURITY #53 — security audit log", () => {
         password: "Supersecret123!",
         companyName: "No Admin SL",
         companyNif: "B12345674",
+        companyContactName: "Ana Ejemplo",
+        companyPhone: "600111222",
+        companyEmail: "empresa@example.com",
+        companyAddress: "Calle Prueba 1",
+        companyPostalCode: "46540",
+        companyCity: "El Puig",
         acceptTerms: true,
       },
     });
@@ -96,6 +108,12 @@ test.describe("SECURITY #53 — security audit log", () => {
         password: "Supersecret123!",
         companyName: "Audit SL",
         companyNif: "B12345674",
+        companyContactName: "Ana Ejemplo",
+        companyPhone: "600111222",
+        companyEmail: "empresa@example.com",
+        companyAddress: "Calle Prueba 1",
+        companyPostalCode: "46540",
+        companyCity: "El Puig",
         acceptTerms: true,
       },
     });

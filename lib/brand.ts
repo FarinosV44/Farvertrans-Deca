@@ -19,6 +19,16 @@ export const BRAND = {
   supportEmail: "Deca@praetoriaabogados.es",
   /** Support phone (owner directive, 2026-09-06). */
   supportPhone: "607 52 77 19",
+  /**
+   * WhatsApp numbers for the panel help centre (#63). International format,
+   * digits only (e.g. "34607527719"). Left EMPTY on purpose — the buttons
+   * only render once dirección confirms the definitive channels; nothing
+   * unverified goes live.
+   */
+  supportWhatsapp: "",
+  legalWhatsapp: "",
+  /** Human-readable support hours, shown beside the channels when set. */
+  supportHours: "",
   /** Canonical base URL comes from the environment (NEXT_PUBLIC_FVD_BASE_URL). */
   get baseUrl(): string {
     return process.env.NEXT_PUBLIC_FVD_BASE_URL ?? "http://localhost:3000";

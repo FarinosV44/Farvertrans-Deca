@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { publicEnv } from "@/lib/env";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
 import type { DecaPayloadData } from "@/lib/data/history";
+import { DECA_ROLES } from "@/lib/deca/roles";
 
 /**
  * The full data behind the post-generation document cockpit (PRODUCT #36) —
@@ -37,14 +38,34 @@ export type CockpitData = {
 };
 
 const FIELDS: { key: string; label: string; get: (d: DecaPayloadData) => string }[] = [
-  { key: "shipper.name", label: "Cargador — nombre", get: (d) => d.shipper?.name ?? "" },
-  { key: "shipper.nif", label: "Cargador — NIF/VAT", get: (d) => d.shipper?.nif ?? "" },
-  { key: "shipper.address", label: "Cargador — domicilio", get: (d) => d.shipper?.address ?? "" },
-  { key: "carrier.name", label: "Transportista — nombre", get: (d) => d.carrier?.name ?? "" },
-  { key: "carrier.nif", label: "Transportista — NIF/VAT", get: (d) => d.carrier?.nif ?? "" },
+  {
+    key: "shipper.name",
+    label: `${DECA_ROLES.shipper.title} — nombre`,
+    get: (d) => d.shipper?.name ?? "",
+  },
+  {
+    key: "shipper.nif",
+    label: `${DECA_ROLES.shipper.title} — NIF/VAT`,
+    get: (d) => d.shipper?.nif ?? "",
+  },
+  {
+    key: "shipper.address",
+    label: `${DECA_ROLES.shipper.title} — domicilio`,
+    get: (d) => d.shipper?.address ?? "",
+  },
+  {
+    key: "carrier.name",
+    label: `${DECA_ROLES.carrier.title} — nombre`,
+    get: (d) => d.carrier?.name ?? "",
+  },
+  {
+    key: "carrier.nif",
+    label: `${DECA_ROLES.carrier.title} — NIF/VAT`,
+    get: (d) => d.carrier?.nif ?? "",
+  },
   {
     key: "carrier.address",
-    label: "Transportista — domicilio",
+    label: `${DECA_ROLES.carrier.title} — domicilio`,
     get: (d) => d.carrier?.address ?? "",
   },
   {

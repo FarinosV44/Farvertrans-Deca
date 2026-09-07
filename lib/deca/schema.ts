@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { normalizePlate } from "./plate";
 import { locationSchema } from "./location";
+import { DECA_ROLES } from "./roles";
 
 /**
  * DeCA data model (R-2 / Art. 6 Orden FOM/2861/2012). Strings are trimmed; the
@@ -20,12 +21,12 @@ export const partySchema = z.object({
 });
 
 export const shipperSchema = partySchema.extend({
-  address: trimmed(4, 300, "Indica el domicilio del cargador"),
+  address: trimmed(4, 300, `Indica el domicilio del ${DECA_ROLES.shipper.inline}`),
 });
 
 // Art. 6.1.a) Orden FOM/2861/2012 requires the domicilio of BOTH parties.
 export const carrierSchema = partySchema.extend({
-  address: trimmed(4, 300, "Indica el domicilio del transportista"),
+  address: trimmed(4, 300, `Indica el domicilio del ${DECA_ROLES.carrier.inline}`),
 });
 
 export const step1Schema = z.object({

@@ -264,9 +264,12 @@ export const it = {
       legend: "La tua azienda",
       name: "Nome o ragione sociale",
       nif: "Partita IVA / Codice fiscale",
-      contactName: "Persona di contatto (facoltativo)",
-      phone: "Telefono (facoltativo)",
-      address: "Indirizzo (facoltativo)",
+      contactName: "Persona di contatto",
+      phone: "Telefono",
+      email: "E-mail dell'azienda",
+      address: "Indirizzo",
+      postalCode: "CAP",
+      city: "Città",
     },
     profile: {
       legend: "Come userai principalmente la piattaforma?",
@@ -400,6 +403,24 @@ export const it = {
       datos: "Dati abituali",
       equipo: "Team",
       empresa: "La mia azienda",
+      ayuda: "Aiuto",
+    },
+    help: {
+      title: "Aiuto e assistenza",
+      intro:
+        "Scegli il canale che ti serve. Il supporto tecnico e l'assistenza legale sono servizi distinti.",
+      techHeading: "Supporto tecnico",
+      techIntro: "Per problemi con la piattaforma, la generazione del DeCA o il tuo account.",
+      legalHeading: "Assistenza legale per trasporti e logistica",
+      legalIntro:
+        "Avvocati esperti in trasporti e logistica, utili in caso di ispezioni, sanzioni, reclami, controversie contrattuali e procedimenti giudiziari.",
+      legalDisclaimer:
+        "Servizio fornito da PRAETORIA, S.L. Non sostituisce il supporto tecnico e non garantisce alcun risultato.",
+      phoneLabel: "Telefono",
+      emailLabel: "E-mail di supporto",
+      whatsappTech: "WhatsApp · supporto tecnico",
+      whatsappLegal: "WhatsApp · assistenza legale",
+      hoursLabel: "Orari di assistenza",
     },
     teamActivity: {
       heading: "Attività del team",
@@ -623,6 +644,14 @@ export const it = {
   errors: {
     generic: "Qualcosa è andato storto. Riprova tra qualche secondo.",
     notFound: "Non abbiamo trovato questa pagina.",
+  },
+  legal: {
+    roles: {
+      shipper: "Mittente contrattuale",
+      carrier: "Vettore effettivo",
+      shipperShort: "Mittente",
+      carrierShort: "Vettore",
+    },
   },
   legalNotice: {
     notTranslated:

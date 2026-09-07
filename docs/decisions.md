@@ -3423,3 +3423,243 @@ remaining scope.
   reconciled" passes every existing check silently. Worth a diagnostics addition (compare ledger
   rows against `prisma/migrations/` folder names) in a future slice — not done here.
 - Corrections to the record: D-096, D-098, D-111 each gained a "Correction (D-112)" note above.
+
+## D-113 — merged `develop` into `main` at `d51b4ee` (D-112 record)
+- Date / phase: 2026-09-07, immediately after D-112, on the user's explicit instruction ("commit
+  them all in main"). Docs-only merge — `docs/PROGRESS.md` + `docs/decisions.md`, 107 insertions,
+  no code. `--no-ff`, no conflicts. Carries the D-111 merge record and the D-112 production
+  migration-ledger reconciliation (plus the Correction notes on D-096/D-098/D-111).
+- CI triggered on the `main` push (doc-only — expected green).
+- Production DB is already reconciled (D-112); the Hostinger redeploy remains the user's action.
+
+## D-114 — #61 Unify DeCA-party legal terminology: a single source, not a find-and-replace
+- Date / phase: 2026-09-07, Phase 5 maintenance. First of the #59–#64 launch batch
+  (plan `.claude/plans/sunny-greeting-snowflake.md`, approved by the user).
+- **What the issue actually needed.** Its two literal substitutions
+  ("transportista de mercancías" → "…efectivo", "empresa cargadora" → "…contractual") only
+  physically occur in the `CompanyProfile` onboarding picker, where those are **business-type
+  self-classification categories** (parallel set with "operador" / "transportista de viajeros"),
+  NOT the DeCA document parties — mechanically substituting there would mislabel a passenger carrier
+  and break the parallel set. Left unchanged. The real need was consistency of the *document-party*
+  denomination, which D-107 had already half-done (PDF, review screen, FAQ, most legal prose) but
+  without a central source, so other surfaces had drifted.
+- **Decision:** one canonical source per audience.
+  - `lib/deca/roles.ts` — `DECA_ROLES.{shipper,carrier}.{title,inline,short,upper}` for the
+    Spanish-only, non-i18n surfaces: the generated PDF, the correction-diff row labels, the zod
+    validation messages.
+  - `t.legal.roles.{shipper,carrier,shipperShort,carrierShort}` added to all 8 i18n dictionaries
+    for translated UI copy; the `es` values are the source of truth and `deca-roles.test.ts`
+    asserts `lib/deca/roles.ts` stays in lockstep with them.
+- **Wired:** `lib/pdf/deca-document.tsx` (was hardcoded strings — same wording, now from the
+  constant), `lib/deca/detail.ts` (6 diff labels: "Cargador — …" → "Cargador contractual — …"),
+  `lib/deca/schema.ts` (2 zod messages), `lib/deca/validate.ts` (NIF warning labels),
+  `components/deca/doc-summary.tsx` — **fixed a real asymmetry**: the shipper card was titled
+  "Empresa que contrata el transporte" while the carrier card already said "Transportista
+  efectivo"; both now use the canonical pair.
+- **Deliberately NOT changed** (per the issue's own "no mechanical substitution" instruction and
+  scope discipline): ~50 SEO-prose lines in `content/seo/pages.ts` (most already pair the terms; the
+  rest use "cargador"/"transportista" as natural short forms, not the old incorrect phrases), the
+  short-form table headers in `/panel/historico` and the admin DeCA table, and the review-step
+  descriptive titles ("Empresa que contrata el transporte" / "Transportista que realiza el
+  transporte" — plain-language helpers at the confirm step). The seeded `content_item` rows
+  (`errores-frecuentes-al-generar-un-deca`, `cuenta-atras-deca-5-octubre-2026`) already name the
+  roles correctly, so **no backfill migration** was needed (unlike D-107).
+- **No schema change, no migration, nothing to deploy** for #61 — pure code + i18n.
+- Verification: `tsc --noEmit` clean; `prettier --check` clean; `vitest run` 142/142 (3 new in
+  `deca-roles.test.ts`; `deca-diff.test.ts` label assertion updated to the new *intentional* wording
+  per "never weaken a test — a wording change is a spec change"). Full e2e + a real generated-PDF
+  eye check are pending local Docker (down this session); the changed e2e-adjacent assertions
+  (`crear.spec.ts`, `deca-validate.test.ts`, `doc-cockpit.spec.ts`, `creator-ux31.spec.ts`) were
+  checked by hand to still hold — "transportista efectivo" still contains "transportista", and the
+  cockpit still renders "Transportista efectivo".
+
+## D-115 — #59 Mandatory complete company + contact data (soft gate + hard CIF block)
+- Date / phase: 2026-09-07, Phase 5 maintenance, sprint B of the #59–#64 batch.
+- **User decisions (recorded, not re-asked):** soft gate for existing companies; hard block on an
+  invalid CIF/NIF control character for the account's OWN company.
+- **Schema:** `Company` gains `postal_code`, `city` (their own fields, not buried in `address`) and
+  `data_completed_at` (stamped the first time the ficha passes the full check). All nullable — the
+  requirement lives in the app, not the database, so the 9 existing companies are never broken.
+  Migration `20260907150000_company_full_ficha_fields`, applied to local dev; **needs
+  `prisma migrate deploy` on production** (D-112 pattern).
+- **One schema, four call sites.** New `lib/validation/company.ts` (`companyDataSchema`) is now the
+  single validator for the register route, the Google complete-company route, the `/panel/empresa`
+  edit and (Sprint C) the superadmin edit — each had its own partial rules before.
+  `lib/validation/spanish.ts`: `isValidSpanishPostalCode` (5 digits, province 01–52),
+  `isValidPhone` (ES national or explicit international), `isValidOwnNif` — wraps the existing
+  `checkNif()` and, unlike every other caller, treats an unknown shape or bad checksum as invalid.
+  The DeCA wizard's *counterparty* NIF is untouched — it stays a soft warning (R-2 tolerates
+  foreign operators).
+- **Soft gate:** `lib/company/completeness.ts` (`companyDataComplete` / `missingCompanyFields`).
+  `POST /api/deca` returns `409 company_data_incomplete` for an authenticated create when the
+  company ficha is incomplete, alongside the existing `emailVerifiedAt` gate. `/panel/empresa`
+  shows a "Completa los datos de tu empresa" step. **Login and `/d/[token]` are never gated.**
+- **Every registration path requires the full ficha** — the normal signup, the Google step-2
+  completion, AND the operator-prospect onboarding link (a prospect who registers is a real
+  company; name/NIF fall back to the seeded prospect values, the rest is required).
+- **UI:** `register-form.tsx` + `complete-company-form.tsx` gained the required email / address /
+  postal-code / town fields (and lost the "(opcional)" markers on contact/phone).
+  `company-profile-form.tsx` + `/panel/empresa` gained postal-code / town and the incomplete banner.
+  `t.auth.company.*` extended (email/postalCode/city) in all 8 dictionaries.
+- **Deferred (not #59 scope):** `complete-company-form.tsx` still hardcodes its Spanish strings —
+  an i18n pass is a separate follow-up.
+- **e2e ripple:** ~29 `register()` call sites across ~19 spec files updated to send the full ficha
+  (the invalid placeholder `B12345675` → the valid `B12345674`). Two real regressions were caught
+  and fixed: `doc-cockpit.spec.ts` asserted the old "Empresa que contrata el transporte" cockpit
+  title (D-114 renamed it to "Cargador contractual" — assertion updated to the new intentional
+  wording), and `growth.spec.ts`'s prospect helper wasn't filling the new fields.
+- Verification: 154 unit + typecheck + prettier green. New `tests/e2e/registro-company-data.spec.ts`
+  (8 fields, invalid CIF, invalid postal code, form-required check) and
+  `tests/e2e/panel-company-completeness.spec.ts` (incomplete → 409 + banner → complete → 201).
+  Full e2e: <pending final run>. Commits `c182ba0` (foundation) + `<pending>` (wiring) on `develop`.
+
+## D-116 — #62 part 1: account-lifecycle status + enforcement (schema, session, login)
+- Date / phase: 2026-09-07, Phase 5, sprint C of the #59–#64 batch. Split #62 into (1) the
+  status model + enforcement (this entry) and (2) the admin mutation UI/API + anonymize (next
+  session) — the enforcement is the security-critical core and is harmless while every account is
+  the default `active`.
+- **Schema:** one shared enum `AccountStatus { active, blocked, deactivated, anonymized }`. `User`
+  and `Company` each gain `status` (default `active`), `statusReason`, `statusChangedAt`,
+  `anonymizedAt`. Migration `20260907170000_account_lifecycle_status`, applied to local dev —
+  **needs `prisma migrate deploy` on production** when the batch merges.
+- **Enforcement, two layers:**
+  - `getCurrentSession()` returns null when `user.status !== "active"` OR
+    `user.company.status !== "active"` — same effect as a `sessionVersion` bump, and it also
+    catches a stale cookie that still has the right `sv`. So blocking takes effect on the target's
+    very next request, no explicit session-kill needed (though the admin action will still bump
+    `sessionVersion` for immediacy).
+  - `login()` (and the future Google callback) refuses a suspended user/company with a new
+    `AuthError("account_suspended", …)` — a plain "esta cuenta está suspendida", not "contraseña
+    incorrecta".
+- `/d/[token]` is deliberately untouched — a blocked company's already-issued DeCA stays verifiable
+  for inspection (R-6…R-9). Verified by the lifecycle spec once the admin UI lands.
+- Admin read models (`listCompaniesAdmin`, `listUsersAdmin`, `getCompanyAdmin`) now surface
+  `status` (+ the #59 `postalCode`/`city`/`email`/`dataComplete` on the company detail).
+- **Deferred to #62 part 2 (next session):** `lib/admin/lifecycle.ts` (`setUserStatus` /
+  `setCompanyStatus` with `recordAudit` + `bumpSessionVersion`), `lib/admin/anonymize.ts`
+  (in-place PII overwrite, never deletes rows / DeCA / audit — D-067), `PATCH
+  /api/admin/{empresas,usuarios}/[id]` gated with `requireStepUp()`, `getUserAdmin(id)` +
+  `/admin/usuarios/[id]` page, the client action components (first mutation UI in `/admin`), status
+  badges + row links, `t.admin.*` in 8 dicts, `tests/e2e/admin-account-lifecycle.spec.ts`.
+- Verification: `tsc` clean; new `tests/e2e/account-status.spec.ts` (block kills the session +
+  refuses login; company deactivation blocks members) 2/2; admin/account/audit e2e subset 31/32
+  (the 1 is the documented admin-2fa parallel flake). Commit `<pending>` on `develop`.
+
+## D-117 — #62 part 2: the superadmin lifecycle surface (states, anonymize, admin UI)
+- Date / phase: 2026-09-07, Phase 5, sprint C (part 2) of the #59–#64 batch. Completes #62 on top
+  of the D-116 enforcement layer.
+- **`lib/admin/lifecycle.ts`** — `setUserStatus` / `setCompanyStatus` (`active`/`blocked`/
+  `deactivated`): writes `status`+`statusReason`+`statusChangedAt`, on block/deactivate bumps every
+  affected member's `sessionVersion` (instant logout, belt-and-braces with the D-116 session check),
+  `recordAudit({action: "user_status_changed" | "company_status_changed"})`. Refuses to transition
+  an `anonymized` account.
+- **`lib/admin/anonymize.ts`** (+ pure `anonymize-fields.ts` for the test) — `anonymizeUser` /
+  `anonymizeCompany`: overwrites PII IN PLACE (`email` → `anon+<id>@anonymized.invalid`, company
+  ficha fields → null/tombstone), sets `status="anonymized"` + `anonymizedAt`. **Never** deletes a
+  row, a `Deca`/`DecaVersion`, or a `SecurityAuditLog` (D-067) — the historical `creatorName`/
+  `creatorEmail` on a `Deca` and the `dataJson` in a version are part of the immutable legal record
+  and are left untouched. Anonymising a company anonymises its members too (one transaction).
+- **`PATCH /api/admin/{empresas,usuarios}/[id]`** — actions `block`/`deactivate`/`reactivate`/
+  `anonymize` (+ `edit` on the company: the superadmin is the only actor that may fix `name`/`nif`,
+  which are locked for the company's own users). **Gated: `getInternalUser()` (non-internal → 404,
+  the area does not exist) then `requireStepUp()` (internal but stale 2FA → 401 `step_up_required`)**
+  — `requireStepUp` was purpose-built for this in SECURITY #53 and had never been wired to a route.
+  Anonymise needs `confirm: "ANONIMIZAR"`.
+- **`lib/admin/records.ts`** — `getUserAdmin(id)` (new: detail + the user's audit rows). `status`
+  surfaced on `listCompaniesAdmin`/`listUsersAdmin`/`getCompanyAdmin` + the #59 ficha fields on the
+  company detail. `lib/admin/search.ts` user hits now point at `/admin/usuarios/<id>`.
+- **UI** — new `app/admin/(protected)/usuarios/[id]/page.tsx`; `<AccountActions>`
+  (`components/admin/account-actions.tsx`) on both detail pages — the **first client-interactive
+  component in `/admin`**: status badge, block/deactivate/reactivate buttons, a collapsed
+  irreversible-anonymise section with a typed confirmation, and a "verifica tu identidad" link when
+  the server returns `step_up_required`. Status badges + detail links added to the two list pages.
+- `/d/[token]` is untouched. Verified: a blocked company's already-issued DeCA still serves a PDF.
+- **Deliberately NOT done:** `t.admin.*` i18n. The entire `/admin` area is hardcoded Spanish
+  server components (internal-only, ES-only by convention) — adding i18n for just the new pieces
+  would be inconsistent. A full admin i18n pass is separate work if ever wanted.
+- Verification: `tsc` + prettier + 157 unit (`admin-anonymize.test.ts` field contract) +
+  `tests/e2e/admin-account-lifecycle.spec.ts` 3/3 (block → session dead + `/d/` still 200 →
+  reactivate; anonymise → PII null, DeCA count unchanged, `/d/` still 200, audit row present;
+  routes 404 for anon) + `account-status.spec.ts` 2/2. Full e2e: <pending>. Migration for #62 is
+  `20260907170000_account_lifecycle_status` (D-116) — no new migration in part 2. Commit `<pending>`.
+
+## D-118 — #63 Support + legal-assistance channels in the panel
+- Date / phase: 2026-09-07, Phase 5, sprint D of the #59–#64 batch.
+- **Config (one point):** `lib/brand.ts` gains `supportWhatsapp`, `legalWhatsapp`, `supportHours` —
+  all EMPTY by default. The WhatsApp buttons render only once a number is set, so nothing
+  unconfirmed goes live ("no publicar datos definitivos hasta que dirección confirme"). `lib/support/
+  channels.ts` shapes them: `techSupportChannels()` (always phone + email, WhatsApp if configured),
+  `legalAssistanceChannel()` (null until configured), `whatsappLink()` builds `wa.me` deep links
+  with a purpose-specific pre-filled message (distinct for técnico vs jurídico).
+- **UI:** new `app/panel/ayuda/page.tsx` — two clearly separated sections: **Soporte técnico**
+  (plataforma / generación / cuenta) and **Asistencia jurídica en transporte y logística**
+  (PRAETORIA — inspecciones, sanciones, reclamaciones, conflictos contractuales, procedimientos
+  judiciales) with a prudent disclaimer ("no sustituye al soporte técnico y no garantiza ningún
+  resultado"). Reachable from a new "Ayuda" tab in `AppNav` (on every panel page) and from the
+  account menu. `t.panel.help.*` + `t.panel.nav.ayuda` in all 8 dictionaries.
+- **SEO:** `app/layout.tsx` Organization JSON-LD gains a `contactPoint` (telephone + email).
+- **a11y:** real `<a href>` for tel/mailto/wa.me, `target=_blank rel=noopener noreferrer` on
+  WhatsApp, distinct `<h2>` per section (not colour-only separation), `min-h-11` targets.
+- The D-039 "no company attribution on public surfaces" rule is respected — showing PRAETORIA as
+  the legal-assistance provider is the established carve-out for the legal entity (D-108 area).
+- Verification: `tsc` + prettier + `support-channels.test.ts` 3/3 + `panel-help.spec.ts` 2/2 + full
+  e2e. No schema change. Commit `<pending>` on `develop`.
+- Deferred: a shared `app/panel/layout.tsx` to DRY the per-page header/main/footer was considered
+  and skipped — the 8 panel pages compose their own shell and a wrapping layout would double-render
+  it without a risky refactor; the "Ayuda" nav tab already satisfies "reachable from any
+  authenticated area".
+
+## D-119 — #60 Backup & restore: automated, encrypted, off-machine
+- Date / phase: 2026-09-07, Phase 5, sprint E of the #59–#64 batch. User decision: GitHub Actions +
+  an external S3-compatible object store, RPO ≤24h.
+- **`scripts/backup.mjs`** — `pg_dump --format=custom` (via `BACKUP_DIRECT_URL`, the session pooler)
+  + downloads every object in the `deca-pdfs` bucket (service role) + `manifest.json` (SHA-256 of
+  every part) → `tar` → **`age`-encrypted** (the dump holds third-party personal data; unencrypted
+  is warned about loudly). `BACKUP_SKIP_STORAGE=1` for a DB-only dry run. Exits non-zero on any
+  failure — the red run is the alert.
+- **`scripts/restore.mjs`** — decrypt → untar → `pg_restore --clean --if-exists` into a **scratch**
+  target. **Refuses a production-looking target** (`pooler.supabase.com` / `supabase.co` /
+  `decaprofesional`, overridable only with `--force-production` AND
+  `I_UNDERSTAND=overwrite-production`). Guard is a pure module `lib/backup/target.mjs`
+  (`restoreAllowed`), unit-tested.
+- **`.github/workflows/backup.yml`** — daily cron (03:17 UTC) + `workflow_dispatch`; ubuntu, installs
+  `postgresql-client` + `age`, runs the script, `aws s3 cp` to an S3-compatible bucket under its own
+  credentials; keeps `daily/<date>/` + `monthly/<month>/` (retention via a bucket lifecycle rule —
+  30 dailies + 12 monthlies — not the workflow, so it survives an outage).
+- **`docs/backup-and-restore.md`** (new) — storage inventory, the account-lifecycle-vs-documents
+  matrix (ties to #62 — nothing cascades to a DeCA), **RPO ≤24h / RTO ≤4h** with justification,
+  retention & rotation, encryption in transit + at rest, the step-by-step restore, RGPD, and a
+  one-time operator checklist. `docs/07-release.md` §6 now points here; `docs/threat-model.md` gains
+  a "Data loss" row.
+- **Restore-test EXECUTED (DB half):** dev DB → `pg_dump` → `pg_restore` into a fresh scratch DB →
+  `prisma migrate status` "up to date" (26/26) → real rows present (6555 `deca_version`) → scratch
+  dropped. Logged in `docs/07-release.md` §6. **Not yet tested:** the Storage half + a full
+  production archive→restore→PDF-hash check — needs the operator's object-store + `age` key setup
+  (checklist in the doc). This is a `notify` item.
+- Verification: 164 unit (`backup-target.test.ts` 4/4) + `tsc` + prettier + `next lint` clean +
+  `node -c` on both scripts + the restore guard smoke-refuses a prod URL. No app-runtime code
+  changed → e2e unaffected. Commit `<pending>` on `develop`.
+
+## D-120 — #64 Subscription / dunning / billing model — DESIGN ONLY
+- Date / phase: 2026-09-07, Phase 5, sprint F (last) of the #59–#64 batch.
+- **Nothing built, nothing migrated, nothing shipped.** Pricing/plans/checkout stay forbidden for
+  v1 (D-007 row 32, EPIC 01, execution scope guard). The enabling clause is D-068 (Terms already
+  reserve "future paid plans possible").
+- **Deliverable:** `docs/design/billing-model.md` — the full data-model design the issue's
+  acceptance criteria ask for: paste-ready Prisma models (`Subscription`, `SubscriptionEvent`,
+  `Invoice`, `Payment`) + `SubscriptionStatus` enum (`trialing/active/past_due/grace/suspended/
+  canceled/expired`), the state machine with retries (3 over ~7 days) and a ~7-day courtesy period,
+  general contact vs `billingEmail` separated, invoice numbering / IVA / rectificativas / indefinite
+  retention, owner-only permissions + audit, no card data ever (provider references only), and a
+  section proving `User`/`Company` need no rework later (every table hangs off `companyId`,
+  `Company` gains one optional relation). `lib/billing/plans.ts` — plans as a TS constant, imported
+  by nothing.
+- **Deliberately NOT done** (vs the plan's "dormant migration" option): no change to
+  `prisma/schema.prisma`, no migration file. A dormant migration would show as pending in
+  `migrate status`, risk being applied by a routine `migrate deploy`, and force the client to carry
+  unused models — for zero benefit over a paste-ready snippet in the doc. This is genuinely
+  design-only.
+- `docs/sprints/deferred.md` D-32 row updated ("design done, own phase later"); `docs/threat-model.md`
+  gains a FUTURE billing-data row.
+- Verification: `tsc` + prettier + `vitest` (unchanged count — no test, it is design) clean. No app
+  change. Commit `<pending>` on `develop`. **#59–#64 batch complete.**

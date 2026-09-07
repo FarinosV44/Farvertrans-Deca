@@ -47,7 +47,7 @@ describe("diffVersions — 'Qué ha cambiado' (PRODUCT #36 §6)", () => {
       carrier: { ...base.carrier, name: "Otro Transportista SL" },
     });
     expect(changed).toEqual([
-      { label: "Transportista — nombre", from: "Trans SL", to: "Otro Transportista SL" },
+      { label: "Transportista efectivo — nombre", from: "Trans SL", to: "Otro Transportista SL" },
     ]);
   });
 });

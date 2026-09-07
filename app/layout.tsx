@@ -44,6 +44,12 @@ const organizationJsonLd = {
   url: LEGAL_ENTITY.corporateUrl,
   email: LEGAL_ENTITY.supportEmail,
   address: { "@type": "PostalAddress", streetAddress: LEGAL_ENTITY.address },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer support",
+    telephone: LEGAL_ENTITY.supportPhone,
+    email: LEGAL_ENTITY.supportEmail,
+  },
   brand: { "@type": "Brand", name: BRAND.name, url: publicEnv.baseUrl },
 };
 

@@ -15,6 +15,12 @@ async function register(page: Page): Promise<string> {
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", `Entrypoints SL ${rnd()}`);
   await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
   await expect(page).toHaveURL(/\/verificar-email/);

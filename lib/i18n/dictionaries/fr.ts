@@ -264,9 +264,12 @@ export const fr = {
       legend: "Votre entreprise",
       name: "Nom ou raison sociale",
       nif: "Numéro fiscal",
-      contactName: "Personne de contact (facultatif)",
-      phone: "Téléphone (facultatif)",
-      address: "Adresse (facultatif)",
+      contactName: "Personne de contact",
+      phone: "Téléphone",
+      email: "E-mail de l'entreprise",
+      address: "Adresse",
+      postalCode: "Code postal",
+      city: "Ville",
     },
     profile: {
       legend: "Comment allez-vous principalement utiliser la plateforme ?",
@@ -401,6 +404,24 @@ export const fr = {
       datos: "Données habituelles",
       equipo: "Équipe",
       empresa: "Mon entreprise",
+      ayuda: "Aide",
+    },
+    help: {
+      title: "Aide et assistance",
+      intro:
+        "Choisissez le canal dont vous avez besoin. Le support technique et l'assistance juridique sont des services distincts.",
+      techHeading: "Support technique",
+      techIntro: "Pour tout problème avec la plateforme, la génération du DeCA ou votre compte.",
+      legalHeading: "Assistance juridique en transport et logistique",
+      legalIntro:
+        "Des avocats expérimentés en transport et logistique, utiles en cas de contrôles, sanctions, réclamations, litiges contractuels et procédures judiciaires.",
+      legalDisclaimer:
+        "Service fourni par PRAETORIA, S.L. Il ne remplace pas le support technique et ne garantit aucun résultat.",
+      phoneLabel: "Téléphone",
+      emailLabel: "E-mail d'assistance",
+      whatsappTech: "WhatsApp · support technique",
+      whatsappLegal: "WhatsApp · assistance juridique",
+      hoursLabel: "Horaires d'assistance",
     },
     teamActivity: {
       heading: "Activité de l'équipe",
@@ -630,6 +651,14 @@ export const fr = {
   errors: {
     generic: "Une erreur s'est produite. Réessayez dans quelques secondes.",
     notFound: "Nous n'avons pas trouvé cette page.",
+  },
+  legal: {
+    roles: {
+      shipper: "Chargeur contractuel",
+      carrier: "Transporteur effectif",
+      shipperShort: "Chargeur",
+      carrierShort: "Transporteur",
+    },
   },
   legalNotice: {
     notTranslated:

@@ -271,9 +271,12 @@ export const eu = {
       legend: "Zure enpresa",
       name: "Izena edo sozietate-izena",
       nif: "IFK / IFZ",
-      contactName: "Harremanetarako pertsona (aukerakoa)",
-      phone: "Telefonoa (aukerakoa)",
-      address: "Helbidea (aukerakoa)",
+      contactName: "Harremanetarako pertsona",
+      phone: "Telefonoa",
+      email: "Enpresaren helbide elektronikoa",
+      address: "Helbidea",
+      postalCode: "Posta-kodea",
+      city: "Herria",
     },
     profile: {
       legend: "Nola erabiliko duzu batez ere plataforma?",
@@ -407,6 +410,24 @@ export const eu = {
       datos: "Ohiko datuak",
       equipo: "Taldea",
       empresa: "Nire enpresa",
+      ayuda: "Laguntza",
+    },
+    help: {
+      title: "Laguntza eta arreta",
+      intro:
+        "Aukeratu behar duzun kanala. Laguntza teknikoa eta lege-laguntza zerbitzu desberdinak dira.",
+      techHeading: "Laguntza teknikoa",
+      techIntro: "Plataformarekin, DeCA sortzearekin edo zure kontuarekin gorabeherak izanez gero.",
+      legalHeading: "Garraioko eta logistikako lege-laguntza",
+      legalIntro:
+        "Garraioan eta logistikan eskarmentua duten abokatuak: ikuskapenak, zehapenak, erreklamazioak, kontratu-gatazkak eta prozedura judizialak.",
+      legalDisclaimer:
+        "PRAETORIA, S.L.-k emandako zerbitzua. Ez du laguntza teknikoa ordezkatzen eta ez du emaitzarik bermatzen.",
+      phoneLabel: "Telefonoa",
+      emailLabel: "Laguntza-helbidea",
+      whatsappTech: "WhatsApp · laguntza teknikoa",
+      whatsappLegal: "WhatsApp · lege-laguntza",
+      hoursLabel: "Arreta-ordutegia",
     },
     teamActivity: {
       heading: "Taldearen jarduera",
@@ -636,6 +657,14 @@ export const eu = {
   errors: {
     generic: "Zerbait ez da ondo joan. Saiatu berriro segundo batzuen buruan.",
     notFound: "Ez dugu orri hau aurkitu.",
+  },
+  legal: {
+    roles: {
+      shipper: "Bidaltzaile kontratugilea",
+      carrier: "Garraiolari eragilea",
+      shipperShort: "Bidaltzailea",
+      carrierShort: "Garraiolaria",
+    },
   },
   legalNotice: {
     notTranslated:

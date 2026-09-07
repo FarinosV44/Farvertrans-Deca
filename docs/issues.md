@@ -2,9 +2,13 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-04 — issues #1–#28 open; no third-party comments. #1–#28 all merged to
-> `main`; every issue commented (beat 1). All awaiting the user's deploy + verification, then beat 3,
-> then the user closes them.
+> Last inbound sweep: 2026-09-07 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56 (worked
+> in D-042…D-111, awaiting the user's close after live verification), plus the new launch batch
+> **#59–#64**. No third-party comments on any issue. #29–#38 closed. Working #59–#64 now
+> (plan: `.claude/plans/sunny-greeting-snowflake.md`), one sprint per issue on `develop`.
+>
+> Earlier note (2026-09-04): #1–#28 all merged to `main`; every issue commented (beat 1); awaiting
+> the user's deploy + verification, then beat 3, then the user closes them.
 
 ## Inventory
 | # | Title | Type | Priority | Status | Entry |
@@ -110,3 +114,83 @@
 - Verification: pending — the automated compliance suite (PDF <5 MB, native, QR legible + correct URL, HTTPS direct download no-auth, creation/modification recorded, retrievable, prior version preserved).
 - Replies: none yet.
 - Pending: everything (Phase 2 onward).
+
+---
+
+## Launch batch #59–#64 (2026-09-07 — plan `.claude/plans/sunny-greeting-snowflake.md`)
+
+### I-061 — #61 Unify DeCA-party legal terminology  · P0 · **worked, on `develop`**
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/61
+- Diagnosis: a partial migration had already happened (D-107) — the PDF, review screen, FAQ and most
+  legal prose already said "cargador contractual" / "transportista efectivo" — but there was **no
+  central source**, so the wizard chrome, correction-diff, zod messages and a few components had
+  drifted or hardcoded the bare forms. The two *literal* phrases the issue lists
+  ("transportista de mercancías", "empresa cargadora") only occur in the CompanyProfile onboarding
+  picker, which is a business-type self-classification, **not** the DeCA parties — left unchanged.
+- Resolution (D-114): new `lib/deca/roles.ts` (`DECA_ROLES`) as the single source for the
+  Spanish-only surfaces (PDF, correction-diff labels, zod messages) + a `t.legal.roles` group in all
+  8 i18n dictionaries for translated UI. Wired `lib/pdf/deca-document.tsx`, `lib/deca/detail.ts`,
+  `lib/deca/schema.ts`, `lib/deca/validate.ts`, `components/deca/doc-summary.tsx` (fixed a real
+  asymmetry — the shipper card said "Empresa que contrata el transporte", the carrier
+  "Transportista efectivo"). Deliberately did NOT mechanically rewrite ~50 SEO prose lines or the
+  short-form table headers ("Cargador"/"Transportista"), per the issue's own "no mechanical
+  substitution" instruction — those are natural short forms in context, not the old incorrect phrases.
+- Commits: `<pending>` on `develop`.
+- Verification: 142 unit (3 new in `deca-roles.test.ts`; `deca-diff.test.ts` label updated to the
+  new intentional wording) + typecheck + prettier green. e2e + a real generated-PDF eye check
+  pending local Docker.
+- Replies: beat 1 pending.
+
+### I-059 — #59 Mandatory complete company + contact data · P0 · **worked, on `develop`**
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/59
+- Resolution (D-115): soft-gate approach (user decision). New signups must give the full ficha
+  (name, CIF/NIF with a valid control character, contact person, phone, email, address, postal code,
+  town); an invalid own CIF is a hard block (`isValidOwnNif` wrapping `checkNif`), while the DeCA
+  wizard's counterparty NIF stays a soft warning. Postal code + town became their own `Company`
+  columns (`postal_code`, `city`) + `data_completed_at`. Existing companies are handled by the soft
+  gate: `POST /api/deca` returns 409 `company_data_incomplete` for an authed create until the ficha
+  is complete, `/panel/empresa` shows a "Completa los datos de tu empresa" step — login and
+  `/d/[token]` are never blocked. Shared `companyDataSchema` now backs the register /
+  complete-company / profile routes (they each had their own before).
+- Commits: `c182ba0` (foundation), `<pending>` (wiring) on `develop`. Migration
+  `20260907150000_company_full_ficha_fields` — applied to local dev; **needs `prisma migrate deploy`
+  on production** (D-112 pattern).
+- Verification: 154 unit + typecheck + prettier; 2 new e2e specs (`registro-company-data`,
+  `panel-company-completeness`) 11/11; the ~29 existing e2e `register()` call sites updated to send
+  the full ficha (`B12345675` → the valid `B12345674`). Full e2e run <pending>.
+- Deferred: `complete-company-form.tsx` (Google step 2) still hardcodes ES strings — an i18n pass is
+  a follow-up, not #59 scope.
+- Replies: beat 1 pending.
+
+### I-062 — #62 Superadmin lifecycle · P0 · **DONE, on `develop`**
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/62
+- Resolution: part 1 (D-116, `713bc31`) — `AccountStatus` enum on `User`/`Company` (migration
+  `20260907170000`), `getCurrentSession()` + `login()` reject a suspended user/company. Part 2
+  (D-117) — `lib/admin/lifecycle.ts` + `anonymize.ts` (in-place PII overwrite, never deletes a row /
+  DeCA / audit row — D-067), `PATCH /api/admin/{empresas,usuarios}/[id]` (`getInternalUser` → 404,
+  then `requireStepUp` → 401), new `/admin/usuarios/[id]` page + `<AccountActions>` (first
+  client-interactive `/admin` component) + status badges on the list pages. `/d/[token]` untouched —
+  a blocked company's DeCA stays verifiable.
+- Commits: `713bc31` + `<pending>` on `develop`. No production migration yet.
+- Verification: 157 unit + `admin-account-lifecycle.spec.ts` 3/3 + `account-status.spec.ts` 2/2 +
+  full e2e.
+- Deferred: `t.admin.*` i18n (the whole admin area is ES-only server components by convention).
+- Replies: beat 1 pending.
+### I-063 — #63 Visible support + legal-assistance channels · P1 · **DONE, on `develop`** (D-118)
+- `/panel/ayuda` (técnico + jurídico separated), "Ayuda" nav tab + account-menu link,
+  `lib/support/channels.ts`, `BRAND` whatsapp/hours empty-by-default, JSON-LD contactPoint,
+  `t.panel.help.*` ×8. 3 unit + 2 e2e + full e2e green. Beat 1 posted. No production migration.
+### I-060 — #60 Backup & restore of DeCA documents · P0 · **DONE, on `develop`** (D-119)
+- `scripts/backup.mjs` (pg_dump + PDF bucket + age-encrypted tar) + `scripts/restore.mjs` (scratch
+  only, refuses production) + `.github/workflows/backup.yml` (daily → S3-compatible store) +
+  `docs/backup-and-restore.md` (RPO ≤24h / RTO ≤4h). DB-half restore-test EXECUTED + logged in
+  07-release §6. Beat 1 posted. **User action:** create the object-store bucket + `age` key + repo
+  secrets, then run the workflow once + a full restore-test (Storage half). No production migration.
+
+### I-064 — #64 Subscription/billing model — DESIGN ONLY · P2 · **DONE, on `develop`** (D-120)
+- `docs/design/billing-model.md` (models + state machine + invoicing + permissions + no-rework
+  proof) + `lib/billing/plans.ts`. No schema, no migration, no UI. Beat 1 posted.
+
+**Batch #59–#64: all six done on `develop`.** User decisions (2026-09-07): #59 soft-gate + hard CIF
+block on own company; #60 GitHub Actions + external object store, RPO ≤24h; #62 states 1–3 built +
+anonymize-in-place (no hard delete, D-067).

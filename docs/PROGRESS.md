@@ -1315,3 +1315,76 @@ present, `company.email` + `content_item.legal_reviewer_name` present, `webauthn
 Profesional", legal-wording backfill applied. **Hostinger NOT redeployed — the user does that next.**
 Local backup JSON of the ledger + `content_item` + schema snapshot kept in the session scratchpad.
 See `decisions.md` D-112 (and the Correction notes it adds to D-096/D-098/D-111).
+
+## D-113: merged develop into main at d51b4ee (D-112 record)
+2026-09-07, on the user's explicit instruction. Docs-only merge (PROGRESS.md + decisions.md).
+`develop` == `main` again except this record commit. Production DB reconciled per D-112; Hostinger
+redeploy still the user's action. See `decisions.md` D-113.
+
+## D-114: #61 unify DeCA-party terminology (launch batch #59–#64, sprint A)
+2026-09-07. Started the #59–#64 launch batch (plan `.claude/plans/sunny-greeting-snowflake.md`,
+approved). #61: new `lib/deca/roles.ts` (`DECA_ROLES`) + `t.legal.roles` in all 8 dictionaries as
+the single source for the DeCA parties' names; wired the PDF, correction-diff, zod messages and the
+cockpit summary (fixed a real shipper/carrier asymmetry there). The issue's two literal phrases live
+only in the CompanyProfile picker (business-type categories, not the parties) — left alone.
+No schema change, nothing to deploy. Deliberately did not rewrite the ~50 SEO-prose short-form uses
+(issue says no mechanical substitution). 142 unit + typecheck + prettier green; full e2e pending
+local Docker. `docs/issues.md` swept (open: #1–4, #24, #33, #40–43, #46, #47, #56, #59–64).
+Commit `c52f6f6`; beat-1 posted on #61.
+
+### Sprint B (#59) — foundation landed, wiring blocked on Docker
+2026-09-07, commit `c182ba0`. Built and unit-tested (154 unit green) the parts that don't need a DB:
+- `lib/validation/spanish.ts` (`isValidSpanishPostalCode`, `isValidPhone`, `isValidOwnNif` — hard
+  NIF gate wrapping `checkNif`), `lib/validation/company.ts` (`companyDataSchema` — the one schema
+  for every "our own company" surface), `lib/company/completeness.ts` (soft-gate check).
+- `prisma/schema.prisma`: `Company` + `postal_code`, `city`, `data_completed_at` (all nullable) +
+  migration `20260907150000_company_full_ficha_fields` — **written, NOT applied** to local or prod.
+### Sprint B (#59) — COMPLETE, on `develop` (D-115)
+2026-09-07, Docker back up. Wired every registration path (`lib/auth/index.ts` `signup` normal +
+prospect branches, `completeCompanyForUser`) + `register` / `complete-company` / `company/profile`
+routes + `POST /api/deca` soft gate (409 `company_data_incomplete`) + `register-form.tsx` /
+`complete-company-form.tsx` / `company-profile-form.tsx` / `/panel/empresa` (incomplete banner) +
+`t.auth.company.*` in all 8 dictionaries. Migration `20260907150000_company_full_ficha_fields`
+applied to local dev — **still needs `prisma migrate deploy` on production** (D-112 pattern).
+Ripple: ~29 e2e `register()` call sites across ~19 specs updated to send the full ficha; 2 real
+regressions caught + fixed (`doc-cockpit` #61 title assertion, `growth` prospect helper).
+154 unit + typecheck + prettier green; 2 new e2e specs; full e2e run <in progress>.
+`docs/api/INDEX.md` updated. Deferred: i18n pass on `complete-company-form.tsx`.
+**Next:** sprint C = #62 (superadmin lifecycle — first admin mutation UI), then D = #63, E = #60,
+F = #64. All need production `migrate deploy` for their migrations once merged, except #64 (dormant).
+
+### Sprint C (#62) part 1 — DONE, on `develop` (D-116); part 2 pending
+2026-09-07, commit `713bc31`. `AccountStatus` enum + status fields on `User`/`Company`, migration
+`20260907170000_account_lifecycle_status` (local dev only). `getCurrentSession()` + `login()` reject
+a suspended user/company (`account_suspended` error). `/d/[token]` untouched. Admin read models
+surface `status`. New `account-status.spec.ts` 2/2.
+**#62 part 2 (next session):** `lib/admin/lifecycle.ts` + `lib/admin/anonymize.ts`, `PATCH
+/api/admin/{empresas,usuarios}/[id]` via `requireStepUp()`, `getUserAdmin` + `/admin/usuarios/[id]`
+page, client action components (first `/admin` mutation UI), status badges, `t.admin.*` ×8,
+`admin-account-lifecycle.spec.ts`. Then sprints D (#63), E (#60), F (#64).
+**Production migrations pending** (apply when merged to `main`): `20260907150000` (#59),
+`20260907170000` (#62). #64's stays dormant.
+
+### Sprint C (#62) part 2 — DONE, on `develop` (D-117)
+2026-09-07, commit `<pending>`. `lib/admin/lifecycle.ts` + `lib/admin/anonymize.ts`, `PATCH
+/api/admin/{empresas,usuarios}/[id]` (getInternalUser→404 then requireStepUp→401), `getUserAdmin` +
+new `/admin/usuarios/[id]` page, `<AccountActions>` (first client-interactive `/admin` component) on
+both detail pages, status badges + links on the list pages. 157 unit + `admin-account-lifecycle`
+3/3 + `account-status` 2/2. No new migration (uses `20260907170000` from part 1). t.admin i18n
+deliberately skipped (admin area is ES-only by convention). **#62 COMPLETE.**
+**Next:** sprint D (#63 support channels), E (#60 backup), F (#64 billing design).
+
+### Sprint D (#63) — DONE, on `develop` (D-118)
+2026-09-07, commit `<pending>`. Help centre `/panel/ayuda` (técnico vs jurídico separated, prudent
+disclaimer), "Ayuda" tab in AppNav + account-menu link, `lib/support/channels.ts`, `BRAND`
+whatsapp/hours (empty until dirección confirms), JSON-LD contactPoint, `t.panel.help.*` ×8.
+160 unit + `support-channels` 3/3 + `panel-help` 2/2 + full e2e 186/187 (1 = admin-2fa flake).
+No schema change. **Next:** sprint E (#60 backup), F (#64 billing design).
+
+### Sprint E (#60) + F (#64) — DONE, on `develop` (D-119, D-120)
+2026-09-07. #60: `scripts/backup.mjs` + `restore.mjs` + `.github/workflows/backup.yml` +
+`docs/backup-and-restore.md` (RPO ≤24h / RTO ≤4h) + a real executed DB-half restore-test (logged in
+07-release §6). #64: `docs/design/billing-model.md` + `lib/billing/plans.ts` — design only, no
+schema, no migration, no UI. 164 unit + tsc + lint + prettier green.
+**#59–#64 BATCH COMPLETE on `develop`.** Next per the user: merge to `main` + apply all pending
+migrations to production.

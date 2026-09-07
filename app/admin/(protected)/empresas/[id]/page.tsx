@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCompanyAdmin } from "@/lib/admin/records";
+import { AccountActions } from "@/components/admin/account-actions";
 import {
   PageHeader,
   DefinitionList,
@@ -25,13 +26,25 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
       <BackLink href="/admin/empresas">Empresas</BackLink>
       <PageHeader title={c.name} lead={`${c.nif ?? "sin NIF"} · ${c.totalDeca} DeCA`} />
 
+      <AccountActions
+        kind="empresas"
+        id={c.id}
+        status={c.status as "active" | "blocked" | "deactivated" | "anonymized"}
+        reason={c.statusReason}
+        name={c.name}
+      />
+
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
         <DefinitionList
           items={[
             { label: "NIF", value: c.nif ?? "—" },
             { label: "Dirección", value: c.address ?? "—" },
+            { label: "Código postal", value: c.postalCode ?? "—" },
+            { label: "Población", value: c.city ?? "—" },
             { label: "Contacto", value: c.contactName ?? "—" },
             { label: "Teléfono", value: c.phone ?? "—" },
+            { label: "Correo", value: c.email ?? "—" },
+            { label: "Ficha completa (#59)", value: c.dataComplete ? "Sí" : "No" },
             { label: "Perfil", value: c.profile ?? "—" },
             { label: "Logo en PDF", value: c.hasLogo ? "Sí" : "No" },
             { label: "Alta", value: fmt(c.createdAt) },
@@ -69,14 +82,11 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
         <h2 id="mem" className="mb-2 text-sm font-bold">
           Miembros
         </h2>
-        <Table head={["Email", "Proveedor", "Rol workspace", "Rol", "Email verificado", "Alta"]}>
+        <Table head={["Email", "Proveedor", "Rol workspace", "Estado", "Email verificado", "Alta"]}>
           {c.members.map((m) => (
             <Row key={m.id}>
               <Cell>
-                <Link
-                  href={`/admin/usuarios?q=${encodeURIComponent(m.email)}`}
-                  className="no-underline"
-                >
+                <Link href={`/admin/usuarios/${m.id}`} className="no-underline">
                   {m.email}
                 </Link>
               </Cell>
@@ -84,7 +94,13 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
                 {m.role === "internal" ? <Badge tone="yellow">interno</Badge> : "cliente"}
               </Cell>
               <Cell>{m.companyRole === "owner" ? "administrador" : "miembro"}</Cell>
-              <Cell>{m.role}</Cell>
+              <Cell>
+                {m.status === "active" ? (
+                  <Badge tone="green">activa</Badge>
+                ) : (
+                  <Badge tone="muted">{m.status}</Badge>
+                )}
+              </Cell>
               <Cell>
                 {m.emailVerifiedAt ? (
                   <Badge tone="green">verificado</Badge>

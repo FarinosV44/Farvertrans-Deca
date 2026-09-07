@@ -76,7 +76,7 @@ export async function adminSearch(raw: string): Promise<SearchHit[]> {
       kind: "usuario",
       label: u.email,
       sub: u.company?.name ?? "sin empresa",
-      href: `/admin/usuarios?q=${encodeURIComponent(u.email)}`,
+      href: `/admin/usuarios/${u.id}`,
     });
   for (const v of decas)
     hits.push({

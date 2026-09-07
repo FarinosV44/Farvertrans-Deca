@@ -11,6 +11,12 @@ async function registerCompany(page: Page, addr = email()) {
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Cuenta SL");
   await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
   await page.getByTestId("accept-terms").check();
   await page.getByTestId("register-submit").click();
   await expect(page).toHaveURL(/\/verificar-email/);
@@ -98,6 +104,12 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
         password: "Supersecret123!",
         companyName: "X SL",
         companyNif: "B12345674",
+        companyContactName: "Ana Ejemplo",
+        companyPhone: "600111222",
+        companyEmail: "empresa@example.com",
+        companyAddress: "Calle Prueba 1",
+        companyPostalCode: "46540",
+        companyCity: "El Puig",
         acceptTerms: true,
       },
     });
@@ -118,6 +130,12 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
         password: "Supersecret123!",
         companyName: "Y SL",
         companyNif: "B12345674",
+        companyContactName: "Ana Ejemplo",
+        companyPhone: "600111222",
+        companyEmail: "empresa@example.com",
+        companyAddress: "Calle Prueba 1",
+        companyPostalCode: "46540",
+        companyCity: "El Puig",
         acceptTerms: true,
       },
     });
@@ -151,6 +169,12 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
         password: "Supersecret123!",
         companyName: "Expira SL",
         companyNif: "B12345674",
+        companyContactName: "Ana Ejemplo",
+        companyPhone: "600111222",
+        companyEmail: "empresa@example.com",
+        companyAddress: "Calle Prueba 1",
+        companyPostalCode: "46540",
+        companyCity: "El Puig",
         acceptTerms: true,
       },
     });
@@ -186,6 +210,12 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
         password: "Supersecret123!",
         companyName: "Debil SL",
         companyNif: "B12345674",
+        companyContactName: "Ana Ejemplo",
+        companyPhone: "600111222",
+        companyEmail: "empresa@example.com",
+        companyAddress: "Calle Prueba 1",
+        companyPostalCode: "46540",
+        companyCity: "El Puig",
         acceptTerms: true,
       },
     });

@@ -34,22 +34,36 @@ model Operator {
 
 /// The account's own transport company.
 model Company {
-  id          String          @id @default(cuid())
-  name        String
-  nif         String?
-  address     String?
-  contactName String?         @map("contact_name")
-  phone       String?
+  id              String          @id @default(cuid())
+  name            String
+  nif             String?
+  address         String?
+  /// Postal code and town, kept as their own fields (#59) rather than buried
+  /// in the free-text `address` line, so a complete, queryable ficha exists.
+  postalCode      String?         @map("postal_code")
+  city            String?
+  contactName     String?         @map("contact_name")
+  phone           String?
   /// Company contact email (distinct from any member's own login email) —
   /// editable on `/panel/empresa`, owner-only, for invoicing/support contact.
-  email       String?
-  profile     CompanyProfile?
+  email           String?
+  /// Set the first time the ficha passes the full mandatory-data check (#59).
+  /// Drives the soft gate for pre-#59 companies without re-validating on every
+  /// request. Columns stay nullable — "mandatory" is enforced in the app.
+  dataCompletedAt DateTime?       @map("data_completed_at")
+  /// Account lifecycle (#62). A non-`active` company blocks every member's
+  /// panel access; `/d/[token]` for its already-issued DeCA is never affected.
+  status          AccountStatus   @default(active)
+  statusReason    String?         @map("status_reason")
+  statusChangedAt DateTime?       @map("status_changed_at")
+  anonymizedAt    DateTime?       @map("anonymized_at")
+  profile         CompanyProfile?
   /// Optional PDF header logo (PRODUCT #39), stored as a data URI (PNG/JPEG,
   /// size-capped — see lib/company/logo.ts). Read at DOCUMENT CREATION time
   /// only: changing or removing it never alters an already-rendered PDF,
   /// since every version's bytes are already stored and immutable.
-  logoDataUri String?         @map("logo_data_uri")
-  createdAt   DateTime        @default(now()) @map("created_at")
+  logoDataUri     String?         @map("logo_data_uri")
+  createdAt       DateTime        @default(now()) @map("created_at")
 
   users             User[]
   decas             Deca[]
@@ -91,37 +105,44 @@ model CommercialConsent {
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.
 model User {
-  id              String      @id @default(cuid())
-  authUserId      String      @unique @map("auth_user_id")
+  id              String        @id @default(cuid())
+  authUserId      String        @unique @map("auth_user_id")
   email           String
-  passwordHash    String?     @map("password_hash")
-  googleId        String?     @unique @map("google_id")
-  companyId       String?     @map("company_id")
-  role            Role        @default(user)
-  companyRole     CompanyRole @default(owner) @map("company_role")
-  emailVerifiedAt DateTime?   @map("email_verified_at")
+  passwordHash    String?       @map("password_hash")
+  googleId        String?       @unique @map("google_id")
+  companyId       String?       @map("company_id")
+  role            Role          @default(user)
+  companyRole     CompanyRole   @default(owner) @map("company_role")
+  emailVerifiedAt DateTime?     @map("email_verified_at")
   /// I18N: "es" or "en" (lib/i18n/locale.ts). Restored into the `fvd_locale`
   /// cookie on login so the UI comes back in the language they left it in.
-  preferredLocale String      @default("es") @map("preferred_locale")
+  preferredLocale String        @default("es") @map("preferred_locale")
   /// SECURITY #53: bumped on password change/reset and "log out everywhere".
   /// A session token embeds the version it was issued at; `getCurrentUser()`
   /// rejects a token whose version doesn't match this column, since sessions
   /// are stateless (signed, not stored) and have no other revocation path.
-  sessionVersion  Int         @default(1) @map("session_version")
+  sessionVersion  Int           @default(1) @map("session_version")
   /// SECURITY #53: mandatory admin 2FA. Base32 TOTP secret, set at enrollment
   /// and never logged/returned once `totpEnabledAt` is set. Null = not
   /// enrolled — `requireInternal()` forces enrollment before any admin access.
-  totpSecret      String?     @map("totp_secret")
-  totpEnabledAt   DateTime?   @map("totp_enabled_at")
-  createdAt       DateTime    @default(now()) @map("created_at")
+  totpSecret      String?       @map("totp_secret")
+  totpEnabledAt   DateTime?     @map("totp_enabled_at")
+  /// Account lifecycle (#62). A non-`active` user is logged out everywhere on
+  /// the next request (same effect as a `sessionVersion` bump) and cannot log
+  /// back in until reactivated.
+  status          AccountStatus @default(active)
+  statusReason    String?       @map("status_reason")
+  statusChangedAt DateTime?     @map("status_changed_at")
+  anonymizedAt    DateTime?     @map("anonymized_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
 
-  company        Company?            @relation(fields: [companyId], references: [id])
-  createdDecas   Deca[]              @relation("DecaCreatedBy")
-  acquisition    Acquisition?
-  savedCompanies SavedCompany[]
-  savedVehicles  SavedVehicle[]
-  savedLocations SavedLocation[]
-  recoveryCodes  AdminRecoveryCode[]
+  company             Company?             @relation(fields: [companyId], references: [id])
+  createdDecas        Deca[]               @relation("DecaCreatedBy")
+  acquisition         Acquisition?
+  savedCompanies      SavedCompany[]
+  savedVehicles       SavedVehicle[]
+  savedLocations      SavedLocation[]
+  recoveryCodes       AdminRecoveryCode[]
   webauthnCredentials WebAuthnCredential[]
   trustedDevices      TrustedDevice[]
 
@@ -135,25 +156,25 @@ model User {
 /// same `tv` session timestamp. Only the public key is ever stored; the
 /// private key never leaves the authenticator.
 model WebAuthnCredential {
-  id     String @id @default(cuid())
-  userId String @map("user_id")
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
   /// Base64url credential ID from the authenticator — how a login/step-up
   /// challenge finds which public key to verify against.
-  credentialId String @unique @map("credential_id")
-  publicKey    Bytes  @map("public_key")
+  credentialId String    @unique @map("credential_id")
+  publicKey    Bytes     @map("public_key")
   /// Signature counter — WebAuthn replay protection (must strictly increase
   /// on every use; a non-increasing counter means a cloned authenticator).
-  counter BigInt @default(0)
+  counter      BigInt    @default(0)
   /// "singleDevice" | "multiDevice" (a synced passkey, e.g. iCloud Keychain).
-  deviceType String  @map("device_type")
-  backedUp   Boolean @default(false) @map("backed_up")
+  deviceType   String    @map("device_type")
+  backedUp     Boolean   @default(false) @map("backed_up")
   /// Comma-separated AuthenticatorTransport hints ("internal,hybrid", …).
-  transports String?
+  transports   String?
   /// User-facing label ("iPhone de Ana") — set from the device/browser at
   /// registration time, editable nowhere yet (not required by the brief).
-  name       String?
-  createdAt  DateTime  @default(now()) @map("created_at")
-  lastUsedAt DateTime? @map("last_used_at")
+  name         String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastUsedAt   DateTime? @map("last_used_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -236,6 +257,18 @@ enum CompanyRole {
   owner
   member
   read_only
+}
+
+/// Account lifecycle state for a `User` or a `Company` (#62). `active` =
+/// normal. `blocked` = access suspended, data and documents kept, all live
+/// sessions invalidated. `deactivated` = a stable "given up" state, also no
+/// access, reversible. `anonymized` = PII overwritten in place — the row and
+/// every DeCA / audit record are kept (D-067), the operation is not reversible.
+enum AccountStatus {
+  active
+  blocked
+  deactivated
+  anonymized
 }
 
 /// A pending invitation to join a company workspace (TEAM #27). One-time, expiring.

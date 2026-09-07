@@ -263,9 +263,12 @@ export const gl = {
       legend: "A túa empresa",
       name: "Nome ou razón social",
       nif: "CIF / NIF",
-      contactName: "Persoa de contacto (opcional)",
-      phone: "Teléfono (opcional)",
-      address: "Domicilio (opcional)",
+      contactName: "Persoa de contacto",
+      phone: "Teléfono",
+      email: "Correo electrónico da empresa",
+      address: "Enderezo",
+      postalCode: "Código postal",
+      city: "Poboación",
     },
     profile: {
       legend: "Como usarás principalmente a plataforma?",
@@ -398,6 +401,24 @@ export const gl = {
       datos: "Datos habituais",
       equipo: "Equipo",
       empresa: "A miña empresa",
+      ayuda: "Axuda",
+    },
+    help: {
+      title: "Axuda e soporte",
+      intro:
+        "Escolle a canle que precises. O soporte técnico e a asistencia xurídica son servizos distintos.",
+      techHeading: "Soporte técnico",
+      techIntro: "Para incidencias coa plataforma, a xeración do DeCA ou a túa conta.",
+      legalHeading: "Asistencia xurídica en transporte e loxística",
+      legalIntro:
+        "Avogados con experiencia en transporte e loxística, útiles ante inspeccións, sancións, reclamacións, conflitos contractuais e procedementos xudiciais.",
+      legalDisclaimer:
+        "Servizo prestado por PRAETORIA, S.L. Non substitúe o soporte técnico e non garante ningún resultado.",
+      phoneLabel: "Teléfono",
+      emailLabel: "Correo de soporte",
+      whatsappTech: "WhatsApp · soporte técnico",
+      whatsappLegal: "WhatsApp · asistencia xurídica",
+      hoursLabel: "Horario de atención",
     },
     teamActivity: {
       heading: "Actividade do equipo",
@@ -624,6 +645,14 @@ export const gl = {
   errors: {
     generic: "Algo non foi ben. Téntao de novo nuns segundos.",
     notFound: "Non atopamos esta páxina.",
+  },
+  legal: {
+    roles: {
+      shipper: "Cargador contractual",
+      carrier: "Transportista efectivo",
+      shipperShort: "Cargador",
+      carrierShort: "Transportista",
+    },
   },
   legalNotice: {
     notTranslated:

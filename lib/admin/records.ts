@@ -190,6 +190,7 @@ export type CompanyAdminRow = {
   id: string;
   name: string;
   nif: string | null;
+  status: string;
   createdAt: Date;
   members: number;
   totalDeca: number;
@@ -221,6 +222,7 @@ export async function listCompaniesAdmin(q?: string, take = 300): Promise<Compan
     id: c.id,
     name: c.name,
     nif: c.nif,
+    status: c.status,
     createdAt: c.createdAt,
     members: c._count.users,
     totalDeca: c._count.decas,
@@ -242,6 +244,7 @@ export async function getCompanyAdmin(id: string) {
           companyRole: true,
           createdAt: true,
           emailVerifiedAt: true,
+          status: true,
         },
       },
       acquisition: true,
@@ -291,8 +294,16 @@ export async function getCompanyAdmin(id: string) {
     name: company.name,
     nif: company.nif,
     address: company.address,
+    postalCode: company.postalCode,
+    city: company.city,
+    email: company.email,
     contactName: company.contactName,
     phone: company.phone,
+    status: company.status,
+    statusReason: company.statusReason,
+    statusChangedAt: company.statusChangedAt,
+    anonymizedAt: company.anonymizedAt,
+    dataComplete: !!company.dataCompletedAt,
     profile: company.profile,
     /** Never the actual data URI (PRODUCT #39) — admin sees only whether one exists. */
     hasLogo: !!company.logoDataUri,
@@ -320,6 +331,7 @@ export async function getCompanyAdmin(id: string) {
         companyRole: u.companyRole,
         createdAt: u.createdAt,
         emailVerifiedAt: u.emailVerifiedAt,
+        status: u.status,
       })),
     saved: { companies: savedCompanies, vehicles: savedVehicles, locations: savedLocations },
     acquisition: company.acquisition,
@@ -340,6 +352,7 @@ export type UserAdminRow = {
   email: string;
   provider: "email" | "google";
   role: string;
+  status: string;
   companyId: string | null;
   companyName: string | null;
   companyRole: string;
@@ -359,9 +372,51 @@ export async function listUsersAdmin(q?: string, take = 400): Promise<UserAdminR
     // Google-linked users have no local password hash (#30, once OAuth lands).
     provider: u.passwordHash ? "email" : "google",
     role: u.role,
+    status: u.status,
     companyId: u.companyId,
     companyName: u.company?.name ?? null,
     companyRole: u.companyRole,
     createdAt: u.createdAt,
   }));
+}
+
+/** Full detail for one user — the `/admin/usuarios/[id]` sheet (#62). */
+export async function getUserAdmin(id: string) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      company: { select: { id: true, name: true, nif: true, status: true } },
+      _count: { select: { createdDecas: true } },
+    },
+  });
+  if (!user) return null;
+
+  const auditRows = await prisma.securityAuditLog.findMany({
+    where: { OR: [{ actorId: id }, { targetId: id }] },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    select: { action: true, result: true, actorId: true, targetType: true, createdAt: true },
+  });
+
+  return {
+    id: user.id,
+    email: user.email,
+    provider: user.passwordHash ? ("email" as const) : ("google" as const),
+    role: user.role,
+    companyRole: user.companyRole,
+    status: user.status,
+    statusReason: user.statusReason,
+    statusChangedAt: user.statusChangedAt,
+    anonymizedAt: user.anonymizedAt,
+    emailVerifiedAt: user.emailVerifiedAt,
+    createdAt: user.createdAt,
+    company: user.company,
+    createdDeca: user._count.createdDecas,
+    audit: auditRows.map((r) => ({
+      action: r.action,
+      result: r.result,
+      role: r.actorId === id ? ("actor" as const) : ("target" as const),
+      at: r.createdAt,
+    })),
+  };
 }

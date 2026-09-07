@@ -5,6 +5,62 @@ import { prisma } from "@/lib/prisma";
 import { checkPasswordStrength, hashPassword, verifyPassword } from "./password";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS, signSession, verifySession } from "./session";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
+import { companyDataSchema } from "@/lib/validation/company";
+
+type CompanyProfileKey = "carrier_goods" | "shipper" | "operator" | "carrier_passengers";
+
+/** The full company ficha a self-registering account must provide (#59). */
+export type CompanyFichaInput = {
+  name: string;
+  nif: string;
+  address: string;
+  contactName?: string;
+  phone?: string;
+  email?: string;
+  postalCode?: string;
+  city?: string;
+  profile?: CompanyProfileKey;
+};
+
+/**
+ * Validate a self-registered company ficha against the shared schema (#59)
+ * and return the row data for `company.create`, with `dataCompletedAt` set.
+ * Throws `AuthError("bad_input", …)` with the first precise message on failure.
+ * Only used on the "creates its own company" paths — a team member joining an
+ * existing workspace, and a prospect-invite with partial pre-filled data, do
+ * not pass through here.
+ */
+function validatedCompanyData(input: CompanyFichaInput) {
+  const parsed = companyDataSchema.safeParse({
+    name: input.name,
+    nif: input.nif,
+    contactName: input.contactName ?? "",
+    phone: input.phone ?? "",
+    email: input.email ?? "",
+    address: input.address,
+    postalCode: input.postalCode ?? "",
+    city: input.city ?? "",
+  });
+  if (!parsed.success) {
+    throw new AuthError(
+      "bad_input",
+      parsed.error.issues[0]?.message ?? "Revisa los datos de la empresa.",
+    );
+  }
+  const d = parsed.data;
+  return {
+    name: d.name,
+    nif: d.nif,
+    contactName: d.contactName,
+    phone: d.phone,
+    email: d.email,
+    address: d.address,
+    postalCode: d.postalCode,
+    city: d.city,
+    profile: input.profile,
+    dataCompletedAt: new Date(),
+  };
+}
 
 /**
  * v1 authentication (D-021): own email + password with an HMAC-signed httpOnly
@@ -20,7 +76,8 @@ export class AuthError extends Error {
       | "invalid_credentials"
       | "weak_password"
       | "bad_input"
-      | "terms_required",
+      | "terms_required"
+      | "account_suspended",
     message: string,
   ) {
     super(message);
@@ -33,14 +90,7 @@ const normEmail = (e: string) => e.trim().toLowerCase();
 export type SignupInput = {
   email: string;
   password: string;
-  company: {
-    name: string;
-    nif: string;
-    address: string;
-    contactName?: string;
-    phone?: string;
-    profile?: "carrier_goods" | "shipper" | "operator" | "carrier_passengers";
-  };
+  company: CompanyFichaInput;
   /** When set, the user JOINS the invited company instead of creating one (TEAM #27). */
   inviteToken?: string;
   /** Explicit T&C + privacy acceptance (TRUST #42 §5) — never implied, never pre-checked. */
@@ -104,13 +154,16 @@ export async function signup(input: SignupInput): Promise<{
         "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
       );
 
-    const name = input.company.name.trim() || prospect.name;
-    const nif = input.company.nif.trim() || prospect.nif || "";
-    if (!name || !nif) throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
+    // A prospect who registers through an operator link is a real company —
+    // it needs a complete ficha (#59) exactly like any other new account. The
+    // name/NIF fall back to the operator-seeded prospect values.
+    const companyData = validatedCompanyData({
+      ...input.company,
+      name: input.company.name.trim() || prospect.name,
+      nif: input.company.nif.trim() || prospect.nif || "",
+    });
     const r = await prisma.$transaction(async (tx) => {
-      const company = await tx.company.create({
-        data: { name, nif, address: input.company.address.trim() || null },
-      });
+      const company = await tx.company.create({ data: companyData });
       const user = await tx.user.create({
         data: {
           authUserId: `local:${crypto.randomUUID()}`,
@@ -131,25 +184,18 @@ export async function signup(input: SignupInput): Promise<{
     };
   }
 
-  if (!input.company.name.trim() || !input.company.nif.trim())
-    throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
   if (!input.acceptTerms)
     throw new AuthError(
       "terms_required",
       "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
     );
+  // #59: a self-registering company must give a complete, well-formed ficha
+  // (razón social, CIF/NIF with a valid control character, contacto, teléfono,
+  // correo, dirección, código postal, población).
+  const companyData = validatedCompanyData(input.company);
 
   const result = await prisma.$transaction(async (tx) => {
-    const company = await tx.company.create({
-      data: {
-        name: input.company.name.trim(),
-        nif: input.company.nif.trim(),
-        address: input.company.address.trim() || null,
-        contactName: input.company.contactName?.trim() || null,
-        phone: input.company.phone?.trim() || null,
-        profile: input.company.profile,
-      },
-    });
+    const company = await tx.company.create({ data: companyData });
     const user = await tx.user.create({
       data: {
         authUserId: `local:${crypto.randomUUID()}`,
@@ -209,14 +255,7 @@ export async function findOrCreateGoogleUser(
 }
 
 export type CompleteCompanyInput = {
-  company: {
-    name: string;
-    nif: string;
-    address: string;
-    contactName?: string;
-    phone?: string;
-    profile?: "carrier_goods" | "shipper" | "operator" | "carrier_passengers";
-  };
+  company: CompanyFichaInput;
   inviteToken?: string;
   acceptTerms: boolean;
 };
@@ -257,26 +296,16 @@ export async function completeCompanyForUser(
     throw new AuthError("bad_input", "La invitación no es válida o ha caducado.");
   }
 
-  if (!input.company.name.trim() || !input.company.nif.trim())
-    throw new AuthError("bad_input", "Indica el nombre y el NIF de la empresa.");
   if (!input.acceptTerms) {
     throw new AuthError(
       "terms_required",
       "Debes aceptar los Términos y Condiciones y la Política de Privacidad.",
     );
   }
+  const companyData = validatedCompanyData(input.company); // #59
 
   const result = await prisma.$transaction(async (tx) => {
-    const company = await tx.company.create({
-      data: {
-        name: input.company.name.trim(),
-        nif: input.company.nif.trim(),
-        address: input.company.address.trim() || null,
-        contactName: input.company.contactName?.trim() || null,
-        phone: input.company.phone?.trim() || null,
-        profile: input.company.profile,
-      },
-    });
+    const company = await tx.company.create({ data: companyData });
     await tx.user.update({
       where: { id: userId },
       data: { companyId: company.id, companyRole: "owner" },
@@ -292,9 +321,17 @@ export async function login(
   password: string,
 ): Promise<{ userId: string; preferredLocale: string; role: string }> {
   const email = normEmail(emailRaw);
-  const user = await prisma.user.findFirst({ where: { email } });
+  const user = await prisma.user.findFirst({ where: { email }, include: { company: true } });
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
     throw new AuthError("invalid_credentials", "Email o contraseña incorrectos.");
+  }
+  // #62: a suspended account (or one whose company is suspended) cannot log in,
+  // and is told so plainly rather than "wrong password".
+  if (user.status !== "active" || (user.company && user.company.status !== "active")) {
+    throw new AuthError(
+      "account_suspended",
+      "Esta cuenta está suspendida. Contacta con soporte si crees que es un error.",
+    );
   }
   return { userId: user.id, preferredLocale: user.preferredLocale, role: user.role };
 }
@@ -352,6 +389,11 @@ export async function getCurrentSession() {
     include: { company: true },
   });
   if (!user || user.sessionVersion !== payload.sv) return null;
+  // #62: a blocked/deactivated/anonymized user — or one whose company is in
+  // any of those states — has no session. Same effect as a sessionVersion
+  // bump, but it also survives a stale cookie that still has the right sv.
+  if (user.status !== "active") return null;
+  if (user.company && user.company.status !== "active") return null;
   return { user, payload };
 }
 

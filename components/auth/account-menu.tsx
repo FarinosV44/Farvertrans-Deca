@@ -55,6 +55,12 @@ export function AccountMenu({ companyName }: { companyName: string }) {
         >
           Equipo
         </Link>
+        <Link
+          href="/panel/ayuda"
+          className="block rounded-[6px] px-3 py-2 text-sm no-underline hover:bg-[var(--color-surface)]"
+        >
+          Ayuda y soporte
+        </Link>
         <button
           type="button"
           onClick={logoutAll}

@@ -181,3 +181,13 @@ export function IconBadge({ children, size = 40 }: { children: React.ReactNode; 
     </span>
   );
 }
+
+export function LifebuoyIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="m5 5 4.5 4.5M19 5l-4.5 4.5M5 19l4.5-4.5M19 19l-4.5-4.5" />
+    </svg>
+  );
+}

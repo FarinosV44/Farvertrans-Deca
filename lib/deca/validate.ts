@@ -1,5 +1,6 @@
 import { decaPayloadSchema, type DecaPayload } from "./schema";
 import { checkNif } from "./nif";
+import { DECA_ROLES } from "./roles";
 
 /** Raised when a DeCA payload does not satisfy R-2. Generation must fail closed. */
 export class DecaValidationError extends Error {
@@ -38,8 +39,8 @@ export function validateDeca(input: unknown): ValidatedDeca {
   const warnings: string[] = [];
 
   for (const [label, nif] of [
-    ["cargador", data.shipper.nif],
-    ["transportista", data.carrier.nif],
+    [DECA_ROLES.shipper.inline, data.shipper.nif],
+    [DECA_ROLES.carrier.inline, data.carrier.nif],
   ] as const) {
     const c = checkNif(nif);
     if (!c.valid) {

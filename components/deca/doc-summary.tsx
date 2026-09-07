@@ -1,5 +1,6 @@
 import type { DecaPayloadData } from "@/lib/data/history";
 import { formatLocationFull } from "@/lib/deca/location";
+import { DECA_ROLES } from "@/lib/deca/roles";
 
 /**
  * The generated DeCA's structured data, in the exact sections of the PDF
@@ -9,7 +10,7 @@ import { formatLocationFull } from "@/lib/deca/location";
 export function DocSummary({ data }: { data: DecaPayloadData }) {
   const sections: { title: string; rows: [string, string][] }[] = [
     {
-      title: "Empresa que contrata el transporte",
+      title: DECA_ROLES.shipper.title,
       rows: [
         ["Nombre o razón social", data.shipper?.name ?? ""],
         ["NIF / VAT", data.shipper?.nif ?? ""],
@@ -17,7 +18,7 @@ export function DocSummary({ data }: { data: DecaPayloadData }) {
       ],
     },
     {
-      title: "Transportista efectivo",
+      title: DECA_ROLES.carrier.title,
       rows: [
         ["Nombre o razón social", data.carrier?.name ?? ""],
         ["NIF / VAT", data.carrier?.nif ?? ""],

@@ -263,9 +263,12 @@ export const ca = {
       legend: "La teva empresa",
       name: "Nom o raó social",
       nif: "CIF / NIF",
-      contactName: "Persona de contacte (opcional)",
-      phone: "Telèfon (opcional)",
-      address: "Domicili (opcional)",
+      contactName: "Persona de contacte",
+      phone: "Telèfon",
+      email: "Correu electrònic de l'empresa",
+      address: "Adreça",
+      postalCode: "Codi postal",
+      city: "Població",
     },
     profile: {
       legend: "Com faràs servir principalment la plataforma?",
@@ -398,6 +401,24 @@ export const ca = {
       datos: "Dades habituals",
       equipo: "Equip",
       empresa: "La meva empresa",
+      ayuda: "Ajuda",
+    },
+    help: {
+      title: "Ajuda i suport",
+      intro:
+        "Tria el canal que necessitis. El suport tècnic i l'assistència jurídica són serveis diferents.",
+      techHeading: "Suport tècnic",
+      techIntro: "Per a incidències amb la plataforma, la generació del DeCA o el teu compte.",
+      legalHeading: "Assistència jurídica en transport i logística",
+      legalIntro:
+        "Advocats amb experiència en transport i logística, útils davant inspeccions, sancions, reclamacions, conflictes contractuals i procediments judicials.",
+      legalDisclaimer:
+        "Servei prestat per PRAETORIA, S.L. No substitueix el suport tècnic i no garanteix cap resultat.",
+      phoneLabel: "Telèfon",
+      emailLabel: "Correu de suport",
+      whatsappTech: "WhatsApp · suport tècnic",
+      whatsappLegal: "WhatsApp · assistència jurídica",
+      hoursLabel: "Horari d'atenció",
     },
     teamActivity: {
       heading: "Activitat de l'equip",
@@ -624,6 +645,14 @@ export const ca = {
   errors: {
     generic: "Alguna cosa no ha anat bé. Torna-ho a intentar d'aquí uns segons.",
     notFound: "No hem trobat aquesta pàgina.",
+  },
+  legal: {
+    roles: {
+      shipper: "Carregador contractual",
+      carrier: "Transportista efectiu",
+      shipperShort: "Carregador",
+      carrierShort: "Transportista",
+    },
   },
   legalNotice: {
     notTranslated:

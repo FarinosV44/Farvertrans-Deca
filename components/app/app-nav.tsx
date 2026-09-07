@@ -6,10 +6,19 @@ import {
   BuildingIcon,
   UsersIcon,
   GearIcon,
+  LifebuoyIcon,
 } from "@/components/panel/icons";
 import { getDictionary } from "@/lib/i18n/server";
 
-const TAB_KEYS = ["home", "historico", "plantillas", "datos", "equipo", "empresa"] as const;
+const TAB_KEYS = [
+  "home",
+  "historico",
+  "plantillas",
+  "datos",
+  "equipo",
+  "empresa",
+  "ayuda",
+] as const;
 const TAB_META: Record<
   (typeof TAB_KEYS)[number],
   {
@@ -23,12 +32,13 @@ const TAB_META: Record<
   datos: { href: "/panel/datos", Icon: BuildingIcon },
   equipo: { href: "/panel/equipo", Icon: UsersIcon },
   empresa: { href: "/panel/empresa", Icon: GearIcon },
+  ayuda: { href: "/panel/ayuda", Icon: LifebuoyIcon },
 };
 
 export async function AppNav({
   current,
 }: {
-  current: "home" | "historico" | "datos" | "plantillas" | "equipo" | "empresa";
+  current: "home" | "historico" | "datos" | "plantillas" | "equipo" | "empresa" | "ayuda";
 }) {
   const t = await getDictionary();
   const TABS = TAB_KEYS.map((key) => ({ key, ...TAB_META[key], label: t.panel.nav[key] }));

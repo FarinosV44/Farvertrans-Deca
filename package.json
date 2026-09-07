@@ -27,7 +27,9 @@
     "seed:content": "tsx prisma/content-seed.ts",
     "diagnose": "node scripts/diagnose.mjs",
     "keel:verify": "node scripts/keel-verify.mjs",
-    "keel:doctor": "node scripts/keel-doctor.mjs"
+    "keel:doctor": "node scripts/keel-doctor.mjs",
+    "backup": "node scripts/backup.mjs",
+    "restore:test": "node scripts/restore.mjs"
   },
   "dependencies": {
     "@prisma/client": "6.1.0",
