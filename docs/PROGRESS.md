@@ -1352,3 +1352,15 @@ regressions caught + fixed (`doc-cockpit` #61 title assertion, `growth` prospect
 `docs/api/INDEX.md` updated. Deferred: i18n pass on `complete-company-form.tsx`.
 **Next:** sprint C = #62 (superadmin lifecycle — first admin mutation UI), then D = #63, E = #60,
 F = #64. All need production `migrate deploy` for their migrations once merged, except #64 (dormant).
+
+### Sprint C (#62) part 1 — DONE, on `develop` (D-116); part 2 pending
+2026-09-07, commit `713bc31`. `AccountStatus` enum + status fields on `User`/`Company`, migration
+`20260907170000_account_lifecycle_status` (local dev only). `getCurrentSession()` + `login()` reject
+a suspended user/company (`account_suspended` error). `/d/[token]` untouched. Admin read models
+surface `status`. New `account-status.spec.ts` 2/2.
+**#62 part 2 (next session):** `lib/admin/lifecycle.ts` + `lib/admin/anonymize.ts`, `PATCH
+/api/admin/{empresas,usuarios}/[id]` via `requireStepUp()`, `getUserAdmin` + `/admin/usuarios/[id]`
+page, client action components (first `/admin` mutation UI), status badges, `t.admin.*` ×8,
+`admin-account-lifecycle.spec.ts`. Then sprints D (#63), E (#60), F (#64).
+**Production migrations pending** (apply when merged to `main`): `20260907150000` (#59),
+`20260907170000` (#62). #64's stays dormant.

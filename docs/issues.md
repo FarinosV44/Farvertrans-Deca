@@ -162,7 +162,9 @@
   a follow-up, not #59 scope.
 - Replies: beat 1 pending.
 
-### I-062 — #62 Superadmin view/edit/block/deactivate/anonymize · P0 · queued (sprint C)
+### I-062 — #62 Superadmin lifecycle · P0 · part 1 on `develop` (D-116); part 2 pending
+- Enforcement layer done: AccountStatus enum, session + login reject suspended (713bc31). Admin
+  mutation UI/API + anonymize helper are part 2.
 ### I-063 — #63 Visible support + legal-assistance channels · P1 · queued (sprint D)
 ### I-060 — #60 Backup & restore of DeCA documents · P0 · queued (sprint E)
 ### I-064 — #64 Subscription/billing model — DESIGN ONLY · P2 · queued (sprint F)
