@@ -1410,6 +1410,13 @@ DeCA; new `deca-pdf-snapshot.test.ts`. 172 unit + full compliance + affected e2e
 **Deferred follow-ups:** `Card`/`DataTable` primitives + remaining panel cards, node-based wizard
 progress, admin i18n — not blockers. Older open issues #1–4/#24/#33/#40–47/#56 await the user's close.
 
+### #68 — landing "Cada DeCA te cuesta menos tiempo" composition (D-128) — on `main`
+2026-09-07. Left feature grid → compact 3-col flat Sistema Vía cards; new
+`components/site/activity-snapshot.tsx` ("Tu actividad", aria-hidden) as a 3rd right-column visual
+to kill the desktop void under Histórico; footer line tied to the grid with the 2px línea rule.
+Fixed a pre-existing 768px header overflow (`site-header` section nav `md:flex`→`lg:flex`) that had
+`landing.spec.ts:201` red on `main`. 172 unit + 14/14 landing e2e + compliance 8/8. No i18n, no schema.
+
 ### #62 gap fix — admin company-ficha edit form (D-127) — on `main`
 2026-09-07. The `edit` action of `PATCH /api/admin/empresas/[id]` existed since D-117 but no UI
 called it — the detail page was read-only, so the superadmin could not correct a bad `nif` (the

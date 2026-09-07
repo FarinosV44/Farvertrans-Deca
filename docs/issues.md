@@ -200,7 +200,17 @@ anonymize-in-place (no hard delete, D-067).
 
 ---
 
-## Design bundle #65–#67 (new — triaged 2026-09-07)
+## Design bundle #65–#68 (triaged 2026-09-07)
+
+### I-068 — #68 Landing "Cada DeCA te cuesta menos tiempo" composition · P2 · **DONE, on `main`** (D-128)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/68
+- Desktop void under the right-column Histórico block. Fix: left feature grid compacted to 3 cols
+  of flat Sistema Vía cards; new `components/site/activity-snapshot.tsx` ("Tu actividad", aria-hidden
+  product visual — not a decorative image) as a third right-column block; footer line tied to the
+  grid with the 2px "línea" rule. Also fixed a pre-existing 768px header overflow (section nav
+  `md:flex` → `lg:flex`) that had `landing.spec.ts:201` red on `main`.
+- 172 unit + 14/14 landing e2e + nav-links + crear + launch-happy-path + compliance 8/8. No i18n,
+  no schema. Beat-1 comment pending. Awaiting the user's live-verification close.
 
 ### I-067 — #67 Own visual identity — "Sistema Vía" · P1 · **DONE, on `main`** (D-125/D-126)
 - Proposal approved 2026-09-07. Artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 · spec `docs/design/sistema-via.md` · D-122…D-126.

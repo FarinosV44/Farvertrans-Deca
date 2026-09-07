@@ -41,7 +41,10 @@ export async function SiteHeader({
         </Link>
 
         {nav && (
-          <nav className="ml-4 hidden items-center gap-5 text-sm md:flex" aria-label="Secciones">
+          <nav
+            className="ml-4 hidden items-center gap-4 text-sm lg:flex xl:gap-5"
+            aria-label="Secciones"
+          >
             <Link href="/#pasos" className="no-underline hover:text-[var(--color-primary)]">
               {es.nav.howItWorks}
             </Link>

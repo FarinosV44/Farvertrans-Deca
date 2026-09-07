@@ -3825,3 +3825,26 @@ remaining scope.
   ficha validates. 4/4 in that spec; 22/22 admin e2e; 172 unit; compliance 8/8.
 - **No schema change**, no migration. The `praetoria sl` production row is now fixable from
   `/admin/empresas/[id]` → "Editar ficha de la empresa" (set `nif` to `B21810452`, a valid CIF).
+
+## D-128 — #68 landing "Cada DeCA te cuesta menos tiempo" composition
+- Date / phase: 2026-09-07, Phase 5. Landing section rebalance; stays within Sistema Vía (D-125).
+- **Left column** (`app/page.tsx` daily-use section): the 8 feature cards go from a 2-col grid of
+  padded, shadow-lifted `--radius-lg` cards to a compact **3-col** grid (`lg:grid-cols-3`, `grid-cols-2`
+  below) of flat Sistema Vía cards (`--radius-md`, hairline border, no hover shadow, `p-3`, 30px icon
+  badge). Cuts the column's height by roughly a row-and-a-half and removes the non-Sistema-Vía shadow.
+- **Right column:** new `components/site/activity-snapshot.tsx` — a third `aria-hidden` product
+  visual ("Tu actividad": DeCA creados / empresas / vehículos / último DeCA, as a 2×2 tile grid),
+  sibling to `SavedDataPreview` / `WorkspacePreview`, with placeholder figures coherent with those
+  previews. It fills the void the issue reported under the Histórico block. Not a decorative image
+  (explicitly ruled out by the issue).
+- **Footer line** ("Empieza a rellenar tu DeCA sin compromiso…"): `mt-6` → `mt-5` and a 2px primary
+  left rule (the "línea" motif) so it reads as attached to the grid, not floating.
+- **Pre-existing bug found + fixed in the same slice:** the site header's section `<nav>` was
+  `md:flex`, and at exactly 768px the wordmark + full nav + actions (the CTA carries
+  `whitespace-nowrap` since #67) overflowed the viewport — `landing.spec.ts:201` "no horizontal
+  overflow at 768px" was already red on `main`. Moved the section nav to `lg:flex` (with `gap-4`,
+  `xl:gap-5`); 360/768/1280 overflow checks now all green. No e2e depends on that nav below 1024px
+  (default Playwright viewport is 1280).
+- No i18n change (the feature-card text is unchanged; the previews are Spanish-only `aria-hidden`
+  decoration by the same convention as their siblings). Verification: 172 unit + 14/14 landing e2e +
+  nav-links + crear + launch-happy-path + compliance 8/8.

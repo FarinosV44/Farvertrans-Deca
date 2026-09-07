@@ -11,6 +11,7 @@ import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
 import { WorkspacePreview } from "@/components/site/workspace-preview";
 import { SavedDataPreview } from "@/components/site/saved-data-preview";
+import { ActivitySnapshot } from "@/components/site/activity-snapshot";
 import { FaqAccordion } from "@/components/site/faq-accordion";
 import { getCurrentUser } from "@/lib/auth";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
@@ -328,12 +329,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Daily use — DESIGN #55 §5: paired with two real product visuals
-            (`WorkspacePreview` + `SavedDataPreview`, same product-led-graphics
-            rule as the hero's `DecaPreview`) so "Guarda una vez. Reutiliza
-            siempre." has concrete visual proof on both halves of that claim —
-            saved data on top, the reuse outcome (history) below it — instead
-            of one visual and empty space under it. */}
+        {/* Daily use — DESIGN #55 §5 + #68: the left feature grid is compacted
+            (3 columns on desktop, flat Sistema Vía cards) and the right column
+            carries three product visuals — saved data, the reuse outcome
+            (history), and an activity snapshot — so the two columns balance
+            instead of leaving a tall void under the history block. */}
         <section
           className={`${wrap} border-t border-[var(--color-border)] py-16`}
           aria-labelledby="cada-dia"
@@ -346,26 +346,28 @@ export default async function HomePage() {
               <p className="mt-2 max-w-md text-sm text-[var(--color-text-muted)]">
                 {dict.landing.dailyUseSubhead}
               </p>
-              <div className="mt-8 grid grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-2 gap-2.5 lg:grid-cols-3">
                 {PRODUCT_SHOWCASE.map(({ Icon }, i) => {
                   const item = dict.landing.dailyUse[i];
                   return (
                     <div
                       key={item.label}
-                      className="flex flex-col items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-shadow duration-200 hover:shadow-[0_8px_28px_rgba(15,23,42,0.08)]"
+                      className="flex flex-col items-start gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
                     >
-                      <IconBadge size={40}>
-                        <Icon width={18} height={18} />
+                      <IconBadge size={30}>
+                        <Icon width={15} height={15} />
                       </IconBadge>
                       <div>
-                        <p className="text-sm font-bold">{item.label}</p>
-                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">{item.body}</p>
+                        <p className="text-[13px] font-bold leading-tight">{item.label}</p>
+                        <p className="mt-1 text-[11px] leading-snug text-[var(--color-text-muted)]">
+                          {item.body}
+                        </p>
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <p className="mt-6 text-sm text-[var(--color-text-muted)]">
+              <p className="mt-5 border-l-2 border-[var(--color-primary)] pl-3.5 text-sm text-[var(--color-text-muted)]">
                 {dict.landing.dailyUseFooter}{" "}
                 <Link href="/entrar">{dict.landing.dailyUseFooterLink}</Link>{" "}
                 {dict.landing.dailyUseFooterAfterLink}
@@ -374,6 +376,7 @@ export default async function HomePage() {
             <div className="space-y-4">
               <SavedDataPreview />
               <WorkspacePreview />
+              <ActivitySnapshot />
             </div>
           </div>
         </section>
