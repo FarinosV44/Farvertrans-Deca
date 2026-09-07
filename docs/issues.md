@@ -199,7 +199,15 @@ anonymize-in-place (no hard delete, D-067).
 
 ## Design bundle #65–#67 (new — triaged 2026-09-07)
 
-### I-067 — #67 Own visual identity for DeCA Profesional (Vignelli-inspired) · P1 · **needs direction**
+### I-067 — #67 Own visual identity — "Sistema Vía" · P1 · **APPROVED, in progress on `main`**
+- Proposal approved 2026-09-07. Artifact: https://claude.ai/code/artifact/a275359c-16ff-4bbc-b25f-b4fd99a1e8f5 · spec `docs/design/sistema-via.md` · D-122/D-123/D-124.
+- Done (`ab6ead5` on `main`): tokens + Archivo/IBM Plex Mono, `components/ui/` system,
+  AccountActions + panel data-notice + /crear progress colour + nav rules migrated.
+- Remaining: `/panel` home + banners, historial/datos/equipo/plantillas tables + empty states,
+  `company-profile-form`, icon-set audit, mobile pass. Then close.
+
+--- old triage note kept below ---
+### (was) I-067 — needs direction
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/67
 - A full design-system project: palette + functional colours, typography scale, grid/spacing,
   iconography, interaction/a11y states, reusable components, and a documented difference from
