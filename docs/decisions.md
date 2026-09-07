@@ -3423,3 +3423,11 @@ remaining scope.
   reconciled" passes every existing check silently. Worth a diagnostics addition (compare ledger
   rows against `prisma/migrations/` folder names) in a future slice — not done here.
 - Corrections to the record: D-096, D-098, D-111 each gained a "Correction (D-112)" note above.
+
+## D-113 — merged `develop` into `main` at `d51b4ee` (D-112 record)
+- Date / phase: 2026-09-07, immediately after D-112, on the user's explicit instruction ("commit
+  them all in main"). Docs-only merge — `docs/PROGRESS.md` + `docs/decisions.md`, 107 insertions,
+  no code. `--no-ff`, no conflicts. Carries the D-111 merge record and the D-112 production
+  migration-ledger reconciliation (plus the Correction notes on D-096/D-098/D-111).
+- CI triggered on the `main` push (doc-only — expected green).
+- Production DB is already reconciled (D-112); the Hostinger redeploy remains the user's action.

@@ -1315,3 +1315,8 @@ present, `company.email` + `content_item.legal_reviewer_name` present, `webauthn
 Profesional", legal-wording backfill applied. **Hostinger NOT redeployed — the user does that next.**
 Local backup JSON of the ledger + `content_item` + schema snapshot kept in the session scratchpad.
 See `decisions.md` D-112 (and the Correction notes it adds to D-096/D-098/D-111).
+
+## D-113: merged develop into main at d51b4ee (D-112 record)
+2026-09-07, on the user's explicit instruction. Docs-only merge (PROGRESS.md + decisions.md).
+`develop` == `main` again except this record commit. Production DB reconciled per D-112; Hostinger
+redeploy still the user's action. See `decisions.md` D-113.
