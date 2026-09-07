@@ -5,7 +5,11 @@ import { AppNav } from "@/components/app/app-nav";
 import { CompanyLogoManager } from "@/components/app/company-logo-manager";
 import { CompanyProfileForm } from "@/components/app/company-profile-form";
 import { getCurrentUser } from "@/lib/auth";
-import { companyDataComplete } from "@/lib/company/completeness";
+import {
+  companyDataComplete,
+  missingCompanyFields,
+  describeMissingFields,
+} from "@/lib/company/completeness";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi empresa", robots: { index: false } };
@@ -14,8 +18,12 @@ export default async function EmpresaPage() {
   const user = await getCurrentUser();
   if (!user?.companyId || !user.company) redirect("/registro");
 
-  const dataComplete = companyDataComplete(user.company);
+  const dataComplete = companyDataComplete(user.company, false);
   const canEdit = user.companyRole === "owner";
+  const missing = missingCompanyFields(user.company, false);
+  // name/nif are locked for the user (#59) — only flag them as "ask support".
+  const editableMissing = missing.filter((f) => f !== "name" && f !== "nif");
+  const identifierMissing = missing.some((f) => f === "name" || f === "nif");
 
   return (
     <>
@@ -28,12 +36,25 @@ export default async function EmpresaPage() {
           <div
             role="status"
             data-testid="company-data-incomplete"
-            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-warning,#b45309)] bg-[color-mix(in_srgb,var(--color-warning,#b45309)_8%,transparent)] p-4 text-sm"
+            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-warn)] bg-[var(--color-warn-bg)] p-4 text-sm"
           >
-            <strong>Completa los datos de tu empresa.</strong>{" "}
-            {canEdit
-              ? "Faltan datos obligatorios (dirección, código postal, población, contacto). Rellénalos abajo para poder generar nuevos DeCA."
-              : "Faltan datos obligatorios. Pídele al responsable de la cuenta que los complete para poder generar nuevos DeCA."}
+            <strong>Completa los datos de tu empresa</strong> para poder generar nuevos DeCA.
+            {editableMissing.length > 0 && (
+              <>
+                {" "}
+                {canEdit
+                  ? "Falta o no es válido, más abajo: "
+                  : "Pídele al responsable que complete: "}
+                {describeMissingFields(editableMissing)}.
+              </>
+            )}
+            {identifierMissing && (
+              <>
+                {" "}
+                La razón social o el CIF/NIF de la empresa no son correctos; escríbenos a soporte
+                para corregirlos.
+              </>
+            )}
           </div>
         )}
 
