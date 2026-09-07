@@ -180,8 +180,17 @@
 - `/panel/ayuda` (técnico + jurídico separated), "Ayuda" nav tab + account-menu link,
   `lib/support/channels.ts`, `BRAND` whatsapp/hours empty-by-default, JSON-LD contactPoint,
   `t.panel.help.*` ×8. 3 unit + 2 e2e + full e2e green. Beat 1 posted. No production migration.
-### I-060 — #60 Backup & restore of DeCA documents · P0 · queued (sprint E)
-### I-064 — #64 Subscription/billing model — DESIGN ONLY · P2 · queued (sprint F)
-- User decisions recorded 2026-09-07: #59 soft-gate + hard CIF block on own company; #60 GitHub
-  Actions + external object store, RPO ≤24h; #62 states 1–3 built + anonymize-in-place (no hard
-  delete, D-067).
+### I-060 — #60 Backup & restore of DeCA documents · P0 · **DONE, on `develop`** (D-119)
+- `scripts/backup.mjs` (pg_dump + PDF bucket + age-encrypted tar) + `scripts/restore.mjs` (scratch
+  only, refuses production) + `.github/workflows/backup.yml` (daily → S3-compatible store) +
+  `docs/backup-and-restore.md` (RPO ≤24h / RTO ≤4h). DB-half restore-test EXECUTED + logged in
+  07-release §6. Beat 1 posted. **User action:** create the object-store bucket + `age` key + repo
+  secrets, then run the workflow once + a full restore-test (Storage half). No production migration.
+
+### I-064 — #64 Subscription/billing model — DESIGN ONLY · P2 · **DONE, on `develop`** (D-120)
+- `docs/design/billing-model.md` (models + state machine + invoicing + permissions + no-rework
+  proof) + `lib/billing/plans.ts`. No schema, no migration, no UI. Beat 1 posted.
+
+**Batch #59–#64: all six done on `develop`.** User decisions (2026-09-07): #59 soft-gate + hard CIF
+block on own company; #60 GitHub Actions + external object store, RPO ≤24h; #62 states 1–3 built +
+anonymize-in-place (no hard delete, D-067).
