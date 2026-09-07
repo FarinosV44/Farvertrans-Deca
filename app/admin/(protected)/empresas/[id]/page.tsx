@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCompanyAdmin } from "@/lib/admin/records";
 import { AccountActions } from "@/components/admin/account-actions";
+import { CompanyEditForm } from "@/components/admin/company-edit-form";
 import {
   PageHeader,
   DefinitionList,
@@ -33,6 +34,22 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
         reason={c.statusReason}
         name={c.name}
       />
+
+      {c.status !== "anonymized" && (
+        <CompanyEditForm
+          id={c.id}
+          initial={{
+            name: c.name,
+            nif: c.nif ?? "",
+            contactName: c.contactName ?? "",
+            phone: c.phone ?? "",
+            email: c.email ?? "",
+            address: c.address ?? "",
+            postalCode: c.postalCode ?? "",
+            city: c.city ?? "",
+          }}
+        />
+      )}
 
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
         <DefinitionList

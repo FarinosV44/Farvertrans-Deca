@@ -162,7 +162,7 @@
   a follow-up, not #59 scope.
 - Replies: beat 1 pending.
 
-### I-062 — #62 Superadmin lifecycle · P0 · **DONE, on `develop`**
+### I-062 — #62 Superadmin lifecycle · P0 · **DONE, on `main`** (D-116/D-117/D-121/D-127)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/62
 - Resolution: part 1 (D-116, `713bc31`) — `AccountStatus` enum on `User`/`Company` (migration
   `20260907170000`), `getCurrentSession()` + `login()` reject a suspended user/company. Part 2
@@ -171,11 +171,14 @@
   then `requireStepUp` → 401), new `/admin/usuarios/[id]` page + `<AccountActions>` (first
   client-interactive `/admin` component) + status badges on the list pages. `/d/[token]` untouched —
   a blocked company's DeCA stays verifiable.
-- Commits: `713bc31` + `<pending>` on `develop`. No production migration yet.
-- Verification: 157 unit + `admin-account-lifecycle.spec.ts` 3/3 + `account-status.spec.ts` 2/2 +
-  full e2e.
+- Gap fix (D-127, on `main`): the `edit` action existed in the API from D-117 but no UI called it —
+  the detail page was read-only. New `components/admin/company-edit-form.tsx` (8-field disclosure,
+  step-up aware, surfaces the 422 on a bad CIF/NIF). This is the superadmin escape hatch #59's D-123
+  fix assumes. `admin-account-lifecycle.spec.ts` "edit the ficha" added.
+- Migration `20260907170000` **applied to production** (D-121). Beat-1 commented.
+- Verification: 172 unit + `admin-account-lifecycle.spec.ts` 4/4 + `account-status.spec.ts` 2/2 +
+  22/22 admin e2e + compliance 8/8.
 - Deferred: `t.admin.*` i18n (the whole admin area is ES-only server components by convention).
-- Replies: beat 1 pending.
 ### I-063 — #63 Visible support + legal-assistance channels · P1 · **DONE, on `develop`** (D-118)
 - `/panel/ayuda` (técnico + jurídico separated), "Ayuda" nav tab + account-menu link,
   `lib/support/channels.ts`, `BRAND` whatsapp/hours empty-by-default, JSON-LD contactPoint,

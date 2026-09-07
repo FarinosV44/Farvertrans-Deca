@@ -3807,3 +3807,21 @@ remaining scope.
 - Beat-1 comments posted on #65/#66/#67 in Spanish (forge-reply-language rule). #59–#67 are all
   implemented and on `main`; none closed — they await the user's live-verification (Keel: never
   close an issue on my own reading of the code).
+
+## D-127 — #62 gap: the admin company-ficha edit form was never built
+- Date / phase: 2026-09-07, Phase 5. User: "no me deja editar desde donde me dices lo de praetoria sl".
+- **Defect:** `PATCH /api/admin/empresas/[id]` has always accepted `action: "edit"` (full ficha,
+  incl. the owner-locked `name`/`nif`), but `/admin/empresas/[id]` only ever rendered the ficha as a
+  read-only `DefinitionList` + the `AccountActions` component (block/deactivate/reactivate/anonymize).
+  No UI called `edit` — D-117 shipped the endpoint and the page without the form the plan named
+  (`<InlineEditForm>`). So the superadmin genuinely could not correct a bad `nif` from the UI, which
+  is exactly what #59's soft-gate fix (D-123) assumes as the escape hatch.
+- **Fix:** new `components/admin/company-edit-form.tsx` — a `<details>` disclosure with the 8 ficha
+  fields pre-filled, submitting `{ action: "edit", data }`; handles `step_up_required` (link to
+  `/admin/2fa/verify`) and surfaces the 422 schema message (a still-invalid CIF/NIF is rejected).
+  Slotted into the detail page under `AccountActions`, hidden when the company is anonymised.
+- **Test:** `admin-account-lifecycle.spec.ts` — "edit the ficha" — sets `nif = "praetoria sl"`, shows
+  a still-invalid value is 422, a valid CIF is 200, and `dataCompletedAt` is stamped once the whole
+  ficha validates. 4/4 in that spec; 22/22 admin e2e; 172 unit; compliance 8/8.
+- **No schema change**, no migration. The `praetoria sl` production row is now fixable from
+  `/admin/empresas/[id]` → "Editar ficha de la empresa" (set `nif` to `B21810452`, a valid CIF).

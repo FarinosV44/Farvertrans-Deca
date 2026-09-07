@@ -122,6 +122,43 @@ test("anonymise a company: PII gone, DeCA + audit kept", async ({ request }) => 
   ).toBe(1);
 });
 
+test("edit the ficha: the superadmin fixes an invalid NIF the owner cannot touch", async ({
+  request,
+}) => {
+  const { companyId } = await newCompanyWithDeca();
+  await loginAdminApi(request);
+
+  // Simulate a pre-#59 company whose locked NIF is not a valid CIF.
+  await prisma.company.update({ where: { id: companyId }, data: { nif: "praetoria sl" } });
+
+  const base = {
+    name: "Praetoria SL",
+    contactName: "Ana Ejemplo",
+    phone: "600111222",
+    email: "empresa@example.com",
+    address: "Calle Prueba 1",
+    postalCode: "46540",
+    city: "El Puig",
+  };
+
+  // A still-invalid NIF is rejected by the shared schema.
+  const bad = await request.patch(`/api/admin/empresas/${companyId}`, {
+    data: { action: "edit", data: { ...base, nif: "praetoria sl" } },
+  });
+  expect(bad.status()).toBe(422);
+
+  // A valid CIF goes through.
+  const ok = await request.patch(`/api/admin/empresas/${companyId}`, {
+    data: { action: "edit", data: { ...base, nif: "B12345674" } },
+  });
+  expect(ok.status()).toBe(200);
+
+  const company = await prisma.company.findUniqueOrThrow({ where: { id: companyId } });
+  expect(company.nif).toBe("B12345674");
+  expect(company.name).toBe("Praetoria SL");
+  expect(company.dataCompletedAt).not.toBeNull(); // full ficha now valid → stamped
+});
+
 test("the lifecycle routes are step-up gated and internal-only", async () => {
   const anon = await pwRequest.newContext({ baseURL: "http://localhost:3000" });
   const r = await anon.patch("/api/admin/usuarios/whatever", { data: { action: "block" } });

@@ -1410,6 +1410,14 @@ DeCA; new `deca-pdf-snapshot.test.ts`. 172 unit + full compliance + affected e2e
 **Deferred follow-ups:** `Card`/`DataTable` primitives + remaining panel cards, node-based wizard
 progress, admin i18n — not blockers. Older open issues #1–4/#24/#33/#40–47/#56 await the user's close.
 
+### #62 gap fix — admin company-ficha edit form (D-127) — on `main`
+2026-09-07. The `edit` action of `PATCH /api/admin/empresas/[id]` existed since D-117 but no UI
+called it — the detail page was read-only, so the superadmin could not correct a bad `nif` (the
+escape hatch #59's D-123 fix assumes). New `components/admin/company-edit-form.tsx` (8-field
+disclosure, step-up aware, surfaces the 422). `admin-account-lifecycle.spec.ts` "edit the ficha"
+added. 172 unit + 22 admin e2e + compliance 8/8. No migration. `praetoria sl` is now fixable at
+`/admin/empresas/[id]` → "Editar ficha de la empresa".
+
 ### #65/#66/#67 merged to `main` (D-125) — released
 2026-09-07, merge `5848cb9` (`main`), `develop` fast-forwarded and pushed. Final verification before
 the merge: typecheck clean (fixed a `pdfjs` `TextItem` union type in `deca-pdf-snapshot.test.ts`,
