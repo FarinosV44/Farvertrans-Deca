@@ -1388,3 +1388,13 @@ No schema change. **Next:** sprint E (#60 backup), F (#64 billing design).
 schema, no migration, no UI. 164 unit + tsc + lint + prettier green.
 **#59–#64 BATCH COMPLETE on `develop`.** Next per the user: merge to `main` + apply all pending
 migrations to production.
+
+### #59 fix + #67 Sistema Vía (started) — on `main` (D-123, D-124)
+2026-09-07. **#59 fix** (`f218fb3`): soft gate lenient on the locked CIF/NIF for pre-#59 companies
+(a company with `nif = "praetoria sl"` was permanently trapped); messages now name the real missing
+field. **#67** (user approved "Sistema Vía", proposal artifact + `docs/design/sistema-via.md`):
+token foundation, Archivo + IBM Plex Mono, `components/ui/` (Kicker/Pill/Button/Alert/EmptyState/
+Progress), migrations of AccountActions + panel data-notice + /crear route colour + nav rules.
+All merged to `main` at `ab6ead5`, 168 unit + full e2e green. No migration.
+**Next:** finish #67 (remaining panel surfaces + icons + mobile), then #65 (admin), then #66 (PDF).
+Older open issues #1–4/#24/#33/#40–47/#56 still awaiting the user's live-verification close.
