@@ -1659,3 +1659,18 @@ documented `content-cms.spec.ts:60` flake. Needs the Hostinger redeploy to reach
 - **NEXT:** (1) get the production DB connection string from the user and apply the 2 pending
   migrations (`20260908205105`, `20260908213756`); (2) merge `develop` → `main`; (3) beat-1 comments
   on #87–#90; (4) the user redeploys Hostinger.
+
+## D-155 — #87–#90 merged to `main` + both production migrations applied (2026-09-09)
+- `develop` → `main` merge `967f9b4` (`--no-ff`), `develop` fast-forwarded. CI running on `main`.
+- **Production migrations applied** (user supplied the Supabase connection strings in chat, used
+  only as transient shell env vars — never written/committed; user will rotate the DB password):
+  `prisma migrate status` was clean beforehand (33/33, exactly the 2 expected pending), then
+  `prisma migrate deploy` applied `20260908205105_commercial_opportunity` and
+  `20260908213756_commercial_conversion_and_alerts`. After: "Database schema is up to date!" (35/35).
+  Verified via the transaction pooler: `commercial_opportunity` (15 cols incl.
+  `converted_by_user_id`/`revenue_eur`/`margin_eur`/`loads_generated`), `commercial_activity_log`,
+  `commercial_alert`, `commercial_alert_config` all present; `CommercialOpportunityState` enum has
+  all 10 values.
+- Beat-1 comments posted on #87 / #88 / #89 / #90 (Spanish, not closed).
+- **Still the user's:** redeploy Hostinger (production still runs a pre-#69 build — none of #85–#91
+  or #87–#90 is live yet); rotate the DB password; live-verify #85–#91 + #87–#90, then close.
