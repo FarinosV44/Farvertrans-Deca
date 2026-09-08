@@ -400,7 +400,8 @@ anonymize-in-place (no hard delete, D-067).
      companies + activate/deactivate. Attribution already permanent/first-touch (#11). Commissions
      not built; model left ready.
 - **Verification:** typecheck + lint + prettier + 215 unit (13 new) + keel:verify + full e2e.
-- **Replies:** beat-1 posted 2026-09-08 (comment 5590619965, ES). Beat-3 after the merge/deploy.
-- **Pending:** merge `develop` → `main`; `prisma migrate deploy` for `20260908185301_support_tickets`
-  + `20260908190836_operator_contact_fields`; redeploy Hostinger; the user confirms p7 live; then
-  beat 3 + close #86.
+- **Merged to `main`** `ce65fb7` + **both production migrations applied** (2026-09-08, user
+  instruction; ledger clean beforehand, 31→33, verified via :6543). `develop` == `main`.
+- **Replies:** beat-1 posted 2026-09-08 (comment 5590619965, ES). Beat-3 after the Hostinger redeploy.
+- **Pending:** redeploy Hostinger; the user confirms p7 (Superadmin from PC) live; rotate secrets;
+  then beat 3 + close #86.

@@ -1548,4 +1548,4 @@ WhatsApp técnico = jurídico = **34607527719**; email jurídico = **info@praeto
 - Gate: typecheck + lint + prettier + **215 unit** (13 new) + keel:verify green; full e2e run.
 - **2 migrations to `prisma migrate deploy` on production after the `main` merge:**
   `20260908185301_support_tickets`, `20260908190836_operator_contact_fields`.
-- **On `develop` only** — awaits the user's merge + deploy instruction.
+- **Merged to `main`** `ce65fb7` (`--no-ff`) + **both production migrations applied** (2026-09-08, user instruction): ledger clean beforehand (31→33), `support_ticket*` + `operator` new columns verified via :6543. `develop` == `main`. **Still needs: Hostinger redeploy** + live check of p7.

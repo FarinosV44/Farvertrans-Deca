@@ -4439,3 +4439,16 @@ remaining scope.
   pagado / exportación" without touching anything recorded here. Noted on the operator detail page.
 - Tests: `operators.test.ts` (2); `operadores-module.spec.ts` (create → ref link → company signs up
   via link → attributed on the detail page → deactivate keeps history).
+
+### #86 merged to `main` + production migrations applied (2026-09-08, user instruction "push to main and apply the migration the password is the same i will change it after")
+- `develop` → `main` merge `ce65fb7` (`--no-ff`); `develop` fast-forwarded to match (both at `ce65fb7`).
+- `prisma migrate deploy` against production `DIRECT_URL` (Supabase session pooler :5432, project
+  `nlieprqtxbgszdnjnhew`, password unchanged per the user — "i will change it after"; credentials
+  used only as transient shell env vars, never written/committed). Production ledger was CLEAN
+  beforehand (31/31, no drift). Applied `20260908185301_support_tickets` +
+  `20260908190836_operator_contact_fields`; `migrate status` → "Database schema is up to date!"
+  (33/33). Verified via the transaction pooler (:6543): `support_ticket` + `support_ticket_message`
+  tables present, `operator` has `last_name`/`email`/`phone`/`notes`, both models queryable.
+- **Still outstanding (user):** Hostinger redeploy (production still runs a pre-#69 build);
+  confirm p7 (Superadmin access from PC) works live; rotate the DB password + other secrets;
+  asesoría legal review of the `LEGAL REVIEW PENDING` sections; beat-3 + close #85 and #86.
