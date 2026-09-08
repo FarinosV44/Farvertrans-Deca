@@ -4302,6 +4302,13 @@ remaining scope.
   `auth.footNote` all anchored to 2026. No pricing UI in the panel (the "discreto" choice).
 - Gate: typecheck + lint (pre-existing warnings only) + prettier + 205 unit (4 new) + keel:verify
   green. Targeted e2e (`commercial-consent`, `master-data`, `landing`) run.
-- **On `develop` only — not merged to `main`, migration not deployed.** Standing "push to main"
-  from this issue's own review requirement does not apply; awaits the user's explicit merge/deploy
-  instruction.
+- **Merged to `main` + production migration applied (2026-09-08, user instruction "push to main and
+  apply the production the password is the same").** `develop` → `main` merge `9d4d702` (`--no-ff`);
+  `develop` fast-forwarded to match (both at `9d4d702`). `prisma migrate deploy` against production
+  `DIRECT_URL` (Supabase session pooler :5432, project `nlieprqtxbgszdnjnhew`, password unchanged
+  per the user — credentials used only as transient shell env vars, never written/committed).
+  Production ledger was CLEAN beforehand (30/30, no drift — unlike D-112). Applied
+  `20260908170252_saved_company_postal_city`; `migrate status` → "Database schema is up to date!"
+  (31/31); `saved_company.postal_code` + `city` verified present via the transaction pooler (:6543).
+- **Still outstanding (user):** Hostinger redeploy so the #85 code (and everything since the last
+  deploy) actually runs; secret rotation still not done; beat-3 + close #85 after live check.

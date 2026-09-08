@@ -371,7 +371,9 @@ anonymize-in-place (no hard delete, D-067).
 - **Verification:** typecheck + lint + prettier + 205 unit (4 new: `commercial-availability`,
   `saved-schema`) + keel:verify green. e2e: `commercial-consent.spec.ts` (+WhatsApp assertion),
   `master-data.spec.ts` (+CP/población carry-through), `landing.spec.ts`.
-- **Pending:** the user merges `develop` → `main` and runs `prisma migrate deploy` on production
-  for `20260908170252_saved_company_postal_city`; then beat 3 + the user closes #85 (Keel never
+- **Merged to `main`** `9d4d702` (2026-09-08, user instruction) + **production migration
+  `20260908170252_saved_company_postal_city` applied** (ledger clean beforehand, 31/31, columns
+  verified via :6543). `develop` == `main`.
+- **Pending:** Hostinger redeploy so the code runs; then beat 3 + the user closes #85 (Keel never
   closes on its own reading).
-- **Replies:** beat-1 posted 2026-09-08 (comment 5589051332, ES). Beat-3 after the user's deploy.
+- **Replies:** beat-1 posted 2026-09-08 (comment 5589051332, ES). Beat-3 after the user's redeploy.

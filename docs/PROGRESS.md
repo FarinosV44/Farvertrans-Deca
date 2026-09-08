@@ -45,10 +45,11 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #85 pre-launch UX batch (D-148) — on `develop`, not `main`.** WhatsApp channel label,
-  `SavedCompany` postal/city (migration `20260908170252`), discreet "Gratis durante 2026" landing
-  message. See the `#85` section near the end of this file. Keel updated to v5.20.0 this session
-  (lock stamp kept at v5.19.2 per the user).
+- **Latest: #85 pre-launch UX batch (D-148) — MERGED to `main` (`9d4d702`), production migration
+  `20260908170252_saved_company_postal_city` APPLIED (31/31, columns verified).** WhatsApp channel
+  label, `SavedCompany` postal/city, discreet "Gratis durante 2026" landing message. `develop` ==
+  `main`. See the `#85` section near the end of this file. Keel updated to v5.20.0 this session
+  (lock stamp kept at v5.19.2 per the user). **Still needs: Hostinger redeploy** so the code runs.
 - **Done: BUILD 05–15.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
   tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13) + SEO cluster (14) + launch
   gate (15). All green: 47 unit + 57 e2e (6 compliance R-1…R-13 + axe on every public screen +
@@ -1514,5 +1515,7 @@ saved-company postal/city optional.
   panel pricing UI.
 - Gate: typecheck + lint (pre-existing warnings only) + prettier + **205 unit** (4 new) + keel:verify
   green. Targeted e2e (`commercial-consent`, `master-data`, `landing`) — see test-points.
-- **On `develop` only.** Needs (user): merge → `main`; `prisma migrate deploy` for
-  `20260908170252` on production; beat-1/beat-3 comments; then the user closes #85.
+- **Merged to `main` (`9d4d702`, `--no-ff`) + production migration `20260908170252` applied**
+  (2026-09-08, user: "push to main and apply the production the password is the same"). Prod ledger
+  clean beforehand (30/30); now 31/31, `saved_company.postal_code`+`city` verified via :6543.
+  `develop` == `main`. Needs (user): **Hostinger redeploy**; beat-3 + close #85.
