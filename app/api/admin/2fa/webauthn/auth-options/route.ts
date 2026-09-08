@@ -34,6 +34,18 @@ export async function POST() {
     })),
   });
 
+  // #91: a breadcrumb for the "stuck on connecting" report — an options line
+  // with no matching `admin_passkey_verify` audit row soon after means the
+  // ceremony never completed on the client. No secret, no challenge value.
+  console.info(
+    JSON.stringify({
+      event: "admin_passkey_auth_options",
+      userId: user.id,
+      credentials: credentials.length,
+      ts: new Date().toISOString(),
+    }),
+  );
+
   const res = NextResponse.json(options);
   res.cookies.set(
     WEBAUTHN_CHALLENGE_COOKIE,

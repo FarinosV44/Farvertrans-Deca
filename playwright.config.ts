@@ -31,6 +31,11 @@ export default defineConfig({
     // - FVD_EXPOSE_RESET_TOKEN: lets the password-reset e2e read the emailed token.
     // - FVD_DISABLE_ABUSE_CHECKS: the suite creates dozens of real accounts from one
     //   machine inside one rate-limit window by design; see lib/abuse/index.ts.
-    env: { FVD_EXPOSE_RESET_TOKEN: "1", FVD_DISABLE_ABUSE_CHECKS: "1" },
+    // - SUPERADMIN_BACKUP_PASSWORD: the #91 backup-password e2e needs a known value.
+    env: {
+      FVD_EXPOSE_RESET_TOKEN: "1",
+      FVD_DISABLE_ABUSE_CHECKS: "1",
+      SUPERADMIN_BACKUP_PASSWORD: "e2e-backup-Sup3r!",
+    },
   },
 });

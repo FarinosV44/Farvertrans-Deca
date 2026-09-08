@@ -37,6 +37,11 @@ export function TotpVerifyForm({
   const [platformPasskey, setPlatformPasskey] = useState(false);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
+  // #91 — backup-password path (only replaces the Super Admin verification step).
+  const [showBackup, setShowBackup] = useState(false);
+  const [backupPw, setBackupPw] = useState("");
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
 
   useEffect(() => {
     const supported = browserSupportsWebAuthn();
@@ -67,8 +72,16 @@ export function TotpVerifyForm({
     if (passkeyBusy) return;
     setPasskeyBusy(true);
     setPasskeyError(null);
-    const result = await authenticateWithPasskey();
-    setPasskeyBusy(false);
+    let result: Awaited<ReturnType<typeof authenticateWithPasskey>>;
+    try {
+      result = await authenticateWithPasskey();
+    } catch (e) {
+      // authenticateWithPasskey never throws by contract, but a `finally` that
+      // clears the loading state is the whole point of #91 — belt and braces.
+      result = { ok: false, error: e instanceof Error ? e.message : "Error inesperado." };
+    } finally {
+      setPasskeyBusy(false);
+    }
     if (!result.ok) {
       setPasskeyError(
         result.error === "no_passkeys"
@@ -78,6 +91,31 @@ export function TotpVerifyForm({
       return;
     }
     await afterSuccess();
+  }
+
+  async function submitBackup(e: React.FormEvent) {
+    e.preventDefault();
+    if (backupBusy || !backupPw) return;
+    setBackupBusy(true);
+    setBackupError(null);
+    try {
+      const res = await fetch("/api/admin/2fa/backup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: backupPw }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setBackupError(data?.error?.message ?? "No se pudo verificar. Inténtalo de nuevo.");
+        return;
+      }
+      setBackupPw("");
+      await afterSuccess();
+    } catch {
+      setBackupError("Sin conexión. Inténtalo de nuevo.");
+    } finally {
+      setBackupBusy(false);
+    }
   }
 
   async function submitCode(e: React.FormEvent) {
@@ -221,6 +259,72 @@ export function TotpVerifyForm({
           )}
         </>
       )}
+
+      {/* #91 — offline recovery for the Super Admin verification step only. */}
+      <div className="mt-6 border-t border-[var(--color-border)] pt-4">
+        {!showBackup ? (
+          <button
+            type="button"
+            data-testid="use-backup-password"
+            onClick={() => {
+              setShowBackup(true);
+              setBackupError(null);
+            }}
+            className="text-sm font-medium text-[var(--color-primary)]"
+          >
+            Usar contraseña de emergencia
+          </button>
+        ) : (
+          <form onSubmit={submitBackup}>
+            <label htmlFor="backup-password" className="block text-sm font-medium">
+              Contraseña de emergencia
+            </label>
+            <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+              Solo sustituye la verificación adicional del panel de administración, nunca tu acceso
+              normal a la aplicación.
+            </p>
+            <input
+              id="backup-password"
+              data-testid="backup-password-input"
+              type="password"
+              autoComplete="off"
+              value={backupPw}
+              onChange={(e) => setBackupPw(e.target.value)}
+              className="mt-2 block min-h-12 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+            />
+            {backupError && (
+              <p
+                role="alert"
+                data-testid="backup-password-error"
+                className="mt-2 text-sm text-[var(--color-danger)]"
+              >
+                {backupError}
+              </p>
+            )}
+            <div className="mt-3 flex gap-2">
+              <button
+                type="submit"
+                data-testid="backup-password-submit"
+                disabled={backupBusy || !backupPw}
+                className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
+              >
+                {backupBusy ? "Comprobando…" : "Acceder"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBackup(false);
+                  setBackupPw("");
+                  setBackupError(null);
+                }}
+                className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 text-sm font-medium"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
