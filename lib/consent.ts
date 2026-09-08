@@ -1,39 +1,84 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import {
+  sharedFieldKeys,
+  type CommercialConsentMode,
+  type CommercialContactChannel,
+  type CommercialTreatmentState,
+  type SharedFieldKey,
+} from "@/lib/commercial/types";
 
 /**
- * Commercial route-offer consent (DATA #45 §3) — separate from the mandatory
- * `TermsAcceptance`. Opt-in, not pre-checked, revocable, auditable
- * (granted_at/revoked_at + the copy version shown when granted).
+ * Commercial-treatment preference (#84, evolving DATA #45 §3) — separate from
+ * the mandatory `TermsAcceptance`. Opt-in, granular (`none` / `per_deca` /
+ * `all`), revocable, and audited: every change and every prepared/withdrawn
+ * availability record is appended to `CommercialConsentEvent`. Free use of the
+ * product is never conditioned on this — `none` is the normal default.
+ *
+ * Nothing here transmits anything to a third party: there is no recipient side
+ * yet. `all` / `per_deca` only cause a `DecaAvailabilityShare` row to be
+ * prepared (see `lib/commercial/availability.ts`).
  */
 
-export const COMMERCIAL_CONSENT_VERSION = "2026-09-05";
+/**
+ * Legal-text version in force for the commercial treatment. Bumped together
+ * with the new privacy/terms sections (#84, Slice 4) so every stored consent
+ * and availability record names the exact text the operator agreed to.
+ */
+export const COMMERCIAL_CONSENT_VERSION = "2026-09-15";
 
-export type CommercialConsentState = {
-  granted: boolean;
-  version: string | null;
-  grantedAt: Date | null;
-  revokedAt: Date | null;
+export {
+  sharedFieldKeys,
+  type CommercialConsentMode,
+  type CommercialContactChannel,
+  type CommercialTreatmentState,
+  type SharedFieldKey,
 };
 
-const EMPTY_CONSENT: CommercialConsentState = {
-  granted: false,
+const EMPTY: CommercialTreatmentState = {
+  mode: "none",
+  channel: null,
+  contactEmail: null,
+  contactPhone: null,
   version: null,
   grantedAt: null,
   revokedAt: null,
+  updatedAt: null,
 };
 
+type ConsentRow = {
+  mode: CommercialConsentMode;
+  channel: CommercialContactChannel | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  version: string;
+  grantedAt: Date | null;
+  revokedAt: Date | null;
+  updatedAt: Date;
+};
+
+function toState(row: ConsentRow): CommercialTreatmentState {
+  return {
+    mode: row.mode,
+    channel: row.channel,
+    contactEmail: row.contactEmail,
+    contactPhone: row.contactPhone,
+    version: row.version,
+    grantedAt: row.grantedAt,
+    revokedAt: row.revokedAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 /**
- * Reads never crash the page they back: a schema mismatch (e.g. this
- * migration not yet applied on a given environment) degrades to the safe
- * "not granted" default instead of a generic error boundary, matching the
- * lesson from D-041 (unguarded Prisma calls taking down an entire page). The
- * real error is still logged so the gap is diagnosable, not silently masked.
+ * Reads never crash the page they back (D-041): a schema mismatch degrades to
+ * the safe "none" default instead of an error boundary. The real error is
+ * still logged so the gap stays diagnosable.
  */
-export async function getCommercialConsent(companyId: string): Promise<CommercialConsentState> {
-  let row;
+export async function getCommercialTreatment(companyId: string): Promise<CommercialTreatmentState> {
   try {
-    row = await prisma.commercialConsent.findUnique({ where: { companyId } });
+    const row = await prisma.commercialConsent.findUnique({ where: { companyId } });
+    return row ? toState(row as ConsentRow) : EMPTY;
   } catch (e) {
     console.error(
       JSON.stringify({
@@ -42,39 +87,124 @@ export async function getCommercialConsent(companyId: string): Promise<Commercia
         error: e instanceof Error ? e.message : String(e),
       }),
     );
-    return EMPTY_CONSENT;
+    return EMPTY;
   }
-  if (!row) return EMPTY_CONSENT;
+}
+
+/** Normalise the contact values so only the selected channel's value is kept. */
+function contactsFor(
+  channel: CommercialContactChannel,
+  email: string | null | undefined,
+  phone: string | null | undefined,
+): { contactEmail: string | null; contactPhone: string | null } {
   return {
-    granted: row.granted,
-    version: row.version,
-    grantedAt: row.grantedAt,
-    revokedAt: row.revokedAt,
+    contactEmail: channel === "phone" ? null : email?.trim() || null,
+    contactPhone: channel === "email" ? null : phone?.trim() || null,
   };
 }
 
-export async function setCommercialConsent(
+/**
+ * Append a commercial-treatment event. Best-effort — an audit write must never
+ * block the action it records (same rule as `recordAudit`). Exported so
+ * `lib/commercial/availability.ts` records `availability_*` through one path.
+ */
+export async function recordCommercialEvent(e: {
+  companyId: string;
+  actorUserId: string | null;
+  kind:
+    | "mode_set"
+    | "channel_set"
+    | "per_deca_enabled"
+    | "per_deca_disabled"
+    | "global_revoked"
+    | "availability_prepared"
+    | "availability_withdrawn";
+  decaId?: string | null;
+  mode?: CommercialConsentMode | null;
+  channel?: CommercialContactChannel | null;
+  detail?: unknown;
+}): Promise<void> {
+  try {
+    await prisma.commercialConsentEvent.create({
+      data: {
+        companyId: e.companyId,
+        actorUserId: e.actorUserId,
+        kind: e.kind,
+        decaId: e.decaId ?? null,
+        mode: e.mode ?? null,
+        channel: e.channel ?? null,
+        legalVersion: COMMERCIAL_CONSENT_VERSION,
+        detail: e.detail === undefined ? undefined : (e.detail as object),
+      },
+    });
+  } catch {
+    // never block the audited action on an audit-log hiccup
+  }
+}
+
+export async function setCommercialMode(
   companyId: string,
-  granted: boolean,
-): Promise<CommercialConsentState> {
+  mode: CommercialConsentMode,
+  actorUserId: string | null,
+): Promise<CommercialTreatmentState> {
   const now = new Date();
+  const goingNone = mode === "none";
   const row = await prisma.commercialConsent.upsert({
     where: { companyId },
     create: {
       companyId,
-      granted,
+      mode,
       version: COMMERCIAL_CONSENT_VERSION,
-      grantedAt: granted ? now : null,
-      revokedAt: granted ? null : now,
+      grantedAt: goingNone ? null : now,
+      revokedAt: goingNone ? now : null,
     },
-    update: granted
-      ? { granted: true, version: COMMERCIAL_CONSENT_VERSION, grantedAt: now, revokedAt: null }
-      : { granted: false, revokedAt: now },
+    update: goingNone
+      ? { mode, revokedAt: now }
+      : { mode, version: COMMERCIAL_CONSENT_VERSION, grantedAt: now, revokedAt: null },
   });
-  return {
-    granted: row.granted,
-    version: row.version,
-    grantedAt: row.grantedAt,
-    revokedAt: row.revokedAt,
-  };
+  await recordCommercialEvent({
+    companyId,
+    actorUserId,
+    kind: goingNone ? "global_revoked" : "mode_set",
+    mode,
+  });
+  return toState(row as ConsentRow);
+}
+
+export async function setCommercialChannel(
+  companyId: string,
+  input: {
+    channel: CommercialContactChannel;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+  },
+  actorUserId: string | null,
+): Promise<CommercialTreatmentState> {
+  const contacts = contactsFor(input.channel, input.contactEmail, input.contactPhone);
+  const row = await prisma.commercialConsent.upsert({
+    where: { companyId },
+    create: {
+      companyId,
+      mode: "none",
+      version: COMMERCIAL_CONSENT_VERSION,
+      channel: input.channel,
+      ...contacts,
+    },
+    update: { channel: input.channel, ...contacts },
+  });
+  await recordCommercialEvent({
+    companyId,
+    actorUserId,
+    kind: "channel_set",
+    channel: input.channel,
+  });
+  return toState(row as ConsentRow);
+}
+
+/** Retire the global authorisation immediately (future porte communications only). */
+export async function revokeCommercial(
+  companyId: string,
+  actorUserId: string | null,
+): Promise<CommercialTreatmentState> {
+  return setCommercialMode(companyId, "none", actorUserId);
 }

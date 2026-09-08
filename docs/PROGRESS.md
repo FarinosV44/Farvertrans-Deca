@@ -1466,3 +1466,24 @@ to `B21810452` via `/admin/empresas/[id]`.
   composes the PDF "CP población" line, threaded through wizard + company quick-fill + duplicate +
   correction + templates + diff. `SavedCompany` left as free-address (out of scope). 184 unit,
   e2e 204/204 (`--workers=1` for the 4 load-flakes), compliance 8/8.
+
+### #84 [RGPD] granular commercial consent — BUILT on `develop`, NOT `main` (D-146, 2026-09-08)
+Evolves DATA #45 into a 3-mode (none/per_deca/all), channel-aware, revocable, audited
+"Tratamiento comercial" opt-in. New `/panel/privacidad` page + nav tab; discreet unchecked
+registration checkbox; compact per-DeCA block in the wizard (separate body key — never in
+`data_json`); per-DeCA withdraw; `DecaAvailabilityShare` (ficha with carrier/destination/date/
+channel/contact ONLY) + `CommercialConsentEvent` audit; drafted legal sections
+(`LEGAL REVIEW PENDING`), `termsVersion` -> `2026-09-15`; admin read-only `/admin/tratamiento-comercial`.
+**No recipient side (none exists) — records sit at `pending`.**
+- Slices on `develop`: model+lib (`542fbdc`), settings+opt-in (`2e2f49e`), per-DeCA capture
+  (`756604a`), legal+admin+docs (`5a7294d`), regression+hand-off (this).
+- **Full gate green at `5a7294d`:** 201 unit, e2e 223 (220 parallel + `admin-2fa:109` /
+  `admin-growth:78` / `content-cms:60` green at `--workers=1`), compliance R-1…R-13 8/8, typecheck,
+  lint (pre-existing warnings only), format, keel:verify. Beat-1 comment posted on #84.
+- Migration `20260908140000_commercial_treatment` is **LOCAL DEV ONLY**. **NOT merged to `main`,
+  NOT `prisma migrate deploy`'d.** Per the issue: functional + legal review of the drafted text,
+  then the user authorises (a) the production migration and (b) the `main` merge. Overrides this
+  run's standing "push to main".
+- **Current position / next action:** #84 is complete on `develop` and waiting on the user
+  (legal review → authorise migration + `main` merge → redeploy). No further code work on #84
+  unless the review returns changes.

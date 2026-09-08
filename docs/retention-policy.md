@@ -16,6 +16,9 @@ never destroys a generated document.
 | `pdf_sha256` per version | With the version row | Postgres |
 | `deca_access_log` (hashed IP + timestamp) | Indefinite in v1 (audit minimalism — no PII) | Postgres |
 | `claim_token` | 30 days TTL, then inert (the DeCA itself is unaffected) | Postgres |
+| `commercial_consent` (one row/company — mode + channel + contact + accepted legal version) | Kept while the account exists; cascades on company deletion. Reset to `none` on the #84 migration | Postgres |
+| `commercial_consent_event` (append-only audit of every treatment change / prepared / withdrawn record) | Kept as evidence of the authorisation for the life of the account; cascades on company deletion. No more DeCA content than needed to evidence consent | Postgres |
+| `deca_availability_share` (the "ficha de disponibilidad comercial" — carrier name, destination, date, channel, contact only) | One row per DeCA that opted in; cascades on DeCA or company deletion. Status `pending` until withdrawn — never transmitted anywhere yet (#84) | Postgres |
 
 **Minimum guarantee:** every generated DeCA and every version's PDF is retained
 for **at least one year** while Farvertrans acts as the repository holding the

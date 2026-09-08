@@ -311,6 +311,8 @@ export const ca = {
       andAccept: "i accepto els",
       termsAndConditions: "Termes i Condicions",
     },
+    commercialOptIn:
+      "Vull rebre propostes personalitzades de càrrega de carregadors interessats, compartint les dades mínimes de disponibilitat dels meus ports. Ho podré canviar en qualsevol moment.",
     submit: {
       register: "Crear compte gratis",
       login: "Entra",
@@ -414,7 +416,53 @@ export const ca = {
       datos: "Dades habituals",
       equipo: "Equip",
       empresa: "La meva empresa",
+      privacidad: "Privadesa",
       ayuda: "Ajuda",
+    },
+    privacy: {
+      title: "Privadesa i comunicacions",
+      intro:
+        "Aquí decideixes si DeCA Profesional pot comunicar unes poques dades de disponibilitat dels teus ports a carregadors interessats a oferir-te propostes comercials personalitzades i preferents de càrrega. És voluntari i ho pots canviar quan vulguis.",
+      freeUseNote:
+        "No autoritzar aquesta comunicació no afecta en res l'ús gratuït de DeCA Profesional.",
+      sectionTitle: "Tractament comercial",
+      modeLegend: "Quan vols compartir la disponibilitat dels teus ports?",
+      modes: {
+        none: "No compartir en cap port",
+        noneHint: "Cap dada comercial surt dels teus DeCA. És l'opció per defecte.",
+        perDeca: "Pregunta-m'ho a cada DeCA",
+        perDecaHint:
+          "Ho decideixes port a port en crear cada DeCA. El control estarà desactivat per defecte.",
+        all: "Compartir en tots els ports, tret que ho desactivi",
+        allHint:
+          "Es prepara la fitxa de disponibilitat per a cada DeCA nou. Ho pots desactivar en un port concret abans d'emetre'l.",
+      },
+      channelLegend: "Canal de contacte autoritzat",
+      channels: { email: "Correu electrònic", phone: "Telèfon", both: "Correu i telèfon" },
+      channelEmailLabel: "Correu per a propostes",
+      channelPhoneLabel: "Telèfon per a propostes",
+      previewTitle: "Dades que es compartiran",
+      previewFields: {
+        carrierName: "Empresa o nom del transportista",
+        destination: "Destinació o zona de disponibilitat del vehicle",
+        availabilityDate: "Data estimada d'arribada o disponibilitat",
+        contactEmail: "Adreça de correu autoritzada",
+        contactPhone: "Número de telèfon autoritzat",
+      },
+      previewNever:
+        "Mai no es comparteix l'origen, el carregador, l'adreça de càrrega, la mercaderia, el preu, les matrícules, el conductor ni el document, l'URL o el QR del DeCA.",
+      moreInfo: "Més informació",
+      moreInfoBody:
+        "El receptor només rep una fitxa de disponibilitat amb els camps anteriors; no accedeix al teu compte ni al DeCA. Pots retirar l'autorització en qualsevol moment: la retirada és immediata per a les comunicacions futures i no afecta les ja fetes lícitament ni cap DeCA.",
+      acceptedAt: (s) => `Autorització registrada el ${s}`,
+      notAuthorized: "Sense autorització activa",
+      revoke: "Retirar l'autorització",
+      revokeConfirm:
+        "Vols retirar l'autorització? Deixarà de preparar-se la fitxa de disponibilitat per als teus propers ports. No afecta cap DeCA.",
+      save: "Desa",
+      saved: "Preferència desada.",
+      error: "No s'ha pogut desar la teva preferència.",
+      ownerOnly: "Només l'administrador de l'empresa pot canviar aquesta preferència.",
     },
     help: {
       title: "Ajuda i suport",
@@ -615,6 +663,20 @@ export const ca = {
       goods: "Mercaderia",
       weight: "Pes o mesura",
       reference: "Referència",
+      commercialShare: "Propostes de càrrega",
+      commercialShareOn: "Sí — es prepara la fitxa de disponibilitat",
+      commercialShareOff: "No",
+    },
+    commercialShare: {
+      legend: "Tractament comercial (opcional)",
+      hint: "Si vols, autoritza l'enviament de les dades mínimes de disponibilitat d'aquest port per rebre propostes personalitzades de càrrega. No autoritzar-ho no afecta l'ús gratuït de DeCA Profesional.",
+      enable: "Vull rebre ofertes personalitzades en finalitzar aquest port",
+      destination: "Destinació o zona de disponibilitat",
+      date: "Data estimada de disponibilitat",
+      channel: "Canal de contacte",
+      channels: { email: "Correu electrònic", phone: "Telèfon", both: "Correu i telèfon" },
+      previewTitle: "Només s'enviarà:",
+      manage: "Canvia la meva preferència general a Privadesa",
     },
     buttons: {
       back: "Enrere",

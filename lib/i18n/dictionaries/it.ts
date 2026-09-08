@@ -312,6 +312,8 @@ export const it = {
       andAccept: "e accetto i",
       termsAndConditions: "Termini e Condizioni",
     },
+    commercialOptIn:
+      "Voglio ricevere proposte personalizzate di carico da caricatori interessati, condividendo i dati minimi di disponibilità dei miei trasporti. Potrò modificarlo in qualsiasi momento.",
     submit: {
       register: "Crea account gratuito",
       login: "Accedi",
@@ -416,7 +418,53 @@ export const it = {
       datos: "Dati abituali",
       equipo: "Team",
       empresa: "La mia azienda",
+      privacidad: "Privacy",
       ayuda: "Aiuto",
+    },
+    privacy: {
+      title: "Privacy e comunicazioni",
+      intro:
+        "Qui decidi se DeCA Profesional può comunicare alcuni dati di disponibilità dei tuoi trasporti a caricatori interessati a proporti offerte commerciali personalizzate e preferenziali di carico. È facoltativo e puoi modificarlo quando vuoi.",
+      freeUseNote:
+        "Non autorizzare questa comunicazione non incide in alcun modo sull'uso gratuito di DeCA Profesional.",
+      sectionTitle: "Trattamento commerciale",
+      modeLegend: "Quando vuoi condividere la disponibilità dei tuoi trasporti?",
+      modes: {
+        none: "Non condividere in nessun trasporto",
+        noneHint: "Nessun dato commerciale esce dai tuoi DeCA. È l'opzione predefinita.",
+        perDeca: "Chiedimelo a ogni DeCA",
+        perDecaHint:
+          "Decidi trasporto per trasporto durante la creazione di ogni DeCA. Il controllo è disattivato per impostazione predefinita.",
+        all: "Condividi in tutti i trasporti, salvo disattivazione",
+        allHint:
+          "Per ogni nuovo DeCA viene preparata la scheda di disponibilità. Puoi disattivarla per un trasporto specifico prima di emetterlo.",
+      },
+      channelLegend: "Canale di contatto autorizzato",
+      channels: { email: "E-mail", phone: "Telefono", both: "E-mail e telefono" },
+      channelEmailLabel: "E-mail per le proposte",
+      channelPhoneLabel: "Telefono per le proposte",
+      previewTitle: "Dati che verranno condivisi",
+      previewFields: {
+        carrierName: "Azienda o nome del trasportatore",
+        destination: "Destinazione o zona di disponibilità del veicolo",
+        availabilityDate: "Data stimata di arrivo o disponibilità",
+        contactEmail: "Indirizzo e-mail autorizzato",
+        contactPhone: "Numero di telefono autorizzato",
+      },
+      previewNever:
+        "L'origine, il caricatore, l'indirizzo di carico, la merce, il prezzo, le targhe, il conducente e il documento, l'URL o il QR del DeCA non vengono mai condivisi.",
+      moreInfo: "Maggiori informazioni",
+      moreInfoBody:
+        "Il destinatario riceve solo una scheda di disponibilità con i campi indicati sopra; non accede al tuo account né al DeCA. Puoi ritirare l'autorizzazione in qualsiasi momento: il ritiro è immediato per le comunicazioni future e non incide su quelle già effettuate lecitamente né su alcun DeCA.",
+      acceptedAt: (s) => `Autorizzazione registrata il ${s}`,
+      notAuthorized: "Nessuna autorizzazione attiva",
+      revoke: "Ritira l'autorizzazione",
+      revokeConfirm:
+        "Ritirare l'autorizzazione? La scheda di disponibilità non verrà più preparata per i tuoi prossimi trasporti. Non incide su alcun DeCA.",
+      save: "Salva",
+      saved: "Preferenza salvata.",
+      error: "Non è stato possibile salvare la tua preferenza.",
+      ownerOnly: "Solo l'amministratore dell'azienda può modificare questa preferenza.",
     },
     help: {
       title: "Aiuto e assistenza",
@@ -614,6 +662,20 @@ export const it = {
       goods: "Merce",
       weight: "Peso o misura",
       reference: "Riferimento",
+      commercialShare: "Proposte di carico",
+      commercialShareOn: "Sì — viene preparata la scheda di disponibilità",
+      commercialShareOff: "No",
+    },
+    commercialShare: {
+      legend: "Trattamento commerciale (facoltativo)",
+      hint: "Se vuoi, autorizza l'invio dei dati minimi di disponibilità di questo trasporto per ricevere proposte personalizzate di carico. Non autorizzarlo non incide sull'uso gratuito di DeCA Profesional.",
+      enable: "Voglio ricevere proposte personalizzate al termine di questo trasporto",
+      destination: "Destinazione o zona di disponibilità",
+      date: "Data stimata di disponibilità",
+      channel: "Canale di contatto",
+      channels: { email: "E-mail", phone: "Telefono", both: "E-mail e telefono" },
+      previewTitle: "Verrà inviato solo:",
+      manage: "Modifica la mia preferenza generale in Privacy",
     },
     buttons: {
       back: "Indietro",

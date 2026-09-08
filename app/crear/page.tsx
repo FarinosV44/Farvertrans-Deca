@@ -13,6 +13,7 @@ import {
 import { getCurrentUser } from "@/lib/auth";
 import { getDraft } from "@/lib/deca/draft";
 import { getDecaForDuplicate } from "@/lib/data/history";
+import { getCommercialTreatment } from "@/lib/consent";
 import { listSaved } from "@/lib/data/saved";
 import { listTemplates } from "@/lib/data/templates";
 import { LEAD_COOKIE } from "@/lib/deca/lead";
@@ -97,15 +98,20 @@ export default async function CrearPage({
   let initial: WizardInitial | undefined;
   let saved: SavedData | undefined;
   let templates: WizardTemplate[] | undefined;
+  let commercialTreatment:
+    | { mode: "none" | "per_deca" | "all"; channel: "email" | "phone" | "both" | null }
+    | undefined;
 
   if (user?.companyId) {
-    const [s, t, source] = await Promise.all([
+    const [s, t, source, treatment] = await Promise.all([
       listSaved(user.companyId),
       listTemplates(user.companyId),
       from ? getDecaForDuplicate(user.companyId, from) : Promise.resolve(null),
+      getCommercialTreatment(user.companyId),
     ]);
     saved = s;
     templates = t;
+    commercialTreatment = { mode: treatment.mode, channel: treatment.channel };
     // #76: resume the user's saved draft (only when not duplicating).
     if (!source) {
       const draft = await getDraft(user.id);
@@ -177,6 +183,7 @@ export default async function CrearPage({
                     }
                   : undefined
               }
+              commercialTreatment={commercialTreatment}
             />
           </div>
           <div className="hidden lg:sticky lg:top-24 lg:block">

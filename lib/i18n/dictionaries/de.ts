@@ -313,6 +313,8 @@ export const de = {
       andAccept: "gelesen und akzeptiere die",
       termsAndConditions: "Allgemeinen Geschäftsbedingungen",
     },
+    commercialOptIn:
+      "Ich möchte personalisierte Frachtangebote von interessierten Verladern erhalten und dafür die minimalen Verfügbarkeitsdaten meiner Transporte teilen. Ich kann das jederzeit ändern.",
     submit: {
       register: "Kostenloses Konto erstellen",
       login: "Anmelden",
@@ -420,7 +422,54 @@ export const de = {
       datos: "Übliche Daten",
       equipo: "Team",
       empresa: "Mein Unternehmen",
+      privacidad: "Datenschutz",
       ayuda: "Hilfe",
+    },
+    privacy: {
+      title: "Datenschutz und Kommunikation",
+      intro:
+        "Hier entscheiden Sie, ob DeCA Profesional einige Verfügbarkeitsdaten Ihrer Transporte an Verlader weitergeben darf, die Ihnen personalisierte und bevorzugte Frachtangebote machen möchten. Das ist freiwillig und jederzeit änderbar.",
+      freeUseNote:
+        "Wenn Sie diese Kommunikation nicht erlauben, hat das keinerlei Auswirkung auf die kostenlose Nutzung von DeCA Profesional.",
+      sectionTitle: "Kommerzielle Verarbeitung",
+      modeLegend: "Wann möchten Sie die Verfügbarkeit Ihrer Transporte teilen?",
+      modes: {
+        none: "Bei keinem Transport teilen",
+        noneHint: "Es verlassen keine kommerziellen Daten Ihre DeCAs. Das ist die Standardoption.",
+        perDeca: "Bei jedem DeCA nachfragen",
+        perDecaHint:
+          "Sie entscheiden pro Transport beim Erstellen jedes DeCA. Die Option ist standardmäßig deaktiviert.",
+        all: "Bei allen Transporten teilen, sofern nicht deaktiviert",
+        allHint:
+          "Für jedes neue DeCA wird ein Verfügbarkeitsdatensatz vorbereitet. Sie können ihn für einen bestimmten Transport vor der Ausstellung deaktivieren.",
+      },
+      channelLegend: "Zugelassener Kontaktkanal",
+      channels: { email: "E-Mail", phone: "Telefon", both: "E-Mail und Telefon" },
+      channelEmailLabel: "E-Mail für Angebote",
+      channelPhoneLabel: "Telefon für Angebote",
+      previewTitle: "Daten, die geteilt werden",
+      previewFields: {
+        carrierName: "Unternehmen oder Name des Transportunternehmers",
+        destination: "Zielort oder Verfügbarkeitsgebiet des Fahrzeugs",
+        availabilityDate: "Voraussichtliches Ankunfts- oder Verfügbarkeitsdatum",
+        contactEmail: "Zugelassene E-Mail-Adresse",
+        contactPhone: "Zugelassene Telefonnummer",
+      },
+      previewNever:
+        "Herkunft, Verlader, Ladeadresse, Ware, Preis, Kennzeichen, Fahrer sowie das DeCA-Dokument, die URL oder der QR-Code werden nie geteilt.",
+      moreInfo: "Mehr Informationen",
+      moreInfoBody:
+        "Der Empfänger erhält nur einen Verfügbarkeitsdatensatz mit den obigen Feldern; er hat keinen Zugriff auf Ihr Konto oder das DeCA. Sie können die Einwilligung jederzeit widerrufen: Der Widerruf gilt sofort für künftige Mitteilungen und berührt weder bereits rechtmäßig erfolgte Mitteilungen noch ein DeCA.",
+      acceptedAt: (s) => `Einwilligung erfasst am ${s}`,
+      notAuthorized: "Keine aktive Einwilligung",
+      revoke: "Einwilligung widerrufen",
+      revokeConfirm:
+        "Einwilligung widerrufen? Für Ihre nächsten Transporte wird kein Verfügbarkeitsdatensatz mehr vorbereitet. Kein DeCA ist betroffen.",
+      save: "Speichern",
+      saved: "Einstellung gespeichert.",
+      error: "Ihre Einstellung konnte nicht gespeichert werden.",
+      ownerOnly:
+        "Nur die Administratorin bzw. der Administrator des Unternehmens kann diese Einstellung ändern.",
     },
     help: {
       title: "Hilfe und Support",
@@ -623,6 +672,20 @@ export const de = {
       goods: "Ware",
       weight: "Gewicht oder Maß",
       reference: "Referenz",
+      commercialShare: "Frachtangebote",
+      commercialShareOn: "Ja — ein Verfügbarkeitsdatensatz wird vorbereitet",
+      commercialShareOff: "Nein",
+    },
+    commercialShare: {
+      legend: "Kommerzielle Verarbeitung (optional)",
+      hint: "Erlauben Sie bei Bedarf das Senden der minimalen Verfügbarkeitsdaten dieses Transports, um personalisierte Frachtangebote zu erhalten. Eine Ablehnung wirkt sich nicht auf die kostenlose Nutzung von DeCA Profesional aus.",
+      enable: "Ich möchte am Ende dieses Transports personalisierte Angebote erhalten",
+      destination: "Zielort oder Verfügbarkeitsgebiet",
+      date: "Voraussichtliches Verfügbarkeitsdatum",
+      channel: "Kontaktkanal",
+      channels: { email: "E-Mail", phone: "Telefon", both: "E-Mail und Telefon" },
+      previewTitle: "Es wird nur Folgendes gesendet:",
+      manage: "Meine allgemeine Einstellung unter Datenschutz ändern",
     },
     buttons: {
       back: "Zurück",

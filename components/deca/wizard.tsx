@@ -41,6 +41,12 @@ type FormState = {
   tractorPlate: string;
   trailerPlate: string;
   reference: string;
+  // #84 — per-DeCA commercial-share opt-in. NOT part of the legal payload:
+  // sent as a separate body key, never written to `data_json`.
+  commercialShareEnabled: string; // "1" | ""
+  commercialShareDestination: string;
+  commercialShareDate: string;
+  commercialShareChannel: string; // "" | "email" | "phone" | "both"
 };
 
 const EMPTY: FormState = {
@@ -73,6 +79,10 @@ const EMPTY: FormState = {
   tractorPlate: "",
   trailerPlate: "",
   reference: "",
+  commercialShareEnabled: "",
+  commercialShareDestination: "",
+  commercialShareDate: "",
+  commercialShareChannel: "",
 };
 
 const STORAGE_KEY = "fvd_crear_draft";
@@ -276,6 +286,18 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
         [r.goods, form.goods],
         [r.weight, form.weight],
         ...(form.reference ? ([[r.reference, form.reference]] as [string, string][]) : []),
+        ...(form.commercialShareEnabled === "1"
+          ? ([
+              [
+                r.commercialShare,
+                `${r.commercialShareOn}${
+                  form.commercialShareDestination || form.unloadLocationCity
+                    ? ` · ${form.commercialShareDestination || form.unloadLocationCity}`
+                    : ""
+                }`,
+              ],
+            ] as [string, string][])
+          : []),
       ],
     },
   ];
@@ -464,6 +486,7 @@ export function CrearWizard({
   saved,
   templates,
   company,
+  commercialTreatment,
   correctDecaId,
   authed = false,
   emailVerified = false,
@@ -473,6 +496,11 @@ export function CrearWizard({
   templates?: WizardTemplate[];
   /** The logged-in company, for "usar mi empresa" (UX #25). */
   company?: WizardCompany;
+  /** The company's commercial-treatment preference (#84). Absent → no block. */
+  commercialTreatment?: {
+    mode: "none" | "per_deca" | "all";
+    channel: "email" | "phone" | "both" | null;
+  };
   /** When set, the wizard corrects an existing DeCA → a new version (R-13). */
   correctDecaId?: string;
   /**
@@ -496,8 +524,14 @@ export function CrearWizard({
   const isCorrection = !!correctDecaId;
   const showLeadGate = !isCorrection && !authed;
   const needsVerification = !isCorrection && authed && !emailVerified;
+  // #84 — the per-DeCA commercial block only exists for a logged-in company
+  // that has opted into some sharing mode; never for the anonymous one-shot or
+  // a correction.
+  const showCommercialShare =
+    authed && !isCorrection && !!company && (commercialTreatment?.mode ?? "none") !== "none";
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(initial ? { ...EMPTY, ...initial } : EMPTY);
+  const commercialShareOn = showCommercialShare && form.commercialShareEnabled === "1";
   const [reason, setReason] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -538,6 +572,27 @@ export function CrearWizard({
   const failureRef = useRef<HTMLDivElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
+
+  // #84 — "all" means the porte control starts ON (still removable per porte).
+  // "per_deca" starts OFF. Only set the default once, on mount.
+  const commercialDefaultRef = useRef(false);
+  useEffect(() => {
+    if (commercialDefaultRef.current) return;
+    commercialDefaultRef.current = true;
+    if (
+      showCommercialShare &&
+      commercialTreatment?.mode === "all" &&
+      !initial?.commercialShareEnabled
+    ) {
+      setForm((f) => ({
+        ...f,
+        commercialShareEnabled: "1",
+        commercialShareChannel:
+          f.commercialShareChannel || (commercialTreatment.channel ?? "email"),
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Restore a draft on mount; fire deca_started once. A duplicate (`initial`)
   // always wins over a stale draft.
@@ -715,6 +770,19 @@ export function CrearWizard({
         // D-060: opportunistic lead capture for an anonymous first DeCA — the
         // server ignores these fields for an authenticated caller.
         ...(showLeadGate ? { leadName, leadEmail } : {}),
+        // #84: per-DeCA commercial-share opt-in. A SEPARATE key — never merged
+        // into the legal payload, never written to `data_json`. Only sent when
+        // the operator ticked the box; the server re-checks the live preference.
+        ...(commercialShareOn
+          ? {
+              commercialShare: {
+                enabled: true,
+                destination: form.commercialShareDestination.trim() || undefined,
+                availabilityDate: form.commercialShareDate.trim() || undefined,
+                channel: form.commercialShareChannel || commercialTreatment?.channel || "email",
+              },
+            }
+          : {}),
       }),
     });
   }
@@ -1553,6 +1621,81 @@ export function CrearWizard({
                 )}
               </div>
             )}
+          </fieldset>
+        )}
+
+        {step === 2 && showCommercialShare && (
+          <fieldset
+            data-testid="commercial-share"
+            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4"
+          >
+            <legend className="px-1 text-sm font-bold">{t.crear.commercialShare.legend}</legend>
+            <p className="text-xs text-[var(--color-text-muted)]">{t.crear.commercialShare.hint}</p>
+            <label className="mt-3 flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                data-testid="commercial-share-enable"
+                checked={form.commercialShareEnabled === "1"}
+                onChange={(e) => set("commercialShareEnabled")(e.target.checked ? "1" : "")}
+                className="mt-0.5 h-4 w-4 shrink-0"
+              />
+              <span>{t.crear.commercialShare.enable}</span>
+            </label>
+            {form.commercialShareEnabled === "1" && (
+              <div className="mt-3 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="font-medium">{t.crear.commercialShare.destination}</span>
+                    <input
+                      data-testid="commercial-share-destination"
+                      value={form.commercialShareDestination}
+                      placeholder={form.unloadLocationCity}
+                      onChange={(e) => set("commercialShareDestination")(e.target.value)}
+                      className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="font-medium">{t.crear.commercialShare.date}</span>
+                    <input
+                      type="date"
+                      data-testid="commercial-share-date"
+                      value={form.commercialShareDate}
+                      placeholder={form.unloadDate}
+                      onChange={(e) => set("commercialShareDate")(e.target.value)}
+                      className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                    />
+                  </label>
+                </div>
+                <label className="block text-sm">
+                  <span className="font-medium">{t.crear.commercialShare.channel}</span>
+                  <select
+                    data-testid="commercial-share-channel"
+                    value={form.commercialShareChannel || commercialTreatment?.channel || "email"}
+                    onChange={(e) => set("commercialShareChannel")(e.target.value)}
+                    className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm sm:max-w-xs"
+                  >
+                    <option value="email">{t.crear.commercialShare.channels.email}</option>
+                    <option value="phone">{t.crear.commercialShare.channels.phone}</option>
+                    <option value="both">{t.crear.commercialShare.channels.both}</option>
+                  </select>
+                </label>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  {t.crear.commercialShare.previewTitle} {t.crear.fields.name},{" "}
+                  {t.crear.commercialShare.destination}, {t.crear.commercialShare.date}
+                  {(form.commercialShareChannel || commercialTreatment?.channel || "email") !==
+                    "phone" && `, ${t.panel.privacy.previewFields.contactEmail}`}
+                  {(form.commercialShareChannel || commercialTreatment?.channel || "email") !==
+                    "email" && `, ${t.panel.privacy.previewFields.contactPhone}`}
+                  .
+                </p>
+              </div>
+            )}
+            <Link
+              href="/panel/privacidad"
+              className="mt-3 inline-block text-xs font-medium text-[var(--color-primary)]"
+            >
+              {t.crear.commercialShare.manage}
+            </Link>
           </fieldset>
         )}
 

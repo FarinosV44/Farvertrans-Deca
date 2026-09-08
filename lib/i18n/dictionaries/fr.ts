@@ -312,6 +312,8 @@ export const fr = {
       andAccept: "et j'accepte les",
       termsAndConditions: "Conditions Générales",
     },
+    commercialOptIn:
+      "Je souhaite recevoir des propositions personnalisées de fret de la part de chargeurs intéressés, en partageant les informations minimales de disponibilité de mes transports. Je pourrai le modifier à tout moment.",
     submit: {
       register: "Créer un compte gratuit",
       login: "Connexion",
@@ -417,7 +419,57 @@ export const fr = {
       datos: "Données habituelles",
       equipo: "Équipe",
       empresa: "Mon entreprise",
+      privacidad: "Confidentialité",
       ayuda: "Aide",
+    },
+    privacy: {
+      title: "Confidentialité et communications",
+      intro:
+        "Vous décidez ici si DeCA Profesional peut communiquer quelques informations de disponibilité de vos transports à des chargeurs intéressés pour vous adresser des propositions commerciales personnalisées et préférentielles de fret. C'est facultatif et modifiable à tout moment.",
+      freeUseNote:
+        "Ne pas autoriser cette communication n'affecte en rien l'usage gratuit de DeCA Profesional.",
+      sectionTitle: "Traitement commercial",
+      modeLegend: "Quand souhaitez-vous partager la disponibilité de vos transports ?",
+      modes: {
+        none: "Ne partager sur aucun transport",
+        noneHint: "Aucune donnée commerciale ne sort de vos DeCA. C'est l'option par défaut.",
+        perDeca: "Me demander à chaque DeCA",
+        perDecaHint:
+          "Vous décidez transport par transport lors de la création de chaque DeCA. Le contrôle est désactivé par défaut.",
+        all: "Partager sur tous les transports, sauf désactivation",
+        allHint:
+          "Une fiche de disponibilité est préparée pour chaque nouveau DeCA. Vous pouvez la désactiver sur un transport précis avant de l'émettre.",
+      },
+      channelLegend: "Canal de contact autorisé",
+      channels: {
+        email: "Courrier électronique",
+        phone: "Téléphone",
+        both: "Courriel et téléphone",
+      },
+      channelEmailLabel: "Courriel pour les propositions",
+      channelPhoneLabel: "Téléphone pour les propositions",
+      previewTitle: "Données qui seront partagées",
+      previewFields: {
+        carrierName: "Entreprise ou nom du transporteur",
+        destination: "Destination ou zone de disponibilité du véhicule",
+        availabilityDate: "Date estimée d'arrivée ou de disponibilité",
+        contactEmail: "Adresse électronique autorisée",
+        contactPhone: "Numéro de téléphone autorisé",
+      },
+      previewNever:
+        "L'origine, le chargeur, l'adresse de chargement, la marchandise, le prix, les plaques, le conducteur ainsi que le document, l'URL ou le QR du DeCA ne sont jamais partagés.",
+      moreInfo: "Plus d'informations",
+      moreInfoBody:
+        "Le destinataire ne reçoit qu'une fiche de disponibilité avec les champs ci-dessus ; il n'accède ni à votre compte ni au DeCA. Vous pouvez retirer l'autorisation à tout moment : le retrait est immédiat pour les communications futures et n'affecte ni celles déjà effectuées licitement ni aucun DeCA.",
+      acceptedAt: (s) => `Autorisation enregistrée le ${s}`,
+      notAuthorized: "Aucune autorisation active",
+      revoke: "Retirer l'autorisation",
+      revokeConfirm:
+        "Retirer l'autorisation ? La fiche de disponibilité ne sera plus préparée pour vos prochains transports. Cela n'affecte aucun DeCA.",
+      save: "Enregistrer",
+      saved: "Préférence enregistrée.",
+      error: "Votre préférence n'a pas pu être enregistrée.",
+      ownerOnly: "Seul l'administrateur de l'entreprise peut modifier cette préférence.",
     },
     help: {
       title: "Aide et assistance",
@@ -620,6 +672,24 @@ export const fr = {
       goods: "Marchandise",
       weight: "Poids ou mesure",
       reference: "Référence",
+      commercialShare: "Propositions de fret",
+      commercialShareOn: "Oui — une fiche de disponibilité est préparée",
+      commercialShareOff: "Non",
+    },
+    commercialShare: {
+      legend: "Traitement commercial (facultatif)",
+      hint: "Si vous le souhaitez, autorisez l'envoi des informations minimales de disponibilité de ce transport pour recevoir des propositions personnalisées de fret. Le refus n'affecte pas l'usage gratuit de DeCA Profesional.",
+      enable: "Je souhaite recevoir des propositions personnalisées à la fin de ce transport",
+      destination: "Destination ou zone de disponibilité",
+      date: "Date estimée de disponibilité",
+      channel: "Canal de contact",
+      channels: {
+        email: "Courrier électronique",
+        phone: "Téléphone",
+        both: "Courriel et téléphone",
+      },
+      previewTitle: "Seront envoyés uniquement :",
+      manage: "Modifier ma préférence générale dans Confidentialité",
     },
     buttons: {
       back: "Retour",

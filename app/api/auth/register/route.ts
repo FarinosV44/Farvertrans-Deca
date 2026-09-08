@@ -23,6 +23,9 @@ const schema = z.object({
   companyEmail: z.string().trim().max(160).optional().default(""),
   companyProfile: z.enum(["carrier_goods", "shipper", "operator", "carrier_passengers"]).optional(),
   acceptTerms: z.boolean(),
+  /** #84 — discreet, never required. `true` sets the company's commercial
+   *  treatment to `all`; absent/`false` leaves it at `none`. */
+  commercialOptIn: z.boolean().optional().default(false),
   claim: z.string().trim().max(200).optional(),
   invite: z.string().trim().max(200).optional(),
 });
@@ -134,6 +137,25 @@ export async function POST(req: Request) {
     await writeAcquisitionAtSignup(created.userId, created.companyId);
   } catch {
     // attribution is best-effort — never block signup
+  }
+
+  // #84 — the discreet registration opt-in sets the global commercial treatment
+  // to "all". Never required; a signup that joins a team (no own company) or
+  // leaves it unticked is untouched.
+  if (b.commercialOptIn && created.companyId && !created.joinedTeam) {
+    try {
+      const { setCommercialMode, setCommercialChannel } = await import("@/lib/consent");
+      await setCommercialMode(created.companyId, "all", created.userId);
+      // Default the channel to the company email so the opt-in is complete; the
+      // owner can change it on /panel/privacidad.
+      await setCommercialChannel(
+        created.companyId,
+        { channel: "email", contactEmail: b.companyEmail || b.email },
+        created.userId,
+      );
+    } catch {
+      // never block signup on the commercial-preference write
+    }
   }
 
   // Prospect onboarding link (GROWTH #28): link the company back to the prospect

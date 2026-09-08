@@ -6,11 +6,20 @@ import {
   BuildingIcon,
   UsersIcon,
   GearIcon,
+  ShieldIcon,
   LifebuoyIcon,
 } from "@/components/panel/icons";
 import { getDictionary } from "@/lib/i18n/server";
 
-type TabKey = "home" | "historico" | "plantillas" | "datos" | "equipo" | "empresa" | "ayuda";
+type TabKey =
+  | "home"
+  | "historico"
+  | "plantillas"
+  | "datos"
+  | "equipo"
+  | "empresa"
+  | "privacidad"
+  | "ayuda";
 type IconCmp = (props: {
   width?: number;
   height?: number;
@@ -24,6 +33,7 @@ const TAB_META: Record<TabKey, { href: string; Icon: IconCmp }> = {
   datos: { href: "/panel/datos", Icon: BuildingIcon },
   equipo: { href: "/panel/equipo", Icon: UsersIcon },
   empresa: { href: "/panel/empresa", Icon: GearIcon },
+  privacidad: { href: "/panel/privacidad", Icon: ShieldIcon },
   ayuda: { href: "/panel/ayuda", Icon: LifebuoyIcon },
 };
 
@@ -39,7 +49,7 @@ const TAB_META: Record<TabKey, { href: string; Icon: IconCmp }> = {
  */
 const GROUPS: { labelKey: "work" | "company" | "help"; keys: TabKey[] }[] = [
   { labelKey: "work", keys: ["home", "historico", "plantillas", "datos"] },
-  { labelKey: "company", keys: ["equipo", "empresa"] },
+  { labelKey: "company", keys: ["equipo", "empresa", "privacidad"] },
   { labelKey: "help", keys: ["ayuda"] },
 ];
 

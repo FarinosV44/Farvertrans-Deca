@@ -6,10 +6,12 @@ import { AppNav } from "@/components/app/app-nav";
 import { ResultActions } from "@/components/deca/result-actions";
 import { SaveTemplate } from "@/components/deca/save-template";
 import { DocSummary } from "@/components/deca/doc-summary";
+import { AvailabilityNotice } from "@/components/deca/availability-notice";
 import { QrCard } from "@/components/deca/qr-card";
 import { VersionTimeline, ChangeList } from "@/components/deca/version-timeline";
 import { getCurrentUser } from "@/lib/auth";
 import { getDecaCockpit } from "@/lib/deca/detail";
+import { getAvailabilityShare } from "@/lib/commercial/availability";
 import { qrPngDataUriCached } from "@/lib/pdf/qr";
 import { formatLocationShort } from "@/lib/deca/location";
 
@@ -27,7 +29,10 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
   if (!doc) notFound();
 
   const c = doc.current;
-  const qr = await qrPngDataUriCached(c.publicUrl);
+  const [qr, availability] = await Promise.all([
+    qrPngDataUriCached(c.publicUrl),
+    getAvailabilityShare(id, user.companyId),
+  ]);
 
   return (
     <>
@@ -92,6 +97,14 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="mt-8 space-y-8">
+          {availability && (
+            <AvailabilityNotice
+              decaId={doc.id}
+              status={availability.status}
+              destination={availability.destination}
+              canWithdraw={user.companyRole === "owner"}
+            />
+          )}
           <QrCard qrDataUri={qr} publicUrl={c.publicUrl} versionNo={c.versionNo} />
 
           <section aria-labelledby="datos-h">

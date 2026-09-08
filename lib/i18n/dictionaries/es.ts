@@ -303,6 +303,8 @@ export const es = {
       andAccept: "y acepto los",
       termsAndConditions: "Términos y Condiciones",
     },
+    commercialOptIn:
+      "Quiero recibir propuestas personalizadas de carga de cargadores interesados, compartiendo los datos mínimos de disponibilidad de mis portes. Podré cambiarlo en cualquier momento.",
     submit: {
       register: "Crear cuenta gratis",
       login: "Entrar",
@@ -406,7 +408,53 @@ export const es = {
       datos: "Datos habituales",
       equipo: "Equipo",
       empresa: "Mi empresa",
+      privacidad: "Privacidad",
       ayuda: "Ayuda",
+    },
+    privacy: {
+      title: "Privacidad y comunicaciones",
+      intro:
+        "Aquí decides si DeCA Profesional puede comunicar unos pocos datos de disponibilidad de tus portes a cargadores interesados en ofrecerte propuestas comerciales personalizadas y preferentes de carga. Es voluntario y puedes cambiarlo cuando quieras.",
+      freeUseNote:
+        "No autorizar esta comunicación no afecta en nada al uso gratuito de DeCA Profesional.",
+      sectionTitle: "Tratamiento comercial",
+      modeLegend: "¿Cuándo quieres compartir la disponibilidad de tus portes?",
+      modes: {
+        none: "No compartir en ningún porte",
+        noneHint: "Ningún dato comercial sale de tus DeCA. Es la opción por defecto.",
+        perDeca: "Preguntarme en cada DeCA",
+        perDecaHint:
+          "Lo decides porte a porte al crear cada DeCA. El control estará desactivado por defecto.",
+        all: "Compartir en todos los portes, salvo que lo desactive",
+        allHint:
+          "Se prepara la ficha de disponibilidad para cada nuevo DeCA. Puedes desactivarlo en un porte concreto antes de emitirlo.",
+      },
+      channelLegend: "Canal de contacto autorizado",
+      channels: { email: "Correo electrónico", phone: "Teléfono", both: "Correo y teléfono" },
+      channelEmailLabel: "Correo para propuestas",
+      channelPhoneLabel: "Teléfono para propuestas",
+      previewTitle: "Datos que se compartirán",
+      previewFields: {
+        carrierName: "Empresa o nombre del transportista",
+        destination: "Destino o zona de disponibilidad del vehículo",
+        availabilityDate: "Fecha estimada de llegada o disponibilidad",
+        contactEmail: "Correo electrónico autorizado",
+        contactPhone: "Teléfono autorizado",
+      },
+      previewNever:
+        "Nunca se comparte el origen, el cargador, la dirección de carga, la mercancía, el precio, las matrículas, el conductor ni el documento, la URL o el QR del DeCA.",
+      moreInfo: "Más información",
+      moreInfoBody:
+        "El receptor solo recibe una ficha de disponibilidad con los campos anteriores; no accede a tu cuenta ni al DeCA. Puedes retirar la autorización en cualquier momento: la retirada es inmediata para las comunicaciones futuras y no afecta a las ya realizadas lícitamente ni a ningún DeCA.",
+      acceptedAt: (s: string) => `Autorización registrada el ${s}`,
+      notAuthorized: "Sin autorización activa",
+      revoke: "Retirar autorización",
+      revokeConfirm:
+        "¿Retirar la autorización? Dejará de prepararse la ficha de disponibilidad para tus próximos portes. No afecta a ningún DeCA.",
+      save: "Guardar",
+      saved: "Preferencia guardada.",
+      error: "No se pudo guardar tu preferencia.",
+      ownerOnly: "Solo el administrador de la empresa puede cambiar esta preferencia.",
     },
     help: {
       title: "Ayuda y soporte",
@@ -608,6 +656,20 @@ export const es = {
       goods: "Mercancía",
       weight: "Peso o medida",
       reference: "Referencia",
+      commercialShare: "Propuestas de carga",
+      commercialShareOn: "Sí — se prepara la ficha de disponibilidad",
+      commercialShareOff: "No",
+    },
+    commercialShare: {
+      legend: "Tratamiento comercial (opcional)",
+      hint: "Si quieres, autoriza el envío de los datos mínimos de disponibilidad de este porte para recibir propuestas personalizadas de carga. No autorizarlo no afecta al uso gratuito de DeCA Profesional.",
+      enable: "Quiero recibir ofertas personalizadas al finalizar este porte",
+      destination: "Destino o zona de disponibilidad",
+      date: "Fecha estimada de disponibilidad",
+      channel: "Canal de contacto",
+      channels: { email: "Correo electrónico", phone: "Teléfono", both: "Correo y teléfono" },
+      previewTitle: "Se enviará únicamente:",
+      manage: "Cambiar mi preferencia general en Privacidad",
     },
     buttons: {
       back: "Atrás",

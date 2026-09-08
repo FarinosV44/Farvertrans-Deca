@@ -257,9 +257,9 @@ test.describe("ADMIN #33 — internal command center", () => {
           .textContent();
       const before = Number((await kpiValue()) ?? "0");
 
-      // Not consented yet — granting it is what should move the KPI.
+      // Not consented yet — choosing a sharing mode is what should move the KPI (#84).
       const consentRes = await page.request.post("/api/company/consent", {
-        data: { granted: true },
+        data: { mode: "all" },
       });
       expect(consentRes.status()).toBe(200);
 

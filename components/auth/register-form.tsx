@@ -57,6 +57,9 @@ export function RegisterForm({
     companyProfile: "" as "" | (typeof PROFILE_VALUES)[number],
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
+  // #84 — discreet, unchecked, never required. Ticking it sets the company's
+  // global commercial-treatment preference to "all"; leaving it does nothing.
+  const [commercialOptIn, setCommercialOptIn] = useState(false);
   const [mode, setMode] = useState<"register" | "login">(initialMode);
   // AUTH #30: the Google callback fails closed and redirects back here with
   // `?error=...` on any handshake failure — previously silent (no UI ever
@@ -90,7 +93,14 @@ export function RegisterForm({
     const url = mode === "register" ? "/api/auth/register" : "/api/auth/login";
     const body =
       mode === "register"
-        ? { ...f, companyProfile: f.companyProfile || undefined, acceptTerms, claim, invite }
+        ? {
+            ...f,
+            companyProfile: f.companyProfile || undefined,
+            acceptTerms,
+            commercialOptIn,
+            claim,
+            invite,
+          }
         : { email: f.email, password: f.password, claim, invite };
     try {
       const res = await fetch(url, {
@@ -336,6 +346,19 @@ export function RegisterForm({
               </Link>
               .
             </span>
+          </label>
+        )}
+
+        {mode === "register" && !joiningTeam && (
+          <label className="mt-3 flex items-start gap-2 text-xs text-[var(--color-text-muted)]">
+            <input
+              type="checkbox"
+              data-testid="commercial-opt-in"
+              checked={commercialOptIn}
+              onChange={(e) => setCommercialOptIn(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <span>{t.auth.commercialOptIn}</span>
           </label>
         )}
 
