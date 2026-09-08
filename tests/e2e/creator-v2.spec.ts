@@ -112,6 +112,42 @@ test.describe("UX #25 — creator V2", () => {
     await expect(page.locator("#carrierName")).toHaveValue("Operador CV2 SL");
   });
 
+  test("party postal code + población flow onto the review and the generated DeCA (D-145)", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+
+    // "usar mi empresa" also carries the company ficha's CP + población
+    await page.getByTestId("use-my-company-shipper").click();
+    await expect(page.locator("#shipperPostalCode")).toHaveValue("46540");
+    await expect(page.locator("#shipperCity")).toHaveValue("El Puig");
+
+    await page.fill("#carrierName", DECA.carrierName);
+    await page.fill("#carrierNif", DECA.carrierNif);
+    await page.fill("#carrierAddress", DECA.carrierAddress);
+    await page.fill("#carrierPostalCode", "46988");
+    await page.fill("#carrierCity", "Paterna");
+    await page.getByTestId("wizard-next").click();
+    await fillStep2(page);
+    await page.getByTestId("wizard-next").click();
+    await page.fill("#goods", DECA.goods);
+    await page.fill("#weight", DECA.weight);
+    await page.fill("#tractorPlate", DECA.tractorPlate);
+
+    // the review summary shows both parties' postal code + población
+    const review = page.getByTestId("review-summary");
+    await expect(review).toContainText("46540");
+    await expect(review).toContainText("El Puig");
+    await expect(review).toContainText("46988");
+    await expect(review).toContainText("Paterna");
+
+    await page.getByTestId("wizard-generate").click();
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
+    // and they reach the generated document view
+    await expect(page.getByText("46988 Paterna")).toBeVisible();
+  });
+
   test("template: save from a DeCA → appears in the wizard → creates a NEW independent document", async ({
     page,
   }) => {

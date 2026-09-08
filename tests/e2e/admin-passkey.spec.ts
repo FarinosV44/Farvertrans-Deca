@@ -63,6 +63,38 @@ test.describe("SECURITY #53 passkey follow-up", () => {
     await page.waitForURL(/\/admin$/);
   });
 
+  test("no platform authenticator: setup leads with TOTP, not the cross-device passkey QR", async ({
+    page,
+  }) => {
+    // Force `platformAuthenticatorIsAvailable()` false — a desktop without
+    // Windows Hello / Touch ID (the dev machine running the suite may actually
+    // have one, so we stub it). Leading with the passkey there sends the admin
+    // into a hybrid-transport QR the phone hangs on "conectando…"; the choice
+    // screen must lead with the code app instead.
+    await page.addInitScript(() => {
+      if (window.PublicKeyCredential) {
+        window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable = () =>
+          Promise.resolve(false);
+      }
+    });
+    const { email, password } = await createFreshInternalUser();
+    await loginPassword(page, email, password);
+
+    await page.goto("/admin");
+    await page.waitForURL(/\/admin\/2fa\/setup/);
+
+    // TOTP is the primary call to action (solid button), passkey is demoted.
+    const totpBtn = page.getByTestId("setup-use-totp");
+    await expect(totpBtn).toBeVisible();
+    await expect(totpBtn).toHaveClass(/bg-\[var\(--color-primary\)\]/);
+    await expect(page.getByTestId("setup-passkey-start")).not.toHaveClass(
+      /bg-\[var\(--color-primary\)\]/,
+    );
+
+    await totpBtn.click();
+    await expect(page.getByTestId("totp-qr")).toBeVisible();
+  });
+
   test("passkey login: the verify screen's Face ID button completes a fresh session", async ({
     page,
   }) => {

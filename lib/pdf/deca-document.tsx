@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
-import type { DecaPayload } from "@/lib/deca/schema";
+import { type DecaPayload, formatPartyAddressLines } from "@/lib/deca/schema";
 import { BRAND } from "@/lib/brand";
 import { DECA_ROLES } from "@/lib/deca/roles";
 import { formatLocationCityLine } from "@/lib/deca/location";
@@ -209,13 +209,13 @@ function PartyCard({
   role,
   name,
   nif,
-  address,
+  addressLines,
 }: {
   n: number;
   role: string;
   name: string;
   nif: string;
-  address: string;
+  addressLines: string[];
 }) {
   return (
     <View style={s.card}>
@@ -227,7 +227,11 @@ function PartyCard({
       <Text style={s.fieldLabel}>NIF / VAT</Text>
       <Text style={s.fieldValue}>{nif}</Text>
       <Text style={s.fieldLabel}>Domicilio</Text>
-      <Text style={s.fieldValue}>{address}</Text>
+      {addressLines.map((line, i) => (
+        <Text key={i} style={s.fieldValue}>
+          {line}
+        </Text>
+      ))}
     </View>
   );
 }
@@ -349,14 +353,14 @@ export function DecaDocument(p: DecaDocProps) {
                 role={DECA_ROLES.shipper.title}
                 name={p.data.shipper.name}
                 nif={p.data.shipper.nif}
-                address={p.data.shipper.address}
+                addressLines={formatPartyAddressLines(p.data.shipper)}
               />
               <PartyCard
                 n={2}
                 role={DECA_ROLES.carrier.title}
                 name={p.data.carrier.name}
                 nif={p.data.carrier.nif}
-                address={p.data.carrier.address}
+                addressLines={formatPartyAddressLines(p.data.carrier)}
               />
             </View>
           </View>

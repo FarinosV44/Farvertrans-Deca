@@ -3,6 +3,7 @@ import {
   startRegistration,
   startAuthentication,
   browserSupportsWebAuthn,
+  platformAuthenticatorIsAvailable,
 } from "@simplewebauthn/browser";
 
 /**
@@ -13,7 +14,7 @@ import {
  * brief item 9: "clear success/error messages").
  */
 
-export { browserSupportsWebAuthn };
+export { browserSupportsWebAuthn, platformAuthenticatorIsAvailable };
 
 function friendlyError(e: unknown): string {
   const name = e instanceof Error ? e.name : "";

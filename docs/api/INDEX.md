@@ -88,7 +88,7 @@
 | Dockerfile | build | Dockerfile | docs/07-release.md | Production image — Next standalone, non-root, healthcheck |
 | hashIdentifier() / clientIp() | function | lib/hash.ts | docs/reference/lib.md | One-way IP hash + proxy IP extraction for the access log |
 | validateDeca() / DecaValidationError | fn/class | lib/deca/validate.ts | docs/reference/lib.md | Full R-2 compliance validation; throws on missing mandatory field, warns (never blocks) on foreign NIF |
-| decaPayloadSchema / step1..3Schema | const | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload |
+| decaPayloadSchema / step1..3Schema / formatPartyAddressLines() | const/fn | lib/deca/schema.ts | docs/reference/lib.md | zod schemas for the wizard steps + the full DeCA payload; `formatPartyAddressLines` composes a party's domicilio (street line, then "CP población" when informed) for the PDF/review, D-145 |
 | normalizePlate() / looksLikeSpanishPlate() | function | lib/deca/plate.ts | docs/reference/lib.md | Plate normalisation + soft Spanish-format hint |
 | checkNif() | function | lib/deca/nif.ts | docs/reference/lib.md | DNI/NIE/CIF control validation (advisory) |
 | newPublicToken() / newClaimToken() | function | lib/deca/token.ts | docs/reference/lib.md | 256-bit base64url tokens for the public URL and the claim link |

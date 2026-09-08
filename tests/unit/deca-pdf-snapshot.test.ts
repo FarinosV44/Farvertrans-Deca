@@ -23,7 +23,9 @@ const payload: DecaPayload = {
   carrier: {
     name: "Logística del Turia SA",
     nif: "A96789011",
-    address: "Pol. Fuente del Jarro, calle 5, 46988 Paterna",
+    address: "Pol. Fuente del Jarro, calle 5",
+    postalCode: "46988",
+    city: "Paterna",
   },
   loadLocation: {
     name: "Almacén Turia",
@@ -103,6 +105,33 @@ describe("#66 — generated DeCA structural snapshot", () => {
     expect(t).toContain("28028");
     expect(t).toMatch(/46023.*Valencia/);
     expect(t).toMatch(/28028.*Madrid/);
+  });
+
+  it("shows the carrier's postal code + población under its domicilio when given", async () => {
+    const t = await text();
+    expect(t).toMatch(/46988 Paterna/);
+  });
+
+  it("renders a party with no postal code / town cleanly — just the street line", async () => {
+    const noTown: DecaPayload = {
+      ...payload,
+      shipper: { name: "Sólo Calle SL", nif: "B12345674", address: "Calle Única 7, Bilbao" },
+    };
+    const buf = await renderDecaPdf({
+      data: noTown,
+      publicUrl: "https://decaprofesional.es/d/A4F2C9E1",
+      reference: "DECA-A4F2C9E1",
+      versionNo: 1,
+      createdAt: new Date("2026-10-06T08:41:00Z"),
+    });
+    const doc = await getDocument({ data: new Uint8Array(buf) }).promise;
+    let out = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const c = await (await doc.getPage(i)).getTextContent();
+      out += " " + c.items.map((it) => ("str" in it ? it.str : "")).join(" ");
+    }
+    out = out.replace(/\s+/g, " ");
+    expect(out).toContain("Calle Única 7, Bilbao");
   });
 
   it("renders a location with no province cleanly — no stray separators (#75)", async () => {

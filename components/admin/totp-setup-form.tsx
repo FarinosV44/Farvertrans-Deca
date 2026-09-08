@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { registerPasskey, browserSupportsWebAuthn } from "@/lib/auth/webauthn-client";
+import {
+  registerPasskey,
+  browserSupportsWebAuthn,
+  platformAuthenticatorIsAvailable,
+} from "@/lib/auth/webauthn-client";
 
 type Mode = "choice" | "totp";
 
@@ -17,6 +21,14 @@ export function TotpSetupForm() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("choice");
   const [passkeySupported, setPasskeySupported] = useState(true);
+  /**
+   * A PLATFORM authenticator (Face ID / Touch ID / Windows Hello / Android
+   * screen lock). Only when this is present do we lead with the passkey: on a
+   * desktop without one, the browser falls back to a cross-device QR that the
+   * phone hangs on "connecting…" for — so there we lead with TOTP instead and
+   * keep the passkey as a small secondary option.
+   */
+  const [platformPasskey, setPlatformPasskey] = useState(false);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
@@ -29,7 +41,13 @@ export function TotpSetupForm() {
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 
   useEffect(() => {
-    setPasskeySupported(browserSupportsWebAuthn());
+    const supported = browserSupportsWebAuthn();
+    setPasskeySupported(supported);
+    if (supported) {
+      platformAuthenticatorIsAvailable()
+        .then(setPlatformPasskey)
+        .catch(() => setPlatformPasskey(false));
+    }
   }, []);
 
   useEffect(() => {
@@ -143,47 +161,91 @@ export function TotpSetupForm() {
   }
 
   if (mode === "choice") {
+    // Lead with the passkey only when this device can do it locally. Otherwise
+    // the app-of-authentication route is the reliable one (no cross-device QR).
+    const passkeyPrimary = passkeySupported && platformPasskey;
+
+    const passkeyButton = (
+      <button
+        type="button"
+        data-testid="setup-passkey-start"
+        onClick={startPasskey}
+        disabled={passkeyBusy}
+        className={
+          passkeyPrimary
+            ? "mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
+            : "mt-3 min-h-12 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium text-[var(--color-text)] disabled:opacity-55"
+        }
+      >
+        {passkeyBusy
+          ? "Confirma en tu dispositivo…"
+          : passkeyPrimary
+            ? "Configurar con Face ID / clave de acceso"
+            : "Usar una clave de acceso (Face ID, Touch ID, Windows Hello…)"}
+      </button>
+    );
+
+    const totpButton = (
+      <button
+        type="button"
+        data-testid="setup-use-totp"
+        onClick={() => setMode("totp")}
+        className={
+          passkeyPrimary
+            ? "mt-3 min-h-12 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium text-[var(--color-text)]"
+            : "mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)]"
+        }
+      >
+        Usar una app de autenticación (Google Authenticator, Authy…)
+      </button>
+    );
+
     return (
       <div>
         <h1 className="text-2xl font-bold">Protege tu cuenta de administrador</h1>
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          Obligatorio para acceder al panel de administración. La forma más rápida es con Face ID,
-          Touch ID, Windows Hello o el PIN de tu dispositivo.
+          {passkeyPrimary
+            ? "Obligatorio para acceder al panel de administración. La forma más rápida es con Face ID, Touch ID, Windows Hello o el PIN de tu dispositivo."
+            : "Obligatorio para acceder al panel de administración. En este equipo, lo más fiable es una app de autenticación en el móvil (el código de 6 dígitos)."}
         </p>
 
-        {passkeySupported && (
-          <button
-            type="button"
-            data-testid="setup-passkey-start"
-            onClick={startPasskey}
-            disabled={passkeyBusy}
-            className="mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
-          >
-            {passkeyBusy
-              ? "Confirma en tu dispositivo…"
-              : "Configurar con Face ID / clave de acceso"}
-          </button>
+        {passkeyPrimary ? (
+          <>
+            {passkeySupported && passkeyButton}
+            {passkeyError && (
+              <p
+                role="alert"
+                data-testid="setup-passkey-error"
+                className="mt-2 text-sm text-[var(--color-danger)]"
+              >
+                {passkeyError}
+              </p>
+            )}
+            {totpButton}
+          </>
+        ) : (
+          <>
+            {totpButton}
+            {passkeySupported && (
+              <>
+                {passkeyButton}
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  Requiere Face ID / Touch ID / Windows Hello en este equipo, o confirmar en otro
+                  dispositivo por Bluetooth.
+                </p>
+              </>
+            )}
+            {passkeyError && (
+              <p
+                role="alert"
+                data-testid="setup-passkey-error"
+                className="mt-2 text-sm text-[var(--color-danger)]"
+              >
+                {passkeyError}
+              </p>
+            )}
+          </>
         )}
-        {passkeyError && (
-          <p
-            role="alert"
-            data-testid="setup-passkey-error"
-            className="mt-2 text-sm text-[var(--color-danger)]"
-          >
-            {passkeyError}
-          </p>
-        )}
-
-        <button
-          type="button"
-          data-testid="setup-use-totp"
-          onClick={() => setMode("totp")}
-          className={`min-h-12 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium text-[var(--color-text)] ${
-            passkeySupported ? "mt-3" : "mt-6"
-          }`}
-        >
-          Usar una app de autenticación en su lugar
-        </button>
       </div>
     );
   }

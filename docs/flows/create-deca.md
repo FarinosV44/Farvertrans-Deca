@@ -3,7 +3,7 @@
 Trigger: "CREAR DECA GRATIS" from the landing / any CTA, or "Nuevo DeCA" in the app.
 
 1. User opens `/app/deca/new`. System renders step 1.
-2. Step 1 — shipper + carrier (name/razón social, NIF, address). Validate on "Siguiente" (zod + R-2). Authed: autofill from saved entities (F7).
+2. Step 1 — shipper + carrier (name/razón social, NIF, address; optional postal code + población, D-145). Validate on "Siguiente" (zod + R-2). Authed: autofill from saved entities (F7); "usar mi empresa" fills the postal code + población from the company ficha.
 3. Step 2 — origin, destination, date of transport. Validate on advance.
 4. Step 3 — goods nature, weight (or alternative measure), plate(s) (tractor + trailer if articulated).
 5. User → "Generar DeCA".

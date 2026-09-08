@@ -116,9 +116,13 @@ export default async function CrearPage({
         shipperName: source.shipper?.name ?? "",
         shipperNif: source.shipper?.nif ?? "",
         shipperAddress: source.shipper?.address ?? "",
+        shipperPostalCode: source.shipper?.postalCode ?? "",
+        shipperCity: source.shipper?.city ?? "",
         carrierName: source.carrier?.name ?? "",
         carrierNif: source.carrier?.nif ?? "",
         carrierAddress: source.carrier?.address ?? "",
+        carrierPostalCode: source.carrier?.postalCode ?? "",
+        carrierCity: source.carrier?.city ?? "",
         loadLocationName: source.loadLocation?.name ?? "",
         loadLocationAddress: source.loadLocation?.address ?? "",
         loadLocationPostalCode: source.loadLocation?.postalCode ?? "",
@@ -168,6 +172,8 @@ export default async function CrearPage({
                       name: user.company.name,
                       nif: user.company.nif,
                       address: user.company.address,
+                      postalCode: user.company.postalCode,
+                      city: user.company.city,
                     }
                   : undefined
               }

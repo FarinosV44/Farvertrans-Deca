@@ -15,9 +15,13 @@ type FormState = {
   shipperName: string;
   shipperNif: string;
   shipperAddress: string;
+  shipperPostalCode: string;
+  shipperCity: string;
   carrierName: string;
   carrierNif: string;
   carrierAddress: string;
+  carrierPostalCode: string;
+  carrierCity: string;
   loadLocationName: string;
   loadLocationAddress: string;
   loadLocationPostalCode: string;
@@ -43,9 +47,13 @@ const EMPTY: FormState = {
   shipperName: "",
   shipperNif: "",
   shipperAddress: "",
+  shipperPostalCode: "",
+  shipperCity: "",
   carrierName: "",
   carrierNif: "",
   carrierAddress: "",
+  carrierPostalCode: "",
+  carrierCity: "",
   loadLocationName: "",
   loadLocationAddress: "",
   loadLocationPostalCode: "",
@@ -74,9 +82,13 @@ const FIELD_KEY_MAP: Record<string, keyof FormState> = {
   "shipper.name": "shipperName",
   "shipper.nif": "shipperNif",
   "shipper.address": "shipperAddress",
+  "shipper.postalCode": "shipperPostalCode",
+  "shipper.city": "shipperCity",
   "carrier.name": "carrierName",
   "carrier.nif": "carrierNif",
   "carrier.address": "carrierAddress",
+  "carrier.postalCode": "carrierPostalCode",
+  "carrier.city": "carrierCity",
   "loadLocation.name": "loadLocationName",
   "loadLocation.address": "loadLocationAddress",
   "loadLocation.postalCode": "loadLocationPostalCode",
@@ -129,8 +141,8 @@ type TemplateLocation = {
 export type WizardTemplate = {
   id: string;
   name: string;
-  shipper?: { name?: string; nif?: string; address?: string };
-  carrier?: { name?: string; nif?: string; address?: string };
+  shipper?: { name?: string; nif?: string; address?: string; postalCode?: string; city?: string };
+  carrier?: { name?: string; nif?: string; address?: string; postalCode?: string; city?: string };
   loadLocation?: TemplateLocation;
   unloadLocation?: TemplateLocation;
   goods?: string;
@@ -139,15 +151,33 @@ export type WizardTemplate = {
   trailerPlate?: string;
 };
 
-export type WizardCompany = { name: string; nif: string | null; address: string | null };
+export type WizardCompany = {
+  name: string;
+  nif: string | null;
+  address: string | null;
+  postalCode: string | null;
+  city: string | null;
+};
 
 /** Pre-fill for the duplicate flow (a source DeCA's payload, date left blank). */
 export type WizardInitial = Partial<FormState>;
 
 function toPayload(f: FormState) {
   return {
-    shipper: { name: f.shipperName, nif: f.shipperNif, address: f.shipperAddress },
-    carrier: { name: f.carrierName, nif: f.carrierNif, address: f.carrierAddress },
+    shipper: {
+      name: f.shipperName,
+      nif: f.shipperNif,
+      address: f.shipperAddress,
+      postalCode: f.shipperPostalCode,
+      city: f.shipperCity,
+    },
+    carrier: {
+      name: f.carrierName,
+      nif: f.carrierNif,
+      address: f.carrierAddress,
+      postalCode: f.carrierPostalCode,
+      city: f.carrierCity,
+    },
     loadLocation: {
       name: f.loadLocationName,
       address: f.loadLocationAddress,
@@ -192,6 +222,8 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
         [r.name, form.shipperName],
         [r.nif, form.shipperNif],
         [r.address, form.shipperAddress],
+        [r.postalCode, form.shipperPostalCode],
+        [r.city, form.shipperCity],
       ],
     },
     {
@@ -202,6 +234,8 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
         [r.name, form.carrierName],
         [r.nif, form.carrierNif],
         [r.address, form.carrierAddress],
+        [r.postalCode, form.carrierPostalCode],
+        [r.city, form.carrierCity],
       ],
     },
     {
@@ -581,16 +615,18 @@ export function CrearWizard({
   const partyQuickFill = (
     party: "shipper" | "carrier",
     mode: "company" | "carrier" | "shipper",
-    values: () => { name: string; nif: string; address: string },
+    values: () => { name: string; nif: string; address: string; postalCode: string; city: string },
   ) => {
     const on = quickFill[party] === mode;
     setForm((f) => {
-      const v = on ? { name: "", nif: "", address: "" } : values();
+      const v = on ? { name: "", nif: "", address: "", postalCode: "", city: "" } : values();
       return {
         ...f,
         [`${party}Name`]: v.name,
         [`${party}Nif`]: v.nif,
         [`${party}Address`]: v.address,
+        [`${party}PostalCode`]: v.postalCode,
+        [`${party}City`]: v.city,
       };
     });
     setPicked((p) => ({ ...p, [`${party}Id`]: undefined }));
@@ -870,9 +906,13 @@ export function CrearWizard({
                         shipperName: tpl.shipper?.name || f.shipperName,
                         shipperNif: tpl.shipper?.nif || f.shipperNif,
                         shipperAddress: tpl.shipper?.address || f.shipperAddress,
+                        shipperPostalCode: tpl.shipper?.postalCode || f.shipperPostalCode,
+                        shipperCity: tpl.shipper?.city || f.shipperCity,
                         carrierName: tpl.carrier?.name || f.carrierName,
                         carrierNif: tpl.carrier?.nif || f.carrierNif,
                         carrierAddress: tpl.carrier?.address || f.carrierAddress,
+                        carrierPostalCode: tpl.carrier?.postalCode || f.carrierPostalCode,
+                        carrierCity: tpl.carrier?.city || f.carrierCity,
                         loadLocationName: tpl.loadLocation?.name || f.loadLocationName,
                         loadLocationAddress: tpl.loadLocation?.address || f.loadLocationAddress,
                         loadLocationPostalCode:
@@ -921,6 +961,8 @@ export function CrearWizard({
                       name: company.name,
                       nif: company.nif ?? "",
                       address: company.address ?? "",
+                      postalCode: company.postalCode ?? "",
+                      city: company.city ?? "",
                     }))
                   }
                   className={quickBtn(quickFill.shipper === "company")}
@@ -936,6 +978,8 @@ export function CrearWizard({
                       name: company.name,
                       nif: company.nif ?? "",
                       address: company.address ?? "",
+                      postalCode: company.postalCode ?? "",
+                      city: company.city ?? "",
                     }))
                   }
                   className={quickBtn(quickFill.carrier === "company")}
@@ -1006,6 +1050,24 @@ export function CrearWizard({
                 error={errors.shipperAddress}
                 autoComplete="street-address"
               />
+              <div className="grid gap-x-4 sm:grid-cols-2">
+                <Field
+                  id="shipperPostalCode"
+                  label={t.crear.fields.postalCode}
+                  value={form.shipperPostalCode}
+                  onChange={setAndUnpick("shipperPostalCode", "shipperId")}
+                  error={errors.shipperPostalCode}
+                  autoComplete="postal-code"
+                />
+                <Field
+                  id="shipperCity"
+                  label={t.crear.fields.city}
+                  value={form.shipperCity}
+                  onChange={setAndUnpick("shipperCity", "shipperId")}
+                  error={errors.shipperCity}
+                  autoComplete="address-level2"
+                />
+              </div>
             </fieldset>
 
             {(form.shipperName || form.carrierName) && (
@@ -1019,6 +1081,8 @@ export function CrearWizard({
                       name: form.shipperName,
                       nif: form.shipperNif,
                       address: form.shipperAddress,
+                      postalCode: form.shipperPostalCode,
+                      city: form.shipperCity,
                     }))
                   }
                   className={quickBtn(quickFill.carrier === "shipper")}
@@ -1034,6 +1098,8 @@ export function CrearWizard({
                       name: form.carrierName,
                       nif: form.carrierNif,
                       address: form.carrierAddress,
+                      postalCode: form.carrierPostalCode,
+                      city: form.carrierCity,
                     }))
                   }
                   className={quickBtn(quickFill.shipper === "carrier")}
@@ -1105,6 +1171,24 @@ export function CrearWizard({
                 error={errors.carrierAddress}
                 autoComplete="street-address"
               />
+              <div className="grid gap-x-4 sm:grid-cols-2">
+                <Field
+                  id="carrierPostalCode"
+                  label={t.crear.fields.postalCode}
+                  value={form.carrierPostalCode}
+                  onChange={setAndUnpick("carrierPostalCode", "carrierId")}
+                  error={errors.carrierPostalCode}
+                  autoComplete="postal-code"
+                />
+                <Field
+                  id="carrierCity"
+                  label={t.crear.fields.city}
+                  value={form.carrierCity}
+                  onChange={setAndUnpick("carrierCity", "carrierId")}
+                  error={errors.carrierCity}
+                  autoComplete="address-level2"
+                />
+              </div>
             </fieldset>
           </>
         )}

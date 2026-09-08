@@ -1451,3 +1451,18 @@ to `B21810452` via `/admin/empresas/[id]`.
 - Order: #75 ✓ → #70 (panel nav) → #71 (pre-gen checklist) → #69 (Modo Inspección) → #76 #77 #78
   (panel features) → #80 (admin shell) → #72 #73 #81 #82 #83 #74 (admin cluster) → #79 (final
   regression checklist).
+
+### Post-launch live feedback (2026-09-08) — user reports from real use
+- **D-143 DONE** — admin 2FA "app de authenticator … conectando" hang. Setup + verify screens led
+  with the passkey whenever `browserSupportsWebAuthn()` (true on all desktops); on a device with no
+  platform authenticator that triggers the cross-device hybrid QR the phone hangs on. Both screens
+  now gate the passkey-primary treatment on `platformAuthenticatorIsAvailable()` and otherwise lead
+  with the TOTP app. `admin-passkey.spec.ts` +1 test; 13 2FA/passkey e2e green.
+- **D-144 DONE** — `/panel` home horizontal overflow on mobile (CSS-grid auto-track). Grids on
+  `app/panel/page.tsx` are `flex flex-col` until their real breakpoint. `panel-nav.spec.ts` +1 test
+  (seeds a DeCA, checks no h-scroll at 360/390/414).
+- **D-145 DONE** — party población + CP on the generated DeCA. Optional `postalCode`/`city` on
+  `shipperSchema`/`carrierSchema` (no migration — party data is `dataJson`), `formatPartyAddressLines`
+  composes the PDF "CP población" line, threaded through wizard + company quick-fill + duplicate +
+  correction + templates + diff. `SavedCompany` left as free-address (out of scope). 184 unit,
+  e2e 204/204 (`--workers=1` for the 4 load-flakes), compliance 8/8.

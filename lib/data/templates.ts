@@ -25,6 +25,8 @@ export const templatePayloadSchema = z.object({
       name: z.string().trim().max(200).default(""),
       nif: z.string().trim().max(20).default(""),
       address: z.string().trim().max(300).default(""),
+      postalCode: z.string().trim().max(12).default(""),
+      city: z.string().trim().max(120).default(""),
     })
     .default({}),
   carrier: z
@@ -32,6 +34,8 @@ export const templatePayloadSchema = z.object({
       name: z.string().trim().max(200).default(""),
       nif: z.string().trim().max(20).default(""),
       address: z.string().trim().max(300).default(""),
+      postalCode: z.string().trim().max(12).default(""),
+      city: z.string().trim().max(120).default(""),
     })
     .default({}),
   loadLocation: templateLocationSchema,

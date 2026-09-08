@@ -4139,3 +4139,70 @@ remaining scope.
   hex; badges/pills use the shared `Badge`/`Pill` tone APIs.
 - Full regression at this point: 180 unit, 206/206 e2e (0 flaky), compliance 8/8, typecheck, lint
   (pre-existing `<img>` warnings), keel:verify.
+
+## D-143 — admin 2FA: lead with the code app when the device has no platform authenticator
+- Date / phase: 2026-09-08, Phase 5. User report: "escaneo el qr para acceder y se me queda en el
+  móvil con la app de authenticator todo el rato conectando" (superadmin).
+- **Cause:** `browserSupportsWebAuthn()` only checks that `window.PublicKeyCredential` exists — true
+  on every desktop browser. Both the setup choice screen (`totp-setup-form.tsx`) and the verify
+  screen (`totp-verify-form.tsx`) led with the passkey button whenever that was true. On a desktop
+  with no Face ID / Touch ID / Windows Hello, `navigator.credentials.*` falls back to the
+  cross-device **hybrid ("caBLE") transport**: the browser shows a QR, the phone scans it and then
+  hangs forever on "conectando…" because the desktop side never advertises the BLE side channel in
+  a plain server context.
+- **Fix:** both components now also call `platformAuthenticatorIsAvailable()` (re-exported from
+  `lib/auth/webauthn-client.ts`) on mount. The passkey is the **primary** path only when a local
+  platform authenticator is present; otherwise the screen leads with "Usar una app de autenticación
+  (Google Authenticator, Authy…)" as the solid primary button and demotes the passkey to a
+  secondary outline button with a one-line note ("requiere Face ID / Touch ID / Windows Hello…").
+  The passkey path is never hidden — a user who does have a roaming authenticator can still pick it.
+- TOTP QR itself was fine (valid `otpauth://totp/…`); the QR that hung was always the passkey one.
+- Tests: `admin-passkey.spec.ts` gains "no platform authenticator: setup leads with TOTP" (stubs
+  `isUserVerifyingPlatformAuthenticatorAvailable → false` via `addInitScript`, asserts the TOTP
+  button carries the primary style and the passkey button does not). Existing 12 2FA/passkey e2e
+  still green (the CDP virtual authenticator reports `transport: "internal"` so those keep leading
+  with the passkey, as intended).
+
+## D-144 — mobile: panel home ("Mis DeCA") horizontal overflow
+- Date / phase: 2026-09-08, Phase 5. User report: "en el móvil la pestaña de panel de mis deca se
+  sale de la pantalla".
+- **Cause:** the same CSS-grid auto-track trap as D-13x — an element with `display: grid` but no
+  `grid-template-columns` at mobile width (only a `md:grid-cols-…` variant, inactive < 768px)
+  creates one implicit auto column sized to its widest child's **min-content**, and grid auto
+  tracks do not shrink below that (unlike flex). Three grids on `/panel` did this; the project's
+  custom `sm` breakpoint (360px, not 640px) made `sm:grid-cols-2` fire on the smallest phones too.
+- **Fix (`app/panel/page.tsx`):** the outer 2-column layout and the two card pairs are now
+  `flex flex-col` at mobile and only become `grid` at their real breakpoint (`md:` / `min-[480px]:`).
+  Recent-doc rows stack `flex-col` and go `flex-row` at `min-[560px]`; the meta line is `truncate`
+  inside a `min-w-0` box; the action links `flex-wrap`.
+- Test: `panel-nav.spec.ts` already checks no horizontal scroll across `/panel` at 360/768/1280/1440
+  — extended to seed a DeCA first so the "duplicar" card + recent rows actually render on the
+  smallest width.
+
+## D-145 — party postal code + población on the generated DeCA
+- Date / phase: 2026-09-08, Phase 5. User request: "al generar deca debería salir tanto del cargador
+  como de transportista población y cp no solo la dirección".
+- **Change:** `shipperSchema` / `carrierSchema` (`lib/deca/schema.ts`) gain `postalCode` (≤12) and
+  `city` (≤120). Both are **OPTIONAL**, deliberately — same reasoning as `province` on a location
+  (#75): a hard requirement produced junk input, and many non-Spanish domiciles already carry the
+  locality inside the free `address` line. New `formatPartyAddressLines()` composes the display
+  (street line, then "CP población"), dropping any absent part with no dangling separator; the PDF
+  `PartyCard` (`lib/pdf/deca-document.tsx`) prints each line, the review summary and `doc-summary`
+  show the composed value, `lib/deca/detail.ts` adds the two diff rows.
+- **No DB migration** — party data lives entirely in `DecaVersion.dataJson` (only derived route
+  intel is columnar), so this is a pure payload-shape change. Historical DeCA render unchanged
+  (missing fields → just the street line, as before).
+- **Wizard:** two fields per party after the address, in a 2-col grid. The "usar mi empresa"
+  quick-fill fills them from `Company.postalCode` / `Company.city` (present since #59); the
+  toggle-off and "el mismo que…" quick-fills carry them too. `WizardCompany`, `WizardTemplate`,
+  the duplicate flow (`app/crear/page.tsx`), the correction pre-fill (`…/corregir/page.tsx`),
+  `templatePayloadSchema` and `history.ts`'s `Data` type all thread the two fields.
+- **Out of scope (kept deliberately small):** `SavedCompany` still stores only a free `address`
+  (no migration, no save-form change) — a saved counterparty just won't pre-fill CP/población; the
+  operator types them or uses "usar mi empresa".
+- Tests: `deca-validate.test.ts` (optional accept + `formatPartyAddressLines` compose rules),
+  `deca-pdf-snapshot.test.ts` (carrier "46988 Paterna" line renders; a party with none stays a
+  clean single street line). Full regression: 184 unit, e2e 204/204 (`--workers=3`; the 4 that
+  flaked under load — `admin-2fa:109`, `admin-passkey`, `admin-growth:78`, `content-cms:60` — all
+  green at `--workers=1`), compliance R-1…R-13 8/8, typecheck, lint (pre-existing warnings only),
+  keel:verify.

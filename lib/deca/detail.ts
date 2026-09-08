@@ -54,6 +54,16 @@ const FIELDS: { key: string; label: string; get: (d: DecaPayloadData) => string 
     get: (d) => d.shipper?.address ?? "",
   },
   {
+    key: "shipper.postalCode",
+    label: `${DECA_ROLES.shipper.title} — código postal`,
+    get: (d) => d.shipper?.postalCode ?? "",
+  },
+  {
+    key: "shipper.city",
+    label: `${DECA_ROLES.shipper.title} — población`,
+    get: (d) => d.shipper?.city ?? "",
+  },
+  {
     key: "carrier.name",
     label: `${DECA_ROLES.carrier.title} — nombre`,
     get: (d) => d.carrier?.name ?? "",
@@ -67,6 +77,16 @@ const FIELDS: { key: string; label: string; get: (d: DecaPayloadData) => string 
     key: "carrier.address",
     label: `${DECA_ROLES.carrier.title} — domicilio`,
     get: (d) => d.carrier?.address ?? "",
+  },
+  {
+    key: "carrier.postalCode",
+    label: `${DECA_ROLES.carrier.title} — código postal`,
+    get: (d) => d.carrier?.postalCode ?? "",
+  },
+  {
+    key: "carrier.city",
+    label: `${DECA_ROLES.carrier.title} — población`,
+    get: (d) => d.carrier?.city ?? "",
   },
   {
     key: "loadLocation.name",
