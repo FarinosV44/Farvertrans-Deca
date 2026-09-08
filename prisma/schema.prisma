@@ -70,6 +70,8 @@ model Company {
   acquisition         Acquisition?
   invites             CompanyInvite[]
   commercialConsent   CommercialConsent?
+  commercialEvents    CommercialConsentEvent[]
+  availabilityShares  DecaAvailabilityShare[]
   savedCompanies      SavedCompany[]
   savedVehicles       SavedVehicle[]
   savedLocations      SavedLocation[]
@@ -89,21 +91,85 @@ enum CompanyProfile {
   carrier_passengers
 }
 
-/// Company-level authorization to analyze route data for commercial matching
-/// (DATA #45 §3). Separate from `TermsAcceptance` — commercial use of route
-/// data is opt-in and revocable, never assumed from ordinary product use.
+/// Company-level commercial-treatment preference (#84, evolving DATA #45 §3).
+/// Separate from `TermsAcceptance` — opt-in, granular, revocable, never assumed
+/// from ordinary product use, and never a condition of the free service. One
+/// row per company; the full history of changes lives in `CommercialConsentEvent`.
 model CommercialConsent {
-  id        String    @id @default(cuid())
-  companyId String    @unique @map("company_id")
-  granted   Boolean   @default(false)
-  version   String
-  grantedAt DateTime? @map("granted_at")
-  revokedAt DateTime? @map("revoked_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id           String                    @id @default(cuid())
+  companyId    String                    @unique @map("company_id")
+  mode         CommercialConsentMode     @default(none)
+  channel      CommercialContactChannel?
+  /// The exact contact values the operator authorised for the selected channel
+  /// — stored here, not read live from the company ficha, so a later ficha edit
+  /// never silently changes what has been consented to.
+  contactEmail String?                   @map("contact_email")
+  contactPhone String?                   @map("contact_phone")
+  /// The legal-text version in force when the current preference was set.
+  version      String
+  grantedAt    DateTime?                 @map("granted_at")
+  revokedAt    DateTime?                 @map("revoked_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("commercial_consent")
+}
+
+/// Append-only audit of every commercial-treatment change and every prepared or
+/// withdrawn availability record (#84). Structured detail lives here because
+/// `SecurityAuditLog` has no metadata column. No more DeCA content is recorded
+/// than is needed to evidence the authorisation.
+model CommercialConsentEvent {
+  id           String                    @id @default(cuid())
+  companyId    String                    @map("company_id")
+  actorUserId  String?                   @map("actor_user_id")
+  /// mode_set | channel_set | per_deca_enabled | per_deca_disabled |
+  /// global_revoked | availability_prepared | availability_withdrawn
+  kind         String
+  decaId       String?                   @map("deca_id")
+  mode         CommercialConsentMode?
+  channel      CommercialContactChannel?
+  legalVersion String                    @map("legal_version")
+  /// The authorised-field snapshot for an availability record (never origin,
+  /// cargador, goods, plates, price, QR, URL or document content).
+  detail       Json?
+  createdAt    DateTime                  @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@map("commercial_consent_event")
+}
+
+/// The "ficha de disponibilidad comercial" prepared for a single DeCA when the
+/// operator has authorised sharing for that porte (#84). Holds ONLY the fields
+/// the operator explicitly authorised — the table has no column for origin,
+/// cargador identity, load address, goods, weight, price, plates, driver, token
+/// or public URL, so those data can never be shared through this path. Nothing
+/// is transmitted to any third party yet (no recipient side exists); a row sits
+/// at `pending` until withdrawn.
+model DecaAvailabilityShare {
+  id               String                   @id @default(cuid())
+  decaId           String                   @unique @map("deca_id")
+  companyId        String                   @map("company_id")
+  carrierName      String                   @map("carrier_name")
+  destination      String
+  availabilityDate DateTime                 @map("availability_date")
+  channel          CommercialContactChannel
+  contactEmail     String?                  @map("contact_email")
+  contactPhone     String?                  @map("contact_phone")
+  legalVersion     String                   @map("legal_version")
+  /// pending | withdrawn
+  status           String                   @default("pending")
+  preparedAt       DateTime                 @default(now()) @map("prepared_at")
+  withdrawnAt      DateTime?                @map("withdrawn_at")
+
+  deca    Deca    @relation(fields: [decaId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("deca_availability_share")
 }
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.
@@ -295,6 +361,25 @@ enum AccountStatus {
   anonymized
 }
 
+/// Granular commercial-treatment preference (#84). `none` = never communicate
+/// any availability data. `per_deca` = ask on each DeCA (control off by
+/// default). `all` = communicate for every future DeCA unless the operator
+/// disables it on that specific porte. Free use of the product is never
+/// conditioned on this — `none` is the normal, neutral default.
+enum CommercialConsentMode {
+  none
+  per_deca
+  all
+}
+
+/// Which contact channel the operator has authorised for a commercial
+/// availability offer (#84). Only the value(s) selected here are ever shared.
+enum CommercialContactChannel {
+  email
+  phone
+  both
+}
+
 /// A pending invitation to join a company workspace (TEAM #27). One-time, expiring.
 model CompanyInvite {
   id              String      @id @default(cuid())
@@ -357,12 +442,13 @@ model Deca {
   creatorEmail     String?   @map("creator_email")
   createdAt        DateTime  @default(now()) @map("created_at")
 
-  company        Company?         @relation(fields: [companyId], references: [id])
-  createdByUser  User?            @relation("DecaCreatedBy", fields: [createdByUserId], references: [id])
-  currentVersion DecaVersion?     @relation("CurrentVersion", fields: [currentVersionId], references: [id])
-  versions       DecaVersion[]    @relation("DecaVersions")
-  claimTokens    ClaimToken[]
-  routeIntel     DecaRouteIntel[]
+  company           Company?               @relation(fields: [companyId], references: [id])
+  createdByUser     User?                  @relation("DecaCreatedBy", fields: [createdByUserId], references: [id])
+  currentVersion    DecaVersion?           @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions          DecaVersion[]          @relation("DecaVersions")
+  claimTokens       ClaimToken[]
+  routeIntel        DecaRouteIntel[]
+  availabilityShare DecaAvailabilityShare?
 
   @@map("deca")
 }

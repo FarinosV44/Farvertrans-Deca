@@ -138,12 +138,14 @@ export default async function AdminEmpresaDetail({
               value: c.terms ? `v${c.terms.version} · ${fmt(c.terms.acceptedAt)}` : "—",
             },
             {
-              label: "Consentimiento comercial",
+              label: "Tratamiento comercial",
               value: c.commercialConsent
-                ? c.commercialConsent.granted
-                  ? `Autorizado v${c.commercialConsent.version}`
-                  : "Revocado"
-                : "No solicitado",
+                ? c.commercialConsent.mode === "none"
+                  ? "No autorizado"
+                  : `${
+                      c.commercialConsent.mode === "all" ? "Todos los portes" : "Por porte"
+                    } · v${c.commercialConsent.version}`
+                : "No configurado",
             },
             {
               label: "Operador (first / last)",

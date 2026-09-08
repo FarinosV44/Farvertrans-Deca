@@ -29,7 +29,7 @@ const WINDOW = 5000;
 
 export async function consentedCompanyCount(): Promise<{ consented: number; total: number }> {
   const [consented, total] = await Promise.all([
-    prisma.commercialConsent.count({ where: { granted: true } }),
+    prisma.commercialConsent.count({ where: { mode: { not: "none" } } }),
     prisma.company.count(),
   ]);
   return { consented, total };
@@ -38,7 +38,7 @@ export async function consentedCompanyCount(): Promise<{ consented: number; tota
 /** Most frequent corridors platform-wide, counting only consented companies' rows. */
 export async function topCorridors(since: Date, limit = 20): Promise<CorridorSummary[]> {
   const consentedIds = await prisma.commercialConsent.findMany({
-    where: { granted: true },
+    where: { mode: { not: "none" } },
     select: { companyId: true },
   });
   const companyIds = consentedIds.map((c) => c.companyId);

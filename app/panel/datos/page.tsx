@@ -3,10 +3,8 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { SavedDataManager } from "@/components/app/saved-data-manager";
-import { CommercialConsentToggle } from "@/components/app/commercial-consent-toggle";
 import { getCurrentUser } from "@/lib/auth";
 import { listSaved } from "@/lib/data/saved";
-import { getCommercialConsent } from "@/lib/consent";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Datos habituales", robots: { index: false } };
@@ -15,10 +13,7 @@ export default async function DatosPage() {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro");
 
-  const [saved, consent] = await Promise.all([
-    listSaved(user.companyId),
-    getCommercialConsent(user.companyId),
-  ]);
+  const saved = await listSaved(user.companyId);
 
   return (
     <>
@@ -34,10 +29,6 @@ export default async function DatosPage() {
           companies={saved.companies}
           vehicles={saved.vehicles}
           locations={saved.locations}
-        />
-        <CommercialConsentToggle
-          granted={consent.granted}
-          canChange={user.companyRole === "owner"}
         />
       </main>
       <SiteFooter />

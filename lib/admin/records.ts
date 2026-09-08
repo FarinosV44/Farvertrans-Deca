@@ -316,7 +316,8 @@ export async function getCompanyAdmin(id: string) {
       : null,
     commercialConsent: company.commercialConsent
       ? {
-          granted: company.commercialConsent.granted,
+          mode: company.commercialConsent.mode,
+          channel: company.commercialConsent.channel,
           version: company.commercialConsent.version,
           grantedAt: company.commercialConsent.grantedAt,
           revokedAt: company.commercialConsent.revokedAt,
