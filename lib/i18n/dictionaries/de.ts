@@ -41,6 +41,7 @@ export const de = {
       cta: "DECA KOSTENLOS ERSTELLEN",
       ctaSecondary: "ANMELDEN",
       noCardNote: "Ohne Kreditkarte · Kein Dokumentenlimit während der Startphase.",
+      launchBadge: "2026 kostenlos · Startphase",
     },
     trustRow: [
       "Keine Registrierung für Ihr erstes DeCA",
@@ -91,7 +92,7 @@ export const de = {
     benefits: [
       {
         title: "Kostenlos",
-        body: "Kein Limit für DeCA während der Einführungsphase. Ohne Kreditkarte, ohne Zahlungsplan.",
+        body: "Kein Limit für DeCA während der Startphase 2026. Ohne Kreditkarte. Ab 2027 im Abonnement.",
       },
       {
         title: "Schnell",
@@ -231,7 +232,7 @@ export const de = {
           },
           {
             q: `Ist ${BRAND.name} kostenlos?`,
-            a: "Ja. Sie können bis zum 31. Dezember 2026 Dokumente ohne Kreditkarte und ohne Limit erstellen und herunterladen.",
+            a: "Ja. Sie können bis zum 31. Dezember 2026 Dokumente ohne Kreditkarte und ohne Limit erstellen und herunterladen. Ab 2027 wird DeCA Profesional im Abonnement angeboten.",
           },
           {
             q: "Kann ich beliebig viele Dokumente erstellen?",
@@ -243,7 +244,7 @@ export const de = {
     finalCtaHeading: "Jetzt starten. Ohne Kreditkarte.",
     finalCtaSubhead:
       "Erstellen Sie Ihr DeCA, speichern Sie Ihre gewohnten Daten und arbeiten Sie von einem einzigen Ort aus.",
-    finalCtaMicrocopy: "Kostenlos während der Startphase · Ohne Kreditkarte",
+    finalCtaMicrocopy: "2026 kostenlos · Startphase · Ohne Kreditkarte",
   },
   auth: {
     heading: {
@@ -329,7 +330,7 @@ export const de = {
       toLogin: "Anmelden",
       toRegister: "Kostenloses Konto erstellen",
     },
-    footNote: "Kostenlos · Ohne Kreditkarte · Ihre DeCA an einem Ort",
+    footNote: "2026 kostenlos · Ohne Kreditkarte · Ihre DeCA an einem Ort",
     errors: {
       acceptTerms:
         "Sie müssen die Allgemeinen Geschäftsbedingungen und die Datenschutzerklärung akzeptieren.",
@@ -444,16 +445,16 @@ export const de = {
           "Für jedes neue DeCA wird ein Verfügbarkeitsdatensatz vorbereitet. Sie können ihn für einen bestimmten Transport vor der Ausstellung deaktivieren.",
       },
       channelLegend: "Zugelassener Kontaktkanal",
-      channels: { email: "E-Mail", phone: "Telefon", both: "E-Mail und Telefon" },
+      channels: { email: "E-Mail", phone: "WhatsApp", both: "E-Mail und WhatsApp" },
       channelEmailLabel: "E-Mail für Angebote",
-      channelPhoneLabel: "Telefon für Angebote",
+      channelPhoneLabel: "WhatsApp für Angebote",
       previewTitle: "Daten, die geteilt werden",
       previewFields: {
         carrierName: "Unternehmen oder Name des Transportunternehmers",
         destination: "Zielort oder Verfügbarkeitsgebiet des Fahrzeugs",
         availabilityDate: "Voraussichtliches Ankunfts- oder Verfügbarkeitsdatum",
         contactEmail: "Zugelassene E-Mail-Adresse",
-        contactPhone: "Zugelassene Telefonnummer",
+        contactPhone: "Zugelassene WhatsApp-Nummer",
       },
       previewNever:
         "Herkunft, Verlader, Ladeadresse, Ware, Preis, Kennzeichen, Fahrer sowie das DeCA-Dokument, die URL oder der QR-Code werden nie geteilt.",
@@ -683,7 +684,7 @@ export const de = {
       destination: "Zielort oder Verfügbarkeitsgebiet",
       date: "Voraussichtliches Verfügbarkeitsdatum",
       channel: "Kontaktkanal",
-      channels: { email: "E-Mail", phone: "Telefon", both: "E-Mail und Telefon" },
+      channels: { email: "E-Mail", phone: "WhatsApp", both: "E-Mail und WhatsApp" },
       previewTitle: "Es wird nur Folgendes gesendet:",
       manage: "Meine allgemeine Einstellung unter Datenschutz ändern",
     },

@@ -37,6 +37,7 @@ export const en = {
       cta: "CREATE FREE DECA",
       ctaSecondary: "LOG IN",
       noCardNote: "No card · No document limit during the launch phase.",
+      launchBadge: "Free through 2026 · Launch phase",
     },
     trustRow: ["No sign-up for your first DeCA", "PDF + QR", "Digital custody", "History"],
     stepsHeading: "Create your DeCA in 3 steps",
@@ -82,7 +83,7 @@ export const en = {
     benefits: [
       {
         title: "Free",
-        body: "No limit on DeCA documents during the launch phase. No card, no payment plan.",
+        body: "No limit on DeCA documents during the 2026 launch phase. No card. From 2027, by subscription.",
       },
       {
         title: "Fast",
@@ -221,7 +222,7 @@ export const en = {
           },
           {
             q: `Is ${BRAND.name} free?`,
-            a: "Yes. You can create and download documents with no card and no limit until 31 December 2026.",
+            a: "Yes. You can create and download documents with no card and no limit until 31 December 2026. From 2027, DeCA Profesional will move to a subscription.",
           },
           {
             q: "Can I generate as many documents as I want?",
@@ -233,7 +234,7 @@ export const en = {
     finalCtaHeading: "Start now. No card.",
     finalCtaSubhead:
       "Create your DeCA, save your regular data and start working from a single space.",
-    finalCtaMicrocopy: "Free during the launch phase · No card",
+    finalCtaMicrocopy: "Free through 2026 · Launch phase · No card",
   },
   auth: {
     heading: {
@@ -317,7 +318,7 @@ export const en = {
       toLogin: "Log in",
       toRegister: "Create your free account",
     },
-    footNote: "Free · No card required · Your DeCA in one place",
+    footNote: "Free through 2026 · No card required · Your DeCA in one place",
     errors: {
       acceptTerms: "You must accept the Terms and Conditions and the Privacy Policy.",
       generic: "This couldn't be completed. Please try again.",
@@ -428,16 +429,16 @@ export const en = {
           "An availability record is prepared for each new DeCA. You can disable it on a specific job before issuing it.",
       },
       channelLegend: "Authorised contact channel",
-      channels: { email: "Email", phone: "Phone", both: "Email and phone" },
+      channels: { email: "Email", phone: "WhatsApp", both: "Email and WhatsApp" },
       channelEmailLabel: "Email for offers",
-      channelPhoneLabel: "Phone for offers",
+      channelPhoneLabel: "WhatsApp for offers",
       previewTitle: "Data that will be shared",
       previewFields: {
         carrierName: "Company or carrier name",
         destination: "Destination or availability area of the vehicle",
         availabilityDate: "Estimated arrival or availability date",
         contactEmail: "Authorised email address",
-        contactPhone: "Authorised phone number",
+        contactPhone: "Authorised WhatsApp number",
       },
       previewNever:
         "The origin, the shipper, the loading address, the goods, the price, the plates, the driver and the DeCA document, URL or QR are never shared.",
@@ -664,7 +665,7 @@ export const en = {
       destination: "Destination or availability area",
       date: "Estimated availability date",
       channel: "Contact channel",
-      channels: { email: "Email", phone: "Phone", both: "Email and phone" },
+      channels: { email: "Email", phone: "WhatsApp", both: "Email and WhatsApp" },
       previewTitle: "Only this will be sent:",
       manage: "Change my general preference in Privacy",
     },

@@ -3,10 +3,10 @@
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
 > Last inbound sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
-> (worked in D-042…D-111, awaiting the user's close), and the launch batches **#59–#68** (all
-> implemented + on `main`, awaiting the user's close) and **#69–#83** (in progress this run —
-> user: "start working and don't stop till you finish them all"). No third-party comments on any
-> issue. #29–#38 closed.
+> (worked in D-042…D-111, awaiting the user's close), the launch batches **#59–#68** (all
+> implemented + on `main`, awaiting the user's close) and **#69–#84** (implemented; #84 on `main`),
+> plus **#85** (pre-launch UX batch — worked this session, D-148, on `develop`). No third-party
+> comments on any issue. #29–#38 closed.
 >
 > Earlier note (2026-09-04): #1–#28 all merged to `main`; every issue commented (beat 1); awaiting
 > the user's deploy + verification, then beat 3, then the user closes them.
@@ -350,3 +350,27 @@ anonymize-in-place (no hard delete, D-067).
   code + town in both location cells (#59). New `tests/unit/deca-pdf-snapshot.test.ts` locks the
   structure + every value. Full R-1…R-13 compliance suite + company-logo + build13 + launch-happy
   green. Mockup was the approved Sistema Vía artifact's "Documento generado" screen.
+
+## I-085 — #85 Ajustes UX: tratamiento comercial, datos de empresa/contacto, gratuidad 2026 · P1 · **DONE, on `develop`** (D-148)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/85
+- **Diagnosis:** three independent pre-launch adjustments in one issue.
+- **Resolution (D-148):**
+  1. **Tratamiento comercial "Teléfono" → "WhatsApp".** Label-only across all 8 i18n dictionaries
+     (`panel.privacy.channels`, `channelPhoneLabel`, `previewFields.contactPhone`, wizard
+     `commercialShare.channels`); stored `CommercialContactChannel` enum keeps `phone` (issue
+     permits it — avoids a production enum rename). New `commercialChannelLabelEs()` helper feeds
+     the ES-only admin `/admin/tratamiento-comercial` (previously showed the raw enum).
+  2. **Empresas/contactos habituales — código postal + población.** Migration
+     `20260908170252_saved_company_postal_city` (additive nullable). `savedCompanySchema` +
+     optional `postalCode`/`city`; `SavedDataManager` company form + list; wizard party autofill
+     now carries CP + población from the picked saved company into the DeCA. Editing = existing
+     delete/re-add pattern (consistent with all saved-data kinds; no per-record edit UI exists).
+  3. **Gratuidad 2026 (discreto).** `landing.hero.launchBadge` pill in `app/page.tsx`; reworded
+     `benefits[0].body` (dropped "sin plan de pago"), FAQ answer, `finalCtaMicrocopy`, `auth.footNote`
+     — all anchored to "durante 2026 / a partir de 2027 mediante suscripción". No panel pricing UI.
+- **Verification:** typecheck + lint + prettier + 205 unit (4 new: `commercial-availability`,
+  `saved-schema`) + keel:verify green. e2e: `commercial-consent.spec.ts` (+WhatsApp assertion),
+  `master-data.spec.ts` (+CP/población carry-through), `landing.spec.ts`.
+- **Pending:** the user merges `develop` → `main` and runs `prisma migrate deploy` on production
+  for `20260908170252_saved_company_postal_city`; then beat 3 + the user closes #85 (Keel never
+  closes on its own reading). Beat-1 comment to post.

@@ -49,7 +49,9 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     await page.getByTestId("c-role").selectOption("shipper");
     await page.fill("#c-name", "Cargador Habitual SL");
     await page.fill("#c-nif", "B11111111");
-    await page.fill("#c-address", "Calle Uno 1, Valencia");
+    await page.fill("#c-address", "Calle Uno 1");
+    await page.fill("#c-postal-code", "46001");
+    await page.fill("#c-city", "Valencia");
     await page.fill("#c-contact-name", "Marta Ruiz");
     await page
       .locator("section", { hasText: "Empresas y contactos" })
@@ -117,6 +119,9 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
       .selectOption({ label: "Cargador Habitual SL — B11111111" });
     firstDecaActions++;
     await expect(page.locator("#shipperName")).toHaveValue("Cargador Habitual SL");
+    // #85 — a saved company now carries CP + población into the DeCA party
+    await expect(page.locator("#shipperPostalCode")).toHaveValue("46001");
+    await expect(page.locator("#shipperCity")).toHaveValue("Valencia");
     await page
       .getByTestId("autofill-carrier")
       .selectOption({ label: "Transportista Habitual SL — B22222222" });

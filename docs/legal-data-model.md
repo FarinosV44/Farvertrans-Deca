@@ -46,8 +46,10 @@ is researched and validated — see `docs/decisions.md` D-042.
   produced junk, and many non-Spanish domiciles carry the locality inside the
   free `address` line. `formatPartyAddressLines()` composes the display, dropping
   any absent part with no dangling separator. The "usar mi empresa" quick-fill
-  populates them from `Company.postalCode` / `Company.city` (#59). `SavedCompany`
-  is unchanged — it still stores only a free `address`.
+  populates them from `Company.postalCode` / `Company.city` (#59). Since #85,
+  `SavedCompany` also carries optional `postalCode` / `city`, so picking a saved
+  company from a wizard autofill dropdown fills the party's "CP población" line
+  too (migration `20260908170252_saved_company_postal_city`, additive/nullable).
 - **Weight is never silently reformatted** (b2). `"12.500 kg"`, `"12,5 t"` and
   `"una plataforma completa (aprox. 24 t)"` all reach the PDF exactly as typed. A
   regex rejects only meaningless values (`0`, `0 kg`, `-`, `n/a`, `sin especificar`)

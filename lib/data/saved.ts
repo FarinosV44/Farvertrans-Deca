@@ -65,6 +65,8 @@ export async function createSaved(
         name: d.name,
         nif: d.nif,
         address: d.address || null,
+        postalCode: d.postalCode || null,
+        city: d.city || null,
         contactName: d.contactName || null,
         contactPhone: d.contactPhone || null,
         contactEmail: d.contactEmail || null,

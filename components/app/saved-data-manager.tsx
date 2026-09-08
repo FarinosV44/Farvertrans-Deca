@@ -10,6 +10,8 @@ type Company = {
   name: string;
   nif: string | null;
   address: string | null;
+  postalCode: string | null;
+  city: string | null;
   contactName: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
@@ -110,7 +112,9 @@ export function SavedDataManager({
           secondary: [
             ROLE_LABEL[c.role],
             c.nif,
-            c.address,
+            [c.address, [c.postalCode, c.city].filter(Boolean).join(" ")]
+              .filter(Boolean)
+              .join(", "),
             c.contactName ? `Contacto: ${c.contactName}` : null,
           ]
             .filter(Boolean)
@@ -247,6 +251,8 @@ function CompanyForm({
     name: "",
     nif: "",
     address: "",
+    postalCode: "",
+    city: "",
     contactName: "",
     contactPhone: "",
     contactEmail: "",
@@ -284,6 +290,20 @@ function CompanyForm({
         label="Domicilio"
         value={f.address}
         onChange={(v) => setF((s) => ({ ...s, address: v }))}
+      />
+      <Field
+        id="c-postal-code"
+        label="Código postal (opcional)"
+        required={false}
+        value={f.postalCode}
+        onChange={(v) => setF((s) => ({ ...s, postalCode: v }))}
+      />
+      <Field
+        id="c-city"
+        label="Población / localidad (opcional)"
+        required={false}
+        value={f.city}
+        onChange={(v) => setF((s) => ({ ...s, city: v }))}
       />
       <Field
         id="c-contact-name"

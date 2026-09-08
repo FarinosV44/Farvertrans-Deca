@@ -148,6 +148,9 @@ test.describe("#84 — commercial-treatment settings", () => {
   test("channel 'email' hides the phone field and vice-versa", async ({ page }) => {
     await register(page, { commercialOptIn: true });
     await page.goto("/panel/privacidad");
+    // #85 — the phone channel is labelled "WhatsApp", never "Teléfono"
+    await expect(page.getByTestId("commercial-channel")).toContainText("WhatsApp");
+    await expect(page.getByTestId("commercial-channel")).not.toContainText("Teléfono");
     await page.getByTestId("commercial-channel").selectOption("email");
     await expect(page.getByTestId("commercial-email")).toBeVisible();
     await expect(page.getByTestId("commercial-phone")).toHaveCount(0);

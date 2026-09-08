@@ -139,6 +139,12 @@ export default async function HomePage() {
                 {hero.subhead}
               </p>
               <p className="mt-3 max-w-xl text-sm text-[var(--color-text-muted)]">{hero.proof}</p>
+              <p
+                data-testid="launch-pricing-badge"
+                className="mt-4 inline-flex items-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface,transparent)] px-3 py-1 text-xs font-medium text-[var(--color-text-muted)]"
+              >
+                {hero.launchBadge}
+              </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <CtaButton
                   event="hero_cta"

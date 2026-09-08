@@ -87,6 +87,10 @@ test.describe("BUILD 06 — production landing", () => {
       ),
     ).toBeVisible();
     await expect(page.getByTestId("cta-hero")).toBeInViewport();
+    // #85: discreet launch-pricing badge, anchored to 2026 (no "free forever")
+    await expect(page.getByTestId("launch-pricing-badge")).toHaveText(
+      "Gratis durante 2026 · Fase de lanzamiento",
+    );
     // returning-user entry point in the hero
     await expect(page.getByTestId("hero-login")).toHaveAttribute("href", "/entrar");
     // conversion sections present

@@ -4269,3 +4269,39 @@ remaining scope.
   `deca_availability_share` tables present.
 - **Still outstanding:** the `LEGAL REVIEW PENDING` sections in privacidad/terminos still need the
   asesoría pass (the user was told); Hostinger redeploy so the #84 code runs; secret rotation.
+
+## D-148 — #85 pre-launch UX batch (WhatsApp channel, saved-company address, launch pricing)
+- Date / phase: 2026-09-08, Phase 5. GitHub issue #85 — three independent pre-launch adjustments.
+  Answers to the batched questions (user): keep the Keel lock stamp at v5.19.2 (do not re-seal for
+  v5.20.0 now); pricing message scope = "discreto"; saved-company postal/city = optional.
+- **Part 1 — "Teléfono" → "WhatsApp" as the commercial-treatment contact channel.** Label change
+  only: the stored `CommercialContactChannel` enum value stays `phone` (the issue permits keeping
+  the internal value; renaming a Postgres enum on production is avoidable risk). All 8 i18n
+  dictionaries updated (`panel.privacy.channels` `phone`/`both`, `channelPhoneLabel`,
+  `previewFields.contactPhone`, and the wizard `commercialShare.channels`). New pure helper
+  `commercialChannelLabelEs()` in `lib/commercial/types.ts` for the ES-only admin
+  `/admin/tratamiento-comercial` (was rendering the raw enum). Unit test in
+  `commercial-availability.test.ts`; e2e assertion in `commercial-consent.spec.ts` (channel select
+  shows "WhatsApp", never "Teléfono").
+- **Part 2 — código postal + población on empresas/contactos habituales (`SavedCompany`).** Closes
+  the gap D-145 left ("`SavedCompany` unchanged — free address only"). Migration
+  `20260908170252_saved_company_postal_city` (additive, nullable `postal_code` + `city`).
+  `savedCompanySchema` gains optional `postalCode`/`city` (max 12/120, `.optional().default("")`,
+  mirroring the DeCA party schema which is optional since #75/D-145). `createSaved` writes them;
+  `SavedDataManager` company form + list display updated; the wizard `SavedData.companies` type +
+  both party autofill handlers now fill `shipper/carrierPostalCode` + `City` from the picked saved
+  company. **Editing = the existing delete-and-re-add pattern** (same as every other saved-data
+  kind — no per-record edit UI exists), noted on the issue. Unit test `tests/unit/saved-schema.test.ts`;
+  e2e assertions in `master-data.spec.ts`. **Needs `prisma migrate deploy` on production** after the
+  `main` merge (same D-112 pattern as the other pending migrations).
+- **Part 3 — "Gratis durante 2026 · Fase de lanzamiento" (discreet).** New `landing.hero.launchBadge`
+  key (all 8 dicts) rendered as a small outlined pill under the hero proof line in `app/page.tsx`
+  (`data-testid="launch-pricing-badge"`). `benefits[0].body` reworded — dropped "sin plan de
+  pago"/"no payment plan" (implied free forever) for "…durante la fase de lanzamiento de 2026 …
+  A partir de 2027, mediante suscripción". FAQ "¿Es gratis?" answer, `finalCtaMicrocopy` and
+  `auth.footNote` all anchored to 2026. No pricing UI in the panel (the "discreto" choice).
+- Gate: typecheck + lint (pre-existing warnings only) + prettier + 205 unit (4 new) + keel:verify
+  green. Targeted e2e (`commercial-consent`, `master-data`, `landing`) run.
+- **On `develop` only — not merged to `main`, migration not deployed.** Standing "push to main"
+  from this issue's own review requirement does not apply; awaits the user's explicit merge/deploy
+  instruction.
