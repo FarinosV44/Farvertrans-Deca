@@ -58,8 +58,10 @@ export function buildAvailabilityPayload(
   const carrierName = deca.carrier?.name?.trim() || "";
   const destination = override?.destination?.trim() || deca.unloadLocation?.city?.trim() || "";
   const availabilityDate = override?.availabilityDate?.trim() || deca.unloadDate?.trim() || "";
-  const channel = override?.channel ?? treatment.channel;
-  if (!carrierName || !destination || !availabilityDate || !channel) return null;
+  // No explicit channel yet (opted in but never opened the settings) → email,
+  // the least intrusive option and the wizard's default selection.
+  const channel = override?.channel ?? treatment.channel ?? "email";
+  if (!carrierName || !destination || !availabilityDate) return null;
 
   const payload: AvailabilityPayload = { carrierName, destination, availabilityDate, channel };
   if ((channel === "email" || channel === "both") && treatment.contactEmail) {

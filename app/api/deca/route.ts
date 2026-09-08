@@ -179,6 +179,25 @@ export async function POST(req: Request) {
           // never block or fail generation over a "last used" bookkeeping hiccup
         });
       }
+
+      // #84: per-DeCA commercial-share opt-in. A SEPARATE top-level key, never
+      // part of `validated`/`data_json`. `recordAvailabilityShare` re-checks the
+      // company's live preference and writes ONLY the authorised fields.
+      const cs = (body as { commercialShare?: unknown } | null)?.commercialShare;
+      if (cs && typeof cs === "object") {
+        const c = cs as Record<string, unknown>;
+        const s = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+        const ch = s(c.channel);
+        const { recordAvailabilityShare } = await import("@/lib/commercial/availability");
+        recordAvailabilityShare(created.decaId, owner.companyId, validated.data, {
+          enabled: c.enabled === true,
+          destination: s(c.destination),
+          availabilityDate: s(c.availabilityDate),
+          channel: ch === "email" || ch === "phone" || ch === "both" ? ch : undefined,
+        }).catch(() => {
+          // best-effort — never blocks generation
+        });
+      }
     }
 
     const res = NextResponse.json(

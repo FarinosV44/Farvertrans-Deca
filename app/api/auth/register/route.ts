@@ -144,8 +144,15 @@ export async function POST(req: Request) {
   // leaves it unticked is untouched.
   if (b.commercialOptIn && created.companyId && !created.joinedTeam) {
     try {
-      const { setCommercialMode } = await import("@/lib/consent");
+      const { setCommercialMode, setCommercialChannel } = await import("@/lib/consent");
       await setCommercialMode(created.companyId, "all", created.userId);
+      // Default the channel to the company email so the opt-in is complete; the
+      // owner can change it on /panel/privacidad.
+      await setCommercialChannel(
+        created.companyId,
+        { channel: "email", contactEmail: b.companyEmail || b.email },
+        created.userId,
+      );
     } catch {
       // never block signup on the commercial-preference write
     }

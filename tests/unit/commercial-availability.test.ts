@@ -111,16 +111,26 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
     expect(p!.contactPhone).toBeUndefined();
   });
 
-  it("returns null when a required value cannot be resolved (no channel, no destination)", () => {
-    expect(
-      buildAvailabilityPayload(deca, treatment({ channel: null }), { enabled: true }),
-    ).toBeNull();
+  it("with no channel set anywhere, falls back to 'email'", () => {
+    const p = buildAvailabilityPayload(deca, treatment({ channel: null }), { enabled: true });
+    expect(p?.channel).toBe("email");
+    expect(p?.contactEmail).toBe("flota@perez.example");
+    expect(p?.contactPhone).toBeUndefined();
+  });
+
+  it("returns null when destination or date cannot be resolved", () => {
     expect(
       buildAvailabilityPayload(
         { ...deca, unloadLocation: { city: "" }, unloadDate: "2026-10-06" },
         treatment(),
         { enabled: true },
       ),
+    ).toBeNull();
+    expect(
+      buildAvailabilityPayload({ ...deca, unloadDate: "" }, treatment(), {
+        enabled: true,
+        destination: "Madrid",
+      }),
     ).toBeNull();
   });
 });
