@@ -78,6 +78,7 @@ model Company {
   decaDrafts          DecaDraft[]
   favoriteRoutes      FavoriteRoute[]
   integrationRequests IntegrationRequest[]
+  supportTickets      SupportTicket[]
 
   @@map("company")
 }
@@ -215,8 +216,62 @@ model User {
   webauthnCredentials WebAuthnCredential[]
   trustedDevices      TrustedDevice[]
   decaDraft           DecaDraft?
+  supportTickets      SupportTicket[]
 
   @@map("user")
+}
+
+/// Internal technical-support ticket (#86 part 5). A message sent from the
+/// panel's "Asistencia técnica" becomes a tracked ticket visible to the
+/// superadmin — never just an email. LEGAL queries are NOT tickets (#86 part 6):
+/// they go straight to the Praetoria legal channel.
+enum SupportTicketStatus {
+  new
+  in_review
+  awaiting_user
+  resolved
+  closed
+}
+
+model SupportTicket {
+  id          String              @id @default(cuid())
+  /// Human-facing sequential number ("Incidencia #123").
+  number      Int                 @unique @default(autoincrement())
+  companyId   String?             @map("company_id")
+  userId      String?             @map("user_id")
+  /// Captured at creation so the ticket stays complete if the user/company is later removed.
+  userEmail   String              @map("user_email")
+  userName    String?             @map("user_name")
+  companyName String?             @map("company_name")
+  category    String
+  subject     String
+  status      SupportTicketStatus @default(new)
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  company  Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  user     User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages SupportTicketMessage[]
+
+  @@index([status])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("support_ticket")
+}
+
+model SupportTicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String   @map("ticket_id")
+  /// "user" or "admin".
+  authorType String   @map("author_type")
+  authorId   String?  @map("author_id")
+  body       String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("support_ticket_message")
 }
 
 /// A single in-progress DeCA the user has not generated yet (#76). One per

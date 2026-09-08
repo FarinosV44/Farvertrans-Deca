@@ -4378,3 +4378,25 @@ remaining scope.
 - Tests: `text-normalize.test.ts` new; `saved-schema.test.ts` + `deca-pdf-snapshot.test.ts` updated
   to case-insensitive structural checks; `master-data.spec.ts` assertions updated for the uppercase
   habituales.
+
+### Slice 5 (part 5, P1) — internal technical-incidence system + Superadmin section
+- **Model:** `SupportTicket` (+ auto `number` for "Incidencia #123", `userEmail`/`userName`/`companyName`
+  captured at creation so the ticket survives account removal, `onDelete: SetNull` on the FKs) +
+  `SupportTicketMessage` (authorType `user`/`admin`). Enum `SupportTicketStatus`:
+  `new` / `in_review` / `awaiting_user` / `resolved` / `closed` — the issue's five states. Migration
+  `20260908185301_support_tickets`.
+- **`lib/support/tickets.ts`** + **`lib/support/schema.ts`** — create/list/get/reply/status, all
+  company-scoped for the user side. Every superadmin reply is recorded AND best-effort emailed to
+  the user (`sendMail`); a new ticket / a user reply notifies `FVD_SUPPORT_NOTIFY_EMAIL` (falls back
+  to `BRAND.supportEmail`). An admin reply moves the ticket to `awaiting_user`.
+- **API:** `POST /api/support` (authed non-`read_only`, `checkAbuse("share")`, 422 with `fields`),
+  `POST /api/support/[id]/reply` (own ticket only), `PATCH /api/admin/support/[id]`
+  (`isInternalRequest` → 404 otherwise; `{body?, status?}`).
+- **UI:** `/panel/ayuda` gains an "Abrir una incidencia técnica" form + a "Mis incidencias" list;
+  `/panel/ayuda/[id]` shows the conversation + a reply box (closed tickets are read-only).
+  Superadmin: **`/admin/soporte`** (list + filter by state / date, "Soporte" nav entry — the old
+  `/admin/errores` nav label changed "Incidencias" → "Errores" to keep them distinct) and
+  `/admin/soporte/[id]` (thread + reply + status). i18n keys added to all 8 dictionaries; the admin
+  area stays ES-only by convention.
+- Tests: `support-schema.test.ts` (4); `support-tickets.spec.ts` (open → superadmin sees it →
+  replies → status → user replies → non-internal 404).
