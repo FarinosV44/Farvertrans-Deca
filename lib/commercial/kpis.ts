@@ -83,9 +83,7 @@ function fold(s: string | null | undefined): string {
   return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
 }
 
-export async function commercialKpis(
-  filter: CommercialKpiFilter = {},
-): Promise<CommercialKpis> {
+export async function commercialKpis(filter: CommercialKpiFilter = {}): Promise<CommercialKpis> {
   const eligible = await prisma.commercialConsent.findMany({
     where: { mode: { not: "none" } },
     select: { companyId: true },
