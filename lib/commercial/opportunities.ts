@@ -12,6 +12,7 @@ import {
 import {
   applyOpportunityFilter,
   sortOpportunities,
+  OPEN_STATES,
   type Opportunity,
   type OpportunityFilter,
   type RouteObservation,
@@ -43,7 +44,7 @@ const ROUTE_WINDOW = 4000;
 const ACTIVITY_LOOKBACK_DAYS = 180;
 
 /** States from which a further outreach action still makes sense. */
-const CONTACTABLE_STATES = new Set<Opportunity["state"]>(["review", "contacted", "interested"]);
+const CONTACTABLE_STATES = new Set<Opportunity["state"]>(OPEN_STATES);
 
 export type OpportunityListResult = {
   opportunities: Opportunity[];
@@ -222,7 +223,20 @@ export async function listOpportunities(
     }),
     prisma.commercialOpportunity.findMany({
       where: { companyId: { in: companyIds } },
-      select: { companyId: true, state: true, note: true, contactedAt: true, updatedAt: true },
+      select: {
+        companyId: true,
+        state: true,
+        note: true,
+        contactedAt: true,
+        updatedAt: true,
+        convertedByUserId: true,
+        convertedAt: true,
+        internalRef: true,
+        firstPorteDate: true,
+        loadsGenerated: true,
+        revenueEur: true,
+        marginEur: true,
+      },
     }),
     prisma.operator.findMany({ select: { refCode: true, name: true, lastName: true } }),
   ]);
@@ -281,6 +295,15 @@ export async function listOpportunities(
           note: opp?.note ?? null,
           contactedAt: opp?.contactedAt ?? null,
           stateUpdatedAt: opp?.updatedAt ?? null,
+          convertedByUserId: opp?.convertedByUserId ?? null,
+          convertedAt: opp?.convertedAt ?? null,
+          outcome: {
+            internalRef: opp?.internalRef ?? null,
+            firstPorteDate: opp?.firstPorteDate ?? null,
+            loadsGenerated: opp?.loadsGenerated ?? null,
+            revenueEur: opp?.revenueEur ?? null,
+            marginEur: opp?.marginEur ?? null,
+          },
           routes,
         },
         now,
@@ -296,14 +319,35 @@ export async function listOpportunities(
   return { opportunities: filtered, eligibleCount, operators };
 }
 
+export type OpportunityUpdate = {
+  state?: Opportunity["state"] | null;
+  note?: string | null;
+  /** #89 — the channel the operator used for this action. */
+  channel?: "whatsapp" | "email" | "call" | "other" | "none";
+  /** #89 — the route/corridor that originated the contact. */
+  routeContext?: string | null;
+  /** #89 — optional manual economic outcome. */
+  outcome?: {
+    internalRef?: string;
+    firstPorteDate?: string;
+    loadsGenerated?: number;
+    revenueEur?: number;
+    marginEur?: number;
+  };
+};
+
 /**
- * Set (or clear) the internal follow-up state for a carrier (#87). `state: null`
- * removes the row entirely (back to "not reviewed"). Refuses a company that is
- * not eligible. Audited (`SecurityAuditLog`); never touches `CommercialConsent`.
+ * Set (or clear) the internal follow-up state for a carrier (#87/#89).
+ * `state: null` removes the row entirely (back to "not reviewed"). Refuses a
+ * company that is not eligible. Writes an append-only `CommercialActivityLog`
+ * entry (who/when/from→to/channel/note) and, on a transition into `converted`,
+ * records the internal commercial operator + timestamp — kept SEPARATE from the
+ * acquisition/referral operator (#89 "atribución"). Audited; never touches
+ * `CommercialConsent`.
  */
 export async function setOpportunityState(
   companyId: string,
-  input: { state?: Opportunity["state"] | null; note?: string | null },
+  input: OpportunityUpdate,
   actorUserId: string,
 ): Promise<void> {
   const consent = await prisma.commercialConsent.findUnique({
@@ -312,14 +356,33 @@ export async function setOpportunityState(
   });
   if (!consent || consent.mode === "none") throw new Error("not_eligible");
 
+  const before = await prisma.commercialOpportunity.findUnique({
+    where: { companyId },
+    select: { state: true },
+  });
+  const fromState = before?.state ?? null;
+
   if (input.state === null) {
     await prisma.commercialOpportunity.deleteMany({ where: { companyId } });
   } else {
-    const base = {
+    const now = new Date();
+    const enteringConverted = input.state === "converted" && fromState !== "converted";
+    const o = input.outcome;
+    const write = {
       updatedByUserId: actorUserId,
       ...(input.state !== undefined ? { state: input.state } : {}),
       ...(input.note !== undefined ? { note: input.note } : {}),
-      ...(input.state === "contacted" ? { contactedAt: new Date() } : {}),
+      ...(input.state === "contacted" && !before ? { contactedAt: now } : {}),
+      ...(enteringConverted ? { convertedByUserId: actorUserId, convertedAt: now } : {}),
+      ...(o?.internalRef !== undefined ? { internalRef: o.internalRef || null } : {}),
+      ...(o?.firstPorteDate
+        ? { firstPorteDate: new Date(`${o.firstPorteDate}T00:00:00Z`) }
+        : o?.firstPorteDate === ""
+          ? { firstPorteDate: null }
+          : {}),
+      ...(o?.loadsGenerated !== undefined ? { loadsGenerated: o.loadsGenerated } : {}),
+      ...(o?.revenueEur !== undefined ? { revenueEur: o.revenueEur } : {}),
+      ...(o?.marginEur !== undefined ? { marginEur: o.marginEur } : {}),
     };
     await prisma.commercialOpportunity.upsert({
       where: { companyId },
@@ -328,15 +391,37 @@ export async function setOpportunityState(
         state: input.state ?? "review",
         note: input.note ?? null,
         updatedByUserId: actorUserId,
-        ...(input.state === "contacted" ? { contactedAt: new Date() } : {}),
+        ...(input.state === "contacted" ? { contactedAt: now } : {}),
+        ...(enteringConverted ? { convertedByUserId: actorUserId, convertedAt: now } : {}),
+        internalRef: o?.internalRef || null,
+        firstPorteDate: o?.firstPorteDate ? new Date(`${o.firstPorteDate}T00:00:00Z`) : null,
+        loadsGenerated: o?.loadsGenerated ?? null,
+        revenueEur: o?.revenueEur ?? null,
+        marginEur: o?.marginEur ?? null,
       },
-      update: base,
+      update: write,
+    });
+  }
+
+  // Append-only activity trail (#89) — one entry per action.
+  const stateChanged = input.state !== undefined && input.state !== fromState;
+  if (stateChanged || input.note !== undefined || input.channel) {
+    await prisma.commercialActivityLog.create({
+      data: {
+        companyId,
+        actorUserId,
+        fromState,
+        toState: input.state === null ? null : (input.state ?? fromState),
+        channel: input.channel ?? "none",
+        note: input.note?.trim() || null,
+        routeContext: input.routeContext?.trim() || null,
+      },
     });
   }
 
   await recordAudit({
     actorId: actorUserId,
-    action: `commercial_opportunity:${input.state ?? "cleared"}`,
+    action: `commercial_opportunity:${input.state === null ? "cleared" : (input.state ?? "note")}`,
     targetType: "company",
     targetId: companyId,
     result: "success",

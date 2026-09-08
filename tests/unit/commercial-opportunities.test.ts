@@ -53,6 +53,15 @@ function baseInput(over: Partial<Parameters<typeof deriveOpportunity>[0]> = {}) 
     note: null,
     contactedAt: null,
     stateUpdatedAt: null,
+    convertedByUserId: null,
+    convertedAt: null,
+    outcome: {
+      internalRef: null,
+      firstPorteDate: null,
+      loadsGenerated: null,
+      revenueEur: null,
+      marginEur: null,
+    },
     routes: [route()],
     ...over,
   };

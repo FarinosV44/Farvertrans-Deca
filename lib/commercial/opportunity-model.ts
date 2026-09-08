@@ -13,41 +13,90 @@ export type OpportunityState =
   | "review"
   | "contacted"
   | "interested"
+  | "not_interested"
   | "unavailable"
-  | "discarded"
-  | "converted";
+  | "awaiting_load"
+  | "first_load_offered"
+  | "first_load_awarded"
+  | "converted"
+  | "discarded";
 
 export const OPPORTUNITY_STATES: OpportunityState[] = [
   "review",
   "contacted",
   "interested",
+  "not_interested",
   "unavailable",
-  "discarded",
+  "awaiting_load",
+  "first_load_offered",
+  "first_load_awarded",
   "converted",
+  "discarded",
 ];
 
 export const OPPORTUNITY_STATE_LABEL: Record<OpportunityState, string> = {
   review: "Revisar",
   contacted: "Contactado",
   interested: "Interesado",
+  not_interested: "No interesado",
   unavailable: "No disponible",
+  awaiting_load: "Pendiente de carga adecuada",
+  first_load_offered: "Primera carga ofrecida",
+  first_load_awarded: "Primera carga adjudicada",
+  converted: "Convertido en transportista Farvertrans",
   discarded: "Descartado",
-  converted: "Convertido",
+};
+
+/** The states that count an opportunity as commercially converted (#89 KPIs). */
+export const CONVERTED_STATES: OpportunityState[] = ["converted"];
+/** States still worth a further outreach step. */
+export const OPEN_STATES: OpportunityState[] = [
+  "review",
+  "contacted",
+  "interested",
+  "awaiting_load",
+  "first_load_offered",
+];
+
+/** The channel an operator used for a commercial action (#89). */
+export const ACTIVITY_CHANNELS = ["whatsapp", "email", "call", "other", "none"] as const;
+export type ActivityChannel = (typeof ACTIVITY_CHANNELS)[number];
+export const ACTIVITY_CHANNEL_LABEL: Record<ActivityChannel, string> = {
+  whatsapp: "WhatsApp",
+  email: "Email",
+  call: "Llamada",
+  other: "Otro",
+  none: "Sin canal",
 };
 
 /**
- * Body of `PATCH /api/admin/oportunidades/[companyId]` (#87). `state: null`
- * clears the follow-up row; at least one of the two fields must be present.
+ * Body of `PATCH /api/admin/oportunidades/[companyId]` (#87/#89). `state: null`
+ * clears the follow-up row; at least one field must be present. `channel` and
+ * the `outcome` block are #89 — recorded on the activity trail / the opportunity.
  */
 export const opportunityUpdateSchema = z
   .object({
     state: z.enum(OPPORTUNITY_STATES as [OpportunityState, ...OpportunityState[]]).nullable(),
     note: z.string().trim().max(2000),
+    channel: z.enum(ACTIVITY_CHANNELS),
+    routeContext: z.string().trim().max(120),
+    outcome: z.object({
+      internalRef: z.string().trim().max(80).optional(),
+      firstPorteDate: z.string().trim().max(10).optional(),
+      loadsGenerated: z.number().int().min(0).max(1_000_000).optional(),
+      revenueEur: z.number().int().min(0).max(1_000_000_000).optional(),
+      marginEur: z.number().int().min(-1_000_000_000).max(1_000_000_000).optional(),
+    }),
   })
   .partial()
-  .refine((d) => d.state !== undefined || d.note !== undefined, {
-    message: "Nada que actualizar.",
-  });
+  .refine(
+    (d) =>
+      d.state !== undefined ||
+      d.note !== undefined ||
+      d.channel !== undefined ||
+      d.outcome !== undefined,
+    { message: "Nada que actualizar." },
+  );
 
 /** A single route the carrier has been observed on (from `DecaRouteIntel`). */
 export type RouteObservation = {
@@ -91,6 +140,19 @@ export type Opportunity = {
   note: string | null;
   contactedAt: Date | null;
   stateUpdatedAt: Date | null;
+
+  /** #89 — the internal commercial operator who converted this, kept separate
+   *  from the acquisition/referral operator above. */
+  convertedByUserId: string | null;
+  convertedAt: Date | null;
+  /** #89 — optional manual economic outcome (whole euros). */
+  outcome: {
+    internalRef: string | null;
+    firstPorteDate: Date | null;
+    loadsGenerated: number | null;
+    revenueEur: number | null;
+    marginEur: number | null;
+  };
 
   routes: RouteObservation[];
 
@@ -195,7 +257,7 @@ export function applyOpportunityFilter(
 
     if (f.state) {
       if (f.state === "open") {
-        if (!["review", "contacted", "interested"].includes(o.state)) return false;
+        if (!OPEN_STATES.includes(o.state)) return false;
       } else if (o.state !== f.state) return false;
     }
 

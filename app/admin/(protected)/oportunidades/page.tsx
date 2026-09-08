@@ -295,6 +295,15 @@ export default async function AdminOportunidades({ searchParams }: { searchParam
                   channel={o.channel}
                   contactEmail={o.contactEmail}
                   contactPhone={o.contactPhone}
+                  outcome={{
+                    internalRef: o.outcome.internalRef ?? "",
+                    firstPorteDate: o.outcome.firstPorteDate
+                      ? o.outcome.firstPorteDate.toISOString().slice(0, 10)
+                      : "",
+                    loadsGenerated: o.outcome.loadsGenerated?.toString() ?? "",
+                    revenueEur: o.outcome.revenueEur?.toString() ?? "",
+                    marginEur: o.outcome.marginEur?.toString() ?? "",
+                  }}
                 />
               </Cell>
             </Row>
