@@ -6,6 +6,7 @@
  * directly (`tests/unit/commercial-opportunities.test.ts`).
  */
 
+import { z } from "zod";
 import type { Zone } from "@/lib/commercial/corridors";
 
 export type OpportunityState =
@@ -33,6 +34,20 @@ export const OPPORTUNITY_STATE_LABEL: Record<OpportunityState, string> = {
   discarded: "Descartado",
   converted: "Convertido",
 };
+
+/**
+ * Body of `PATCH /api/admin/oportunidades/[companyId]` (#87). `state: null`
+ * clears the follow-up row; at least one of the two fields must be present.
+ */
+export const opportunityUpdateSchema = z
+  .object({
+    state: z.enum(OPPORTUNITY_STATES as [OpportunityState, ...OpportunityState[]]).nullable(),
+    note: z.string().trim().max(2000),
+  })
+  .partial()
+  .refine((d) => d.state !== undefined || d.note !== undefined, {
+    message: "Nada que actualizar.",
+  });
 
 /** A single route the carrier has been observed on (from `DecaRouteIntel`). */
 export type RouteObservation = {
