@@ -1575,6 +1575,51 @@ User urgent/blocking, ahead of #87–#90. `SUPERADMIN_BACKUP_PASSWORD` already i
   bug — a hanging ceremony left the loading flag stuck); `buildAuthenticationOptions` `timeout: 60000`.
 - **No migration.** Env var only. Gate: typecheck + 222 unit (3 new) + lint + production build +
   19/19 admin-2fa/admin-passkey e2e green.
-- **NEXT: merge to `main`; the user redeploys Hostinger and confirms Super Admin access personally,
-  THEN #87–#90 continue.** (#87/#88 plan already agreed: eligibility = active CommercialConsent,
-  corridors in code, any internal user, billing manual-optional.)
+- **#91 CONFIRMED by the user** (2026-09-08): Super Admin access works in production. Merged to
+  `main` (`9c83f04`); CI green. Then #87/#88 started.
+
+### #87 + #88 — commercial intelligence for Super Admin (D-152, 2026-09-08) — on `develop`
+Pre-agreed (AskUserQuestion): eligibility = active `CommercialConsent` (`mode != 'none'`); corridors
+in code (`lib/commercial/corridors.ts`); any internal user; billing manual-optional (that is #89).
+Sprint plan: `docs/sprints/sprint-commercial-intel.md`. **User asked to build #87+#88 then review
+before #89/#90 — so this stops on `develop`, NOT merged to `main`.**
+- **Slice 1** (`772a220`) — `lib/commercial/corridors.ts` (in-code CORRIDORS + zone/corridor
+  matching: ES regional zones, FR/Benelux/IT/DE/PT, city hints) + `lib/commercial/activity.ts`
+  (`summariseActivity` — 7/30/60/90d, trend vs prior 30d, weekday histogram). Pure, test-first.
+- **Slice 2** (`772a220`) — `CommercialOpportunity` model + enum + migration
+  `20260908205105_commercial_opportunity` **(local dev only)**. `lib/commercial/opportunity-model.ts`
+  (pure `applyOpportunityFilter` / `sortOpportunities` / `routeMatchesGeoDate` +
+  `opportunityUpdateSchema`). `lib/commercial/opportunities.ts` — `listOpportunities(filter)` over
+  eligible carriers joined with `DecaRouteIntel` + `Acquisition` + `CommercialOpportunity`;
+  `setOpportunityState()` (audited, refuses non-eligible).
+- **Slice 3** (`9fa886e`) — `/admin/oportunidades` page (KPIs, no-JS GET filter form:
+  origin/dest country·province·city, unload-date range, activity 7/30/90d, corridor, operator,
+  state, sort; scrollable table) + `components/admin/opportunity-actions.tsx` (per-row state select
+  auto-save, internal note, WhatsApp/copy-email — **only for the authorised channel + value** —
+  ficha link) + `PATCH /api/admin/oportunidades/[companyId]` (`isInternalRequest` → 404, 409
+  `not_eligible`). "Oportunidades" nav row.
+- **Slices 4–5** (`3d709c6`) — `lib/commercial/affinity.ts` (`affinityScore` 0-100 + band +
+  per-rule breakdown; `autoTags` — every point/tag maps to one documented rule) +
+  `lib/commercial/carrier-profile.ts` (`buildCarrierProfile`: activity, `summariseRoutes` — top
+  O→D, frequent countries/provinces/cities, recurring plates, corridors; returns `{eligible:false}`
+  when no active consent). `/admin/empresas/[id]` gains "Actividad de transporte · Perfil comercial"
+  panel — score + full breakdown + tags + KPIs + routes table; one-line note when not eligible.
+- **Slice 6** — `tests/e2e/commercial-intelligence.spec.ts` (consented carrier surfaces with route
+  activity + WhatsApp action + persisted state + affinity breakdown; non-consented never appears and
+  has no derived profile; API 404 for non-internal, 409 for non-eligible).
+- Gate: typecheck + lint + prettier + **273 unit** (51 new: corridors 15, activity 8, opportunities
+  16, affinity 7, carrier-profile 5) + production build + full e2e **232 passed / 2 = the documented
+  `admin-growth:78` + `master-data:38` flakes, both green at `--workers=1`**. `docs/api/INDEX.md`
+  updated.
+- **Migration `20260908205105_commercial_opportunity` is LOCAL DEV ONLY** — apply to production with
+  the `main` merge, which waits on the user's review of #87/#88.
+
+### FIX (mid-#87) — /admin/contenido blog/guide editor: save + publish (2026-09-08, `d9f825d`) — on `develop`
+User: "no deja publicar en el blog … y tampoco lo guarda." API POST/PATCH both work when called
+directly — root cause is the App Router client cache serving a stale/empty `/admin/contenido/[id]`
+after the soft navigation that followed a save, so the saved content looked unsaved and the
+"Publicar" button never rendered (same class as D-149 #86p7 / D-151 #91). Fix: `content-editor.tsx`
+hard-navigates (`window.location.assign`) after a successful save; shows a clear "sesión de
+administración caducada, vuelve a verificar" message on a 404 (stale admin 2FA) instead of a generic
+error; `force-dynamic` on `/admin/contenido` + `/admin/contenido/nuevo`. Also stabilises the
+documented `content-cms.spec.ts:60` flake. Needs the Hostinger redeploy to reach production.

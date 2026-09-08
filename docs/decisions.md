@@ -4487,3 +4487,80 @@ remaining scope.
   `--workers=1`. typecheck + 222 unit + lint + production build green.
 - **On `develop`** (commit next). Merge to `main` next; the user redeploys Hostinger, then confirms
   Super Admin access personally before #87–#90 continue.
+
+## D-152 — #87 + #88: commercial intelligence for Super Admin
+- Date / phase: 2026-09-08, Phase 5. After the user confirmed #91 (Super Admin access) works in
+  production. User: build #87 + #88, then review before #89/#90.
+- **Pre-agreed (AskUserQuestion, this project):**
+  - Eligibility for every commercial view = the company has an active `CommercialConsent`
+    (`mode != 'none'`; a revocation sets `mode = 'none'`, so that single check suffices).
+  - Corridors of interest live in code (`lib/commercial/corridors.ts`), not a table or an admin
+    screen — editing the list is a one-line code change + deploy.
+  - Any `internal`-role user reaches these screens (no extra "commercial-use" sub-role).
+  - Billing/margin = manual optional input — that is #89, not this sprint.
+- **#87 `Super Admin > Oportunidades`** (`/admin/oportunidades`):
+  - `lib/commercial/corridors.ts` — pure. `CORRIDORS` (ES↔FR/Benelux/IT/DE/PT + a few domestic) +
+    `zoneOf()` (ES regional zones from province, foreign countries from a free-text alias table,
+    well-known freight-city hints when the country field is blank) + `matchCorridors()` + `endZone()`.
+  - `lib/commercial/activity.ts` — pure `summariseActivity(dates, now)`: 7/30/60/90d counts,
+    first/last seen, previous-30d, trend (`up`/`down`/`flat`/`new`/`none`), weekday histogram.
+  - `CommercialOpportunity` model (`companyId @unique`, `state` enum
+    `review|contacted|interested|unavailable|discarded|converted`, `note`, `updatedByUserId`,
+    `contactedAt`) + migration `20260908205105_commercial_opportunity` **(local dev only)**. It is a
+    workflow note, completely independent of `CommercialConsent` — deleting every row changes nothing
+    about what a company authorised.
+  - `lib/commercial/opportunity-model.ts` — pure types + `applyOpportunityFilter` /
+    `sortOpportunities` / `routeMatchesGeoDate` + `opportunityUpdateSchema`.
+  - `lib/commercial/opportunities.ts` — `listOpportunities(filter)`: eligible carriers joined with
+    `DecaRouteIntel` (180-day window, 4000-row cap), `CommercialConsent` (authorised channel +
+    values), `Acquisition` (first/last operator), `CommercialOpportunity` (state). `deriveOpportunity`
+    (pure) folds a company + its routes into a row (movement windows, corridors, end zones,
+    `nextUnloadDate`, most-repeated corridor). `setOpportunityState()` — audited
+    (`SecurityAuditLog` action `commercial_opportunity:<state>`), refuses a non-eligible company.
+  - `/admin/oportunidades` — KPIs + a no-JS `<form method="get">` (origin/dest country·province·city,
+    unload-date range, activity window, corridor, operator, state, sort) + a scrollable table.
+  - `components/admin/opportunity-actions.tsx` — per-row state `<select>` (auto-saves), internal
+    note, and **WhatsApp / copy-email shown ONLY when the carrier's `CommercialConsent.channel`
+    includes that channel AND a value is stored for it** (a `phone`-only consent shows no email
+    action, and vice-versa), plus a ficha link.
+  - `PATCH /api/admin/oportunidades/[companyId]` — `isInternalRequest` → 404; 409 `not_eligible`;
+    `opportunityUpdateSchema`.
+- **#88 carrier profile** (`/admin/empresas/[id]` new panel "Actividad de transporte · Perfil
+  comercial"):
+  - `lib/commercial/affinity.ts` — pure `affinityScore(input)` → `{ score 0-100 (clamped), band
+    Alta/Media/Baja, breakdown }`. Every point is one labelled rule (`+20` actividad 7d, `+15`
+    recurrencia 30d, `+15` ruta recurrente estable, `+15/+5` corredores de interés, `+10` canal
+    autorizado, `+10` consentimiento "todos los portes", `+10` relación previa, `-15` sin actividad
+    90d, `-10` tendencia a la baja). `autoTags()` — objective boolean rules only.
+  - `lib/commercial/carrier-profile.ts` — `buildCarrierProfile(companyId)`: `summariseActivity` over
+    the carrier's `Deca.createdAt`, `summariseRoutes` (pure — top O→D routes with repeat count +
+    approx repeats/month, frequent countries/provinces/cities, plates used 2+ times, distinct
+    corridors), then `affinityScore` + `autoTags`. Returns `{ eligible: false }` when the company
+    has no active consent — the page then renders only a one-line note (#88 privacy AC).
+- **Scope kept out (deliberate):** #89 (conversion tracking / KPIs / manual billing input) and #90
+  (internal alerts) — the user reviews #87/#88 first. `tipo de vehículo` filter (#87) — the data
+  does not exist in `DecaRouteIntel`. No recipient/automatic-messaging side anywhere.
+- Tests: `commercial-corridors` (15), `commercial-activity` (8), `commercial-opportunities` (16),
+  `commercial-affinity` (7), `commercial-carrier-profile` (5) unit; `commercial-intelligence.spec.ts`
+  (2) e2e. Gate: typecheck + lint + prettier + 273 unit + production build + full e2e 232 passed
+  (2 = documented `admin-growth:78` + `master-data:38` flakes, green at `--workers=1`).
+- **On `develop`** (`772a220`, `9fa886e`, `3d709c6`, + slice-6 commit). **NOT merged to `main`** —
+  the user reviews #87/#88 before #89/#90 and before the merge. The migration then goes to production
+  with that merge.
+
+## D-153 — /admin/contenido editor: reliable save + publish (mid-#87 fix)
+- Date / phase: 2026-09-08, Phase 5. User report: writing a blog post in `/admin/contenido`, then
+  "no deja publicar … y tampoco lo guarda".
+- Investigation: `POST /api/admin/contenido` and `PATCH …/[id]` (incl. `_action: {publish:true}`)
+  both succeed when called directly — the record IS created and IS published server-side. The
+  failure is client-side: `ContentEditor.save()` did `router.push('/admin/contenido/[id]')` +
+  `router.refresh()`, and in production the App Router client cache serves a stale/empty version of
+  the destination after that soft navigation, so the just-saved content looked unsaved and the
+  "Publicar" button (rendered only for an existing, non-published item) never appeared. Same class
+  as D-149 (#86 p7) and D-151 (#91) — a bug that only manifests with production caching, not locally.
+- Fix (`d9f825d`): `content-editor.tsx` hard-navigates (`window.location.assign`) after any
+  successful save/update; on an API `404` (a stale admin 2FA check makes `isInternalRequest` false
+  → the route returns 404) it shows "Tu sesión de administración ha caducado. Vuelve a verificar el
+  código y reintenta." instead of a generic "No se pudo guardar."; `force-dynamic` added to
+  `/admin/contenido` and `/admin/contenido/nuevo`. No schema change. Also stabilises the documented
+  `content-cms.spec.ts:60` flake (6/6 green). Needs the Hostinger redeploy to reach production.
