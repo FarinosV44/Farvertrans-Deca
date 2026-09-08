@@ -50,6 +50,38 @@ test.describe("SECURITY #53 — mandatory admin TOTP 2FA", () => {
     await expect(page).toHaveURL(/\/admin$/);
   });
 
+  test("#86 p7: after verifying, the admin stays in and is not bounced back to the 2FA screen", async ({
+    browser,
+  }) => {
+    const { page, close } = await internalPage(browser); // lands on /admin
+    // reload + navigate around — a stale prefetched /admin redirect used to
+    // send the user straight back to /admin/2fa/verify here
+    await page.reload();
+    await expect(page).toHaveURL(/\/admin$/);
+    await page.goto("/admin/contenido");
+    await expect(page).toHaveURL(/\/admin\/contenido$/);
+    await expect(page).not.toHaveURL(/2fa/);
+    // hitting the challenge screen directly with a fresh session bounces to /admin
+    await page.goto("/admin/2fa/verify");
+    await expect(page).toHaveURL(/\/admin$/);
+    await close();
+  });
+
+  test("#86 p7: the 2FA challenge always shows the code input (never hidden behind a passkey)", async ({
+    page,
+  }) => {
+    await page.goto("/entrar");
+    await page.fill("#email", ADMIN.email);
+    await page.fill("#password", ADMIN.password);
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
+      page.getByTestId("register-submit").click(),
+    ]);
+    await page.goto("/admin/2fa/verify");
+    await expect(page.getByTestId("totp-verify-input")).toBeVisible();
+    await expect(page.getByTestId("totp-verify-submit")).toBeVisible();
+  });
+
   test("a normal (non-internal) user cannot call the admin 2FA API at all", async ({ request }) => {
     const addr = email();
     await request.post("/api/auth/register", {

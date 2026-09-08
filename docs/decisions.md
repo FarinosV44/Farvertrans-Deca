@@ -4312,3 +4312,36 @@ remaining scope.
   (31/31); `saved_company.postal_code` + `city` verified present via the transaction pooler (:6543).
 - **Still outstanding (user):** Hostinger redeploy so the #85 code (and everything since the last
   deploy) actually runs; secret rotation still not done; beat-3 + close #85 after live check.
+
+## D-149 — #86 pre-launch batch (8 parts): habituales editables, CP obligatorio, MAYÚSCULAS, incidencias, jurídico, acceso admin, operadores
+- Date / phase: 2026-09-08, Phase 5. GitHub issue #86, worked in priority order (P0 → P1 → P2),
+  one slice per part, on `develop`. User: "Todo de una, sin parar". User-provided config:
+  WhatsApp técnico = WhatsApp jurídico = **607527719** (same number, different pre-filled message);
+  email jurídico = `info@praetoriaabogados.es` (email técnico stays separate).
+- **Part 2 REVERSES D-148's "opcionales" choice.** #85 (D-148) made `SavedCompany` `postalCode`/`city`
+  optional on the user's explicit answer; #86 part 2 (also explicit) makes them mandatory,
+  frontend + backend. Only the user reverses a decision — this is the reversal, recorded.
+
+### Slice 1 (part 7, P0) — admin Superadmin access loop from PC
+- **Symptom (user):** on desktop, after login the 2FA screen "keeps asking for the code" / hangs
+  "conectando" / errors — cannot reach Superadmin, blocking article creation (SEO).
+- **Root cause (most likely) + fixes, defense in depth:**
+  1. **Prefetched-then-cached `/admin` redirect.** The App Router can serve a client-cached
+     `redirect('/admin/2fa/verify')` captured (via `<Link>` prefetch) with the pre-verification
+     cookie, so `router.push('/admin')` after a successful check bounces straight back.
+     `TotpVerifyForm.afterSuccess()` and `TotpSetupForm` now do a HARD navigation
+     (`window.location.assign`) instead of `router.push` + `router.refresh()` — a full document load
+     always carries the fresh session cookie.
+  2. **Stale re-render of the challenge.** `/admin/2fa/verify` now calls a new
+     `isAdmin2faFresh()` (`lib/admin/guard.ts` — the redirect-free tail of `requireInternal()`) and
+     `redirect(next)` when the session is already verified, instead of rendering the form again.
+  3. **Passkey "conectando" trap on desktop.** `platformAuthenticatorIsAvailable()` returns true for
+     Windows Hello even when the registered passkey is on another device; leading with it there
+     forces the cross-device hybrid QR the phone hangs on. `TotpVerifyForm` now takes `hasTotp` and
+     leads with the CODE input whenever an authenticator app is enrolled (the common case); passkey
+     stays as an explicit secondary button. Passkey leads only for a passkey-only admin on a
+     platform-authenticator device.
+- TOTP verification window was NOT widened (a security parameter; clock-skew is escalated
+  separately if the above does not resolve it).
+- Tests: `admin-2fa.spec.ts` +2 (after verifying, reload + navigate + hit the challenge directly →
+  stays in; the code input is always visible). `totp.test.ts` unchanged (window unchanged).

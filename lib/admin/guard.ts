@@ -88,6 +88,25 @@ export async function isInternalRequest(headers: Headers): Promise<boolean> {
   return isTrustedDevice(await trustedDeviceCookie(), session.user.id);
 }
 
+/**
+ * True when THIS browser session has already passed a fresh admin strong-auth
+ * check (TOTP/passkey within the 12h window, or a valid trusted-device grant).
+ * Same test as the tail of `requireInternal()`, but it never redirects — the
+ * `/admin/2fa/verify` and `/admin/2fa/setup` pages use it to bounce an
+ * already-verified admin straight to their destination instead of rendering
+ * the challenge again (#86 part 7 — a stale prefetch or a double navigation
+ * landing back on the challenge screen was read by users as "it keeps asking
+ * for the code").
+ */
+export async function isAdmin2faFresh(): Promise<boolean> {
+  const session = await getCurrentSession();
+  if (!session || session.user.role !== "internal") return false;
+  if (!(await hasEnrolledStrongAuth(session.user.id, session.user.totpEnabledAt))) return false;
+  const tv = session.payload.tv;
+  if (tv && Math.floor(Date.now() / 1000) - tv <= ADMIN_TOTP_MAX_AGE_S) return true;
+  return isTrustedDevice(await trustedDeviceCookie(), session.user.id);
+}
+
 export class StepUpRequiredError extends Error {
   constructor() {
     super("Esta acción requiere verificar tu código de autenticación de nuevo.");

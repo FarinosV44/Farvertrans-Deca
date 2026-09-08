@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   registerPasskey,
   browserSupportsWebAuthn,
@@ -8,6 +7,15 @@ import {
 } from "@/lib/auth/webauthn-client";
 
 type Mode = "choice" | "totp";
+
+/**
+ * Hard navigation to the admin home after enrollment — NOT router.push, which
+ * can be served a prefetched-and-cached `/admin` redirect captured before the
+ * session had strong-auth, bouncing the admin back to the challenge (#86 p7).
+ */
+function goToAdmin() {
+  window.location.assign("/admin");
+}
 
 /**
  * First-time admin strong-auth enrollment (SECURITY #53 passkey follow-up).
@@ -18,7 +26,6 @@ type Mode = "choice" | "totp";
  * the same one-time recovery-codes screen.
  */
 export function TotpSetupForm() {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>("choice");
   const [passkeySupported, setPasskeySupported] = useState(true);
   /**
@@ -63,7 +70,7 @@ export function TotpSetupForm() {
           setSecret(data.secret);
           setQrDataUri(data.qrDataUri);
         } else if (data?.error?.code === "already_enrolled") {
-          router.push("/admin");
+          goToAdmin();
         } else {
           setError("No se pudo iniciar la configuración. Recarga la página.");
         }
@@ -91,8 +98,7 @@ export function TotpSetupForm() {
     if (result.data.recoveryCodes) {
       setRecoveryCodes(result.data.recoveryCodes);
     } else {
-      router.push("/admin");
-      router.refresh();
+      goToAdmin();
     }
   }
 
@@ -120,8 +126,7 @@ export function TotpSetupForm() {
       if (data.recoveryCodes) {
         setRecoveryCodes(data.recoveryCodes);
       } else {
-        router.push("/admin");
-        router.refresh();
+        goToAdmin();
       }
     } catch {
       setError("Sin conexión. Inténtalo de nuevo.");
@@ -148,10 +153,7 @@ export function TotpSetupForm() {
         <button
           type="button"
           data-testid="totp-setup-continue"
-          onClick={() => {
-            router.push("/admin");
-            router.refresh();
-          }}
+          onClick={goToAdmin}
           className="mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)]"
         >
           Ya los he guardado — continuar

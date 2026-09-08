@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   authenticateWithPasskey,
   browserSupportsWebAuthn,
@@ -11,11 +10,17 @@ import {
 export function TotpVerifyForm({
   next = "/admin",
   hasPasskey = false,
+  hasTotp = true,
 }: {
   next?: string;
   hasPasskey?: boolean;
+  /** When the admin also has an authenticator app, the code input leads and the
+   * passkey is a secondary option — never the reverse, because on a desktop PC
+   * `platformAuthenticatorIsAvailable()` reports true for Windows Hello even
+   * when the registered passkey lives on another device, and leading with it
+   * there sends the user into the cross-device "conectando…" trap (#86 part 7). */
+  hasTotp?: boolean;
 }) {
-  const router = useRouter();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,8 +56,11 @@ export function TotpVerifyForm({
         // best-effort — a failed trust grant never blocks a successful login
       }
     }
-    router.push(next);
-    router.refresh();
+    // Hard navigation, NOT router.push + refresh: the App Router can serve a
+    // prefetched-then-cached redirect for `/admin` that was captured with the
+    // pre-verification cookie, bouncing the user straight back to this screen.
+    // A full document load always carries the fresh session cookie (#86 part 7).
+    window.location.assign(next);
   }
 
   async function submitPasskey() {
@@ -100,7 +108,10 @@ export function TotpVerifyForm({
   // supports WebAuthn; LEAD with it only when this device has a local
   // (platform) authenticator — otherwise it forces the cross-device QR trap.
   const passkeyOffer = hasPasskey && passkeySupported;
-  const passkeyLead = passkeyOffer && platformPasskey;
+  // Lead with the passkey ONLY for a passkey-only admin on a device with a
+  // local authenticator. With an authenticator app enrolled, the code always
+  // leads (see `hasTotp` above).
+  const passkeyLead = passkeyOffer && platformPasskey && !hasTotp;
 
   return (
     <div>
