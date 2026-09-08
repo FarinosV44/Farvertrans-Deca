@@ -4254,3 +4254,18 @@ remaining scope.
 - **NOT merged to `main`, migration NOT applied to production** (the issue's own
   instruction — overrides this run's standing "push to main"). Awaits functional
   + legal review, then the user's authorisation.
+
+## D-147 — #84 merged to `main` + migration applied to production (user instruction)
+- Date / phase: 2026-09-08, Phase 5. User: "i need all done with no gap and in main and all
+  migrations applied to try" — explicit in-conversation authorisation, overriding the issue's own
+  "no merge / no deploy without authorisation" and this session's earlier "review before merge"
+  answer (only the user reverses a decision).
+- `develop` → `main` merge `1c83f29`; `main` == `develop`.
+- `prisma migrate deploy` against production `DIRECT_URL` (Supabase session pooler :5432, project
+  `nlieprqtxbgszdnjnhew`, password unchanged per the user — being rotated right after). Applied
+  `20260908140000_commercial_treatment`. `prisma migrate status` → "Database schema is up to date!"
+  (30/30). Verified via the runtime client (:6543): `commercial_consent.mode/channel/contactEmail`
+  readable, the pre-existing row reset to `mode='none'`, `commercial_consent_event` and
+  `deca_availability_share` tables present.
+- **Still outstanding:** the `LEGAL REVIEW PENDING` sections in privacidad/terminos still need the
+  asesoría pass (the user was told); Hostinger redeploy so the #84 code runs; secret rotation.

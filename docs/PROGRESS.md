@@ -1484,6 +1484,10 @@ channel/contact ONLY) + `CommercialConsentEvent` audit; drafted legal sections
   NOT `prisma migrate deploy`'d.** Per the issue: functional + legal review of the drafted text,
   then the user authorises (a) the production migration and (b) the `main` merge. Overrides this
   run's standing "push to main".
-- **Current position / next action:** #84 is complete on `develop` and waiting on the user
-  (legal review → authorise migration + `main` merge → redeploy). No further code work on #84
-  unless the review returns changes.
+- **D-147 (2026-09-08): merged to `main` (`1c83f29`) + migration applied to production** on the
+  user's explicit instruction ("in main and all migrations applied to try"), ahead of the asesoría
+  legal review. `prisma migrate status` prod → up to date (30/30); new tables/columns verified.
+- **Current position / next action:** #84 code-complete and live-schema-ready. Outstanding (user):
+  (1) asesoría review of the `LEGAL REVIEW PENDING` privacy/terms sections; (2) redeploy Hostinger
+  so the #84 code runs; (3) rotate the DB password + other secrets. No further code work on #84
+  unless the legal review returns changes.
