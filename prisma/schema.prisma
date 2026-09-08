@@ -74,6 +74,7 @@ model Company {
   savedVehicles     SavedVehicle[]
   savedLocations    SavedLocation[]
   decaDrafts        DecaDraft[]
+  favoriteRoutes    FavoriteRoute[]
 
   @@map("company")
 }
@@ -467,6 +468,7 @@ model SavedCompany {
   contactPhone String?        @map("contact_phone")
   contactEmail String?        @map("contact_email")
   role         SavedPartyRole @default(both)
+  favorite     Boolean        @default(false)
   lastUsedAt   DateTime?      @map("last_used_at")
   createdAt    DateTime       @default(now()) @map("created_at")
 
@@ -485,6 +487,7 @@ model SavedVehicle {
   tractorPlate String    @map("tractor_plate")
   trailerPlate String?   @map("trailer_plate")
   alias        String?
+  favorite     Boolean   @default(false)
   lastUsedAt   DateTime? @map("last_used_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 
@@ -516,6 +519,7 @@ model SavedLocation {
   province   String?
   country    String            @default("España")
   type       SavedLocationType @default(both)
+  favorite   Boolean           @default(false)
   lastUsedAt DateTime?         @map("last_used_at")
   createdAt  DateTime          @default(now()) @map("created_at")
 
@@ -593,10 +597,31 @@ model DecaTemplate {
   companyId String   @map("company_id")
   name      String
   dataJson  Json     @map("data_json")
+  favorite  Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([companyId])
   @@map("deca_template")
+}
+
+/// A route (load city+country → unload city+country) a company pinned as a
+/// favourite (#78). Not a stored DeCA — just a preference that floats a lane
+/// to the top of the "rutas frecuentes" widget and the wizard. `routeKey`
+/// matches `DecaRouteIntel.routeKey` (lib/deca/route-intel.ts).
+model FavoriteRoute {
+  id            String   @id @default(cuid())
+  companyId     String   @map("company_id")
+  routeKey      String   @map("route_key")
+  loadCity      String   @map("load_city")
+  loadCountry   String   @map("load_country")
+  unloadCity    String   @map("unload_city")
+  unloadCountry String   @map("unload_country")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, routeKey])
+  @@map("favorite_route")
 }
 
 /// One-time password-reset token (ACCOUNT #23). Short TTL, single use.

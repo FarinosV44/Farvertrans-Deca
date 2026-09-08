@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Field } from "@/components/deca/field";
+import { FavoriteStar } from "@/components/deca/favorite-star";
 import { BuildingIcon, TruckIcon, MapPinIcon, IconBadge } from "@/components/panel/icons";
 
 type Company = {
@@ -13,12 +14,14 @@ type Company = {
   contactPhone: string | null;
   contactEmail: string | null;
   role: "shipper" | "carrier" | "both";
+  favorite: boolean;
 };
 type Vehicle = {
   id: string;
   tractorPlate: string;
   trailerPlate: string | null;
   alias: string | null;
+  favorite: boolean;
 };
 type Location = {
   id: string;
@@ -29,6 +32,7 @@ type Location = {
   province: string | null;
   country: string;
   type: "load" | "unload" | "both";
+  favorite: boolean;
 };
 
 const ROLE_LABEL: Record<Company["role"], string> = {
@@ -98,8 +102,10 @@ export function SavedDataManager({
       <Section
         title="Empresas y contactos"
         Icon={BuildingIcon}
+        kind="company"
         items={companies.map((c) => ({
           id: c.id,
+          favorite: c.favorite,
           primary: c.name,
           secondary: [
             ROLE_LABEL[c.role],
@@ -117,8 +123,10 @@ export function SavedDataManager({
       <Section
         title="Vehículos"
         Icon={TruckIcon}
+        kind="vehicle"
         items={vehicles.map((v) => ({
           id: v.id,
+          favorite: v.favorite,
           primary: v.alias || v.tractorPlate,
           secondary: [
             v.alias ? v.tractorPlate : null,
@@ -134,8 +142,10 @@ export function SavedDataManager({
       <Section
         title="Lugares de carga y descarga"
         Icon={MapPinIcon}
+        kind="location"
         items={locations.map((l) => ({
           id: l.id,
+          favorite: l.favorite,
           primary: l.name,
           secondary: [
             LOCATION_TYPE_LABEL[l.type],
@@ -161,13 +171,15 @@ function Section({
   title,
   Icon,
   items,
+  kind,
   onRemove,
   busy,
   form,
 }: {
   title: string;
   Icon: (props: { width?: number; height?: number }) => React.JSX.Element;
-  items: { id: string; primary: string; secondary: string }[];
+  items: { id: string; primary: string; secondary: string; favorite: boolean }[];
+  kind: "company" | "vehicle" | "location";
   onRemove: (id: string) => void;
   busy: boolean;
   form: React.ReactNode;
@@ -187,17 +199,24 @@ function Section({
               key={it.id}
               className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
             >
-              <span>
-                <span className="font-medium">{it.primary}</span>
-                {it.secondary && (
-                  <span className="text-[var(--color-text-muted)]"> — {it.secondary}</span>
-                )}
+              <span className="flex min-w-0 items-start gap-2">
+                <FavoriteStar
+                  favorite={it.favorite}
+                  payload={{ kind, id: it.id }}
+                  label={it.primary}
+                />
+                <span className="min-w-0">
+                  <span className="font-medium">{it.primary}</span>
+                  {it.secondary && (
+                    <span className="text-[var(--color-text-muted)]"> — {it.secondary}</span>
+                  )}
+                </span>
               </span>
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => onRemove(it.id)}
-                className="text-sm text-[var(--color-danger)] underline disabled:opacity-55"
+                className="shrink-0 text-sm text-[var(--color-danger)] underline disabled:opacity-55"
               >
                 Borrar
               </button>

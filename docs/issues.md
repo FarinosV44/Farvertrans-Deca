@@ -210,6 +210,19 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-078 — #78 P2 UX: favourites · **DONE, on `main`** (D-135)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/78
+- company-scoped `favorite` flag on saved company/vehicle/location + template + new `favorite_route`
+  table. `favorite desc` first in listSaved/listTemplates/getTopRoutes → wizard dropdowns too.
+  `components/deca/favorite-star.tsx` in /panel/datos + template list + Rutas frecuentes.
+  Migration `20260908000514` — **needs migrate deploy on prod**. `favorites.spec.ts` new.
+
+### I-076 — #76 P1 UX: visible drafts + auto-recovery · **DONE, on `main`** (D-134)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/76
+- `DecaDraft` (one per user) + `/api/deca/draft` PUT/DELETE; wizard debounced autosave + resume;
+  panel "Borrador pendiente" strip. Migration `20260907235352` — **needs migrate deploy on prod**
+  (Hostinger build runs it). `deca-draft.spec.ts` new. `t.panel.draft` x8.
+
 ### I-077 — #77 P1 UX: one-tap share from history · **DONE, on `main`** (D-133)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/77
 - `components/deca/row-share.tsx` — compact Web Share / WhatsApp + copy; publicUrl from currentVersion

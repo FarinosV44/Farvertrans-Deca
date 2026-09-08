@@ -44,14 +44,29 @@ export const templatePayloadSchema = z.object({
 
 export type TemplateInput = z.infer<typeof templatePayloadSchema>;
 
-export type TemplateRow = TemplateInput & { id: string };
+export type TemplateRow = TemplateInput & { id: string; favorite: boolean };
 
 export async function listTemplates(companyId: string): Promise<TemplateRow[]> {
   const rows = await prisma.decaTemplate.findMany({
     where: { companyId },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ favorite: "desc" }, { createdAt: "desc" }], // favourites first (#78)
   });
-  return rows.map((r) => ({ id: r.id, ...(r.dataJson as object) }) as TemplateRow);
+  return rows.map(
+    (r) => ({ id: r.id, favorite: r.favorite, ...(r.dataJson as object) }) as TemplateRow,
+  );
+}
+
+/** Toggle a template's company-scoped favourite flag (#78). */
+export async function setTemplateFavorite(
+  companyId: string,
+  id: string,
+  favorite: boolean,
+): Promise<boolean> {
+  const res = await prisma.decaTemplate.updateMany({
+    where: { id, companyId },
+    data: { favorite },
+  });
+  return res.count > 0;
 }
 
 export async function createTemplate(companyId: string, input: unknown): Promise<TemplateRow> {
@@ -59,7 +74,7 @@ export async function createTemplate(companyId: string, input: unknown): Promise
   const row = await prisma.decaTemplate.create({
     data: { companyId, name: data.name, dataJson: data as unknown as object },
   });
-  return { id: row.id, ...data };
+  return { id: row.id, favorite: row.favorite, ...data };
 }
 
 export async function deleteTemplate(companyId: string, id: string): Promise<void> {

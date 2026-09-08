@@ -3995,3 +3995,24 @@ remaining scope.
 - **Tests:** `tests/e2e/deca-draft.spec.ts` — start → leave → resume from the panel with the data
   intact → discard behind a confirm; and generating clears the draft. 180 unit +
   crear/creator-ux31/workspace/master-data/growth + compliance 8/8.
+
+## D-135 — #78 P2: favourites for saved data, templates and routes
+- Date / phase: 2026-09-08, Phase 5.
+- **Scope decision:** a favourite is **company/workspace-scoped**, not per-user — the whole team
+  shares the pinned lanes and records (consistent with the saved-data model, D-... "shared team
+  resource"). A `read_only` member cannot toggle (403).
+- **Schema:** `favorite Boolean @default(false)` on `saved_company`, `saved_vehicle`,
+  `saved_location`, `deca_template`; new `favorite_route` table (`companyId` + `routeKey` unique —
+  `routeKey` matches `DecaRouteIntel.routeKey`, so a favourited corridor floats up in "rutas
+  frecuentes" and can exist before any DeCA is on it). Migration `20260908000514_favorites`
+  (additive columns with a default + one new table). Applied to local dev; **needs
+  `prisma migrate deploy` on production** (Hostinger build runs it on redeploy).
+- **Ordering:** `listSaved` / `listTemplates` / `getTopRoutes` all sort `favorite desc` first, then
+  the existing recency/frequency. The wizard dropdowns inherit this order for free.
+- **UI:** one `components/deca/favorite-star.tsx` (optimistic ★/☆ toggle → `POST /api/favorites`),
+  wired into `/panel/datos` rows, the template list, and the panel "Rutas frecuentes" widget. No
+  new section — it lives in the existing lists. Toggling never creates or duplicates a record
+  (asserted).
+- **Tests:** `tests/e2e/favorites.spec.ts` — star a saved vehicle → it floats to the top, count
+  stays 2 (no duplicate), un-star reverts the order. 180 unit + master-data/workspace/creator-v2 +
+  compliance 8/8.

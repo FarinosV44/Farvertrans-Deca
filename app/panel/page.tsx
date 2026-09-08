@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { RowShare } from "@/components/deca/row-share";
+import { FavoriteStar } from "@/components/deca/favorite-star";
 import { DraftBanner } from "@/components/app/draft-banner";
 import { getCurrentUser } from "@/lib/auth";
 import { getDraft, draftRouteLabel } from "@/lib/deca/draft";
@@ -202,13 +203,29 @@ export default async function AppHome() {
                       key={r.key}
                       className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
                     >
-                      <p className="font-medium">
-                        {r.loadCity} → {r.unloadCity}
+                      <p className="flex items-start gap-1.5 font-medium">
+                        <FavoriteStar
+                          favorite={r.favorite}
+                          payload={{
+                            kind: "route",
+                            route: {
+                              routeKey: r.key,
+                              loadCity: r.loadCity,
+                              loadCountry: r.loadCountry,
+                              unloadCity: r.unloadCity,
+                              unloadCountry: r.unloadCountry,
+                            },
+                          }}
+                          label={`${r.loadCity} → ${r.unloadCity}`}
+                        />
+                        <span>
+                          {r.loadCity} → {r.unloadCity}
+                        </span>
                       </p>
                       <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                        {r.count} {r.count === 1 ? "DeCA" : "DeCA"}
+                        {r.count === 0 ? "Favorita" : `${r.count} DeCA`}
                       </p>
-                      {canCreate && (
+                      {canCreate && r.lastDecaId && (
                         <Link
                           href={`/crear?from=${r.lastDecaId}`}
                           className="mt-1 inline-block text-xs font-medium text-[var(--color-primary)]"

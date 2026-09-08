@@ -2,10 +2,12 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatLocationShort, type TransportLocation } from "@/lib/deca/location";
+import { FavoriteStar } from "@/components/deca/favorite-star";
 
 type Row = {
   id: string;
   name: string;
+  favorite?: boolean;
   loadLocation?: Partial<TransportLocation>;
   unloadLocation?: Partial<TransportLocation>;
   carrier?: { name?: string };
@@ -39,16 +41,23 @@ export function TemplateList({ templates }: { templates: Row[] }) {
         const unloadShort = formatLocationShort(t.unloadLocation);
         return (
           <li key={t.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-            <div>
-              <p className="font-medium">{t.name}</p>
-              <p className="text-xs text-[var(--color-text-muted)]">
-                {[
-                  loadShort && unloadShort ? `${loadShort} → ${unloadShort}` : null,
-                  t.carrier?.name,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
+            <div className="flex min-w-0 items-start gap-2">
+              <FavoriteStar
+                favorite={!!t.favorite}
+                payload={{ kind: "template", id: t.id }}
+                label={t.name}
+              />
+              <div className="min-w-0">
+                <p className="font-medium">{t.name}</p>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  {[
+                    loadShort && unloadShort ? `${loadShort} → ${unloadShort}` : null,
+                    t.carrier?.name,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
             </div>
             <div className="flex shrink-0 gap-3">
               <Link href="/crear">Usar</Link>

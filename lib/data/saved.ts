@@ -16,22 +16,38 @@ import {
  */
 export { savedKinds, type SavedKind } from "./saved-schema";
 
+// Favourites first (#78), then most-recently-used, then newest.
+const SAVED_ORDER = [
+  { favorite: "desc" as const },
+  { lastUsedAt: "desc" as const },
+  { createdAt: "desc" as const },
+];
+
 export async function listSaved(companyId: string) {
   const [companies, vehicles, locations] = await Promise.all([
-    prisma.savedCompany.findMany({
-      where: { companyId },
-      orderBy: [{ lastUsedAt: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.savedVehicle.findMany({
-      where: { companyId },
-      orderBy: [{ lastUsedAt: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.savedLocation.findMany({
-      where: { companyId },
-      orderBy: [{ lastUsedAt: "desc" }, { createdAt: "desc" }],
-    }),
+    prisma.savedCompany.findMany({ where: { companyId }, orderBy: SAVED_ORDER }),
+    prisma.savedVehicle.findMany({ where: { companyId }, orderBy: SAVED_ORDER }),
+    prisma.savedLocation.findMany({ where: { companyId }, orderBy: SAVED_ORDER }),
   ]);
   return { companies, vehicles, locations };
+}
+
+/** Toggle the company-scoped favourite flag on a saved record (#78). */
+export async function setSavedFavorite(
+  companyId: string,
+  kind: SavedKind,
+  id: string,
+  favorite: boolean,
+): Promise<boolean> {
+  const where = { id, companyId };
+  const data = { favorite };
+  const res =
+    kind === "company"
+      ? await prisma.savedCompany.updateMany({ where, data })
+      : kind === "vehicle"
+        ? await prisma.savedVehicle.updateMany({ where, data })
+        : await prisma.savedLocation.updateMany({ where, data });
+  return res.count > 0;
 }
 
 export async function createSaved(

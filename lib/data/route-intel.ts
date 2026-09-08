@@ -20,12 +20,21 @@ export type RouteSummary = {
   lastUsedAt: Date;
   /** Most recent DeCA on this route — powers "quick create from route" via `/crear?from=`. */
   lastDecaId: string;
+  /** Company-scoped favourite (#78) — favourites float to the top. */
+  favorite: boolean;
 };
 
 const ROUTE_INTEL_WINDOW = 1000;
 
-/** Most frequent routes (corridor = load city/country → unload city/country), most-recent-first on ties. */
+/**
+ * Most frequent routes (corridor = load city/country → unload city/country),
+ * most-recent-first on ties. Favourites (#78) always come first, whatever their
+ * frequency, and a favourited corridor with no DeCA yet still appears.
+ */
 export async function getTopRoutes(companyId: string, limit = 5): Promise<RouteSummary[]> {
+  const favRows = await prisma.favoriteRoute.findMany({ where: { companyId } });
+  const favByKey = new Map(favRows.map((f) => [f.routeKey, f]));
+
   const rows = await prisma.decaRouteIntel.findMany({
     where: { companyId, routeKey: { not: null } },
     orderBy: { generatedAt: "desc" },
@@ -59,11 +68,63 @@ export async function getTopRoutes(companyId: string, limit = 5): Promise<RouteS
         count: 1,
         lastUsedAt: r.generatedAt,
         lastDecaId: r.decaId,
+        favorite: favByKey.has(r.routeKey),
       });
     }
   }
 
+  // A favourited corridor with no DeCA on it yet still shows.
+  for (const [key, f] of favByKey) {
+    if (groups.has(key)) continue;
+    groups.set(key, {
+      key,
+      loadCity: f.loadCity,
+      loadCountry: f.loadCountry,
+      unloadCity: f.unloadCity,
+      unloadCountry: f.unloadCountry,
+      count: 0,
+      lastUsedAt: f.createdAt,
+      lastDecaId: "",
+      favorite: true,
+    });
+  }
+
   return [...groups.values()]
-    .sort((a, b) => b.count - a.count || b.lastUsedAt.getTime() - a.lastUsedAt.getTime())
+    .sort(
+      (a, b) =>
+        Number(b.favorite) - Number(a.favorite) ||
+        b.count - a.count ||
+        b.lastUsedAt.getTime() - a.lastUsedAt.getTime(),
+    )
     .slice(0, limit);
+}
+
+/** Toggle a company's favourite for a route corridor (#78). */
+export async function setRouteFavorite(
+  companyId: string,
+  route: {
+    routeKey: string;
+    loadCity: string;
+    loadCountry: string | null;
+    unloadCity: string;
+    unloadCountry: string | null;
+  },
+  favorite: boolean,
+): Promise<void> {
+  if (favorite) {
+    await prisma.favoriteRoute.upsert({
+      where: { companyId_routeKey: { companyId, routeKey: route.routeKey } },
+      create: {
+        companyId,
+        routeKey: route.routeKey,
+        loadCity: route.loadCity,
+        loadCountry: route.loadCountry ?? "",
+        unloadCity: route.unloadCity,
+        unloadCountry: route.unloadCountry ?? "",
+      },
+      update: {},
+    });
+  } else {
+    await prisma.favoriteRoute.deleteMany({ where: { companyId, routeKey: route.routeKey } });
+  }
 }
