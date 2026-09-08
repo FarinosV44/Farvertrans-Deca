@@ -190,6 +190,71 @@ export async function operationalAlerts(now = new Date()): Promise<Alert[]> {
   return alerts;
 }
 
+export type GenerationHealth = {
+  lastSuccessAt: Date | null;
+  lastSuccessAgeMin: number | null;
+  rate24h: number | null;
+  rate7d: number | null;
+  attempts24h: number;
+  failed24h: number;
+  consecutiveFailures: number;
+  lastSuccessStale: boolean;
+};
+
+/**
+ * Generation health for the Sistema screen (#73). Real numbers over
+ * `deca_version` (v1 rows = successful first generations) and
+ * `generation_failure` — not an HTTP-200 check.
+ */
+export async function generationHealth(now = new Date()): Promise<GenerationHealth> {
+  const d1 = new Date(now.getTime() - 864e5);
+  const d7 = new Date(now.getTime() - 7 * 864e5);
+  const [lastSuccess, ok24, fail24, ok7, fail7, recent] = await Promise.all([
+    prisma.decaVersion.findFirst({
+      where: { versionNo: 1 },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+    prisma.decaVersion.count({ where: { versionNo: 1, createdAt: { gte: d1 } } }),
+    prisma.generationFailure.count({ where: { createdAt: { gte: d1 } } }),
+    prisma.decaVersion.count({ where: { versionNo: 1, createdAt: { gte: d7 } } }),
+    prisma.generationFailure.count({ where: { createdAt: { gte: d7 } } }),
+    // the last 20 generation events (success or failure), newest first, to count
+    // a run of consecutive failures
+    prisma.$queryRaw<{ ts: Date; ok: boolean }[]>`
+      SELECT ts, ok FROM (
+        SELECT created_at AS ts, true AS ok FROM deca_version WHERE version_no = 1
+        UNION ALL
+        SELECT created_at AS ts, false AS ok FROM generation_failure
+      ) e ORDER BY ts DESC LIMIT 20`,
+  ]);
+
+  let consecutive = 0;
+  for (const r of recent) {
+    if (r.ok) break;
+    consecutive += 1;
+  }
+  const attempts24 = ok24 + fail24;
+  const attempts7 = ok7 + fail7;
+  const ageMin = lastSuccess
+    ? Math.round((now.getTime() - lastSuccess.createdAt.getTime()) / 60000)
+    : null;
+  // "stale" only matters during plausible activity — treat >24h since the last
+  // success as stale when there has been any attempt in that window.
+  const lastSuccessStale = ageMin !== null && ageMin > 1440 && attempts24 > 0;
+
+  return {
+    lastSuccessAt: lastSuccess?.createdAt ?? null,
+    lastSuccessAgeMin: ageMin,
+    rate24h: attempts24 > 0 ? ok24 / attempts24 : null,
+    rate7d: attempts7 > 0 ? ok7 / attempts7 : null,
+    attempts24h: attempts24,
+    failed24h: fail24,
+    consecutiveFailures: consecutive,
+    lastSuccessStale,
+  };
+}
+
 /** Editorial content counters for the overview (#33 §1 / SEO #32). */
 export async function contentStats() {
   const [guidesPublished, blogPublished, drafts, contentViews] = await Promise.all([

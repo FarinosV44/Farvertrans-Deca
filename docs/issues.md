@@ -210,6 +210,10 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-073 — #73 system health + incidents · **DONE, on `main`** (D-137)
+- `generationHealth()` (last success + rate 24h/7d + consecutive failures) + "Incidencias recientes"
+  table on /admin/sistema. text+badge, no false green. No schema.
+
 ### I-080 — #80 admin shell + lean Resumen · **DONE, on `main`** (D-136)
 - `ADMIN_GROUPS` (Operación/Crecimiento/Seguridad); Resumen = 6-KPI strip + funnel + Empresas a
   contactar + Alertas + Señales; rest behind Más métricas. `/admin/activacion` new.

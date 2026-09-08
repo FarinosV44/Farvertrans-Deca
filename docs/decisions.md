@@ -4046,3 +4046,17 @@ remaining scope.
   a company request reaches `/admin/integraciones` and can be triaged; the Resumen shows the funnel
   + "Empresas a contactar" with detailed KPIs behind "Más métricas". `admin.spec.ts` overview
   assertion updated to the new lean structure. 180 unit + admin/landing/nav-links + compliance 8/8.
+
+## D-137 — #73: generation health + recent incidents on the Sistema screen
+- Date / phase: 2026-09-08, Phase 5. The Sistema screen already ran `runDiagnostics()` (real DB
+  query, storage round-trip, PDF render smoke — not an HTTP-200 check) with text+badge states.
+- **Added `generationHealth()` (`lib/admin/metrics.ts`):** last successful first-generation
+  timestamp + age, success rate 24h/7d, attempts/failed 24h, and a **consecutive-failure count**
+  from a `$queryRaw` union of `deca_version` (v1) and `generation_failure` newest-first. `lastSuccessStale`
+  = >24h since the last success *while there were attempts*.
+- **Sistema page:** a "Generación de DeCA" block (Correcto / Degradado / Atención badge from the
+  numbers, not colour alone) + a compact "Incidencias recientes" table (fecha · etapa · código ·
+  resumen seguro · estado · Detalle) reusing `listFailures()` (#29), with a link to `/admin/errores`.
+  No secrets, tokens or payloads shown.
+- **Tests:** `admin-growth.spec.ts` asserts the health block + rate line + incidents heading.
+  9 admin e2e + 180 unit + compliance 8/8.

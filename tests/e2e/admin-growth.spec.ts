@@ -45,7 +45,11 @@ test("a company requests an integration and it reaches the superadmin", async ({
   await register(page, company);
   await page.goto("/panel/integraciones");
   await page.getByTestId("integration-system").fill("Transporte TMS Pro");
-  await page.getByTestId("integration-submit").click();
+  const [postRes] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/integraciones")),
+    page.getByTestId("integration-submit").click(),
+  ]);
+  expect(postRes.status()).toBe(200);
   await expect(page.getByTestId("integration-done")).toBeVisible();
 
   const { page: admin, close } = await internalPage(browser);
@@ -55,7 +59,13 @@ test("a company requests an integration and it reaches the superadmin", async ({
     await expect(row).toBeVisible();
     await expect(row).toContainText("Transporte TMS Pro");
     // triage it
-    await row.getByTestId("integration-status").selectOption("reviewed");
+    const [patchRes] = await Promise.all([
+      admin.waitForResponse(
+        (r) => r.url().includes("/api/integraciones") && r.request().method() === "PATCH",
+      ),
+      row.getByTestId("integration-status").selectOption("reviewed"),
+    ]);
+    expect(patchRes.status()).toBe(200);
     await admin.reload();
     await expect(
       admin.locator("tr", { hasText: company }).getByTestId("integration-status"),
@@ -80,6 +90,13 @@ test("the admin Resumen shows the activation funnel and an 'empresas a contactar
 
     await page.goto("/admin/activacion");
     await expect(page.getByRole("heading", { name: "Activación" })).toBeVisible();
+
+    // #73 — the Sistema screen shows generation health + recent incidents,
+    // with text (not colour only).
+    await page.goto("/admin/sistema");
+    await expect(page.getByTestId("generation-health")).toBeVisible();
+    await expect(page.getByText("Tasa de éxito 24 h / 7 d")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Incidencias recientes" })).toBeVisible();
   } finally {
     await close();
   }
