@@ -301,6 +301,8 @@ export const en = {
       andAccept: "and I accept the",
       termsAndConditions: "Terms and Conditions",
     },
+    commercialOptIn:
+      "I want to receive personalised freight offers from interested shippers, sharing the minimal availability details of my jobs. I can change this at any time.",
     submit: {
       register: "Create free account",
       login: "Log in",
@@ -404,7 +406,53 @@ export const en = {
       datos: "Regular data",
       equipo: "Team",
       empresa: "My company",
+      privacidad: "Privacy",
       ayuda: "Help",
+    },
+    privacy: {
+      title: "Privacy and communications",
+      intro:
+        "Here you decide whether DeCA Profesional may pass a few availability details from your jobs to shippers interested in sending you personalised, preferential freight offers. It is optional and you can change it whenever you like.",
+      freeUseNote:
+        "Not authorising this communication does not affect your free use of DeCA Profesional in any way.",
+      sectionTitle: "Commercial processing",
+      modeLegend: "When do you want to share the availability of your jobs?",
+      modes: {
+        none: "Do not share on any job",
+        noneHint: "No commercial data leaves your DeCAs. This is the default.",
+        perDeca: "Ask me on each DeCA",
+        perDecaHint:
+          "You decide job by job when creating each DeCA. The control is off by default.",
+        all: "Share on every job unless I disable it",
+        allHint:
+          "An availability record is prepared for each new DeCA. You can disable it on a specific job before issuing it.",
+      },
+      channelLegend: "Authorised contact channel",
+      channels: { email: "Email", phone: "Phone", both: "Email and phone" },
+      channelEmailLabel: "Email for offers",
+      channelPhoneLabel: "Phone for offers",
+      previewTitle: "Data that will be shared",
+      previewFields: {
+        carrierName: "Company or carrier name",
+        destination: "Destination or availability area of the vehicle",
+        availabilityDate: "Estimated arrival or availability date",
+        contactEmail: "Authorised email address",
+        contactPhone: "Authorised phone number",
+      },
+      previewNever:
+        "The origin, the shipper, the loading address, the goods, the price, the plates, the driver and the DeCA document, URL or QR are never shared.",
+      moreInfo: "More information",
+      moreInfoBody:
+        "The recipient only receives an availability record with the fields above; they do not access your account or the DeCA. You can withdraw the authorisation at any time: withdrawal is immediate for future communications and does not affect ones already made lawfully or any DeCA.",
+      acceptedAt: (s) => `Authorisation recorded on ${s}`,
+      notAuthorized: "No active authorisation",
+      revoke: "Withdraw authorisation",
+      revokeConfirm:
+        "Withdraw the authorisation? The availability record will no longer be prepared for your next jobs. It does not affect any DeCA.",
+      save: "Save",
+      saved: "Preference saved.",
+      error: "Your preference could not be saved.",
+      ownerOnly: "Only the company administrator can change this preference.",
     },
     help: {
       title: "Help and support",
@@ -605,6 +653,20 @@ export const en = {
       goods: "Goods",
       weight: "Weight or measure",
       reference: "Reference",
+      commercialShare: "Freight offers",
+      commercialShareOn: "Yes — an availability record is prepared",
+      commercialShareOff: "No",
+    },
+    commercialShare: {
+      legend: "Commercial processing (optional)",
+      hint: "If you wish, authorise sending the minimal availability details of this job to receive personalised freight offers. Not authorising it does not affect your free use of DeCA Profesional.",
+      enable: "I want to receive personalised offers when this job ends",
+      destination: "Destination or availability area",
+      date: "Estimated availability date",
+      channel: "Contact channel",
+      channels: { email: "Email", phone: "Phone", both: "Email and phone" },
+      previewTitle: "Only this will be sent:",
+      manage: "Change my general preference in Privacy",
     },
     buttons: {
       back: "Back",

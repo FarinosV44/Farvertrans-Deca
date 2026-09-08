@@ -319,6 +319,8 @@ export const eu = {
       andAccept: "eta onartzen ditut",
       termsAndConditions: "Baldintzak eta Erabilera Baldintzak",
     },
+    commercialOptIn:
+      "Interesa duten kargatzaileen karga-proposamen pertsonalizatuak jaso nahi ditut, nire garraioen eskuragarritasun-datu minimoak partekatuz. Noiznahi alda dezaket.",
     submit: {
       register: "Sortu kontu doakoa",
       login: "Sartu",
@@ -423,7 +425,53 @@ export const eu = {
       datos: "Ohiko datuak",
       equipo: "Taldea",
       empresa: "Nire enpresa",
+      privacidad: "Pribatutasuna",
       ayuda: "Laguntza",
+    },
+    privacy: {
+      title: "Pribatutasuna eta komunikazioak",
+      intro:
+        "Hemen erabakitzen duzu DeCA Profesional-ek zure garraioen eskuragarritasun-datu batzuk komunika ditzakeen karga-eskaintza pertsonalizatu eta lehenetsiak egiteko interesa duten kargatzaileei. Aukerakoa da eta noiznahi alda dezakezu.",
+      freeUseNote:
+        "Komunikazio hau ez baimentzeak ez du inola ere eragiten DeCA Profesional doan erabiltzean.",
+      sectionTitle: "Merkataritza-tratamendua",
+      modeLegend: "Noiz partekatu nahi duzu zure garraioen eskuragarritasuna?",
+      modes: {
+        none: "Ez partekatu garraio bakar batean ere",
+        noneHint: "Merkataritza-daturik ez da zure DeCetatik ateratzen. Aukera lehenetsia da.",
+        perDeca: "Galdetu niri DeCA bakoitzean",
+        perDecaHint:
+          "Garraioz garraio erabakitzen duzu DeCA bakoitza sortzean. Kontrola desaktibatuta egongo da lehenetsita.",
+        all: "Partekatu garraio guztietan, desaktibatzen ez badut",
+        allHint:
+          "Eskuragarritasun-fitxa DeCA berri bakoitzerako prestatzen da. Garraio jakin batean desaktiba dezakezu jaulki aurretik.",
+      },
+      channelLegend: "Baimendutako harremanetarako kanala",
+      channels: { email: "Posta elektronikoa", phone: "Telefonoa", both: "Posta eta telefonoa" },
+      channelEmailLabel: "Proposamenetarako posta",
+      channelPhoneLabel: "Proposamenetarako telefonoa",
+      previewTitle: "Partekatuko diren datuak",
+      previewFields: {
+        carrierName: "Enpresa edo garraiolariaren izena",
+        destination: "Ibilgailuaren helmuga edo eskuragarritasun-eremua",
+        availabilityDate: "Iristeko edo eskuragarri egoteko data estimatua",
+        contactEmail: "Baimendutako helbide elektronikoa",
+        contactPhone: "Baimendutako telefono-zenbakia",
+      },
+      previewNever:
+        "Ez dira inoiz partekatzen jatorria, kargatzailea, kargatzeko helbidea, salgaia, prezioa, matrikulak, gidaria, ezta DeCA dokumentua, URLa edo QRa ere.",
+      moreInfo: "Informazio gehiago",
+      moreInfoBody:
+        "Hartzaileak goiko eremuak dituen eskuragarritasun-fitxa bat baino ez du jasotzen; ez du zure kontura ez DeCAra sartzen. Baimena noiznahi ken dezakezu: kentzea berehalakoa da etorkizuneko komunikazioetarako, eta ez die eragiten legez egindakoei ez DeCA bati ere.",
+      acceptedAt: (s) => `Baimena erregistratu zen: ${s}`,
+      notAuthorized: "Baimen aktiborik ez",
+      revoke: "Baimena kendu",
+      revokeConfirm:
+        "Baimena kendu? Ez da eskuragarritasun-fitxarik prestatuko zure hurrengo garraioetarako. Ez dio DeCA bati ere eragiten.",
+      save: "Gorde",
+      saved: "Hobespena gordeta.",
+      error: "Ezin izan da zure hobespena gorde.",
+      ownerOnly: "Enpresako administratzaileak baino ezin du hobespen hau aldatu.",
     },
     help: {
       title: "Laguntza eta arreta",
@@ -627,6 +675,20 @@ export const eu = {
       goods: "Salgaia",
       weight: "Pisua edo neurria",
       reference: "Erreferentzia",
+      commercialShare: "Karga-proposamenak",
+      commercialShareOn: "Bai — eskuragarritasun-fitxa prestatzen da",
+      commercialShareOff: "Ez",
+    },
+    commercialShare: {
+      legend: "Merkataritza-tratamendua (aukerakoa)",
+      hint: "Nahi izanez gero, baimendu garraio honen eskuragarritasun-datu minimoak bidaltzea, karga-proposamen pertsonalizatuak jasotzeko. Ez baimentzeak ez dio eragiten DeCA Profesional doan erabiltzeari.",
+      enable: "Garraio hau amaitzean proposamen pertsonalizatuak jaso nahi ditut",
+      destination: "Helmuga edo eskuragarritasun-eremua",
+      date: "Eskuragarritasun-data estimatua",
+      channel: "Harremanetarako kanala",
+      channels: { email: "Posta elektronikoa", phone: "Telefonoa", both: "Posta eta telefonoa" },
+      previewTitle: "Hau bakarrik bidaliko da:",
+      manage: "Aldatu nire hobespen orokorra Pribatutasunean",
     },
     buttons: {
       back: "Atzera",

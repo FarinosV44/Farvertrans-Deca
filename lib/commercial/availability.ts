@@ -4,9 +4,8 @@ import {
   COMMERCIAL_CONSENT_VERSION,
   getCommercialTreatment,
   recordCommercialEvent,
-  type CommercialContactChannel,
-  type CommercialTreatmentState,
 } from "@/lib/consent";
+import type { CommercialContactChannel, CommercialTreatmentState } from "@/lib/commercial/types";
 
 /**
  * The "ficha de disponibilidad comercial" for a single DeCA (#84).

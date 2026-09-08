@@ -37,6 +37,7 @@ const PANEL_PAGES = [
   "/panel/datos",
   "/panel/equipo",
   "/panel/empresa",
+  "/panel/privacidad",
   "/panel/ayuda",
   "/panel/integraciones",
 ];

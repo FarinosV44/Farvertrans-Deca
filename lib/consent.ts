@@ -1,5 +1,12 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import {
+  sharedFieldKeys,
+  type CommercialConsentMode,
+  type CommercialContactChannel,
+  type CommercialTreatmentState,
+  type SharedFieldKey,
+} from "@/lib/commercial/types";
 
 /**
  * Commercial-treatment preference (#84, evolving DATA #45 §3) — separate from
@@ -20,18 +27,12 @@ import { prisma } from "@/lib/prisma";
  */
 export const COMMERCIAL_CONSENT_VERSION = "2026-09-15";
 
-export type CommercialConsentMode = "none" | "per_deca" | "all";
-export type CommercialContactChannel = "email" | "phone" | "both";
-
-export type CommercialTreatmentState = {
-  mode: CommercialConsentMode;
-  channel: CommercialContactChannel | null;
-  contactEmail: string | null;
-  contactPhone: string | null;
-  version: string | null;
-  grantedAt: Date | null;
-  revokedAt: Date | null;
-  updatedAt: Date | null;
+export {
+  sharedFieldKeys,
+  type CommercialConsentMode,
+  type CommercialContactChannel,
+  type CommercialTreatmentState,
+  type SharedFieldKey,
 };
 
 const EMPTY: CommercialTreatmentState = {
@@ -88,21 +89,6 @@ export async function getCommercialTreatment(companyId: string): Promise<Commerc
     );
     return EMPTY;
   }
-}
-
-/** The DeCA fields that a given channel selection would communicate (#84). */
-export type SharedFieldKey =
-  | "carrierName"
-  | "destination"
-  | "availabilityDate"
-  | "contactEmail"
-  | "contactPhone";
-
-export function sharedFieldKeys(channel: CommercialContactChannel | null): SharedFieldKey[] {
-  const keys: SharedFieldKey[] = ["carrierName", "destination", "availabilityDate"];
-  if (channel === "email" || channel === "both") keys.push("contactEmail");
-  if (channel === "phone" || channel === "both") keys.push("contactPhone");
-  return keys;
 }
 
 /** Normalise the contact values so only the selected channel's value is kept. */
