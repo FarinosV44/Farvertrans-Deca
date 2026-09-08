@@ -217,6 +217,7 @@ anonymize-in-place (no hard delete, D-067).
 
 ### I-081 — #81 Customer 360 · **DONE, on `main`** (D-139)
 - `/admin/empresas/[id]` rebuilt: header + 6-KPI strip + collapsible panels + separated admin zone.
+- Follow-up (5f6da74): "← Empresas" preserves the list's search + segment filters (`?from=`).
 
 ### I-083 — #83 company activity timeline + opportunity signals · **DONE, on `main`** (D-139/D-136)
 - `lib/admin/timeline.ts` companyTimeline (milestones only) on the Actividad panel; opportunitySignals

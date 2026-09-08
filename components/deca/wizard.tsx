@@ -483,6 +483,16 @@ export function CrearWizard({
     unloadLocationId?: string;
     vehicleId?: string;
   }>({});
+  /**
+   * Which quick-fill produced each party's data right now, so the same button
+   * toggles it back OFF (clears those 3 fields) instead of being a one-way
+   * action the operator can only undo by hand. A manual edit to that party
+   * clears its flag, so a stale toggle never wipes retyped data.
+   */
+  const [quickFill, setQuickFill] = useState<{
+    shipper?: "company" | "carrier";
+    carrier?: "company" | "shipper";
+  }>({});
   // D-060: identity captured before an anonymous FIRST DeCA (lib/deca/lead.ts).
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
@@ -557,7 +567,41 @@ export function CrearWizard({
   const setAndUnpick = (k: keyof FormState, pickKey: keyof typeof picked) => (v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
     setPicked((p) => (p[pickKey] ? { ...p, [pickKey]: undefined } : p));
+    // A hand edit to shipper/carrier drops that party's quick-fill flag so the
+    // toggle button can't later wipe data the operator retyped (#).
+    const party = k.startsWith("shipper") ? "shipper" : k.startsWith("carrier") ? "carrier" : null;
+    if (party) setQuickFill((q) => (q[party] ? { ...q, [party]: undefined } : q));
   };
+
+  /**
+   * The 4 party quick-fills are toggles: press once to fill from `source`,
+   * press again (same button) to clear those 3 fields. `party` is the target;
+   * `mode` records which button so pressing a *different* one just re-fills.
+   */
+  const partyQuickFill = (
+    party: "shipper" | "carrier",
+    mode: "company" | "carrier" | "shipper",
+    values: () => { name: string; nif: string; address: string },
+  ) => {
+    const on = quickFill[party] === mode;
+    setForm((f) => {
+      const v = on ? { name: "", nif: "", address: "" } : values();
+      return {
+        ...f,
+        [`${party}Name`]: v.name,
+        [`${party}Nif`]: v.nif,
+        [`${party}Address`]: v.address,
+      };
+    });
+    setPicked((p) => ({ ...p, [`${party}Id`]: undefined }));
+    setQuickFill((q) => ({ ...q, [party]: on ? undefined : mode }));
+  };
+  const quickBtn = (active: boolean) =>
+    `rounded-[var(--radius-md)] border px-3 py-1.5 font-medium ${
+      active
+        ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]"
+        : "border-[var(--color-border)]"
+    }`;
 
   const plateHint =
     form.tractorPlate && !looksLikeSpanishPlate(form.tractorPlate)
@@ -871,30 +915,30 @@ export function CrearWizard({
                 <button
                   type="button"
                   data-testid="use-my-company-shipper"
+                  aria-pressed={quickFill.shipper === "company"}
                   onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      shipperName: company.name,
-                      shipperNif: company.nif ?? "",
-                      shipperAddress: company.address ?? "",
+                    partyQuickFill("shipper", "company", () => ({
+                      name: company.name,
+                      nif: company.nif ?? "",
+                      address: company.address ?? "",
                     }))
                   }
-                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                  className={quickBtn(quickFill.shipper === "company")}
                 >
                   {t.crear.useCompany.shipper}
                 </button>
                 <button
                   type="button"
                   data-testid="use-my-company-carrier"
+                  aria-pressed={quickFill.carrier === "company"}
                   onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      carrierName: company.name,
-                      carrierNif: company.nif ?? "",
-                      carrierAddress: company.address ?? "",
+                    partyQuickFill("carrier", "company", () => ({
+                      name: company.name,
+                      nif: company.nif ?? "",
+                      address: company.address ?? "",
                     }))
                   }
-                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                  className={quickBtn(quickFill.carrier === "company")}
                 >
                   {t.crear.useCompany.carrier}
                 </button>
@@ -969,30 +1013,30 @@ export function CrearWizard({
                 <button
                   type="button"
                   data-testid="use-same-shipper-as-carrier"
+                  aria-pressed={quickFill.carrier === "shipper"}
                   onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      carrierName: f.shipperName,
-                      carrierNif: f.shipperNif,
-                      carrierAddress: f.shipperAddress,
+                    partyQuickFill("carrier", "shipper", () => ({
+                      name: form.shipperName,
+                      nif: form.shipperNif,
+                      address: form.shipperAddress,
                     }))
                   }
-                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                  className={quickBtn(quickFill.carrier === "shipper")}
                 >
                   {t.crear.useSame.shipperIsCarrier}
                 </button>
                 <button
                   type="button"
                   data-testid="use-same-carrier-as-shipper"
+                  aria-pressed={quickFill.shipper === "carrier"}
                   onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      shipperName: f.carrierName,
-                      shipperNif: f.carrierNif,
-                      shipperAddress: f.carrierAddress,
+                    partyQuickFill("shipper", "carrier", () => ({
+                      name: form.carrierName,
+                      nif: form.carrierNif,
+                      address: form.carrierAddress,
                     }))
                   }
-                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-1.5 font-medium"
+                  className={quickBtn(quickFill.shipper === "carrier")}
                 >
                   {t.crear.useSame.carrierIsShipper}
                 </button>

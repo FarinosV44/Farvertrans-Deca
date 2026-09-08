@@ -89,12 +89,27 @@ async function fillAndGenerate(page: Page) {
 }
 
 test.describe("UX #25 — creator V2", () => {
-  test('"usar mi empresa" fills a legal party from the logged-in company', async ({ page }) => {
+  test('"usar mi empresa" fills a legal party from the logged-in company, and toggles back off', async ({
+    page,
+  }) => {
     await register(page, "B12345674");
     await page.goto("/crear");
-    await page.getByTestId("use-my-company-carrier").click();
+    const btn = page.getByTestId("use-my-company-carrier");
+    await btn.click();
     await expect(page.locator("#carrierName")).toHaveValue("Operador CV2 SL");
     await expect(page.locator("#carrierNif")).toHaveValue("B12345674");
+    await expect(btn).toHaveAttribute("aria-pressed", "true");
+    // pressing it again clears the fields it filled (#)
+    await btn.click();
+    await expect(page.locator("#carrierName")).toHaveValue("");
+    await expect(page.locator("#carrierNif")).toHaveValue("");
+    await expect(btn).toHaveAttribute("aria-pressed", "false");
+    // a manual edit drops the toggle so a later press re-fills rather than wipes
+    await btn.click();
+    await page.fill("#carrierName", "Otro Transportista SL");
+    await expect(btn).toHaveAttribute("aria-pressed", "false");
+    await btn.click();
+    await expect(page.locator("#carrierName")).toHaveValue("Operador CV2 SL");
   });
 
   test("template: save from a DeCA → appears in the wizard → creates a NEW independent document", async ({

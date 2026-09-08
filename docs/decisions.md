@@ -4119,3 +4119,23 @@ remaining scope.
 - **Still the user's:** redeploy Hostinger so the new code runs against the new schema (until then
   production serves the pre-batch build against a schema that is ahead of it — additive tables /
   columns, harmless); rotate the DB password + the other secrets pasted in chat; #60 backup.
+
+## D-142 — polish pass on the #69–#83 batch (user request)
+- Date / phase: 2026-09-08, Phase 5. User: focus on polish / responsive / consistency / regression,
+  no new scope. Two concrete asks addressed:
+- **#81 back navigation** — company row links carry the active list filter as `?from=`; the detail
+  page's "← Empresas" (`BackLink`, `data-testid="admin-back"`) returns to `/admin/empresas` with
+  `q` + `seg` intact (re-validated to known keys). `admin-growth.spec.ts` asserts the round-trip.
+- **Wizard party quick-fills are now toggles** — the 4 buttons ("usar mi empresa como cargador /
+  transportista", "el cargador/transportista es el mismo") filled a party one-way; pressing again
+  now **clears** the 3 fields it set (`quickFill` state, `aria-pressed`, active styling). A manual
+  edit to that party drops the flag so a later press re-fills instead of wiping retyped data.
+  `creator-v2.spec.ts` covers fill → toggle-off → manual-edit-then-refill.
+- **Responsive coverage widened** — `/panel/integraciones` added to `panel-nav.spec.ts` (360/768/
+  1280/1440); `admin-growth.spec.ts` adds a 375px page-level no-horizontal-scroll check over
+  `/admin`, `/admin/empresas`, `/admin/activacion`, `/admin/integraciones`, `/admin/sistema` (wide
+  tables scroll inside their own `overflow-x-auto` box, the page never does).
+- **Consistency:** scanned every new component — all colours are `var(--color-*)` tokens, no raw
+  hex; badges/pills use the shared `Badge`/`Pill` tone APIs.
+- Full regression at this point: 180 unit, 206/206 e2e (0 flaky), compliance 8/8, typecheck, lint
+  (pre-existing `<img>` warnings), keel:verify.

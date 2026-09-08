@@ -126,6 +126,24 @@ test("the admin Resumen shows the activation funnel and an 'empresas a contactar
     await page.getByTestId("empresa-search").fill("zzz-no-match-xyz");
     await page.getByRole("button", { name: "Buscar" }).click();
     await expect(page).toHaveURL(/q=zzz-no-match-xyz/);
+
+    // #80 — the admin area is desktop-first but must not force a page-level
+    // horizontal scroll on a phone (wide tables scroll inside their own box).
+    await page.setViewportSize({ width: 375, height: 812 });
+    for (const path of [
+      "/admin",
+      "/admin/empresas",
+      "/admin/activacion",
+      "/admin/integraciones",
+      "/admin/sistema",
+    ]) {
+      await page.goto(path, { waitUntil: "networkidle" });
+      await expect(page.locator("h1").first()).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `no page h-scroll on ${path} at 375px`).toBeLessThanOrEqual(1);
+    }
   } finally {
     await close();
   }

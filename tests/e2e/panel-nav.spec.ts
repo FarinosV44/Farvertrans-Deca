@@ -38,6 +38,7 @@ const PANEL_PAGES = [
   "/panel/equipo",
   "/panel/empresa",
   "/panel/ayuda",
+  "/panel/integraciones",
 ];
 
 for (const [w, h] of [
