@@ -4060,3 +4060,16 @@ remaining scope.
   No secrets, tokens or payloads shown.
 - **Tests:** `admin-growth.spec.ts` asserts the health block + rate line + incidents heading.
   9 admin e2e + 180 unit + compliance 8/8.
+
+## D-138 — #82: rule-based company segmentation + chip filters on /admin/empresas
+- Date / phase: 2026-09-08, Phase 5.
+- `/admin/empresas` now reads `listCompanySegments()` (D-136). Each row shows up to 3 segment
+  Badges; a chip row above the table filters by tag (query `?seg=`), combines with the text search
+  (name / NIF / email) and a period is implicit in the rules. "Limpiar filtros" resets in one
+  click. Only chips with ≥1 company are shown, each with its count and its rule as the `title`.
+- Rules live in `SEGMENT_RULES` (`lib/admin/segments.ts`) — documented, reproducible, no scoring:
+  registered_inactive / profile_incomplete / first_deca / recurring / active_7d / active_30d /
+  multi_user / high_volume (≥30 DeCA/30d, threshold constant) / api_interested / inactive_30d /
+  recent_incident. Not mixed with legal or billing state.
+- **Tests:** `admin-growth.spec.ts` — the chip row filters (URL gets `?seg=`), "Limpiar filtros"
+  resets. `admin.spec.ts` "internal user finds a company" still green. No schema.

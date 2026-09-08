@@ -210,6 +210,10 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-082 — #82 segmentation + filters · **DONE, on `main`** (D-138)
+- `/admin/empresas` — segment Badges per row + chip filters (?seg=) combining with search; documented
+  `SEGMENT_RULES`, no scoring. Limpiar filtros. No schema.
+
 ### I-073 — #73 system health + incidents · **DONE, on `main`** (D-137)
 - `generationHealth()` (last success + rate 24h/7d + consecutive failures) + "Incidencias recientes"
   table on /admin/sistema. text+badge, no false green. No schema.

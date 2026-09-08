@@ -1,59 +1,122 @@
 import Link from "next/link";
-import { listCompaniesAdmin } from "@/lib/admin/records";
+import {
+  listCompanySegments,
+  SEGMENT_LABEL,
+  SEGMENT_RULES,
+  type SegmentTag,
+} from "@/lib/admin/segments";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
+
+export const dynamic = "force-dynamic";
 
 const fmt = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "—");
 type SP = { [k: string]: string | string[] | undefined };
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
+/**
+ * Companies list with rule-based segments (#82). Chip filters + search combine;
+ * every tag maps to a documented rule (`SEGMENT_RULES`), no opaque scoring.
+ */
 export default async function AdminEmpresas({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const q = Array.isArray(sp.q) ? sp.q[0] : (sp.q as string | undefined);
-  const rows = await listCompaniesAdmin(q);
+  const q = one(sp.q)?.trim() ?? "";
+  const seg = one(sp.seg) as SegmentTag | undefined;
+
+  const all = await listCompanySegments();
+  let rows = all;
+  if (q) {
+    const ql = q.toLowerCase();
+    rows = rows.filter(
+      (c) =>
+        c.name.toLowerCase().includes(ql) ||
+        (c.nif ?? "").toLowerCase().includes(ql) ||
+        (c.email ?? "").toLowerCase().includes(ql),
+    );
+  }
+  if (seg && seg in SEGMENT_LABEL) rows = rows.filter((c) => c.tags.includes(seg));
+
+  // Only show chips for segments that actually have companies right now.
+  const counts = new Map<SegmentTag, number>();
+  for (const c of all) for (const t of c.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+  const chips = (Object.keys(SEGMENT_LABEL) as SegmentTag[]).filter(
+    (t) => (counts.get(t) ?? 0) > 0,
+  );
+
+  const qp = (over: Record<string, string | undefined>) => {
+    const p = new URLSearchParams();
+    const merged = { q: q || undefined, seg, ...over };
+    for (const [k, v] of Object.entries(merged)) if (v) p.set(k, String(v));
+    const s = p.toString();
+    return s ? `?${s}` : "/admin/empresas";
+  };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <PageHeader
         title="Empresas"
-        lead="Cuentas de empresa registradas, su actividad y su operador de captación."
+        lead="Cuentas de empresa, su uso real y su segmento automático."
       />
 
-      <form method="get" className="flex items-end gap-3">
+      <form method="get" className="flex flex-wrap items-end gap-3">
         <label className="text-sm">
           <span className="block text-xs text-[var(--color-text-muted)]">
-            Buscar por nombre o NIF
+            Buscar por nombre, NIF o email
           </span>
           <input
             type="search"
             name="q"
-            defaultValue={q ?? ""}
+            defaultValue={q}
             data-testid="empresa-search"
             className="mt-1 w-72 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
           />
         </label>
+        {seg && <input type="hidden" name="seg" value={seg} />}
         <button
           type="submit"
           className="min-h-10 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)]"
         >
           Buscar
         </button>
+        {(q || seg) && (
+          <Link href="/admin/empresas" className="text-sm" data-testid="empresa-clear">
+            Limpiar filtros
+          </Link>
+        )}
       </form>
 
+      <div className="flex flex-wrap gap-1.5" data-testid="segment-chips">
+        {chips.map((t) => {
+          const active = seg === t;
+          return (
+            <Link
+              key={t}
+              href={qp({ seg: active ? undefined : t })}
+              title={SEGMENT_RULES[t]}
+              aria-pressed={active}
+              className={`rounded-[var(--radius-sm)] border px-2 py-0.5 text-xs no-underline ${
+                active
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]"
+                  : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              }`}
+            >
+              {SEGMENT_LABEL[t]} <span className="tabular-nums">{counts.get(t)}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      <p className="text-sm text-[var(--color-text-muted)]" role="status">
+        {rows.length} empresa{rows.length === 1 ? "" : "s"}
+        {seg ? ` · ${SEGMENT_LABEL[seg]}` : ""}
+      </p>
+
       {rows.length === 0 ? (
-        <Empty>Ninguna empresa{q ? ` para "${q}"` : ""}.</Empty>
+        <Empty>Ninguna empresa con estos filtros.</Empty>
       ) : (
         <Table
-          head={[
-            "Empresa",
-            "NIF",
-            "Alta",
-            "Miembros",
-            "DeCA",
-            "Último DeCA",
-            "Operador",
-            "Activa 30d",
-          ]}
+          head={["Empresa", "NIF", "Alta", "Miembros", "DeCA 7d/30d/tot", "Último", "Segmentos"]}
         >
-          {rows.map((c) => (
+          {rows.slice(0, 300).map((c) => (
             <Row key={c.id}>
               <Cell>
                 <Link
@@ -67,11 +130,21 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
               <Cell mono>{c.nif ?? "—"}</Cell>
               <Cell mono>{fmt(c.createdAt)}</Cell>
               <Cell>{c.members}</Cell>
-              <Cell>{c.totalDeca}</Cell>
+              <Cell mono>{`${c.d7}/${c.d30}/${c.total}`}</Cell>
               <Cell mono>{fmt(c.lastDecaAt)}</Cell>
-              <Cell>{c.refCode ?? "—"}</Cell>
               <Cell>
-                {c.active30d ? <Badge tone="green">sí</Badge> : <Badge tone="muted">no</Badge>}
+                <span className="flex flex-wrap gap-1">
+                  {c.tags.slice(0, 3).map((t) => (
+                    <Badge key={t} tone="muted">
+                      {SEGMENT_LABEL[t]}
+                    </Badge>
+                  ))}
+                  {c.tags.length > 3 && (
+                    <span className="text-xs text-[var(--color-text-muted)]">
+                      +{c.tags.length - 3}
+                    </span>
+                  )}
+                </span>
               </Cell>
             </Row>
           ))}

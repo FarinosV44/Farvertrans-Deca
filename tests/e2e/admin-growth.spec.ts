@@ -97,6 +97,20 @@ test("the admin Resumen shows the activation funnel and an 'empresas a contactar
     await expect(page.getByTestId("generation-health")).toBeVisible();
     await expect(page.getByText("Tasa de éxito 24 h / 7 d")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Incidencias recientes" })).toBeVisible();
+
+    // #82 — the companies list has rule-based segment chips that filter, and
+    // combine with search; every chip has its rule as a tooltip.
+    await page.goto("/admin/empresas");
+    const chips = page.getByTestId("segment-chips");
+    await expect(chips).toBeVisible();
+    const firstChip = chips.getByRole("link").first();
+    const chipName = (await firstChip.textContent())?.trim() ?? "";
+    await firstChip.click();
+    await expect(page).toHaveURL(/seg=/);
+    await expect(page.getByTestId("empresa-clear")).toBeVisible();
+    await page.getByTestId("empresa-clear").click();
+    await expect(page).toHaveURL(/\/admin\/empresas$/);
+    expect(chipName.length).toBeGreaterThan(0);
   } finally {
     await close();
   }
