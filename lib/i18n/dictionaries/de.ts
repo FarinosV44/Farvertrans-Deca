@@ -393,6 +393,13 @@ export const de = {
     lastDocuments: "Letzte Dokumente",
     viewAllHistory: "Gesamten Verlauf anzeigen",
     noDocumentsYet: "Sie haben noch keine Dokumente.",
+    draft: {
+      title: "Entwurf vorhanden",
+      edited: (s: string) => `bearbeitet ${s}`,
+      continue: "Fortsetzen",
+      discard: "Verwerfen",
+      confirm: "Diesen Entwurf verwerfen? Betrifft kein erstelltes Dokument.",
+    },
     createFirst: "Erstellen Sie Ihr erstes DeCA",
     detail: "Detail",
     duplicate: "Duplizieren",

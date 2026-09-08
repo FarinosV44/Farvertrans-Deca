@@ -11,6 +11,7 @@ import {
   type WizardTemplate,
 } from "@/components/deca/wizard";
 import { getCurrentUser } from "@/lib/auth";
+import { getDraft } from "@/lib/deca/draft";
 import { getDecaForDuplicate } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
 import { listTemplates } from "@/lib/data/templates";
@@ -105,6 +106,11 @@ export default async function CrearPage({
     ]);
     saved = s;
     templates = t;
+    // #76: resume the user's saved draft (only when not duplicating).
+    if (!source) {
+      const draft = await getDraft(user.id);
+      if (draft) initial = draft.dataJson as WizardInitial;
+    }
     if (source) {
       initial = {
         shipperName: source.shipper?.name ?? "",

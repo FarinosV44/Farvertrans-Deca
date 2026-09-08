@@ -379,6 +379,13 @@ export const es = {
     lastDocuments: "Últimos documentos",
     viewAllHistory: "Ver todo el historial",
     noDocumentsYet: "Aún no tienes documentos.",
+    draft: {
+      title: "Borrador pendiente",
+      edited: (s: string) => `editado ${s}`,
+      continue: "Continuar",
+      discard: "Descartar",
+      confirm: "¿Descartar este borrador? No afecta a ningún documento generado.",
+    },
     createFirst: "Crea tu primer DeCA",
     detail: "Detalle",
     duplicate: "Duplicar",

@@ -390,6 +390,13 @@ export const fr = {
     lastDocuments: "Derniers documents",
     viewAllHistory: "Voir tout l'historique",
     noDocumentsYet: "Vous n'avez pas encore de documents.",
+    draft: {
+      title: "Brouillon en cours",
+      edited: (s: string) => `modifié ${s}`,
+      continue: "Continuer",
+      discard: "Supprimer",
+      confirm: "Supprimer ce brouillon ? Cela n'affecte aucun document généré.",
+    },
     createFirst: "Créez votre premier DeCA",
     detail: "Détail",
     duplicate: "Dupliquer",

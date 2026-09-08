@@ -387,6 +387,13 @@ export const gl = {
     lastDocuments: "Últimos documentos",
     viewAllHistory: "Ver todo o historial",
     noDocumentsYet: "Aínda non tes documentos.",
+    draft: {
+      title: "Borrador pendente",
+      edited: (s: string) => `editado ${s}`,
+      continue: "Continuar",
+      discard: "Descartar",
+      confirm: "Queres descartar este borrador? Non afecta a ningún documento xerado.",
+    },
     createFirst: "Crea o teu primeiro DeCA",
     detail: "Detalle",
     duplicate: "Duplicar",

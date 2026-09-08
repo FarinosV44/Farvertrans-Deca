@@ -389,6 +389,13 @@ export const it = {
     lastDocuments: "Ultimi documenti",
     viewAllHistory: "Vedi tutta la cronologia",
     noDocumentsYet: "Non hai ancora documenti.",
+    draft: {
+      title: "Bozza in corso",
+      edited: (s: string) => `modificata ${s}`,
+      continue: "Continua",
+      discard: "Elimina",
+      confirm: "Eliminare questa bozza? Non influisce su nessun documento generato.",
+    },
     createFirst: "Crea il tuo primo DeCA",
     detail: "Dettaglio",
     duplicate: "Duplica",

@@ -377,6 +377,13 @@ export const en = {
     lastDocuments: "Latest documents",
     viewAllHistory: "View full history",
     noDocumentsYet: "You don't have any documents yet.",
+    draft: {
+      title: "Draft in progress",
+      edited: (s: string) => `edited ${s}`,
+      continue: "Continue",
+      discard: "Discard",
+      confirm: "Discard this draft? It does not affect any generated document.",
+    },
     createFirst: "Create your first DeCA",
     detail: "Detail",
     duplicate: "Duplicate",

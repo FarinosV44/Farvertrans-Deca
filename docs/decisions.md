@@ -3967,3 +3967,31 @@ remaining scope.
 - **Tests:** `tests/e2e/row-share.spec.ts` — from the history list at 360px: one tap opens the
   menu, WhatsApp href carries the `/d/token`, copy writes the current-version URL, no h-scroll.
   180 unit + historico/workspace/panel-nav/driver-delivery green. No schema.
+
+## D-134 — #76 P1: visible drafts + auto-recovery of an in-progress DeCA
+- Date / phase: 2026-09-08, Phase 5.
+- **Schema:** new `DecaDraft` model — **one per user** (`userId @unique`), `companyId`, `dataJson`
+  (the flat wizard form state), `updatedAt`. Migration `20260907235352_deca_draft` (new table +
+  unique index + FKs, cascade on user/company). Applied to **local dev**; **needs
+  `prisma migrate deploy` on production** — the Hostinger build runs it automatically on the next
+  redeploy, and the pre-batch build in production never queries the table, so there is no window
+  where the code is ahead of the schema.
+- **`lib/deca/draft.ts`** — `getDraft` / `saveDraft` (upsert; an empty form removes the draft, so no
+  empty drafts) / `discardDraft`, plus `draftRouteLabel` (compact "City → City", never field names)
+  and `draftHasContent`.
+- **`app/api/deca/draft` route** — `PUT` (auth + company; upsert), `DELETE` (discard). Anonymous
+  visitors keep their draft in the browser only (the wizard's existing `sessionStorage`).
+- **Wizard (`components/deca/wizard.tsx`):** when `authed && !isCorrection`, a debounced (1.2s) `PUT`
+  mirrors the form to the server as the user types; the first render is skipped (no premature
+  draft). On successful generation → `DELETE` (the draft became a real `Deca`). `sessionStorage`
+  recovery after a refresh is unchanged.
+- **`app/crear/page.tsx`:** an authed user with a saved draft and no `?from=` resumes it (the
+  draft's `dataJson` is passed as `initial`).
+- **Panel (`app/panel/page.tsx` + `components/app/draft-banner.tsx`):** a discreet dashed-border
+  strip above the issued-documents list — "Borrador pendiente", route label, "editado hace X"
+  (`lib/i18n/relative.ts`, locale-aware), Continuar (→ `/crear`) and Discard (confirm, DELETE, then
+  `router.refresh()`). Visually distinct from an issued document; a draft has no token/PDF/QR/URL.
+  `t.panel.draft.*` ×8.
+- **Tests:** `tests/e2e/deca-draft.spec.ts` — start → leave → resume from the panel with the data
+  intact → discard behind a confirm; and generating clears the draft. 180 unit +
+  crear/creator-ux31/workspace/master-data/growth + compliance 8/8.

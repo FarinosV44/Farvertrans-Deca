@@ -73,6 +73,7 @@ model Company {
   savedCompanies    SavedCompany[]
   savedVehicles     SavedVehicle[]
   savedLocations    SavedLocation[]
+  decaDrafts        DecaDraft[]
 
   @@map("company")
 }
@@ -145,8 +146,29 @@ model User {
   recoveryCodes       AdminRecoveryCode[]
   webauthnCredentials WebAuthnCredential[]
   trustedDevices      TrustedDevice[]
+  decaDraft           DecaDraft?
 
   @@map("user")
+}
+
+/// A single in-progress DeCA the user has not generated yet (#76). One per
+/// user (`userId @unique`); the wizard upserts it as they type. It carries NO
+/// token, PDF, QR or public URL — it becomes a real `Deca` only on generation,
+/// at which point the draft is deleted. Never shown alongside issued documents.
+model DecaDraft {
+  id        String   @id @default(cuid())
+  userId    String   @unique @map("user_id")
+  companyId String   @map("company_id")
+  /// The flat wizard form state (partial, unvalidated). Size-capped by the API.
+  dataJson  Json     @map("data_json")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@map("deca_draft")
 }
 
 /// SECURITY #53 passkey follow-up: a registered WebAuthn credential (Face

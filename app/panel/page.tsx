@@ -4,7 +4,11 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AppNav } from "@/components/app/app-nav";
 import { RowShare } from "@/components/deca/row-share";
+import { DraftBanner } from "@/components/app/draft-banner";
 import { getCurrentUser } from "@/lib/auth";
+import { getDraft, draftRouteLabel } from "@/lib/deca/draft";
+import { relativeTime } from "@/lib/i18n/relative";
+import { getLocale } from "@/lib/i18n/server";
 import { listHistory } from "@/lib/data/history";
 import { listSaved } from "@/lib/data/saved";
 import { getTopRoutes } from "@/lib/data/route-intel";
@@ -31,11 +35,13 @@ export default async function AppHome() {
   // (the same audience as the invite/role-management UI on /panel/equipo):
   // members don't manage the team, so this would be noise for them.
   const isOwner = user.companyRole === "owner";
-  const [rows, saved, topRoutes, teamActivity] = await Promise.all([
+  const [rows, saved, topRoutes, teamActivity, draft, locale] = await Promise.all([
     listHistory(user.companyId),
     listSaved(user.companyId),
     getTopRoutes(user.companyId, 4),
     isOwner ? listCompanyTeamActivity(user.companyId, 5) : Promise.resolve([]),
+    getDraft(user.id),
+    getLocale(),
   ]);
   const recent = rows.slice(0, 5);
   const last = rows[0];
@@ -69,6 +75,13 @@ export default async function AppHome() {
               {t.panel.verifyBanner.cta}
             </Link>
           </div>
+        )}
+
+        {draft && (
+          <DraftBanner
+            label={draftRouteLabel(draft.dataJson as Record<string, unknown>)}
+            edited={t.panel.draft.edited(relativeTime(draft.updatedAt, locale))}
+          />
         )}
 
         <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px] md:items-start md:gap-10">

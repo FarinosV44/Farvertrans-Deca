@@ -396,6 +396,13 @@ export const eu = {
     lastDocuments: "Azken dokumentuak",
     viewAllHistory: "Ikusi historial osoa",
     noDocumentsYet: "Oraindik ez duzu dokumenturik.",
+    draft: {
+      title: "Zirriborro bat zain",
+      edited: (s: string) => `editatua ${s}`,
+      continue: "Jarraitu",
+      discard: "Baztertu",
+      confirm: "Zirriborro hau baztertu? Ez dio eragiten sortutako inolako dokumenturi.",
+    },
     createFirst: "Sortu zure lehen DeCA",
     detail: "Xehetasuna",
     duplicate: "Bikoiztu",

@@ -387,6 +387,13 @@ export const ca = {
     lastDocuments: "Últims documents",
     viewAllHistory: "Veure tot l'historial",
     noDocumentsYet: "Encara no tens documents.",
+    draft: {
+      title: "Esborrany pendent",
+      edited: (s: string) => `editat ${s}`,
+      continue: "Continuar",
+      discard: "Descartar",
+      confirm: "Vols descartar aquest esborrany? No afecta cap document generat.",
+    },
     createFirst: "Crea el teu primer DeCA",
     detail: "Detall",
     duplicate: "Duplicar",

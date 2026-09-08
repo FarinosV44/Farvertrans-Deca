@@ -527,6 +527,27 @@ export function CrearWizard({
     }
   }, [form]);
 
+  // #76: an authenticated in-progress DeCA is also saved server-side (debounced),
+  // so it shows on the panel and survives a device change. Not while correcting
+  // (that is an existing document) and not the untouched first render.
+  const draftDirty = useRef(false);
+  useEffect(() => {
+    if (!authed || isCorrection) return;
+    if (!draftDirty.current) {
+      draftDirty.current = true;
+      return;
+    }
+    const h = setTimeout(() => {
+      void fetch("/api/deca/draft", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(form),
+        keepalive: true,
+      }).catch(() => {});
+    }, 1200);
+    return () => clearTimeout(h);
+  }, [form, authed, isCorrection]);
+
   useEffect(() => {
     headingRef.current?.focus();
   }, [step]);
@@ -708,6 +729,8 @@ export function CrearWizard({
       } catch {
         /* ignore */
       }
+      // #76: the draft became a real DeCA — drop the server copy.
+      if (authed && !isCorrection) void fetch("/api/deca/draft", { method: "DELETE" });
       if (data.firstForCompany) track("first_authenticated_deca");
       const q = data.claimToken ? `?claim=${encodeURIComponent(data.claimToken)}` : "";
       router.push(`/crear/${data.decaId}${q}`);
