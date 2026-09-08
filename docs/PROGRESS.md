@@ -1549,3 +1549,15 @@ WhatsApp técnico = jurídico = **34607527719**; email jurídico = **info@praeto
 - **2 migrations to `prisma migrate deploy` on production after the `main` merge:**
   `20260908185301_support_tickets`, `20260908190836_operator_contact_fields`.
 - **Merged to `main`** `ce65fb7` (`--no-ff`) + **both production migrations applied** (2026-09-08, user instruction): ledger clean beforehand (31→33), `support_ticket*` + `operator` new columns verified via :6543. `develop` == `main`. **Still needs: Hostinger redeploy** + live check of p7.
+
+### FIX (#86 p3, D-150) — ALL visible DeCA text renders UPPERCASE, uniformly — on `develop`
+User FIX: #86 p3 only uppercased some fields → inconsistent document. Now one presentation
+transform (`lib/deca/display.ts` → `toDisplayDeca()`, pure/idempotent/non-mutating) applied at
+EVERY read site: PDF renderer (replacing the ad-hoc textTransform CSS), web cockpit + Modo
+Inspección + version diff (`lib/deca/detail.ts`), history table + CSV (`lib/data/history.ts`),
+admin cross-tenant DeCA views (`lib/admin/records.ts`), wizard review step. Uppercases
+name/address/city/province/country/goods/reference/notes; NEVER NIF/CP/weight/dates/plates/emails/
+URLs/QR/tokens. Stored `data_json` unchanged (legal/versioned), so existing DeCAs render uniformly
+too. `SaveTemplate` uses `current.rawData` (form re-fill must not come back all-caps).
+Gate: typecheck + lint + prettier + 219 unit (1 new: `deca-display.test.ts`) + full e2e green
+(~12 specs' assertions updated to uppercase). On `develop` (commits `b46e6a7`, `3c1dc8c`).

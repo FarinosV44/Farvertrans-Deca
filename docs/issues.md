@@ -5,7 +5,7 @@
 > Last inbound sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
 > (worked in D-042…D-111, awaiting the user's close), the launch batches **#59–#68** (all
 > implemented + on `main`, awaiting the user's close) and **#69–#84** (implemented; #84 on `main`),
-> plus **#85** (D-148) and **#86** (D-149, on `develop`). No third-party
+> plus **#85** (D-148, on `main`), **#86** (D-149, on `main`) + the p3 FIX (D-150, on `develop`). No third-party
 > comments on any issue. #29–#38 closed.
 >
 > Earlier note (2026-09-04): #1–#28 all merged to `main`; every issue commented (beat 1); awaiting
