@@ -4105,3 +4105,17 @@ remaining scope.
   closes #79 after the live walk passes.
 - Full suite state recorded: 180 unit, e2e 206/206 green (0 flaky this run), compliance
   R-1…R-13 8/8, typecheck clean, lint (pre-existing `<img>` warnings only), keel:verify ok.
+
+## D-141 — #76/#78/#74 migrations applied to production
+- Date / phase: 2026-09-08, Phase 5, on the user's explicit instruction ("you apply the migrations
+  and after I change the passwords").
+- `prisma migrate deploy` against `DIRECT_URL` (Supabase session pooler :5432). Ledger was clean
+  (D-121); no phantom rows. Applied in order:
+  `20260907235352_deca_draft`, `20260908000514_favorites`, `20260908002549_integration_request`.
+- `prisma migrate status` → "Database schema is up to date!" (29/29).
+- **Verified** via the Prisma client against production (:6543 pooler): `deca_draft`,
+  `favorite_route`, `integration_request` tables all present (count 0); the `favorite` column is
+  readable on `saved_vehicle` and `deca_template`. Additive-only — nothing broken, no data touched.
+- **Still the user's:** redeploy Hostinger so the new code runs against the new schema (until then
+  production serves the pre-batch build against a schema that is ahead of it — additive tables /
+  columns, harmless); rotate the DB password + the other secrets pasted in chat; #60 backup.

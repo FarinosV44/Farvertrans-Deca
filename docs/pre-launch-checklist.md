@@ -80,11 +80,11 @@ These need a real deployed environment and a human eye; the suites cannot stand 
 
 ## 3. Blocking operational items before "launched"
 
-- [ ] **`prisma migrate deploy` on production** — pending migrations `20260907235352_deca_draft`,
-      `20260908000514_favorites`, `20260908002549_integration_request`. The Hostinger build runs
-      `migrate deploy`; the currently-deployed build queries none of these tables, so there is no
-      ahead-of-schema window — but the redeploy MUST happen before the new code is live.
-- [ ] **Redeploy Hostinger** (startup file `server.cjs`).
+- [x] **`prisma migrate deploy` on production** — DONE 2026-09-08 (D-141): `20260907235352_deca_draft`,
+      `20260908000514_favorites`, `20260908002549_integration_request` applied against `DIRECT_URL`;
+      `migrate status` → "up to date" (29/29); tables + `favorite` columns verified via the client.
+- [ ] **Redeploy Hostinger** (startup file `server.cjs`) — the schema is now ahead of the deployed
+      build (additive tables/columns, harmless until then); the new code needs the redeploy to run.
 - [ ] **#60 backup** — object-store bucket + `age` key + repo secrets, run the workflow once, full
       restore-test, log in `docs/07-release.md` §6. (Not "verified" until the restore test runs.)
 - [ ] **Rotate** every secret pasted in chat this session — Supabase DB password,

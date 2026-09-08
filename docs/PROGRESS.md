@@ -1447,7 +1447,7 @@ to `B21810452` via `/admin/empresas/[id]`.
   saved-location schemas + wizard, added `formatLocationCityLine()` that joins only informed parts
   (no dangling `— `/`, `, no substitution). Historical payloads untouched. `deca-location.test.ts`
   new. 180 unit + 19 DeCA e2e. No migration.
-- **#69–#83 batch COMPLETE on `main`** (D-129…D-140). All 15 issues implemented, beat-1 commented, none closed (await the user's live verification — #79 `docs/pre-launch-checklist.md`). 206/206 e2e + 180 unit + compliance 8/8. **3 migrations need `prisma migrate deploy` on prod:** 20260907235352_deca_draft, 20260908000514_favorites, 20260908002549_integration_request (Hostinger build runs it on redeploy).
+- **#69–#83 batch COMPLETE on `main`** (D-129…D-140). All 15 issues implemented, beat-1 commented, none closed (await the user's live verification — #79 `docs/pre-launch-checklist.md`). 206/206 e2e + 180 unit + compliance 8/8. **3 batch migrations applied to production 2026-09-08 (D-141)** — deca_draft / favorites / integration_request; verified 29/29. User still: redeploy Hostinger, rotate secrets, #60 backup.
 - Order: #75 ✓ → #70 (panel nav) → #71 (pre-gen checklist) → #69 (Modo Inspección) → #76 #77 #78
   (panel features) → #80 (admin shell) → #72 #73 #81 #82 #83 #74 (admin cluster) → #79 (final
   regression checklist).
