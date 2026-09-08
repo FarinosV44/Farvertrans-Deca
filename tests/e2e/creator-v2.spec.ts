@@ -136,16 +136,17 @@ test.describe("UX #25 — creator V2", () => {
     await page.fill("#tractorPlate", DECA.tractorPlate);
 
     // the review summary shows both parties' postal code + población
+    // (#86 p3 / FIX D-150: the town renders uppercase, the CP verbatim)
     const review = page.getByTestId("review-summary");
     await expect(review).toContainText("46540");
-    await expect(review).toContainText("El Puig");
+    await expect(review).toContainText("EL PUIG");
     await expect(review).toContainText("46988");
-    await expect(review).toContainText("Paterna");
+    await expect(review).toContainText("PATERNA");
 
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
     // and they reach the generated document view
-    await expect(page.getByText("46988 Paterna")).toBeVisible();
+    await expect(page.getByText("46988 PATERNA")).toBeVisible();
   });
 
   test("template: save from a DeCA → appears in the wizard → creates a NEW independent document", async ({

@@ -93,7 +93,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
           >
             Duplicar
           </Link>
-          <SaveTemplate data={c.data} />
+          <SaveTemplate data={c.rawData} />
         </div>
 
         <div className="mt-8 space-y-8">

@@ -105,8 +105,9 @@ test.describe("PRODUCT #36 — document cockpit", () => {
     await expect(page.getByText("Cargador contractual")).toBeVisible();
     await expect(page.getByText("Transportista efectivo")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Datos del documento" })).toBeVisible();
-    await expect(page.locator("#contenido")).toContainText(V.goods);
-    await expect(page.locator("#contenido")).toContainText(V.shipperName);
+    // #86 p3 / FIX (D-150): textual DeCA data renders uppercase everywhere.
+    await expect(page.locator("#contenido")).toContainText(V.goods.toUpperCase());
+    await expect(page.locator("#contenido")).toContainText(V.shipperName.toUpperCase());
   });
 
   test("workspace: a corrected DeCA shows version history and a 'what changed' diff", async ({
@@ -135,7 +136,7 @@ test.describe("PRODUCT #36 — document cockpit", () => {
     const diff = page.getByTestId("change-list");
     await expect(diff).toBeVisible();
     await expect(diff).toContainText("Lugar de descarga — localidad");
-    await expect(diff).toContainText("Madrid");
-    await expect(diff).toContainText("Zaragoza");
+    await expect(diff).toContainText("MADRID");
+    await expect(diff).toContainText("ZARAGOZA");
   });
 });

@@ -101,7 +101,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await expect(member.locator("h1")).toContainText("Agencia Equipo SL");
     await member.goto("/panel/historico");
     await expect(member.getByTestId("historico-table")).toContainText(
-      "Almacén Sevilla — Sevilla → Almacén Bilbao — Bilbao",
+      "ALMACÉN SEVILLA — SEVILLA → ALMACÉN BILBAO — BILBAO",
     );
 
     // exactly one company: the member is listed as an Operador, no new company created
@@ -255,7 +255,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     // the auditor can view the shared history (view is allowed)
     await auditor.goto("/panel/historico");
     await expect(auditor.getByTestId("historico-table")).toContainText(
-      "Almacén Sevilla — Sevilla → Almacén Bilbao — Bilbao",
+      "ALMACÉN SEVILLA — SEVILLA → ALMACÉN BILBAO — BILBAO",
     );
 
     // but /crear shows the read-only gate, never the wizard

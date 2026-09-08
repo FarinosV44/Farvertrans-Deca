@@ -22,7 +22,11 @@ export type CockpitVersion = {
   author: string | null;
   isCurrent: boolean;
   publicUrl: string;
+  /** UPPERCASE-normalised for display (#86 p3 / FIX) — every view of the DeCA. */
   data: DecaPayloadData;
+  /** The payload AS STORED (original casing) — for re-filling forms (e.g. "guardar
+   * como plantilla"), never for display. */
+  rawData: DecaPayloadData;
 };
 
 export type CockpitData = {
@@ -201,9 +205,10 @@ export async function getDecaCockpit(
     author: v.createdByUserId ? (emailById.get(v.createdByUserId) ?? null) : null,
     isCurrent: v.id === deca.currentVersionId,
     publicUrl: `${base}/d/${v.token}`,
-    // #86 p3 / FIX: uppercase every visible textual field, uniformly with the
-    // PDF and Modo Inspección. Stored data_json keeps its original casing.
+    // #86 p3 / FIX: `data` uppercases every visible textual field, uniformly with
+    // the PDF and Modo Inspección; `rawData` keeps the stored casing for form re-fill.
     data: toDisplayDeca((v.dataJson ?? {}) as Record<string, unknown>) as DecaPayloadData,
+    rawData: (v.dataJson ?? {}) as DecaPayloadData,
   });
 
   const versions = deca.versions.map(toVersion);

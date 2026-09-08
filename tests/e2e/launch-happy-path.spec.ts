@@ -99,10 +99,11 @@ test.describe("LAUNCH #20 — production happy path", () => {
     await fillWizardAnon(page);
     const review = page.getByTestId("review-summary");
     await expect(review).toBeVisible();
+    // #86 p3 / FIX (D-150): addresses + localities render uppercase; weight verbatim.
     for (const v of [
-      DECA.shipperAddress,
-      DECA.carrierAddress,
-      DECA.unloadLocationCity,
+      DECA.shipperAddress.toUpperCase(),
+      DECA.carrierAddress.toUpperCase(),
+      DECA.unloadLocationCity.toUpperCase(),
       DECA.weight,
       DECA.tractorPlate,
     ]) {

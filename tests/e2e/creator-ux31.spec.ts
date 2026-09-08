@@ -114,8 +114,9 @@ test.describe("UX #31 — ultra-simple creation flow", () => {
     const review = page.getByTestId("review-summary");
     await expect(review).toContainText("Empresa que contrata el transporte");
     await expect(review).toContainText("Transportista que realiza el transporte");
-    await expect(review).toContainText(V.shipperName);
-    await expect(review).toContainText(V.goods);
+    // #86 p3 / FIX (D-150): textual DeCA data renders uppercase everywhere.
+    await expect(review).toContainText(V.shipperName.toUpperCase());
+    await expect(review).toContainText(V.goods.toUpperCase());
 
     // "Editar" on the parties block jumps back to step 1.
     await page.getByTestId("review-edit-shipper").click();
