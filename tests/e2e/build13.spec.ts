@@ -131,15 +131,15 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
     const v1BytesAfter = Buffer.from(await v1.body());
     // FIX #19: v1's bytes are byte-for-byte unchanged after the correction
     expect(createHash("sha256").update(v1BytesAfter).digest("hex")).toBe(v1HashBefore);
-    const v1Text = await extractText(new Uint8Array(v1BytesAfter));
-    expect(v1Text).toContain("Madrid"); // original unload location preserved
+    const v1Text = (await extractText(new Uint8Array(v1BytesAfter))).toUpperCase();
+    expect(v1Text).toContain("MADRID"); // original unload location preserved (#86 p3: PDF uppercases)
 
     const links = await page.locator("a", { hasText: "Ver PDF" }).all();
     const hrefs = await Promise.all(links.map((l) => l.getAttribute("href")));
     expect(new Set(hrefs).size).toBe(2); // distinct tokens per version
     const v2 = await request.get(hrefs[0]!);
-    const v2Text = await extractText(new Uint8Array(await v2.body()));
-    expect(v2Text).toContain("Barcelona");
+    const v2Text = (await extractText(new Uint8Array(await v2.body()))).toUpperCase();
+    expect(v2Text).toContain("BARCELONA");
   });
 
   test("a non-owner cannot correct another company's DeCA", async ({ page, request }) => {

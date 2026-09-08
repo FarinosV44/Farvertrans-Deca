@@ -38,7 +38,10 @@ async function addVehicle(page: Page, alias: string, plate: string) {
   await page.fill("#v-alias", alias);
   await page.fill("#v-tractor", plate);
   await vehicleSection(page).getByRole("button", { name: "Guardar" }).click();
-  await expect(vehicleSection(page).locator("ul > li").filter({ hasText: alias })).toBeVisible();
+  // #86 p3 — alias stored uppercase
+  await expect(
+    vehicleSection(page).locator("ul > li").filter({ hasText: alias.toUpperCase() }),
+  ).toBeVisible();
 }
 
 test("starring a saved vehicle floats it to the top and is reversible; no duplicate", async ({
@@ -52,14 +55,14 @@ test("starring a saved vehicle floats it to the top and is reversible; no duplic
 
   const list = vehicleSection(page).locator("ul > li");
   await expect(list).toHaveCount(2);
-  await expect(list.first()).toContainText("Camion Dos");
+  await expect(list.first()).toContainText("CAMION DOS");
 
   // star the older one
-  await list.filter({ hasText: "Camion Uno" }).getByTestId("favorite-star").click();
+  await list.filter({ hasText: "CAMION UNO" }).getByTestId("favorite-star").click();
   await expect(list).toHaveCount(2); // no duplicate
-  await expect(list.first()).toContainText("Camion Uno");
+  await expect(list.first()).toContainText("CAMION UNO");
 
   // un-star → order reverts
   await list.first().getByTestId("favorite-star").click();
-  await expect(list.first()).toContainText("Camion Dos");
+  await expect(list.first()).toContainText("CAMION DOS");
 });

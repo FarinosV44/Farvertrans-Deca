@@ -195,12 +195,15 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.locator("section", { hasText: "Empresas y contactos" }).getByText("Añadir").click();
     await page.fill("#c-name", "Habitual Cargas SL");
     await page.fill("#c-nif", "B12345674");
-    await page.fill("#c-address", "Calle Habitual 1, Valencia");
+    await page.fill("#c-address", "Calle Habitual 1");
+    await page.fill("#c-postal-code", "46001"); // #86 p2 — mandatory
+    await page.fill("#c-city", "Valencia");
     await page
       .locator("section", { hasText: "Empresas y contactos" })
       .getByRole("button", { name: "Guardar" })
       .click();
-    await expect(page.getByText("Habitual Cargas SL")).toBeVisible();
+    // #86 p3 — descriptive fields stored uppercase
+    await expect(page.getByText("HABITUAL CARGAS SL")).toBeVisible();
 
     // add a saved vehicle
     await page.locator("section", { hasText: "Vehículos" }).getByText("Añadir").click();
@@ -215,8 +218,8 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.goto("/crear");
     await page
       .getByTestId("autofill-carrier")
-      .selectOption({ label: "Habitual Cargas SL — B12345674" });
-    await expect(page.locator("#carrierName")).toHaveValue("Habitual Cargas SL");
+      .selectOption({ label: "HABITUAL CARGAS SL — B12345674" });
+    await expect(page.locator("#carrierName")).toHaveValue("HABITUAL CARGAS SL");
     await page.fill("#shipperName", DECA.shipper.name);
     await page.fill("#shipperNif", DECA.shipper.nif);
     await page.fill("#shipperAddress", DECA.shipper.address);
@@ -230,10 +233,10 @@ test.describe("BUILD 10 — registered workspace", () => {
     // delete the saved company — the earlier generated DeCA still shows its original carrier
     await page.goto("/panel/datos");
     await page
-      .locator("li", { hasText: "Habitual Cargas SL" })
+      .locator("li", { hasText: "HABITUAL CARGAS SL" })
       .getByRole("button", { name: "Borrar" })
       .click();
-    await expect(page.getByText("Habitual Cargas SL")).toHaveCount(0);
+    await expect(page.getByText("HABITUAL CARGAS SL")).toHaveCount(0);
     await page.goto("/panel/historico");
     await expect(page.getByTestId("historico-table")).toContainText("Transportes Pérez SL");
   });
