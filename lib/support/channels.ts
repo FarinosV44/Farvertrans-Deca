@@ -22,17 +22,19 @@ export function whatsappLink(number: string, message: string): string | null {
   return `https://wa.me/${n}?text=${encodeURIComponent(message)}`;
 }
 
-/** Technical-support channels — always at least phone + email. */
+/**
+ * Technical-support channels (#86 p6). A conventional phone is NO LONGER the
+ * primary channel — WhatsApp leads, then email; the panel also shows the
+ * "open a ticket" form alongside these. The phone is dropped from this list.
+ */
 export function techSupportChannels(): SupportChannel[] {
-  const out: SupportChannel[] = [
-    { kind: "phone", href: `tel:${digits(BRAND.supportPhone)}`, value: BRAND.supportPhone },
-    { kind: "email", href: `mailto:${BRAND.supportEmail}`, value: BRAND.supportEmail },
-  ];
+  const out: SupportChannel[] = [];
   const wa = whatsappLink(
     BRAND.supportWhatsapp,
     "Hola, necesito ayuda técnica con DeCA Profesional.",
   );
   if (wa) out.push({ kind: "whatsapp", href: wa, value: "WhatsApp" });
+  out.push({ kind: "email", href: `mailto:${BRAND.supportEmail}`, value: BRAND.supportEmail });
   return out;
 }
 

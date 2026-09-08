@@ -15,18 +15,22 @@ export const BRAND = {
   shortName: "DeCA Profesional",
   /** One-line value proposition. */
   tagline: "Genera tu Documento Electrónico de Control en menos de 2 minutos.",
-  /** Support / operational contact (LEGAL #52 — PRAETORIA's dedicated DeCA address). */
+  /**
+   * TECHNICAL support (#86 p6 — kept fully separate from the legal channel).
+   * The email stays PRAETORIA's dedicated DeCA address; legal has its own
+   * (`LEGAL_ENTITY.legalEmail` = info@praetoriaabogados.es).
+   */
   supportEmail: "Deca@praetoriaabogados.es",
-  /** Support phone (owner directive, 2026-09-06). */
+  /** Technical-support phone (owner directive, 2026-09-06). No longer the primary channel (#86 p6). */
   supportPhone: "607 52 77 19",
   /**
-   * WhatsApp numbers for the panel help centre (#63). International format,
-   * digits only (e.g. "34607527719"). Left EMPTY on purpose — the buttons
-   * only render once dirección confirms the definitive channels; nothing
-   * unverified goes live.
+   * WhatsApp numbers for the panel help centre. International format, digits
+   * only. Technical and legal currently share the same line (607 52 77 19)
+   * but keep their own pre-filled message and their own section (#86 p6) so
+   * the numbers can split later with a one-line edit.
    */
-  supportWhatsapp: "",
-  legalWhatsapp: "",
+  supportWhatsapp: "34607527719",
+  legalWhatsapp: "34607527719",
   /** Human-readable support hours, shown beside the channels when set. */
   supportHours: "",
   /** Canonical base URL comes from the environment (NEXT_PUBLIC_FVD_BASE_URL). */

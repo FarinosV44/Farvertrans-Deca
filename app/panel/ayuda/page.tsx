@@ -75,24 +75,6 @@ export default async function AyudaPage() {
         </section>
 
         <section
-          aria-labelledby="legal"
-          className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5"
-        >
-          <h2 id="legal" className="text-lg font-bold">
-            {h.legalHeading}
-          </h2>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">{h.legalIntro}</p>
-          <div className="mt-3 flex flex-wrap gap-2" data-testid="support-legal-channels">
-            <ChannelLink
-              href={`mailto:${LEGAL_ENTITY.supportEmail}`}
-              label={LEGAL_ENTITY.supportEmail}
-            />
-            {legal && <ChannelLink href={legal.href} label={h.whatsappLegal} />}
-          </div>
-          <p className="mt-3 text-xs text-[var(--color-text-muted)]">{h.legalDisclaimer}</p>
-        </section>
-
-        <section
           aria-labelledby="open-ticket"
           className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5"
         >
@@ -132,6 +114,28 @@ export default async function AyudaPage() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* #86 p6 — the legal channel is clearly separate from technical support. */}
+        <section
+          aria-labelledby="legal"
+          className="mt-10 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+        >
+          <h2 id="legal" className="text-lg font-bold">
+            {h.legalHeading}
+          </h2>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            Para cualquier inspección, requerimiento, sanción o incidencia relacionada con el
+            transporte, consulta con un abogado.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2" data-testid="support-legal-channels">
+            {legal && <ChannelLink href={legal.href} label={h.whatsappLegal} />}
+            <ChannelLink
+              href={`mailto:${LEGAL_ENTITY.legalEmail}`}
+              label={LEGAL_ENTITY.legalEmail}
+            />
+          </div>
+          <p className="mt-3 text-xs text-[var(--color-text-muted)]">{h.legalDisclaimer}</p>
         </section>
       </main>
       <SiteFooter />

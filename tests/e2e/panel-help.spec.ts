@@ -44,16 +44,18 @@ test("the help centre is reachable from the panel nav and shows separated channe
   await expect(tech).toBeVisible();
   await expect(legal).toBeVisible();
 
-  // Technical support always has a real phone + email link.
-  await expect(tech.locator('a[href^="tel:"]')).toHaveCount(1);
+  // #86 p6: technical support leads with WhatsApp + email — no conventional
+  // phone as a primary channel, and an "open a ticket" form on the page.
+  await expect(tech.locator('a[href^="tel:"]')).toHaveCount(0);
   await expect(tech.locator('a[href^="mailto:"]')).toHaveCount(1);
+  await expect(tech.locator('a[href*="wa.me"]')).toHaveCount(1);
+  await expect(page.getByTestId("ticket-submit")).toBeVisible();
 
-  // Legal assistance is a distinct section with its own heading + prudent wording.
+  // Legal assistance is a distinct section, its own channel + prudent wording.
   await expect(page.getByRole("heading", { name: /Asistencia jurídica/ })).toBeVisible();
   await expect(page.locator("#contenido")).toContainText("no garantiza ningún resultado");
-
-  // Nothing unconfirmed is published — the WhatsApp buttons are hidden.
-  await expect(page.locator('a[href*="wa.me"]')).toHaveCount(0);
+  await expect(legal.locator('a[href*="wa.me"]')).toHaveCount(1);
+  await expect(legal.locator('a[href$="info@praetoriaabogados.es"]')).toHaveCount(1);
 });
 
 test("the account menu links to help too", async ({ page }) => {

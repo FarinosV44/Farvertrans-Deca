@@ -4400,3 +4400,20 @@ remaining scope.
   area stays ES-only by convention.
 - Tests: `support-schema.test.ts` (4); `support-tickets.spec.ts` (open → superadmin sees it →
   replies → status → user replies → non-internal 404).
+
+### Slice 6 (parts 4 & 6, P2) — support panel WhatsApp + legal channel fully separated
+- **Config (user-provided):** technical WhatsApp = legal WhatsApp = **34607527719** (`BRAND.supportWhatsapp`
+  / `BRAND.legalWhatsapp` — same line, different pre-filled message + own section, so they can split
+  later with a one-line edit). Legal email = `LEGAL_ENTITY.legalEmail` = **info@praetoriaabogados.es**
+  (also aliased as `LEGAL_ENTITY.supportEmail` for the existing legal-page / structured-data call
+  sites). Technical email stays `BRAND.supportEmail` = `Deca@praetoriaabogados.es`.
+- **`techSupportChannels()` no longer returns a `tel:` channel** (#86 p4 — no conventional phone as
+  the primary channel). It leads with WhatsApp, then email; the "Abrir una incidencia técnica" form
+  (slice 5) sits right below on `/panel/ayuda`.
+- **`/panel/ayuda`** reordered: técnico (WhatsApp + email) → abrir incidencia → mis incidencias →
+  **jurídico**, now visually distinct (surface background, extra top margin) with the "Consulta con
+  un abogado por WhatsApp" CTA (`h.whatsappLegal`, updated in all 8 dicts) + the orientative text +
+  `info@praetoriaabogados.es`. Legal queries never become support tickets (enforced by design —
+  the ticket form is technical-only).
+- `panel-help.spec.ts` updated for the new channel shape (no `tel:`, WhatsApp present, legal email
+  = info@praetoriaabogados.es).
