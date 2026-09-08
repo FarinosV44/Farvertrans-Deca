@@ -373,4 +373,5 @@ anonymize-in-place (no hard delete, D-067).
   `master-data.spec.ts` (+CP/población carry-through), `landing.spec.ts`.
 - **Pending:** the user merges `develop` → `main` and runs `prisma migrate deploy` on production
   for `20260908170252_saved_company_postal_city`; then beat 3 + the user closes #85 (Keel never
-  closes on its own reading). Beat-1 comment to post.
+  closes on its own reading).
+- **Replies:** beat-1 posted 2026-09-08 (comment 5589051332, ES). Beat-3 after the user's deploy.
