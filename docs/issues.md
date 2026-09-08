@@ -223,6 +223,22 @@ anonymize-in-place (no hard delete, D-067).
 - `lib/admin/timeline.ts` companyTimeline (milestones only) on the Actividad panel; opportunitySignals
   on the Resumen. No schema.
 
+### I-084 — #84 [RGPD] granular commercial consent · **BUILT on `develop`, NOT on `main`** (D-146)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/84
+- Evolves DATA #45 `CommercialConsent` → 3 modes (none/per_deca/all) + channel + append-only
+  `CommercialConsentEvent` + `DecaAvailabilityShare` (the ficha de disponibilidad — carrier/
+  destination/date/channel/contact ONLY, no column for any excluded field). Settings on a new
+  `/panel/privacidad` page + nav tab; a discreet unchecked registration opt-in; a compact per-DeCA
+  block in the wizard's last step (separate body key, never in `data_json`); per-DeCA withdraw.
+  Legal sections drafted in privacidad/terminos (`LEGAL REVIEW PENDING`), `termsVersion` →
+  `2026-09-15`. Admin read-only `/admin/tratamiento-comercial`.
+- **No recipient side is built** (none exists) — records sit at `pending`.
+- **Migration `20260908140000_commercial_treatment` is LOCAL DEV ONLY. NOT merged to `main`, NOT
+  applied to production.** Per the issue: functional + legal review, then the user authorises the
+  migration-apply and the merge.
+- 5 slices on `develop` (`542fbdc` … ). Tests: 2 unit files + `commercial-consent.spec.ts` (the 8
+  minimum cases + settings + opt-in + withdraw).
+
 ### I-082 — #82 segmentation + filters · **DONE, on `main`** (D-138)
 - `/admin/empresas` — segment Badges per row + chip filters (?seg=) combining with search; documented
   `SEGMENT_RULES`, no scoring. Limpiar filtros. No schema.

@@ -105,6 +105,23 @@ export default function TerminosPage() {
         custodia y conservación aplicables a los documentos ya generados.
       </p>
 
+      {/* LEGAL REVIEW PENDING — issue #84 — do not merge to main before sign-off */}
+      <h2>Tratamiento comercial: propuestas personalizadas de carga (opcional)</h2>
+      <p>
+        {BRAND.name} ofrece, con carácter <strong>voluntario y accesorio</strong>, la posibilidad de
+        que el transportista autorice la comunicación de unos datos mínimos de disponibilidad de sus
+        portes a cargadores interesados en dirigirle propuestas comerciales personalizadas y
+        preferentes de carga.{" "}
+        <strong>Esta autorización no es un requisito para usar el Servicio</strong>: el uso gratuito
+        de {BRAND.name} y la creación, conservación y consulta de los DeCA no quedan condicionados a
+        que se conceda, y su no concesión no degrada ninguna función. El usuario puede elegir no
+        compartir en ningún porte, decidirlo en cada DeCA, o autorizarlo con carácter general, y
+        puede revocar la autorización en cualquier momento desde el panel. La finalidad, las
+        categorías de destinatarios, los datos comunicados, los datos excluidos y el mecanismo de
+        revocación se describen en detalle en la{" "}
+        <a href={LEGAL_ENTITY.privacyUrl}>política de privacidad</a>.
+      </p>
+
       <h2>Custodia y conservación</h2>
       <p>
         {LEGAL_ENTITY.name} almacena y custodia los documentos generados a través de la plataforma y

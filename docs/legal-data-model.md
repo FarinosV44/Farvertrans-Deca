@@ -33,6 +33,12 @@ is researched and validated — see `docs/decisions.md` D-042.
 - **Both domicilios are required** (a3, a6). The v1 form previously omitted the
   carrier address; FIX #17 added it. Correcting a pre-#17 DeCA now prompts for the
   missing carrier address before a new compliant version can be generated.
+- **Commercial-share data is NOT part of the DeCA (#84 / D-146).** The optional
+  "Tratamiento comercial" opt-in captured in the wizard's last step rides as a
+  separate `commercialShare` body key on `POST /api/deca` and is **never** merged
+  into `validateDeca` / `decaPayloadSchema` / `DecaVersion.dataJson`. It only
+  causes a `DecaAvailabilityShare` row (carrier name, destination, date, channel,
+  contact) to be prepared. None of the DeCA's mandatory fields are affected.
 - **Party postal code + población (D-145).** `postalCode` / `city` are captured
   as their own fields on each party (like the structured locations) and printed
   on their own line under the street address on the PDF. They are **optional**

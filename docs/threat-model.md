@@ -34,6 +34,7 @@ re-verified at the Phase 7 gate. Only `IN PLACE` controls are written in the pre
 | T-13 | RLS misconfiguration exposing Supabase tables directly | App tables accessed only via the server (service key); Supabase anon key has no table read grants; RLS deny-by-default on any table the client could reach | MANUAL — Supabase policy config; VERIFY |
 | T-14 | Personal-data over-collection in analytics | `event` rows carry no PII (no names, NIF, emails); only session id + path + ref/UTM snapshot | TO BUILD — P5 tracking slice |
 | T-15 | Log leakage of personal data / tokens | `pino` redaction list; `/d/` access log stores only hashed IP + timestamp + doc id | TO BUILD — P5 scaffold |
+| T-16 | Repurposing customer DeCA data for commercial matching (#84) | Sharing is **opt-in** and never conditions the free service; the payload is minimised and enforced structurally (`deca_availability_share` has no column for origin / cargador / goods / plates / price / token / URL — see `buildAvailabilityPayload` + `commercial-availability.test.ts`); the live preference is re-checked at write time; every change and record is on an append-only `commercial_consent_event`; nothing is transmitted to any third party yet (no recipient side). Legal text versioned + pending review. | BUILT (#84, dev) — legal review + prod migration + `main` merge outstanding |
 
 ## 3. Not defended — and what to do if it matters
 

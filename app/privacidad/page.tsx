@@ -14,6 +14,9 @@ export default function PrivacidadPage() {
   return (
     <LegalPage title="Política de privacidad">
       <p>
+        <em>Versión {LEGAL_ENTITY.termsVersion}.</em>
+      </p>
+      <p>
         Esta política explica qué datos trata {BRAND.name} y con qué finalidad, conforme al
         Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD.
       </p>
@@ -58,6 +61,71 @@ export default function PrivacidadPage() {
         Puedes ejercer tus derechos de acceso, rectificación, supresión, portabilidad, limitación y
         oposición escribiendo a <a href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>.
       </p>
+
+      {/* LEGAL REVIEW PENDING — issue #84 — do not merge to main before sign-off */}
+      <h2>Tratamiento comercial: propuestas personalizadas de carga (opcional)</h2>
+      <p>
+        Si lo autorizas expresamente, {BRAND.name} podrá comunicar unos pocos datos de
+        disponibilidad de tus portes a{" "}
+        <strong>
+          cargadores interesados en ofrecerte una propuesta comercial personalizada y preferente de
+          carga
+        </strong>
+        , próxima al destino de tu vehículo y compatible con tus intereses. Esta autorización es{" "}
+        <strong>voluntaria e independiente</strong> del resto de la relación: no se te pide en el
+        alta como paso obligatorio y{" "}
+        <strong>
+          el uso gratuito de {BRAND.name}, así como la creación, conservación y consulta de tus
+          DeCA, no queda condicionado
+        </strong>{" "}
+        a que la concedas.
+      </p>
+      <p>
+        <strong>Finalidad.</strong> Poner en contacto a transportistas con disponibilidad y a
+        cargadores que buscan contratar transporte, para que estos puedan dirigirte propuestas sin
+        compromiso. Aceptar o rechazar cualquier propuesta es siempre decisión tuya.
+      </p>
+      <p>
+        <strong>Base jurídica.</strong> Tu consentimiento (art. 6.1.a RGPD), que puedes retirar en
+        cualquier momento sin que ello afecte a la licitud del tratamiento previo ni al uso del
+        Servicio.
+      </p>
+      <p>
+        <strong>Categorías de destinatarios.</strong> Cargadores interesados en ofrecer una
+        propuesta comercial personalizada y preferente de carga. El destinatario recibe únicamente
+        una <em>ficha de disponibilidad comercial</em> con los campos autorizados; no accede a tu
+        cuenta, ni al DeCA, ni a la URL pública, ni al QR, ni a tu historial de portes.
+      </p>
+      <p>
+        <strong>Datos que se comunican.</strong> Solo estos: (i) empresa o nombre del transportista
+        autorizado; (ii) destino o zona de destino/disponibilidad del vehículo; (iii) fecha estimada
+        de llegada o disponibilidad; (iv) el canal de contacto que hayas autorizado expresamente
+        —correo electrónico, teléfono o ambos— y el dato correspondiente a ese canal.
+      </p>
+      <p>
+        <strong>Datos que NO se comunican por esta vía.</strong> El origen del transporte; la
+        identidad o los datos de contacto del cargador contractual del DeCA; la dirección de carga;
+        la mercancía, su cantidad, peso o naturaleza; el precio, la tarifa o las condiciones
+        económicas; las matrículas, los datos del conductor u otros datos personales no autorizados;
+        y la copia, la URL pública, el QR o el contenido completo del DeCA.
+      </p>
+      <p>
+        <strong>Modalidades y revocación.</strong> Puedes elegir entre no compartir en ningún porte
+        (opción inicial por defecto), decidirlo individualmente en cada DeCA, o autorizarlo con
+        carácter general pudiendo desactivarlo en un porte concreto antes de emitirlo. La
+        configuración y la retirada están disponibles en cualquier momento en el panel, en{" "}
+        <em>Privacidad y comunicaciones</em>. La retirada es inmediata para las comunicaciones
+        futuras; no afecta a las comunicaciones ya realizadas lícitamente antes de la revocación ni
+        a ningún DeCA ya generado. Antes de comunicar una ficha aún pendiente se verifica que la
+        autorización sigue activa.
+      </p>
+      <p>
+        <strong>Registro.</strong> Se conserva de forma estructurada un registro de tu modalidad
+        elegida, el canal y los datos autorizados, la versión de este texto aceptada, y la fecha de
+        cada activación, modificación, revocación o comunicación, con la única finalidad de
+        acreditar la autorización.
+      </p>
+
       <h2>Encargados y terceros</h2>
       <p>
         Usamos proveedores de infraestructura (hosting, base de datos y almacenamiento) que actúan

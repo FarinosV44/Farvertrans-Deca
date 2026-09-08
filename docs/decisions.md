@@ -4206,3 +4206,51 @@ remaining scope.
   flaked under load — `admin-2fa:109`, `admin-passkey`, `admin-growth:78`, `content-cms:60` — all
   green at `--workers=1`), compliance R-1…R-13 8/8, typecheck, lint (pre-existing warnings only),
   keel:verify.
+
+## D-146 — #84 granular commercial treatment ("Tratamiento comercial")
+- Date / phase: 2026-09-08, Phase 5. Evolves DATA #45 / D-048 (the company-level
+  `CommercialConsent.granted` boolean) into a granular, revocable, audited opt-in.
+- **Scope reality:** there is no cargador-facing product (`route-intelligence.ts`:
+  "Nothing here is used for commercial matching yet"). This build stops at
+  **preparing** a `DecaAvailabilityShare` (status `pending`) — actual transmission
+  to third parties is a future issue and out of scope. Every #84 acceptance
+  criterion is transportista-side.
+- **User decisions (in-conversation):** (1) settings on a new `/panel/privacidad`
+  page + nav tab; (2) migration **resets every company to `mode = none`** — fresh
+  opt-in required under the materially different legal text; (3) I draft the
+  Spanish legal text, user + asesoría review before merge; (4) a **discreet but
+  honest** opt-in checkbox at registration (small, unchecked, one plain line, no
+  "opcional" label, no pressure, no pre-tick) — ticking sets `mode = all`;
+  wording keeps "cargadores interesados…", **never names Farvertrans** as the
+  recipient (the user's "propuestas de farvertrans" phrasing was declined as it
+  contradicts a #84 acceptance criterion and the RGPD framing).
+- **Model** (`prisma/schema.prisma`, migration `20260908140000_commercial_treatment`,
+  LOCAL DEV ONLY): enums `CommercialConsentMode {none,per_deca,all}` +
+  `CommercialContactChannel {email,phone,both}`; `CommercialConsent` drops
+  `granted`, gains `mode`/`channel`/`contactEmail`/`contactPhone`; new
+  `CommercialConsentEvent` (append-only structured audit) and
+  `DecaAvailabilityShare` (the "ficha de disponibilidad comercial" — carrier
+  name, destination, date, channel, contact ONLY; the table has no column for any
+  excluded field, so origin/cargador/goods/plates/price/token/URL can never leak).
+  **No production migration** — applied to local dev only pending legal review.
+- **Payload separation:** the per-DeCA opt-in rides as a separate `commercialShare`
+  body key on `POST /api/deca`, never merged into `validateDeca` /
+  `decaPayloadSchema` / `DecaVersion.dataJson`. `buildAvailabilityPayload` (pure)
+  is the single decision point; `recordAvailabilityShare` runs best-effort after
+  the 201 and re-reads the live preference (a revocation between choosing and
+  generating is honoured).
+- **Legal text:** `app/privacidad/page.tsx` + `app/terminos/page.tsx` gain the
+  versioned sections (finalidad, base jurídica art. 6.1.a, categorías de
+  destinatarios, datos comunicados, datos excluidos, modalidades, revocación,
+  registro), marked `LEGAL REVIEW PENDING`. `LEGAL_ENTITY.termsVersion` and
+  `COMMERCIAL_CONSENT_VERSION` bumped to `2026-09-15`.
+- **Admin:** read-only `/admin/tratamiento-comercial` (mode split + prepared
+  records + event trail). `route-intelligence.ts` + `records.ts` migrated from
+  `granted:true` to `mode != "none"`.
+- Tests: `commercial-consent.test.ts`, `commercial-availability.test.ts` (payload
+  exclusion asserted directly), `commercial-consent.spec.ts` (the issue's 8
+  minimum cases + settings + registration opt-in + withdraw). `panel-nav.spec.ts`
+  + `/panel/privacidad`.
+- **NOT merged to `main`, migration NOT applied to production** (the issue's own
+  instruction — overrides this run's standing "push to main"). Awaits functional
+  + legal review, then the user's authorisation.

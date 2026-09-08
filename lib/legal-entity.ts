@@ -35,6 +35,7 @@ export const LEGAL_ENTITY = {
   /** Secondary credibility line — the discreet legal-professional backing (#42 §2A). */
   legalBackingLine:
     "PRAETORIA, S.L. es un despacho jurídico con experiencia en servicios para empresas y profesionales del transporte.",
-  /** Current Terms & Conditions / Privacy acceptance version (TRUST #42 §5). */
-  termsVersion: "2026-09-04",
+  /** Current Terms & Conditions / Privacy acceptance version (TRUST #42 §5).
+   *  Bumped for the #84 commercial-treatment sections (pending legal review). */
+  termsVersion: "2026-09-15",
 } as const;
