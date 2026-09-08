@@ -210,6 +210,11 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-079 — #79 P0 final regression checklist · **automated part done, on `main`** (D-140)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/79
+- `docs/pre-launch-checklist.md` — automated coverage summary (all green) + the live-walk checklist
+  the user runs on the deployed site + blocking ops items. Not closed: needs the live walk.
+
 ### I-081 — #81 Customer 360 · **DONE, on `main`** (D-139)
 - `/admin/empresas/[id]` rebuilt: header + 6-KPI strip + collapsible panels + separated admin zone.
 

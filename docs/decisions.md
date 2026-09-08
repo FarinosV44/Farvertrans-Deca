@@ -4092,3 +4092,16 @@ remaining scope.
 - **Tests:** `admin.spec.ts` "internal user finds a company" updated to the new 360 layout (header +
   KPIs up front, member email behind the Equipo panel, `company-timeline` visible). 13 admin e2e +
   180 unit + compliance 8/8. No schema.
+
+## D-140 — #79: pre-launch regression & finish checklist
+- Date / phase: 2026-09-08, Phase 5. No features — the systematic pass over the #59–#83 batches.
+- `docs/pre-launch-checklist.md` (new): (1) the automated coverage table (typecheck / lint / format
+  / 180 unit / e2e / compliance 8/8 / keel:verify — all green at this commit) and exactly which
+  flows the e2e suite already walks; (2) the **live walk** the user must do on the deployed site
+  (flow, responsive 360/768/1280/1440, security/isolation, text quality, superadmin) — the suites
+  cannot stand in for a real environment; (3) the blocking operational items (three pending
+  production migrations + Hostinger redeploy + #60 backup + secret rotation).
+- **Not closed** — Keel never closes an issue on the assistant's reading of the code; the user
+  closes #79 after the live walk passes.
+- Full suite state recorded: 180 unit, e2e 206/206 green (0 flaky this run), compliance
+  R-1…R-13 8/8, typecheck clean, lint (pre-existing `<img>` warnings only), keel:verify ok.
