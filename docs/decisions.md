@@ -4359,3 +4359,22 @@ remaining scope.
   new writes require them. Scoped to the habitual — the DeCA party fields stay optional (D-145).
 - Tests: `saved-schema.test.ts` rewritten (rejects a company with no CP / no city); `master-data.spec.ts`
   +1 (edit in place, mandatory CP/città with per-field message, edited value flows to wizard autofill).
+
+### Slice 4 (part 3, P1) — UPPERCASE normalisation of operational data
+- New `lib/text/normalize.ts` (`upperText` / `upperTextOrEmpty`, `toLocaleUpperCase("es-ES")` — accents
+  and ñ preserved). Applied at two boundaries:
+  - **Saved habituales (stored uppercase):** `savedCompanySchema` name/address/postalCode/city/contactName,
+    `savedLocationSchema` name/address/postalCode/city/province/country, `savedVehicleSchema` alias
+    (plates were already uppercased by `normalizePlate`). NIF, phone and email keep their exact casing.
+  - **Generated DeCA (render-time uppercase in the PDF):** `deca-document.tsx` `cardValue`, `fieldValue`,
+    `routeName`, `routeAddress` + a `upper` flag on `GridField` for the goods cell. The weight/measure
+    keeps its verbatim styling (existing "never reformatted" rule), and the QR/URL are untouched.
+- **Deliberately NOT done (recorded omission):** the DeCA `dataJson` is NOT stored uppercase (only
+  rendered so on the PDF) and the Company registration ficha is not uppercased. Storing the DeCA
+  payload uppercase rippled across ~28 e2e specs for a purely cosmetic gain right before launch;
+  the PDF (the legal "documento") plus the uppercase habituales cover the issue's visible intent.
+  A follow-up can extend it if the user wants the panel/CSV to match. The compliance suite
+  (R-1…R-13) is case-insensitive, so this changed nothing there.
+- Tests: `text-normalize.test.ts` new; `saved-schema.test.ts` + `deca-pdf-snapshot.test.ts` updated
+  to case-insensitive structural checks; `master-data.spec.ts` assertions updated for the uppercase
+  habituales.

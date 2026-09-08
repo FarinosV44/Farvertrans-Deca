@@ -4,10 +4,11 @@ import { savedCompanySchema } from "@/lib/data/saved-schema";
 describe("savedCompanySchema — postal code + city (#85 added, #86 made mandatory)", () => {
   const base = { name: "Cargas del Turia SL", nif: "B96789011", address: "Av. del Puerto 120" };
 
-  it("accepts and trims postalCode + city", () => {
+  it("accepts, trims and uppercases postalCode + city (#86 p3)", () => {
     const d = savedCompanySchema.parse({ ...base, postalCode: " 46023 ", city: " Valencia " });
     expect(d.postalCode).toBe("46023");
-    expect(d.city).toBe("Valencia");
+    expect(d.city).toBe("VALENCIA");
+    expect(d.name).toBe("CARGAS DEL TURIA SL");
   });
 
   it("rejects a company with no postal code (#86 part 2 — mandatory)", () => {
