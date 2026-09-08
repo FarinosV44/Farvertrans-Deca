@@ -57,17 +57,19 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
       .locator("section", { hasText: "Empresas y contactos" })
       .getByRole("button", { name: "Guardar" })
       .click();
-    await expect(page.getByText("Cargador Habitual SL")).toBeVisible();
+    await expect(page.getByText("CARGADOR HABITUAL SL")).toBeVisible();
 
     await page.getByTestId("c-role").selectOption("carrier");
     await page.fill("#c-name", "Transportista Habitual SL");
     await page.fill("#c-nif", "B22222222");
-    await page.fill("#c-address", "Calle Dos 2, Paterna");
+    await page.fill("#c-address", "Calle Dos 2");
+    await page.fill("#c-postal-code", "46980");
+    await page.fill("#c-city", "Paterna");
     await page
       .locator("section", { hasText: "Empresas y contactos" })
       .getByRole("button", { name: "Guardar" })
       .click();
-    await expect(page.getByText("Transportista Habitual SL")).toBeVisible();
+    await expect(page.getByText("TRANSPORTISTA HABITUAL SL")).toBeVisible();
 
     await page
       .locator("section", { hasText: "Lugares de carga y descarga" })
@@ -83,7 +85,7 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
       .locator("section", { hasText: "Lugares de carga y descarga" })
       .getByRole("button", { name: "Guardar" })
       .click();
-    await expect(page.getByText("Almacén Habitual Valencia")).toBeVisible();
+    await expect(page.getByText("ALMACÉN HABITUAL VALENCIA")).toBeVisible();
 
     await page.getByTestId("l-type").selectOption("unload");
     await page.fill("#l-name", "Plataforma Habitual Madrid");
@@ -95,7 +97,7 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
       .locator("section", { hasText: "Lugares de carga y descarga" })
       .getByRole("button", { name: "Guardar" })
       .click();
-    await expect(page.getByText("Plataforma Habitual Madrid")).toBeVisible();
+    await expect(page.getByText("PLATAFORMA HABITUAL MADRID")).toBeVisible();
 
     await page.locator("section", { hasText: "Vehículos" }).getByText("Añadir").click();
     await page.fill("#v-alias", "Camión 1");
@@ -104,7 +106,7 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
       .locator("section", { hasText: "Vehículos" })
       .getByRole("button", { name: "Guardar" })
       .click();
-    await expect(page.getByText("Camión 1")).toBeVisible();
+    await expect(page.getByText("CAMIÓN 1")).toBeVisible();
 
     // 2. Build the DeCA entirely from the dropdowns — no manual typing of
     // any party, location or vehicle field. "Materially faster" is measured
@@ -116,31 +118,31 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     await page.goto("/crear");
     await page
       .getByTestId("autofill-shipper")
-      .selectOption({ label: "Cargador Habitual SL — B11111111" });
+      .selectOption({ label: "CARGADOR HABITUAL SL — B11111111" });
     firstDecaActions++;
-    await expect(page.locator("#shipperName")).toHaveValue("Cargador Habitual SL");
+    await expect(page.locator("#shipperName")).toHaveValue("CARGADOR HABITUAL SL");
     // #85 — a saved company now carries CP + población into the DeCA party
     await expect(page.locator("#shipperPostalCode")).toHaveValue("46001");
-    await expect(page.locator("#shipperCity")).toHaveValue("Valencia");
+    await expect(page.locator("#shipperCity")).toHaveValue("VALENCIA");
     await page
       .getByTestId("autofill-carrier")
-      .selectOption({ label: "Transportista Habitual SL — B22222222" });
+      .selectOption({ label: "TRANSPORTISTA HABITUAL SL — B22222222" });
     firstDecaActions++;
-    await expect(page.locator("#carrierName")).toHaveValue("Transportista Habitual SL");
+    await expect(page.locator("#carrierName")).toHaveValue("TRANSPORTISTA HABITUAL SL");
     await page.getByTestId("wizard-next").click();
 
     await page
       .getByTestId("autofill-load-location")
-      .selectOption({ label: "Almacén Habitual Valencia — Valencia" });
+      .selectOption({ label: "ALMACÉN HABITUAL VALENCIA — VALENCIA" });
     firstDecaActions++;
-    await expect(page.locator("#loadLocationAddress")).toHaveValue("Av. del Puerto 120");
+    await expect(page.locator("#loadLocationAddress")).toHaveValue("AV. DEL PUERTO 120");
     await page.fill("#loadDate", "2026-10-06");
     firstDecaActions++;
     await page
       .getByTestId("autofill-unload-location")
-      .selectOption({ label: "Plataforma Habitual Madrid — Madrid" });
+      .selectOption({ label: "PLATAFORMA HABITUAL MADRID — MADRID" });
     firstDecaActions++;
-    await expect(page.locator("#unloadLocationAddress")).toHaveValue("Calle Alcalá 200");
+    await expect(page.locator("#unloadLocationAddress")).toHaveValue("CALLE ALCALÁ 200");
     await page.fill("#unloadDate", "2026-10-06");
     firstDecaActions++;
     await page.getByTestId("wizard-next").click();
@@ -149,7 +151,7 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     firstDecaActions++;
     await page.fill("#weight", "12000 kg");
     firstDecaActions++;
-    await page.getByTestId("autofill-vehicle").selectOption({ label: "Camión 1 — 9999ABC" });
+    await page.getByTestId("autofill-vehicle").selectOption({ label: "CAMIÓN 1 — 9999ABC" });
     firstDecaActions++;
     await expect(page.locator("#tractorPlate")).toHaveValue("9999ABC");
     await page.getByTestId("wizard-generate").click();
@@ -160,8 +162,8 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     await page.goto("/panel");
     await page.getByTestId("app-repetir").click();
     await expect(page).toHaveURL(/\/crear\?from=/);
-    await expect(page.locator("#shipperName")).toHaveValue("Cargador Habitual SL"); // prefilled
-    await expect(page.locator("#carrierName")).toHaveValue("Transportista Habitual SL");
+    await expect(page.locator("#shipperName")).toHaveValue("CARGADOR HABITUAL SL"); // prefilled
+    await expect(page.locator("#carrierName")).toHaveValue("TRANSPORTISTA HABITUAL SL");
     await page.getByTestId("wizard-next").click();
     await expect(page.locator("#loadDate")).toHaveValue(""); // dates reset — must be set fresh
     await page.fill("#loadDate", "2026-10-20");
@@ -183,11 +185,56 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     // 4. Editing/removing master data never mutates an already-generated DeCA.
     await page.goto("/panel/datos");
     await page
-      .locator("li", { hasText: "Cargador Habitual SL" })
+      .locator("li", { hasText: "CARGADOR HABITUAL SL" })
       .getByRole("button", { name: "Borrar" })
       .click();
-    await expect(page.getByText("Cargador Habitual SL")).toHaveCount(0);
+    await expect(page.getByText("CARGADOR HABITUAL SL")).toHaveCount(0);
     await page.goto("/panel/historico");
-    await expect(page.getByTestId("historico-table")).toContainText("Cargador Habitual SL");
+    await expect(page.getByTestId("historico-table")).toContainText("CARGADOR HABITUAL SL");
+  });
+
+  test("#86 p1/p2: a saved company can be edited in place; CP + población are mandatory", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/panel/datos");
+    const section = page.locator("section", { hasText: "Empresas y contactos" });
+    await section.getByText("Añadir").click();
+
+    // CP + población are mandatory (#86 part 2) — a clear per-field message
+    await page.fill("#c-name", "Habitual Edición SL");
+    await page.fill("#c-nif", "B33333333");
+    await page.fill("#c-address", "Calle Tres 3");
+    await section.getByRole("button", { name: "Guardar" }).click();
+    await expect(page.locator("#c-postal-code-error")).toBeVisible();
+    await expect(page.locator("#c-city-error")).toBeVisible();
+
+    await page.fill("#c-postal-code", "03001");
+    await page.fill("#c-city", "Alicante");
+    await section.getByRole("button", { name: "Guardar" }).click();
+    // #86 p3: descriptive fields are stored uppercase
+    await expect(section.getByText("HABITUAL EDICIÓN SL")).toBeVisible();
+    await expect(section.locator("li", { hasText: "HABITUAL EDICIÓN SL" })).toContainText(
+      "ALICANTE",
+    );
+
+    // edit in place — no delete + recreate
+    await section
+      .locator("li", { hasText: "HABITUAL EDICIÓN SL" })
+      .getByTestId("edit-company")
+      .click();
+    await page.fill("#c-city", "Elche");
+    await page.fill("#c-postal-code", "03203");
+    await section.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(section.locator("li", { hasText: "HABITUAL EDICIÓN SL" })).toContainText("ELCHE");
+    await expect(section.getByText("HABITUAL EDICIÓN SL")).toHaveCount(1); // same row, not a new one
+
+    // the edited value flows into the wizard autofill
+    await page.goto("/crear");
+    await page
+      .getByTestId("autofill-shipper")
+      .selectOption({ label: "HABITUAL EDICIÓN SL — B33333333" });
+    await expect(page.locator("#shipperCity")).toHaveValue("ELCHE");
+    await expect(page.locator("#shipperPostalCode")).toHaveValue("03203");
   });
 });

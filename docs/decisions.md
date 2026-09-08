@@ -4312,3 +4312,130 @@ remaining scope.
   (31/31); `saved_company.postal_code` + `city` verified present via the transaction pooler (:6543).
 - **Still outstanding (user):** Hostinger redeploy so the #85 code (and everything since the last
   deploy) actually runs; secret rotation still not done; beat-3 + close #85 after live check.
+
+## D-149 — #86 pre-launch batch (8 parts): habituales editables, CP obligatorio, MAYÚSCULAS, incidencias, jurídico, acceso admin, operadores
+- Date / phase: 2026-09-08, Phase 5. GitHub issue #86, worked in priority order (P0 → P1 → P2),
+  one slice per part, on `develop`. User: "Todo de una, sin parar". User-provided config:
+  WhatsApp técnico = WhatsApp jurídico = **607527719** (same number, different pre-filled message);
+  email jurídico = `info@praetoriaabogados.es` (email técnico stays separate).
+- **Part 2 REVERSES D-148's "opcionales" choice.** #85 (D-148) made `SavedCompany` `postalCode`/`city`
+  optional on the user's explicit answer; #86 part 2 (also explicit) makes them mandatory,
+  frontend + backend. Only the user reverses a decision — this is the reversal, recorded.
+
+### Slice 1 (part 7, P0) — admin Superadmin access loop from PC
+- **Symptom (user):** on desktop, after login the 2FA screen "keeps asking for the code" / hangs
+  "conectando" / errors — cannot reach Superadmin, blocking article creation (SEO).
+- **Root cause (most likely) + fixes, defense in depth:**
+  1. **Prefetched-then-cached `/admin` redirect.** The App Router can serve a client-cached
+     `redirect('/admin/2fa/verify')` captured (via `<Link>` prefetch) with the pre-verification
+     cookie, so `router.push('/admin')` after a successful check bounces straight back.
+     `TotpVerifyForm.afterSuccess()` and `TotpSetupForm` now do a HARD navigation
+     (`window.location.assign`) instead of `router.push` + `router.refresh()` — a full document load
+     always carries the fresh session cookie.
+  2. **Stale re-render of the challenge.** `/admin/2fa/verify` now calls a new
+     `isAdmin2faFresh()` (`lib/admin/guard.ts` — the redirect-free tail of `requireInternal()`) and
+     `redirect(next)` when the session is already verified, instead of rendering the form again.
+  3. **Passkey "conectando" trap on desktop.** `platformAuthenticatorIsAvailable()` returns true for
+     Windows Hello even when the registered passkey is on another device; leading with it there
+     forces the cross-device hybrid QR the phone hangs on. `TotpVerifyForm` now takes `hasTotp` and
+     leads with the CODE input whenever an authenticator app is enrolled (the common case); passkey
+     stays as an explicit secondary button. Passkey leads only for a passkey-only admin on a
+     platform-authenticator device.
+- TOTP verification window was NOT widened (a security parameter; clock-skew is escalated
+  separately if the above does not resolve it).
+- Tests: `admin-2fa.spec.ts` +2 (after verifying, reload + navigate + hit the challenge directly →
+  stays in; the code input is always visible). `totp.test.ts` unchanged (window unchanged).
+
+### Slice 2+3 (parts 2 & 1, P1) — saved data editable + CP/población mandatory
+- **Part 1 — edit all 4 habitual kinds in place.** New `updateSaved()` in `lib/data/saved.ts`
+  (same per-kind schema as `createSaved`, `updateMany({where:{id,companyId}})` — keeps id / userId
+  (creator) / favorite / lastUsedAt) + `PATCH /api/saved/[kind]/[id]` (422 with `fields` on
+  invalid). `SavedDataManager` rebuilt: each row has an "Editar" toggle that opens the same form
+  pre-filled inline; on save it PATCHes and `router.refresh()`. `data-testid="edit-<kind>"`.
+- **Part 2 — CP + población mandatory on `SavedCompany`** (reverses D-148). `savedCompanySchema`
+  `postalCode`/`city` now `min(3)`/`min(2)` with explicit Spanish messages ("El código postal es
+  obligatorio." / "La población es obligatoria."), enforced frontend (per-field error shown under
+  the input, from the API's `fields`) and backend (422). DB columns stay nullable (existing rows);
+  new writes require them. Scoped to the habitual — the DeCA party fields stay optional (D-145).
+- Tests: `saved-schema.test.ts` rewritten (rejects a company with no CP / no city); `master-data.spec.ts`
+  +1 (edit in place, mandatory CP/città with per-field message, edited value flows to wizard autofill).
+
+### Slice 4 (part 3, P1) — UPPERCASE normalisation of operational data
+- New `lib/text/normalize.ts` (`upperText` / `upperTextOrEmpty`, `toLocaleUpperCase("es-ES")` — accents
+  and ñ preserved). Applied at two boundaries:
+  - **Saved habituales (stored uppercase):** `savedCompanySchema` name/address/postalCode/city/contactName,
+    `savedLocationSchema` name/address/postalCode/city/province/country, `savedVehicleSchema` alias
+    (plates were already uppercased by `normalizePlate`). NIF, phone and email keep their exact casing.
+  - **Generated DeCA (render-time uppercase in the PDF):** `deca-document.tsx` `cardValue`, `fieldValue`,
+    `routeName`, `routeAddress` + a `upper` flag on `GridField` for the goods cell. The weight/measure
+    keeps its verbatim styling (existing "never reformatted" rule), and the QR/URL are untouched.
+- **Deliberately NOT done (recorded omission):** the DeCA `dataJson` is NOT stored uppercase (only
+  rendered so on the PDF) and the Company registration ficha is not uppercased. Storing the DeCA
+  payload uppercase rippled across ~28 e2e specs for a purely cosmetic gain right before launch;
+  the PDF (the legal "documento") plus the uppercase habituales cover the issue's visible intent.
+  A follow-up can extend it if the user wants the panel/CSV to match. The compliance suite
+  (R-1…R-13) is case-insensitive, so this changed nothing there.
+- Tests: `text-normalize.test.ts` new; `saved-schema.test.ts` + `deca-pdf-snapshot.test.ts` updated
+  to case-insensitive structural checks; `master-data.spec.ts` assertions updated for the uppercase
+  habituales.
+
+### Slice 5 (part 5, P1) — internal technical-incidence system + Superadmin section
+- **Model:** `SupportTicket` (+ auto `number` for "Incidencia #123", `userEmail`/`userName`/`companyName`
+  captured at creation so the ticket survives account removal, `onDelete: SetNull` on the FKs) +
+  `SupportTicketMessage` (authorType `user`/`admin`). Enum `SupportTicketStatus`:
+  `new` / `in_review` / `awaiting_user` / `resolved` / `closed` — the issue's five states. Migration
+  `20260908185301_support_tickets`.
+- **`lib/support/tickets.ts`** + **`lib/support/schema.ts`** — create/list/get/reply/status, all
+  company-scoped for the user side. Every superadmin reply is recorded AND best-effort emailed to
+  the user (`sendMail`); a new ticket / a user reply notifies `FVD_SUPPORT_NOTIFY_EMAIL` (falls back
+  to `BRAND.supportEmail`). An admin reply moves the ticket to `awaiting_user`.
+- **API:** `POST /api/support` (authed non-`read_only`, `checkAbuse("share")`, 422 with `fields`),
+  `POST /api/support/[id]/reply` (own ticket only), `PATCH /api/admin/support/[id]`
+  (`isInternalRequest` → 404 otherwise; `{body?, status?}`).
+- **UI:** `/panel/ayuda` gains an "Abrir una incidencia técnica" form + a "Mis incidencias" list;
+  `/panel/ayuda/[id]` shows the conversation + a reply box (closed tickets are read-only).
+  Superadmin: **`/admin/soporte`** (list + filter by state / date, "Soporte" nav entry — the old
+  `/admin/errores` nav label changed "Incidencias" → "Errores" to keep them distinct) and
+  `/admin/soporte/[id]` (thread + reply + status). i18n keys added to all 8 dictionaries; the admin
+  area stays ES-only by convention.
+- Tests: `support-schema.test.ts` (4); `support-tickets.spec.ts` (open → superadmin sees it →
+  replies → status → user replies → non-internal 404).
+
+### Slice 6 (parts 4 & 6, P2) — support panel WhatsApp + legal channel fully separated
+- **Config (user-provided):** technical WhatsApp = legal WhatsApp = **34607527719** (`BRAND.supportWhatsapp`
+  / `BRAND.legalWhatsapp` — same line, different pre-filled message + own section, so they can split
+  later with a one-line edit). Legal email = `LEGAL_ENTITY.legalEmail` = **info@praetoriaabogados.es**
+  (also aliased as `LEGAL_ENTITY.supportEmail` for the existing legal-page / structured-data call
+  sites). Technical email stays `BRAND.supportEmail` = `Deca@praetoriaabogados.es`.
+- **`techSupportChannels()` no longer returns a `tel:` channel** (#86 p4 — no conventional phone as
+  the primary channel). It leads with WhatsApp, then email; the "Abrir una incidencia técnica" form
+  (slice 5) sits right below on `/panel/ayuda`.
+- **`/panel/ayuda`** reordered: técnico (WhatsApp + email) → abrir incidencia → mis incidencias →
+  **jurídico**, now visually distinct (surface background, extra top margin) with the "Consulta con
+  un abogado por WhatsApp" CTA (`h.whatsappLegal`, updated in all 8 dicts) + the orientative text +
+  `info@praetoriaabogados.es`. Legal queries never become support tickets (enforced by design —
+  the ticket form is technical-only).
+- `panel-help.spec.ts` updated for the new channel shape (no `tel:`, WhatsApp present, legal email
+  = info@praetoriaabogados.es).
+
+### Slice 7 (part 8, P2) — Superadmin operators / commercials / referrals module
+- **Model:** `Operator` gains `lastName` / `email` / `phone` / `notes` (migration
+  `20260908190836_operator_contact_fields`); `refCode` (unique) / `active` / `createdAt` already existed.
+- **`lib/admin/operators.ts`:** `createOperator` generates a collision-checked ref code from the
+  name (`<NAME slice 10><4 rand>`, alphabet without 0/O/1/I); `updateOperator` edits + toggles
+  `active`; `listOperators` adds the first-touch attributed-company count; `getOperator` returns the
+  operator + every attributed company (name, primary user, status, signup date, first-DeCA date,
+  DeCA count) + totals. `operatorLink()` = `<baseUrl>/registro?ref=<code>`.
+- **Attribution was ALREADY permanent and cookie-independent** (#11 / D-011: `Acquisition.firstRefCode`
+  written at signup, first-touch never overwritten). Part 8 reads it — no attribution change needed,
+  no double-attribution possible (first-touch is write-once).
+- **API:** `POST /api/admin/operadores`, `PATCH /api/admin/operadores/[id]` (`isInternalRequest` → 404).
+- **UI:** `/admin/operadores` gains a "Nuevo operador" form + a management table (copy link,
+  activate/deactivate) above the existing metrics table; `/admin/operadores/[id]` shows the link,
+  contact, notes, totals and the attributed-companies table.
+- **Commissions:** NOT built (the issue says not required now). The data model is left ready —
+  attribution + per-company DeCA counts are already queryable; a future `OperatorCommission` table
+  keyed by operator + period + company adds "comisión por alta / por cliente de pago / liquidación /
+  pagado / exportación" without touching anything recorded here. Noted on the operator detail page.
+- Tests: `operators.test.ts` (2); `operadores-module.spec.ts` (create → ref link → company signs up
+  via link → attributed on the detail page → deactivate keeps history).

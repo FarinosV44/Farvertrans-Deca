@@ -1519,3 +1519,33 @@ saved-company postal/city optional.
   (2026-09-08, user: "push to main and apply the production the password is the same"). Prod ledger
   clean beforehand (30/30); now 31/31, `saved_company.postal_code`+`city` verified via :6543.
   `develop` == `main`. Needs (user): **Hostinger redeploy**; beat-3 + close #85.
+
+### #86 [ALTA] pre-launch batch (8 parts) — D-149, 2026-09-08 — on `develop`
+Worked P0 → P1 → P2, one slice per part, on `develop` (commits `1c…` → `98071a2`). User config:
+WhatsApp técnico = jurídico = **34607527719**; email jurídico = **info@praetoriaabogados.es**.
+- **p7 (P0) — Superadmin access loop from PC fixed.** 2FA screen "kept asking for the code" /
+  hung "conectando". Fix: hard navigation (`window.location.assign`) after a successful check
+  instead of `router.push` (prefetched-then-cached `/admin` redirect bounced the user back);
+  `/admin/2fa/verify` redirects an already-verified session (`isAdmin2faFresh()`); the code input
+  always leads when an authenticator app is enrolled (passkey stays secondary — Windows Hello was
+  triggering the cross-device QR trap on desktop).
+- **p2 — CP + población obligatorios** on `SavedCompany` (reverses #85/D-148 "opcionales", explicit).
+- **p1 — habituales editables** in place: `updateSaved()` + `PATCH /api/saved/[kind]/[id]` +
+  "Editar" per row (all 4 kinds).
+- **p3 — MAYÚSCULAS**: saved habituales stored uppercase; the generated DeCA PDF renders party/route/
+  goods uppercase (render-time). NIF/email/weight/QR untouched. DeCA `dataJson` NOT stored uppercase
+  (recorded omission — large e2e ripple, cosmetic).
+- **p5 — incidencias técnicas → Superadmin**: `SupportTicket`(+messages, 5-state enum), migration
+  `20260908185301_support_tickets`. `/panel/ayuda` form + "mis incidencias"; `/admin/soporte`
+  list/filter/detail/reply/status. Admin reply emails the user.
+- **p6 — jurídico separado**: `techSupportChannels()` drops the phone; `/panel/ayuda` reordered with
+  a clearly-distinct legal section (`info@praetoriaabogados.es` + "Consulta con un abogado por
+  WhatsApp"). WhatsApp = 34607527719 for both, own message.
+- **p8 — módulo de operadores**: `Operator` + contact fields (migration
+  `20260908190836_operator_contact_fields`); `/admin/operadores` gains create + copy-link +
+  activate/deactivate + per-operator attributed-companies detail. Attribution was already
+  first-touch + persisted (#11) — no change needed. Commissions deferred, model left ready.
+- Gate: typecheck + lint + prettier + **215 unit** (13 new) + keel:verify green; full e2e run.
+- **2 migrations to `prisma migrate deploy` on production after the `main` merge:**
+  `20260908185301_support_tickets`, `20260908190836_operator_contact_fields`.
+- **On `develop` only** — awaits the user's merge + deploy instruction.

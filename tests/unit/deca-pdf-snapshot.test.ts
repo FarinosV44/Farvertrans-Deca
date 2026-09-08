@@ -79,8 +79,11 @@ describe("#66 — generated DeCA structural snapshot", () => {
     expect(t).toContain(DECA_ROLES.carrier.title.toLowerCase()); // "transportista efectivo"
   });
 
+  // #86 part 3: descriptive values render UPPERCASE, so the structural check is
+  // case-insensitive (same as the R-1…R-13 compliance suite). The weight is the
+  // exception — it is kept verbatim.
   it("carries every mandatory value", async () => {
-    const t = await text();
+    const t = (await text()).toUpperCase();
     for (const v of [
       "Transportes Ejemplo SL",
       "B12345674",
@@ -95,7 +98,7 @@ describe("#66 — generated DeCA structural snapshot", () => {
       "DECA-A4F2C9E1",
       "decaprofesional.es/d/A4F2C9E1",
     ]) {
-      expect(t, v).toContain(v);
+      expect(t, v).toContain(v.toUpperCase());
     }
   });
 
@@ -103,13 +106,13 @@ describe("#66 — generated DeCA structural snapshot", () => {
     const t = await text();
     expect(t).toContain("46023");
     expect(t).toContain("28028");
-    expect(t).toMatch(/46023.*Valencia/);
-    expect(t).toMatch(/28028.*Madrid/);
+    expect(t).toMatch(/46023.*valencia/i);
+    expect(t).toMatch(/28028.*madrid/i);
   });
 
   it("shows the carrier's postal code + población under its domicilio when given", async () => {
     const t = await text();
-    expect(t).toMatch(/46988 Paterna/);
+    expect(t).toMatch(/46988 paterna/i);
   });
 
   it("renders a party with no postal code / town cleanly — just the street line", async () => {
@@ -130,8 +133,8 @@ describe("#66 — generated DeCA structural snapshot", () => {
       const c = await (await doc.getPage(i)).getTextContent();
       out += " " + c.items.map((it) => ("str" in it ? it.str : "")).join(" ");
     }
-    out = out.replace(/\s+/g, " ");
-    expect(out).toContain("Calle Única 7, Bilbao");
+    out = out.replace(/\s+/g, " ").toUpperCase();
+    expect(out).toContain("CALLE ÚNICA 7, BILBAO");
   });
 
   it("renders a location with no province cleanly — no stray separators (#75)", async () => {
@@ -162,9 +165,9 @@ describe("#66 — generated DeCA structural snapshot", () => {
     out = out.replace(/\s+/g, " ");
     expect(out).not.toContain("— ,");
     expect(out).not.toContain(", ,");
-    expect(out).toMatch(/46023 Valencia . España/); // load: no province, still clean
-    expect(out).toContain("Vaulx-en-Velin");
-    expect(out).toContain("Francia");
+    expect(out).toMatch(/46023 valencia . españa/i); // load: no province, still clean
+    expect(out.toUpperCase()).toContain("VAULX-EN-VELIN");
+    expect(out.toUpperCase()).toContain("FRANCIA");
   });
 
   it("numbers the cells CMR-style (1–8)", async () => {

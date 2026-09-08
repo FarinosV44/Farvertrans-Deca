@@ -7,6 +7,9 @@ import { getDictionary } from "@/lib/i18n/server";
 import { BRAND } from "@/lib/brand";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { techSupportChannels, legalAssistanceChannel } from "@/lib/support/channels";
+import { listUserTickets } from "@/lib/support/tickets";
+import { SupportTicketForm } from "@/components/panel/support-ticket-form";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Ayuda y soporte", robots: { index: false } };
@@ -31,6 +34,7 @@ export default async function AyudaPage() {
   const h = t.panel.help;
   const tech = techSupportChannels();
   const legal = legalAssistanceChannel();
+  const tickets = await listUserTickets(user.companyId);
 
   return (
     <>
@@ -71,19 +75,65 @@ export default async function AyudaPage() {
         </section>
 
         <section
-          aria-labelledby="legal"
+          aria-labelledby="open-ticket"
           className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5"
+        >
+          <h2 id="open-ticket" className="text-lg font-bold">
+            {h.openHeading}
+          </h2>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">{h.openIntro}</p>
+          <SupportTicketForm />
+        </section>
+
+        <section aria-labelledby="my-tickets" className="mt-6">
+          <h2 id="my-tickets" className="text-lg font-bold">
+            {h.myHeading}
+          </h2>
+          {tickets.length === 0 ? (
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">{h.none}</p>
+          ) : (
+            <ul className="mt-3 space-y-2" data-testid="my-tickets">
+              {tickets.map((tk) => (
+                <li
+                  key={tk.id}
+                  className="flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
+                >
+                  <span className="min-w-0">
+                    <span className="font-medium">#{tk.number}</span> · {tk.subject}
+                    <span className="block text-xs text-[var(--color-text-muted)]">
+                      {h.statuses[tk.status]} · {h.opened(tk.createdAt.toISOString().slice(0, 10))}
+                    </span>
+                  </span>
+                  <Link
+                    href={`/panel/ayuda/${tk.id}`}
+                    className="shrink-0 text-[var(--color-primary)] underline"
+                  >
+                    {h.view}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* #86 p6 — the legal channel is clearly separate from technical support. */}
+        <section
+          aria-labelledby="legal"
+          className="mt-10 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
         >
           <h2 id="legal" className="text-lg font-bold">
             {h.legalHeading}
           </h2>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">{h.legalIntro}</p>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            Para cualquier inspección, requerimiento, sanción o incidencia relacionada con el
+            transporte, consulta con un abogado.
+          </p>
           <div className="mt-3 flex flex-wrap gap-2" data-testid="support-legal-channels">
-            <ChannelLink
-              href={`mailto:${LEGAL_ENTITY.supportEmail}`}
-              label={LEGAL_ENTITY.supportEmail}
-            />
             {legal && <ChannelLink href={legal.href} label={h.whatsappLegal} />}
+            <ChannelLink
+              href={`mailto:${LEGAL_ENTITY.legalEmail}`}
+              label={LEGAL_ENTITY.legalEmail}
+            />
           </div>
           <p className="mt-3 text-xs text-[var(--color-text-muted)]">{h.legalDisclaimer}</p>
         </section>

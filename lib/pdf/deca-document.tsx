@@ -133,9 +133,18 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
-  cardValue: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: "#101828", marginTop: 4 },
+  // #86 part 3: operational descriptive values render UPPERCASE for a uniform
+  // document. NOT applied to the weight/measure (kept verbatim) or the QR/URL.
+  cardValue: {
+    fontSize: 11,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    color: "#101828",
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
   fieldLabel: { fontSize: 7.5, color: MUTED, marginTop: 8 },
-  fieldValue: { fontSize: 9.5, color: "#101828", marginTop: 1.5 },
+  fieldValue: { fontSize: 9.5, color: "#101828", marginTop: 1.5, textTransform: "uppercase" },
 
   // Route timeline
   routeRow: { flexDirection: "row", gap: 12 },
@@ -149,8 +158,20 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  routeName: { fontSize: 10.5, fontFamily: "Inter", fontWeight: 700, color: "#101828" },
-  routeAddress: { fontSize: 9, color: "#374151", marginTop: 3, lineHeight: 1.35 },
+  routeName: {
+    fontSize: 10.5,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    color: "#101828",
+    textTransform: "uppercase",
+  },
+  routeAddress: {
+    fontSize: 9,
+    color: "#374151",
+    marginTop: 3,
+    lineHeight: 1.35,
+    textTransform: "uppercase",
+  },
   routeDate: { fontSize: 8.5, color: MUTED, marginTop: 7 },
   routeDateValue: {
     fontSize: 9.5,
@@ -165,6 +186,7 @@ const s = StyleSheet.create({
   gridBlock: { width: "50%", paddingHorizontal: 8, marginBottom: 10 },
   gridLabel: { fontSize: 7.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.4 },
   gridValue: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: "#101828", marginTop: 2 },
+  gridValueUpper: { textTransform: "uppercase" },
 
   divider: { borderBottomWidth: 1, borderBottomColor: BORDER, marginTop: 16 },
 
@@ -276,14 +298,25 @@ function RouteCard({
   );
 }
 
-function GridField({ n, label, value }: { n: number; label: string; value: string }) {
+function GridField({
+  n,
+  label,
+  value,
+  upper,
+}: {
+  n: number;
+  label: string;
+  value: string;
+  /** #86 p3: uppercase descriptive values (goods); NEVER the weight/measure. */
+  upper?: boolean;
+}) {
   return (
     <View style={s.gridBlock}>
       <View style={s.cellHeadRow}>
         <CellNo n={n} />
         <Text style={s.gridLabel}>{label}</Text>
       </View>
-      <Text style={s.gridValue}>{value}</Text>
+      <Text style={upper ? [s.gridValue, s.gridValueUpper] : s.gridValue}>{value}</Text>
     </View>
   );
 }
@@ -400,7 +433,7 @@ export function DecaDocument(p: DecaDocProps) {
           <View style={s.section}>
             <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
             <View style={s.grid}>
-              <GridField n={5} label="Naturaleza de la mercancía" value={p.data.goods} />
+              <GridField n={5} label="Naturaleza de la mercancía" value={p.data.goods} upper />
               <GridField n={6} label="Peso o medida" value={p.data.weight} />
               <GridField n={7} label="Matrícula tractora" value={p.data.tractorPlate} />
               <GridField n={8} label="Matrícula remolque" value={p.data.trailerPlate || "—"} />

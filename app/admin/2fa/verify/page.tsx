@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { TotpVerifyForm } from "@/components/admin/totp-verify-form";
-import { getInternalUser, hasEnrolledStrongAuth } from "@/lib/admin/guard";
+import { getInternalUser, hasEnrolledStrongAuth, isAdmin2faFresh } from "@/lib/admin/guard";
 import { safeInternalPath } from "@/lib/auth/safe-redirect";
 import { prisma } from "@/lib/prisma";
 
@@ -27,10 +27,16 @@ export default async function AdminTotpVerifyPage({
   if (!(await hasEnrolledStrongAuth(user.id, user.totpEnabledAt))) redirect("/admin/2fa/setup");
 
   const { next } = await searchParams;
+  const dest = safeInternalPath(next, "/admin");
+  // Already verified on this session (fresh TOTP/passkey or a trusted device)?
+  // Don't render the challenge again — that stale re-render is exactly what
+  // users reported as "it keeps asking for the code" (#86 part 7).
+  if (await isAdmin2faFresh()) redirect(dest);
+
   const hasPasskey = (await prisma.webAuthnCredential.count({ where: { userId: user.id } })) > 0;
   return (
     <AuthShell>
-      <TotpVerifyForm next={safeInternalPath(next, "/admin")} hasPasskey={hasPasskey} />
+      <TotpVerifyForm next={dest} hasPasskey={hasPasskey} hasTotp={!!user.totpEnabledAt} />
     </AuthShell>
   );
 }

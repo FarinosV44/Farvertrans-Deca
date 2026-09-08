@@ -20,8 +20,14 @@ export const LEGAL_ENTITY = {
    * (2026-09 legal-content pass, docs/decisions.md D-108).
    */
   corporateUrl: "https://praetoriaabogados.es/",
-  /** Support/operational contact — reuses the product's support address. */
-  supportEmail: BRAND.supportEmail,
+  /**
+   * LEGAL-assistance contact (#86 p6 — a separate channel from technical
+   * support, never mixed with support tickets). Legal queries go here.
+   */
+  legalEmail: "info@praetoriaabogados.es",
+  legalWhatsapp: BRAND.legalWhatsapp,
+  /** Kept for existing call sites; equals `legalEmail` (the legal channel). */
+  supportEmail: "info@praetoriaabogados.es",
   /** Support phone — reuses the product's support phone. */
   supportPhone: BRAND.supportPhone,
   /** Data-protection contact, if it ever differs from support. */

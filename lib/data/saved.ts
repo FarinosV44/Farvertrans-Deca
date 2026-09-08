@@ -102,6 +102,67 @@ export async function createSaved(
   });
 }
 
+/**
+ * Update an existing saved entity IN PLACE (#86 part 1 — "Editar", not
+ * delete-and-recreate). The row keeps its `id`, `companyId`, `userId`
+ * (original creator), `favorite` and `lastUsedAt`; only the user-editable
+ * fields are replaced, validated by the same schema as `createSaved`. Scoped
+ * to the company. Returns false if the id does not belong to this company.
+ * Never mutates an already-generated DeCA — each document holds its own copy.
+ */
+export async function updateSaved(
+  companyId: string,
+  kind: SavedKind,
+  id: string,
+  input: unknown,
+): Promise<boolean> {
+  const where = { id, companyId };
+  if (kind === "company") {
+    const d = savedCompanySchema.parse(input);
+    const res = await prisma.savedCompany.updateMany({
+      where,
+      data: {
+        name: d.name,
+        nif: d.nif,
+        address: d.address || null,
+        postalCode: d.postalCode,
+        city: d.city,
+        contactName: d.contactName || null,
+        contactPhone: d.contactPhone || null,
+        contactEmail: d.contactEmail || null,
+        role: d.role,
+      },
+    });
+    return res.count > 0;
+  }
+  if (kind === "vehicle") {
+    const d = savedVehicleSchema.parse(input);
+    const res = await prisma.savedVehicle.updateMany({
+      where,
+      data: {
+        tractorPlate: d.tractorPlate,
+        trailerPlate: d.trailerPlate || null,
+        alias: d.alias || null,
+      },
+    });
+    return res.count > 0;
+  }
+  const d = savedLocationSchema.parse(input);
+  const res = await prisma.savedLocation.updateMany({
+    where,
+    data: {
+      name: d.name,
+      address: d.address,
+      postalCode: d.postalCode || null,
+      city: d.city || null,
+      province: d.province || null,
+      country: d.country || "España",
+      type: d.type,
+    },
+  });
+  return res.count > 0;
+}
+
 /** Delete a saved entity. Returns false if it does not belong to this company (never throws). */
 export async function deleteSaved(
   companyId: string,
