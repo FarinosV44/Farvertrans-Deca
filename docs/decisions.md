@@ -4073,3 +4073,22 @@ remaining scope.
   recent_incident. Not mixed with legal or billing state.
 - **Tests:** `admin-growth.spec.ts` — the chip row filters (URL gets `?seg=`), "Limpiar filtros"
   resets. `admin.spec.ts` "internal user finds a company" still green. No schema.
+
+## D-139 — #81 / #83: Customer 360 + company activity timeline
+- Date / phase: 2026-09-08, Phase 5.
+- **`/admin/empresas/[id]` rebuilt** as a compact Customer 360: header (name + NIF + alta + última
+  actividad + "Ver DeCA"), a status + segment Badge row, a **6-KPI strip** (DeCA total / 30d /
+  miembros activos / primer DeCA / último DeCA / ficha completa), then everything else in
+  collapsible `<Panel>` sections — Empresa (legal/contacto/dirección), Uso, Equipo (+invitaciones),
+  Documentos, **Actividad** (open by default). The admin actions (`AccountActions` +
+  `CompanyEditForm`) move to a dashed-border "Acciones de administración" zone at the bottom,
+  visually separate from the read views.
+- **`lib/admin/timeline.ts` `companyTimeline(id)` (#83):** milestone events only (not a click log) —
+  registered, email verified, ficha completed, 1st/2nd DeCA, each correction (with its reason),
+  invites sent/accepted, integration request, generation incidents (stage + correlation code),
+  admin status changes / anonymisation (from `SecurityAuditLog`). Human text, newest-first, capped
+  at 40.
+- **Opportunity signals (#83)** are on the Resumen already (D-136, `opportunitySignals`).
+- **Tests:** `admin.spec.ts` "internal user finds a company" updated to the new 360 layout (header +
+  KPIs up front, member email behind the Equipo panel, `company-timeline` visible). 13 admin e2e +
+  180 unit + compliance 8/8. No schema.

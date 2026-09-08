@@ -210,6 +210,13 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-081 — #81 Customer 360 · **DONE, on `main`** (D-139)
+- `/admin/empresas/[id]` rebuilt: header + 6-KPI strip + collapsible panels + separated admin zone.
+
+### I-083 — #83 company activity timeline + opportunity signals · **DONE, on `main`** (D-139/D-136)
+- `lib/admin/timeline.ts` companyTimeline (milestones only) on the Actividad panel; opportunitySignals
+  on the Resumen. No schema.
+
 ### I-082 — #82 segmentation + filters · **DONE, on `main`** (D-138)
 - `/admin/empresas` — segment Badges per row + chip filters (?seg=) combining with search; documented
   `SEGMENT_RULES`, no scoring. Limpiar filtros. No schema.

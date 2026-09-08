@@ -219,8 +219,13 @@ test.describe("ADMIN #33 — internal command center", () => {
       const link = page.getByTestId("empresa-row-link").first();
       await expect(link).toBeVisible();
       await link.click();
+      // #81: the Customer 360 header + KPIs are up front; detail is in panels.
+      await expect(page.getByRole("heading", { name: company })).toBeVisible();
+      await expect(page.getByText("DeCA total")).toBeVisible();
+      await expect(page.getByTestId("company-timeline")).toBeVisible();
+      await page.getByText("Equipo (", { exact: false }).click();
       await expect(page.getByText(mail)).toBeVisible();
-      await expect(page.getByText("DeCA recientes")).toBeVisible();
+      await page.getByText("Empresa — datos legales").click();
       // PRODUCT #39: admin sees whether the company has a logo (never the image itself)
       await expect(page.getByText("Logo en PDF")).toBeVisible();
 
