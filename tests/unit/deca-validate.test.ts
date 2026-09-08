@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateDeca, DecaValidationError } from "@/lib/deca/validate";
+import { formatPartyAddressLines } from "@/lib/deca/schema";
 import { normalizePlate, looksLikeSpanishPlate } from "@/lib/deca/plate";
 import { checkNif } from "@/lib/deca/nif";
 
@@ -114,6 +115,31 @@ describe("validateDeca (R-2 / AC-09)", () => {
     expect(() =>
       validateDeca({ ...valid, loadLocation: { ...valid.loadLocation, province: "x" } }),
     ).toThrow(DecaValidationError);
+  });
+
+  it("accepts a party with población + CP, and also without them (both optional)", () => {
+    const withTown = validateDeca({
+      ...valid,
+      shipper: { ...valid.shipper, postalCode: " 46023 ", city: " Valencia " },
+    });
+    expect(withTown.data.shipper.postalCode).toBe("46023");
+    expect(withTown.data.shipper.city).toBe("Valencia");
+    // omitted → undefined, never a blocking error
+    const noTown = validateDeca(valid);
+    expect(noTown.data.shipper.postalCode).toBeUndefined();
+    expect(noTown.data.carrier.city).toBeUndefined();
+  });
+
+  it("formatPartyAddressLines drops any absent part, no dangling separators (#75)", () => {
+    expect(
+      formatPartyAddressLines({ address: "Calle Mayor 1", postalCode: "46001", city: "Valencia" }),
+    ).toEqual(["Calle Mayor 1", "46001 Valencia"]);
+    expect(formatPartyAddressLines({ address: "Calle Mayor 1" })).toEqual(["Calle Mayor 1"]);
+    expect(formatPartyAddressLines({ address: "Calle Mayor 1", city: "Valencia" })).toEqual([
+      "Calle Mayor 1",
+      "Valencia",
+    ]);
+    expect(formatPartyAddressLines(null)).toEqual([]);
   });
 
   it("rejects a malformed load/unload date", () => {

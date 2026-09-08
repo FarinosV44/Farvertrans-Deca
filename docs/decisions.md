@@ -4178,3 +4178,31 @@ remaining scope.
 - Test: `panel-nav.spec.ts` already checks no horizontal scroll across `/panel` at 360/768/1280/1440
   — extended to seed a DeCA first so the "duplicar" card + recent rows actually render on the
   smallest width.
+
+## D-145 — party postal code + población on the generated DeCA
+- Date / phase: 2026-09-08, Phase 5. User request: "al generar deca debería salir tanto del cargador
+  como de transportista población y cp no solo la dirección".
+- **Change:** `shipperSchema` / `carrierSchema` (`lib/deca/schema.ts`) gain `postalCode` (≤12) and
+  `city` (≤120). Both are **OPTIONAL**, deliberately — same reasoning as `province` on a location
+  (#75): a hard requirement produced junk input, and many non-Spanish domiciles already carry the
+  locality inside the free `address` line. New `formatPartyAddressLines()` composes the display
+  (street line, then "CP población"), dropping any absent part with no dangling separator; the PDF
+  `PartyCard` (`lib/pdf/deca-document.tsx`) prints each line, the review summary and `doc-summary`
+  show the composed value, `lib/deca/detail.ts` adds the two diff rows.
+- **No DB migration** — party data lives entirely in `DecaVersion.dataJson` (only derived route
+  intel is columnar), so this is a pure payload-shape change. Historical DeCA render unchanged
+  (missing fields → just the street line, as before).
+- **Wizard:** two fields per party after the address, in a 2-col grid. The "usar mi empresa"
+  quick-fill fills them from `Company.postalCode` / `Company.city` (present since #59); the
+  toggle-off and "el mismo que…" quick-fills carry them too. `WizardCompany`, `WizardTemplate`,
+  the duplicate flow (`app/crear/page.tsx`), the correction pre-fill (`…/corregir/page.tsx`),
+  `templatePayloadSchema` and `history.ts`'s `Data` type all thread the two fields.
+- **Out of scope (kept deliberately small):** `SavedCompany` still stores only a free `address`
+  (no migration, no save-form change) — a saved counterparty just won't pre-fill CP/población; the
+  operator types them or uses "usar mi empresa".
+- Tests: `deca-validate.test.ts` (optional accept + `formatPartyAddressLines` compose rules),
+  `deca-pdf-snapshot.test.ts` (carrier "46988 Paterna" line renders; a party with none stays a
+  clean single street line). Full regression: 184 unit, e2e 204/204 (`--workers=3`; the 4 that
+  flaked under load — `admin-2fa:109`, `admin-passkey`, `admin-growth:78`, `content-cms:60` — all
+  green at `--workers=1`), compliance R-1…R-13 8/8, typecheck, lint (pre-existing warnings only),
+  keel:verify.

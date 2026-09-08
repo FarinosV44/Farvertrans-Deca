@@ -14,10 +14,10 @@ is researched and validated — see `docs/decisions.md` D-042.
 |---|---|---|---|---|---|
 | a1 | Nombre / razón social del **cargador contractual** | `shipper.name` (2–200, required) | `#shipperName` — "Empresa que contrata el transporte › Nombre o razón social" | `CARGADOR CONTRACTUAL` | `deca-validate.test.ts` (missing name), `compliance.spec.ts` R-3 |
 | a2 | NIF / identificador del cargador | `shipper.nif` (3–20, required; format = warning) | `#shipperNif` | `NIF DEL CARGADOR` | `deca-validate.test.ts`, `compliance.spec.ts` R-3 |
-| a3 | **Domicilio del cargador** | `shipper.address` (4–300, required) | `#shipperAddress` | `DOMICILIO DEL CARGADOR` | `deca-validate.test.ts` (missing address) |
+| a3 | **Domicilio del cargador** | `shipper.address` (4–300, required); `shipper.postalCode` (≤12, **optional**), `shipper.city` (≤120, **optional**) — D-145 | `#shipperAddress` + `#shipperPostalCode` / `#shipperCity` | `Domicilio` — street line, then a "CP población" line when informed (`formatPartyAddressLines`, same drop-absent discipline as #75) | `deca-validate.test.ts` (missing address; "accepts a party with población + CP"), `deca-pdf-snapshot.test.ts` |
 | a4 | Nombre / razón social del **transportista efectivo** | `carrier.name` (2–200, required) | `#carrierName` — "Transportista que realiza el transporte › Nombre o razón social" | `TRANSPORTISTA EFECTIVO` | `deca-validate.test.ts`, `compliance.spec.ts` R-3 |
 | a5 | NIF / identificador del transportista | `carrier.nif` (3–20, required; format = warning) | `#carrierNif` | `NIF DEL TRANSPORTISTA` | `deca-validate.test.ts` foreign-NIF case, `crear.spec.ts` |
-| a6 | **Domicilio del transportista** | `carrier.address` (4–300, required) | `#carrierAddress` | `DOMICILIO DEL TRANSPORTISTA` | `deca-validate.test.ts` (missing carrier address), `crear.spec.ts` review-summary assertion |
+| a6 | **Domicilio del transportista** | `carrier.address` (4–300, required); `carrier.postalCode` (≤12, **optional**), `carrier.city` (≤120, **optional**) — D-145 | `#carrierAddress` + `#carrierPostalCode` / `#carrierCity` | `Domicilio` — street line, then a "CP población" line when informed | `deca-validate.test.ts` (missing carrier address), `crear.spec.ts` review-summary assertion, `deca-pdf-snapshot.test.ts` |
 | b1 | Naturaleza de la mercancía | `goods` (2–300, required) | `#goods` — "Naturaleza de la mercancía" | `NATURALEZA DE LA MERCANCÍA` | `deca-validate.test.ts`, `compliance.spec.ts` R-3 |
 | b2 | Peso o medida legalmente adecuada | `weight` (1–60, required, **verbatim** — rejects zero/placeholder) | `#weight` — "Peso (o medida alternativa)" | `PESO O MEDIDA` | `deca-validate.test.ts` "keeps the weight VERBATIM" + "rejects a meaningless weight" |
 | c1 | Lugar de origen — **empresa/establecimiento + dirección completa** | `loadLocation` (`{name, address, postalCode, city, country}` required; **`province` optional** — D-129/#75) | `#loadLocationName/Address/PostalCode/City/Province/Country` — "Lugar de carga" | `LUGAR DE CARGA` (address built only from informed fields via `formatLocationFull` / `formatLocationCityLine`) | `deca-validate.test.ts` (missing loadLocation subfields; "accepts a location with no province"), `deca-location.test.ts`, `compliance.spec.ts` R-3 |
@@ -33,6 +33,15 @@ is researched and validated — see `docs/decisions.md` D-042.
 - **Both domicilios are required** (a3, a6). The v1 form previously omitted the
   carrier address; FIX #17 added it. Correcting a pre-#17 DeCA now prompts for the
   missing carrier address before a new compliant version can be generated.
+- **Party postal code + población (D-145).** `postalCode` / `city` are captured
+  as their own fields on each party (like the structured locations) and printed
+  on their own line under the street address on the PDF. They are **optional**
+  for the same reason `province` is optional on a location (#75): forcing them
+  produced junk, and many non-Spanish domiciles carry the locality inside the
+  free `address` line. `formatPartyAddressLines()` composes the display, dropping
+  any absent part with no dangling separator. The "usar mi empresa" quick-fill
+  populates them from `Company.postalCode` / `Company.city` (#59). `SavedCompany`
+  is unchanged — it still stores only a free `address`.
 - **Weight is never silently reformatted** (b2). `"12.500 kg"`, `"12,5 t"` and
   `"una plataforma completa (aprox. 24 t)"` all reach the PDF exactly as typed. A
   regex rejects only meaningless values (`0`, `0 kg`, `-`, `n/a`, `sin especificar`)

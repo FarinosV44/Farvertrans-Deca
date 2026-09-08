@@ -1,5 +1,6 @@
 import type { DecaPayloadData } from "@/lib/data/history";
 import { formatLocationFull } from "@/lib/deca/location";
+import { formatPartyAddressLines } from "@/lib/deca/schema";
 import { DECA_ROLES } from "@/lib/deca/roles";
 
 /**
@@ -14,7 +15,7 @@ export function DocSummary({ data }: { data: DecaPayloadData }) {
       rows: [
         ["Nombre o razón social", data.shipper?.name ?? ""],
         ["NIF / VAT", data.shipper?.nif ?? ""],
-        ["Domicilio", data.shipper?.address ?? ""],
+        ["Domicilio", formatPartyAddressLines(data.shipper).join(", ")],
       ],
     },
     {
@@ -22,7 +23,7 @@ export function DocSummary({ data }: { data: DecaPayloadData }) {
       rows: [
         ["Nombre o razón social", data.carrier?.name ?? ""],
         ["NIF / VAT", data.carrier?.nif ?? ""],
-        ["Domicilio", data.carrier?.address ?? ""],
+        ["Domicilio", formatPartyAddressLines(data.carrier).join(", ")],
       ],
     },
     {

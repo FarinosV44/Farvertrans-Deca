@@ -15,9 +15,24 @@ const trimmed = (min: number, max: number, msg: string) =>
     .transform((s) => s.trim())
     .pipe(z.string().min(min, msg).max(max));
 
+/**
+ * Postal code / town of a party's domicilio. OPTIONAL, for the same reason
+ * province is optional on a location (#75): forcing it produced junk input, and
+ * many non-Spanish domiciles carry the locality inside the free `address` line.
+ * When present it is shown on the PDF as its own "CP · población" line under the
+ * street address (user request 2026-09-08 — "debería salir … población y cp").
+ */
+const optionalTown = (max: number, msg: string) =>
+  z.preprocess(
+    (v) => (typeof v === "string" && v.trim() !== "" ? v.trim() : undefined),
+    z.string().min(2, msg).max(max).optional(),
+  );
+
 export const partySchema = z.object({
   name: trimmed(2, 200, "Indica el nombre o razón social"),
   nif: trimmed(3, 20, "Indica el NIF"),
+  postalCode: optionalTown(12, "Indica un código postal válido"),
+  city: optionalTown(120, "Indica una población válida"),
 });
 
 export const shipperSchema = partySchema.extend({
@@ -28,6 +43,16 @@ export const shipperSchema = partySchema.extend({
 export const carrierSchema = partySchema.extend({
   address: trimmed(4, 300, `Indica el domicilio del ${DECA_ROLES.carrier.inline}`),
 });
+
+/** Party domicilio as display lines: street, then "CP población", each dropped
+ *  when absent (same compose discipline as `formatLocationCityLine`, #75). */
+export function formatPartyAddressLines(
+  p?: { address?: string | null; postalCode?: string | null; city?: string | null } | null,
+): string[] {
+  if (!p) return [];
+  const town = [p.postalCode, p.city].filter(Boolean).join(" ").trim();
+  return [p.address ?? "", town].map((s) => s.trim()).filter((s) => s !== "");
+}
 
 export const step1Schema = z.object({
   shipper: shipperSchema,

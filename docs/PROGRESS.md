@@ -1461,6 +1461,8 @@ to `B21810452` via `/admin/empresas/[id]`.
 - **D-144 DONE** — `/panel` home horizontal overflow on mobile (CSS-grid auto-track). Grids on
   `app/panel/page.tsx` are `flex flex-col` until their real breakpoint. `panel-nav.spec.ts` +1 test
   (seeds a DeCA, checks no h-scroll at 360/390/414).
-- **TODO** — party población + CP on the generated DeCA (both cargador and transportista, not only
-  the street address). Needs structured `postalCode`+`city` on `shipperSchema`/`carrierSchema` and
-  threading through the wizard, company quick-fill, duplicate flow, PDF PartyCard, doc-summary, diff.
+- **D-145 DONE** — party población + CP on the generated DeCA. Optional `postalCode`/`city` on
+  `shipperSchema`/`carrierSchema` (no migration — party data is `dataJson`), `formatPartyAddressLines`
+  composes the PDF "CP población" line, threaded through wizard + company quick-fill + duplicate +
+  correction + templates + diff. `SavedCompany` left as free-address (out of scope). 184 unit,
+  e2e 204/204 (`--workers=1` for the 4 load-flakes), compliance 8/8.
