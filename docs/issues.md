@@ -5,7 +5,7 @@
 > Last inbound sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
 > (worked in D-042…D-111, awaiting the user's close), the launch batches **#59–#68** (all
 > implemented + on `main`, awaiting the user's close) and **#69–#84** (implemented; #84 on `main`),
-> plus **#85** (pre-launch UX batch — worked this session, D-148, on `develop`). No third-party
+> plus **#85** (D-148) and **#86** (D-149, on `develop`). No third-party
 > comments on any issue. #29–#38 closed.
 >
 > Earlier note (2026-09-04): #1–#28 all merged to `main`; every issue commented (beat 1); awaiting
@@ -377,3 +377,29 @@ anonymize-in-place (no hard delete, D-067).
 - **Pending:** Hostinger redeploy so the code runs; then beat 3 + the user closes #85 (Keel never
   closes on its own reading).
 - **Replies:** beat-1 posted 2026-09-08 (comment 5589051332, ES). Beat-3 after the user's redeploy.
+
+## I-086 — #86 [ALTA] Datos habituales editables, soporte técnico/jurídico, acceso Superadmin, operadores · P0/P1/P2 · **DONE, on `develop`** (D-149)
+- Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/86
+- **8 parts, worked in the issue's own priority order:**
+  1. **p7 (P0) — acceso Superadmin desde PC.** Reported symptom: the 2FA screen loops / hangs
+     "conectando". Fixed with a hard navigation after the check, a redirect-if-already-verified on
+     `/admin/2fa/verify`, and code-leads-over-passkey when an authenticator app is enrolled. Cannot
+     reproduce a server error in the flow — the fix targets the App-Router prefetch-cache class of
+     bug plus the desktop passkey trap. **Needs the user to confirm live after redeploy.**
+  2. **p1/p2 — habituales editables + CP/población obligatorios** (`updateSaved` + `PATCH`, "Editar"
+     per row; `savedCompanySchema` requires CP + población, front + back).
+  3. **p3 — MAYÚSCULAS**: saved habituales stored uppercase, DeCA PDF rendered uppercase (weight and
+     emails/NIF left verbatim). The DeCA `dataJson` itself is not stored uppercase — recorded
+     omission (D-149).
+  4. **p5 — incidencias técnicas + sección Superadmin**: `SupportTicket` model, `/panel/ayuda` form,
+     `/admin/soporte` (list/filter/detail/reply/status, 5 states), user notified by email.
+  5. **p4/p6 — WhatsApp + jurídico separado**: no conventional phone as primary; WhatsApp 34607527719
+     (técnico + jurídico, own message); `/panel/ayuda` legal section clearly separate,
+     `info@praetoriaabogados.es`, "Consulta con un abogado por WhatsApp".
+  6. **p8 — módulo de operadores**: create + individual `/registro?ref=` link + copy + attributed
+     companies + activate/deactivate. Attribution already permanent/first-touch (#11). Commissions
+     not built; model left ready.
+- **Verification:** typecheck + lint + prettier + 215 unit (13 new) + keel:verify + full e2e.
+- **Pending:** merge `develop` → `main`; `prisma migrate deploy` for `20260908185301_support_tickets`
+  + `20260908190836_operator_contact_fields`; redeploy Hostinger; the user confirms p7 live; then
+  beat 3 + close #86. Beat-1 comment to post.
