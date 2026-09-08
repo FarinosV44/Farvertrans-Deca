@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authenticateWithPasskey, browserSupportsWebAuthn } from "@/lib/auth/webauthn-client";
+import {
+  authenticateWithPasskey,
+  browserSupportsWebAuthn,
+  platformAuthenticatorIsAvailable,
+} from "@/lib/auth/webauthn-client";
 
 /** Post-login (or step-up) admin strong-auth challenge (SECURITY #53 passkey follow-up). */
 export function TotpVerifyForm({
@@ -17,11 +21,26 @@ export function TotpVerifyForm({
   const [busy, setBusy] = useState(false);
   const [trustDevice, setTrustDevice] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
+  /**
+   * A PLATFORM authenticator on THIS device (Face ID / Touch ID / Windows
+   * Hello / Android screen lock). Without one, `startAuthentication` falls back
+   * to a cross-device QR whose hybrid ("caBLE") transport leaves the phone
+   * stuck on "conectando…" — so we only LEAD with the passkey when this is
+   * available and otherwise lead with the code input, keeping the passkey as a
+   * secondary option.
+   */
+  const [platformPasskey, setPlatformPasskey] = useState(false);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
   useEffect(() => {
-    setPasskeySupported(browserSupportsWebAuthn());
+    const supported = browserSupportsWebAuthn();
+    setPasskeySupported(supported);
+    if (supported) {
+      platformAuthenticatorIsAvailable()
+        .then(setPlatformPasskey)
+        .catch(() => setPlatformPasskey(false));
+    }
   }, []);
 
   async function afterSuccess() {
@@ -77,16 +96,22 @@ export function TotpVerifyForm({
     }
   }
 
+  // Show the passkey button at all only if one is registered and the browser
+  // supports WebAuthn; LEAD with it only when this device has a local
+  // (platform) authenticator — otherwise it forces the cross-device QR trap.
+  const passkeyOffer = hasPasskey && passkeySupported;
+  const passkeyLead = passkeyOffer && platformPasskey;
+
   return (
     <div>
       <h1 className="text-2xl font-bold">Verificación en dos pasos</h1>
       <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-        {hasPasskey && passkeySupported
+        {passkeyLead
           ? "Confirma tu identidad con Face ID, Touch ID o el PIN de tu dispositivo."
           : "Introduce el código de tu app de autenticación, o uno de tus códigos de recuperación."}
       </p>
 
-      {hasPasskey && passkeySupported && (
+      {passkeyLead && (
         <>
           <button
             type="button"
@@ -114,7 +139,7 @@ export function TotpVerifyForm({
         </>
       )}
 
-      <form onSubmit={submitCode} className={hasPasskey && passkeySupported ? "mt-2" : "mt-6"}>
+      <form onSubmit={submitCode} className={passkeyLead ? "mt-2" : "mt-6"}>
         <label htmlFor="totp-code" className="block text-sm font-medium">
           Código
         </label>
@@ -123,7 +148,7 @@ export function TotpVerifyForm({
           data-testid="totp-verify-input"
           inputMode="text"
           autoComplete="one-time-code"
-          autoFocus={!(hasPasskey && passkeySupported)}
+          autoFocus={!passkeyLead}
           value={code}
           onChange={(e) => setCode(e.target.value)}
           className="mt-1 block min-h-12 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-center text-lg tracking-[0.2em]"
@@ -154,7 +179,7 @@ export function TotpVerifyForm({
           disabled={busy || code.length < 6}
           data-testid="totp-verify-submit"
           className={
-            hasPasskey && passkeySupported
+            passkeyLead
               ? "mt-4 min-h-12 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium text-[var(--color-text)] disabled:opacity-55"
               : "mt-4 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
           }
@@ -162,6 +187,29 @@ export function TotpVerifyForm({
           {busy ? "Comprobando…" : "Verificar"}
         </button>
       </form>
+
+      {passkeyOffer && !passkeyLead && (
+        <>
+          <button
+            type="button"
+            data-testid="passkey-verify-start"
+            onClick={submitPasskey}
+            disabled={passkeyBusy}
+            className="mt-3 min-h-12 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-5 font-medium text-[var(--color-text)] disabled:opacity-55"
+          >
+            {passkeyBusy ? "Confirma en tu dispositivo…" : "Usar una clave de acceso"}
+          </button>
+          {passkeyError && (
+            <p
+              role="alert"
+              data-testid="passkey-verify-error"
+              className="mt-2 text-sm text-[var(--color-danger)]"
+            >
+              {passkeyError}
+            </p>
+          )}
+        </>
+      )}
     </div>
   );
 }

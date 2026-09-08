@@ -73,6 +73,55 @@ for (const [w, h] of [
   });
 }
 
+test("panel home does not overflow on a phone once it has a DeCA to show", async ({ page }) => {
+  // The user-reported bug: with recent-doc rows + the "duplicar" card rendered,
+  // `/panel` scrolled sideways on mobile (D-144 — CSS-grid auto-track). The
+  // empty-state panel never triggered it, so this seeds one DeCA first.
+  await register(page);
+  await page.goto("/crear");
+  await page.fill("#shipperName", "Cargas del Turia SL");
+  await page.fill("#shipperNif", "B96789011");
+  await page.fill("#shipperAddress", "Av. del Puerto 120, Valencia");
+  await page.fill("#carrierName", "Transportes Pérez SL");
+  await page.fill("#carrierNif", "B12345674");
+  await page.fill("#carrierAddress", "Pol. Ind. Fuente del Jarro 5, Paterna");
+  await page.getByTestId("wizard-next").click();
+  await page.fill("#loadLocationName", "Almacén Turia");
+  await page.fill("#loadLocationAddress", "Av. del Puerto 120");
+  await page.fill("#loadLocationPostalCode", "46023");
+  await page.fill("#loadLocationCity", "Valencia");
+  await page.fill("#loadLocationProvince", "Valencia");
+  await page.fill("#loadLocationCountry", "España");
+  await page.fill("#loadDate", "2026-10-06");
+  await page.fill("#unloadLocationName", "Plataforma Norte");
+  await page.fill("#unloadLocationAddress", "Calle Alcalá 200");
+  await page.fill("#unloadLocationPostalCode", "28028");
+  await page.fill("#unloadLocationCity", "Madrid");
+  await page.fill("#unloadLocationProvince", "Madrid");
+  await page.fill("#unloadLocationCountry", "España");
+  await page.fill("#unloadDate", "2026-10-06");
+  await page.getByTestId("wizard-next").click();
+  await page.fill("#goods", "Palés de cerámica");
+  await page.fill("#weight", "12.500 kg");
+  await page.fill("#tractorPlate", "1234 BCD");
+  await page.getByTestId("wizard-generate").click();
+  await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i);
+
+  for (const [w, h] of [
+    [360, 740],
+    [390, 844],
+    [414, 896],
+  ] as const) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto("/panel", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("app-repetir")).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow, `no horizontal scroll on /panel at ${w}px`).toBeLessThanOrEqual(1);
+  }
+});
+
 test("every section is reachable from the nav in at most two actions", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await register(page);

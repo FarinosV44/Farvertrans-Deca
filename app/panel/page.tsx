@@ -85,10 +85,10 @@ export default async function AppHome() {
           />
         )}
 
-        <div className="mt-8 grid gap-8 md:grid-cols-[1fr_300px] md:items-start md:gap-10">
+        <div className="mt-8 flex flex-col gap-8 md:grid md:grid-cols-[1fr_300px] md:items-start md:gap-10">
           <div>
             {canCreate && (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-3 min-[480px]:grid min-[480px]:grid-cols-2">
                 <Link
                   href="/crear"
                   data-testid="app-crear"
@@ -138,21 +138,23 @@ export default async function AppHome() {
                   {recent.map((r) => (
                     <li
                       key={r.id}
-                      className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm"
+                      className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3 text-sm min-[560px]:flex-row min-[560px]:items-center min-[560px]:gap-3"
                     >
-                      <IconBadge>
-                        <DocumentIcon />
-                      </IconBadge>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">
-                          {r.loadLocation} → {r.unloadLocation}
-                        </p>
-                        <p className="text-xs text-[var(--color-text-muted)]">
-                          {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
-                          {r.tractorPlate}
-                        </p>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <IconBadge>
+                          <DocumentIcon />
+                        </IconBadge>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">
+                            {r.loadLocation} → {r.unloadLocation}
+                          </p>
+                          <p className="truncate text-xs text-[var(--color-text-muted)]">
+                            {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}
+                            {r.tractorPlate}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-3 text-xs">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-11 text-xs min-[560px]:ml-auto min-[560px]:shrink-0 min-[560px]:pl-0">
                         <Link href={`/panel/deca/${r.id}`}>{t.panel.detail}</Link>
                         <RowShare
                           publicUrl={`${publicEnv.baseUrl.replace(/\/$/, "")}/d/${r.token}`}
@@ -175,7 +177,7 @@ export default async function AppHome() {
           </div>
 
           <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
+            <div className="flex flex-col gap-4 min-[480px]:grid min-[480px]:grid-cols-2 md:grid-cols-1">
               <SummaryCard
                 title={t.panel.companiesCard}
                 manageLabel={t.panel.manageData}

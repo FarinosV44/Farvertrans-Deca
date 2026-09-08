@@ -4139,3 +4139,42 @@ remaining scope.
   hex; badges/pills use the shared `Badge`/`Pill` tone APIs.
 - Full regression at this point: 180 unit, 206/206 e2e (0 flaky), compliance 8/8, typecheck, lint
   (pre-existing `<img>` warnings), keel:verify.
+
+## D-143 — admin 2FA: lead with the code app when the device has no platform authenticator
+- Date / phase: 2026-09-08, Phase 5. User report: "escaneo el qr para acceder y se me queda en el
+  móvil con la app de authenticator todo el rato conectando" (superadmin).
+- **Cause:** `browserSupportsWebAuthn()` only checks that `window.PublicKeyCredential` exists — true
+  on every desktop browser. Both the setup choice screen (`totp-setup-form.tsx`) and the verify
+  screen (`totp-verify-form.tsx`) led with the passkey button whenever that was true. On a desktop
+  with no Face ID / Touch ID / Windows Hello, `navigator.credentials.*` falls back to the
+  cross-device **hybrid ("caBLE") transport**: the browser shows a QR, the phone scans it and then
+  hangs forever on "conectando…" because the desktop side never advertises the BLE side channel in
+  a plain server context.
+- **Fix:** both components now also call `platformAuthenticatorIsAvailable()` (re-exported from
+  `lib/auth/webauthn-client.ts`) on mount. The passkey is the **primary** path only when a local
+  platform authenticator is present; otherwise the screen leads with "Usar una app de autenticación
+  (Google Authenticator, Authy…)" as the solid primary button and demotes the passkey to a
+  secondary outline button with a one-line note ("requiere Face ID / Touch ID / Windows Hello…").
+  The passkey path is never hidden — a user who does have a roaming authenticator can still pick it.
+- TOTP QR itself was fine (valid `otpauth://totp/…`); the QR that hung was always the passkey one.
+- Tests: `admin-passkey.spec.ts` gains "no platform authenticator: setup leads with TOTP" (stubs
+  `isUserVerifyingPlatformAuthenticatorAvailable → false` via `addInitScript`, asserts the TOTP
+  button carries the primary style and the passkey button does not). Existing 12 2FA/passkey e2e
+  still green (the CDP virtual authenticator reports `transport: "internal"` so those keep leading
+  with the passkey, as intended).
+
+## D-144 — mobile: panel home ("Mis DeCA") horizontal overflow
+- Date / phase: 2026-09-08, Phase 5. User report: "en el móvil la pestaña de panel de mis deca se
+  sale de la pantalla".
+- **Cause:** the same CSS-grid auto-track trap as D-13x — an element with `display: grid` but no
+  `grid-template-columns` at mobile width (only a `md:grid-cols-…` variant, inactive < 768px)
+  creates one implicit auto column sized to its widest child's **min-content**, and grid auto
+  tracks do not shrink below that (unlike flex). Three grids on `/panel` did this; the project's
+  custom `sm` breakpoint (360px, not 640px) made `sm:grid-cols-2` fire on the smallest phones too.
+- **Fix (`app/panel/page.tsx`):** the outer 2-column layout and the two card pairs are now
+  `flex flex-col` at mobile and only become `grid` at their real breakpoint (`md:` / `min-[480px]:`).
+  Recent-doc rows stack `flex-col` and go `flex-row` at `min-[560px]`; the meta line is `truncate`
+  inside a `min-w-0` box; the action links `flex-wrap`.
+- Test: `panel-nav.spec.ts` already checks no horizontal scroll across `/panel` at 360/768/1280/1440
+  — extended to seed a DeCA first so the "duplicar" card + recent rows actually render on the
+  smallest width.
