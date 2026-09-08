@@ -89,6 +89,8 @@ model Company {
   integrationRequests   IntegrationRequest[]
   supportTickets        SupportTicket[]
   commercialOpportunity CommercialOpportunity?
+  commercialActivityLog CommercialActivityLog[]
+  commercialAlerts      CommercialAlert[]
 
   @@map("company")
 }
@@ -190,17 +192,31 @@ model DecaAvailabilityShare {
 /// nothing about what a company has authorised. One row per company; absence
 /// means "not reviewed yet".
 model CommercialOpportunity {
-  id              String                     @id @default(cuid())
-  companyId       String                     @unique @map("company_id")
-  state           CommercialOpportunityState @default(review)
+  id                String                     @id @default(cuid())
+  companyId         String                     @unique @map("company_id")
+  state             CommercialOpportunityState @default(review)
   /// Free internal note (last contact, who to call, why discarded…). No PII rules
   /// beyond the app-wide ones — this is an internal CRM-lite field.
-  note            String?
+  note              String?
   /// The internal user who last changed the state, for the activity trail.
-  updatedByUserId String?                    @map("updated_by_user_id")
-  contactedAt     DateTime?                  @map("contacted_at")
-  createdAt       DateTime                   @default(now()) @map("created_at")
-  updatedAt       DateTime                   @updatedAt @map("updated_at")
+  updatedByUserId   String?                    @map("updated_by_user_id")
+  contactedAt       DateTime?                  @map("contacted_at")
+  /// #89 — the internal COMMERCIAL operator who converted the opportunity, kept
+  /// distinct from the acquisition/referral operator (`Acquisition.firstRefCode`,
+  /// #2/#86): one measures acquisition, the other measures commercial
+  /// exploitation.
+  convertedByUserId String?                    @map("converted_by_user_id")
+  convertedAt       DateTime?                  @map("converted_at")
+  /// #89 — optional, manual economic outcome once the carrier does real work for
+  /// Farvertrans. No ERP/TMS integration; rough figures entered by hand. Money in
+  /// whole euros.
+  internalRef       String?                    @map("internal_ref")
+  firstPorteDate    DateTime?                  @map("first_porte_date")
+  loadsGenerated    Int?                       @map("loads_generated")
+  revenueEur        Int?                       @map("revenue_eur")
+  marginEur         Int?                       @map("margin_eur")
+  createdAt         DateTime                   @default(now()) @map("created_at")
+  updatedAt         DateTime                   @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -208,15 +224,91 @@ model CommercialOpportunity {
   @@map("commercial_opportunity")
 }
 
-/// Internal commercial follow-up state for a carrier (#87). `review` = surfaced
-/// by the radar, not yet acted on. The rest track a manual outreach lifecycle.
+/// Internal commercial follow-up state for a carrier (#87 / #89). `review` =
+/// surfaced by the radar, not yet acted on. The rest track a manual outreach and
+/// first-load lifecycle, ending in `converted` (now a Farvertrans carrier) or
+/// `discarded`.
 enum CommercialOpportunityState {
   review
   contacted
   interested
+  not_interested
   unavailable
-  discarded
+  awaiting_load
+  first_load_offered
+  first_load_awarded
   converted
+  discarded
+}
+
+/// #89 — append-only trail of every commercial action on an opportunity: who,
+/// when, the state change, the channel used, an optional short note, and the
+/// route/corridor that originated the contact when known. Never stores WhatsApp
+/// conversation content — only what an operator types as an internal note.
+model CommercialActivityLog {
+  id           String                      @id @default(cuid())
+  companyId    String                      @map("company_id")
+  actorUserId  String?                     @map("actor_user_id")
+  fromState    CommercialOpportunityState? @map("from_state")
+  toState      CommercialOpportunityState? @map("to_state")
+  /// whatsapp | email | call | other | none
+  channel      String                      @default("none")
+  note         String?
+  /// e.g. a corridor id or "Valencia → Lyon" — the opportunity/route context.
+  routeContext String?                     @map("route_context")
+  createdAt    DateTime                    @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@map("commercial_activity_log")
+}
+
+/// #90 — an internal, rule-based alert surfaced in Super Admin. Computed from
+/// the account's own data (activity, recurrence, route, follow-up state); never
+/// sent anywhere. Only ever created for a company eligible for commercial use
+/// (`CommercialConsent.mode != none`). `dedupeKey` keeps one live alert per
+/// company + kind + time bucket so the centre never floods.
+model CommercialAlert {
+  id               String   @id @default(cuid())
+  companyId        String   @map("company_id")
+  /// Rule id, e.g. `upcoming_priority_zone`, `route_repeated_3x_30d`,
+  /// `interested_no_followup`, `reactivated_after_60d`.
+  kind             String
+  dedupeKey        String   @unique @map("dedupe_key")
+  title            String
+  detail           String
+  /// Higher = more worth reviewing. Used for ordering.
+  score            Int      @default(0)
+  routeContext     String?  @map("route_context")
+  /// pending | reviewed | dismissed
+  status           String   @default("pending")
+  reviewedByUserId String?  @map("reviewed_by_user_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([status, score])
+  @@index([companyId])
+  @@map("commercial_alert")
+}
+
+/// #90 — the small, single-row config for the alert rules. No visual builder:
+/// priority corridors/countries, minimum movements, the activity window, and
+/// the follow-up/reactivation day thresholds.
+model CommercialAlertConfig {
+  id                String   @id @default("singleton")
+  priorityCorridors String[] @default([]) @map("priority_corridors")
+  priorityCountries String[] @default([]) @map("priority_countries")
+  minMovements      Int      @default(2) @map("min_movements")
+  windowDays        Int      @default(30) @map("window_days")
+  staleFollowUpDays Int      @default(10) @map("stale_follow_up_days")
+  reactivationDays  Int      @default(60) @map("reactivation_days")
+  updatedByUserId   String?  @map("updated_by_user_id")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("commercial_alert_config")
 }
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.

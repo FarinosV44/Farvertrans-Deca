@@ -29,6 +29,8 @@ export const ADMIN_GROUPS: { label: string; items: { href: string; label: string
       { href: "/admin/captacion", label: "Captación" },
       { href: "/admin/operadores", label: "Operadores" },
       { href: "/admin/oportunidades", label: "Oportunidades" },
+      { href: "/admin/alertas-comerciales", label: "Alertas comerciales" },
+      { href: "/admin/comercial", label: "Panel comercial" },
       { href: "/admin/inteligencia-rutas", label: "Rutas" },
       { href: "/admin/tratamiento-comercial", label: "Tratamiento comercial" },
       { href: "/admin/contenido", label: "Contenido" },

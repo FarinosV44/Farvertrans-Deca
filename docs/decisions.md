@@ -4564,3 +4564,62 @@ remaining scope.
   código y reintenta." instead of a generic "No se pudo guardar."; `force-dynamic` added to
   `/admin/contenido` and `/admin/contenido/nuevo`. No schema change. Also stabilises the documented
   `content-cms.spec.ts:60` flake (6/6 green). Needs the Hostinger redeploy to reach production.
+
+## D-154 — #89 + #90: commercial conversion tracking, KPIs, and internal alerts
+- Date / phase: 2026-09-08/09, Phase 5. User: "main y haz la migracion luego sigue" — i.e. merge
+  #87/#88, apply the migration, then continue with #89/#90 (no further review gate this time).
+- **#89 — seguimiento de contacto, conversión y negocio generado:**
+  - `CommercialOpportunityState` gains the issue's four missing states: `not_interested`,
+    `awaiting_load`, `first_load_offered`, `first_load_awarded` (funnel order:
+    review → contacted → interested → not_interested → unavailable → awaiting_load →
+    first_load_offered → first_load_awarded → converted → discarded).
+  - `CommercialActivityLog` (append-only): companyId, actorUserId, fromState, toState, channel
+    (`whatsapp|email|call|other|none`), note, routeContext, createdAt. NEVER stores WhatsApp
+    conversation content — only what an operator types as a note.
+  - `CommercialOpportunity` gains `convertedByUserId` + `convertedAt` (the internal COMMERCIAL
+    operator, deliberately SEPARATE from `Acquisition.firstRefCode`, the acquisition/referral
+    operator — the issue's "atribución" requirement), and optional manual outcome fields
+    `internalRef` / `firstPorteDate` / `loadsGenerated` / `revenueEur` / `marginEur` (whole euros;
+    no ERP/TMS integration).
+  - `setOpportunityState()` writes one `CommercialActivityLog` entry per action and stamps
+    `convertedBy*` on the transition into `converted`.
+  - `lib/commercial/kpis.ts` — `commercialKpis(filter)` returns detected / contacted / interested /
+    converted / conversionRate / loads / revenueEur / marginEur + a per-state funnel + two
+    attribution tables (by acquisition ref code, by internal commercial user). Filters: period
+    (from/to), acquisition operator, commercial operator, country, corridor. `contacted` /
+    `interested` are computed from the activity log's furthest-reached state (`maxProgress`, pure +
+    unit-tested), so a company that went interested → not_interested still counts as both. Also
+    `recentCommercialActivity()` (global trail) and `carrierCommercialActivity()` (per-company, for
+    the #88 ficha).
+  - UI: new `/admin/comercial` page (KPIs + funnel + attribution + recent activity). `opportunity-
+    actions.tsx` gains a "Canal" select (recorded on every action) and, for a conversion state, a
+    compact outcome form. The #88 carrier panel gains a "Historial comercial" list.
+- **#90 — alertas internas de capacidad y patrones:**
+  - `lib/commercial/alert-rules.ts` — pure `evaluateAlerts(input, config, now)`. Ten rules over
+    data the product already has (activity windows, recurrence, corridor match, follow-up recency,
+    route gap, acquisition timing). Each candidate carries a `dedupeKey` = `company:kind` (+ an ISO
+    week bucket for the time-sensitive ones) so the centre never floods with duplicates.
+  - `CommercialAlert` (status `pending|reviewed|dismissed`, `score` for ordering) +
+    `CommercialAlertConfig` (single `singleton` row: priority corridors/countries, minMovements,
+    windowDays, staleFollowUpDays, reactivationDays — "configuración simple", no visual builder).
+  - `lib/commercial/alerts.ts` — `refreshAlerts()` recomputes and reconciles: new candidates are
+    inserted, a `pending` alert whose condition no longer holds is deleted, and a `reviewed` /
+    `dismissed` alert is NEVER resurrected or modified. Runs on every load of the alert centre.
+  - UI: `/admin/alertas-comerciales` (counter, ordered list, link to the carrier, Revisada /
+    Descartar, config form) + `PATCH /api/admin/alertas-comerciales/[id]` +
+    `POST /api/admin/alertas-comerciales/config` (both `isInternalRequest` → 404).
+  - Only companies eligible for commercial use produce alerts (`listOpportunities` already gates on
+    active `CommercialConsent`).
+- **Out of scope (on the record):** weekly-pattern detection (#90 — needs finer time-series data
+  than `DecaRouteIntel` carries; the other 10 rules cover the issue's intent); any automatic
+  messaging / notification (#90's own principle); ERP/TMS integration (#89's own principle).
+- Migration `20260908213756_commercial_conversion_and_alerts` — LOCAL DEV ONLY. Together with
+  `20260908205105` (#87) it is the pair of pending production migrations.
+- Tests: `commercial-kpis.test.ts` (4 — `rollupFunnel`, `maxProgress`), `commercial-alert-rules.
+  test.ts` (12 — every rule + the dedupe key + the quiet-carrier no-op); `commercial-intelligence.
+  spec.ts` extended (activity trail, conversion + outcome, `/admin/comercial`, the ficha history,
+  the alert centre incl. dismiss-stays-dismissed). Gate: typecheck + lint + prettier + 289 unit +
+  production build + full e2e 231 passed / 3 (all 3 `internalPage`-contention flakes, green
+  isolated / at `--workers=1`).
+- **On `develop`** (`5d4e3f3`, `567b5e9`). NOT merged to `main` — waiting to apply the 2 migrations
+  to production first (needs the DB connection string from the user), then merge + beat comments.

@@ -439,3 +439,27 @@ anonymize-in-place (no hard delete, D-067).
 - Fix (`d9f825d`, on `develop`): hard navigation after save; clear "sesión caducada" message on a
   404; `force-dynamic` on the list + nuevo pages. Also stabilises `content-cms.spec.ts:60`.
 - **Pending:** the Hostinger redeploy to reach production.
+
+## I-089 / I-090 — #89 Seguimiento de contacto/conversión/negocio + #90 Alertas internas · P1/P2 Comercial · **BUILT on `develop`, NOT on `main`** (D-154)
+- 2026-09-08/09. User: "main y haz la migracion luego sigue" — merged #87/#88, then continued
+  straight into #89 + #90 (no review gate this time).
+- **#89** — +4 opportunity states (No interesado / Pendiente de carga adecuada / Primera carga
+  ofrecida / Primera carga adjudicada); `CommercialActivityLog` (quién, cuándo, estado anterior→
+  nuevo, canal, nota, ruta); operador comercial que convierte guardado aparte del operador de
+  captación; resultado económico manual opcional (referencia, primer porte, cargas, facturación,
+  margen); `/admin/comercial` con KPIs (detectadas/contactadas/interesadas/convertidas/tasa/cargas/
+  facturación/margen), embudo y doble atribución; filtros periodo/operador/país/corredor.
+- **#90** — `/admin/alertas-comerciales`: 10 reglas simples sobre datos propios (descarga próxima en
+  zona prioritaria, primera vez en corredor, varias descargas misma zona, ruta 3×, actividad
+  creciente, interesante sin contactar, sin seguimiento, reactivación tras pausa, primer DeCA por
+  referido, empresa captada recurrente), sin duplicados (dedupeKey empresa+regla+semana), acciones
+  Revisada/Descartar (nunca se resucita una descartada), config simple. Solo empresas con
+  consentimiento comercial activo. Nada se envía automáticamente.
+- Fuera de alcance: detección de patrón semanal (#90 — datos insuficientes en `DecaRouteIntel`);
+  cualquier mensajería/notificación automática; integración ERP/TMS.
+- Migración `20260908213756_commercial_conversion_and_alerts` (local dev only) — junto con
+  `20260908205105` (#87) son las 2 migraciones pendientes de aplicar a producción.
+- Gate: typecheck + lint + prettier + 289 unit (16 nuevos) + build de producción + full e2e
+  231 passed / 3 flakes de contención `internalPage` (verdes aislados).
+- **NO fusionado a `main`** — antes hay que aplicar las 2 migraciones a producción (falta la cadena
+  de conexión de la BD del usuario), luego merge + beat-1 en #87–#90.

@@ -60,3 +60,33 @@
 - No new PII in analytics rows. No document content (goods, plates, price, token, URL) on these
   screens beyond what `DecaRouteIntel` already holds for internal route views.
 - No external services, no geocoding, no paid AI — DB queries over existing rows only.
+
+---
+
+## Follow-up: #89 + #90 (D-154, 2026-09-08/09)
+
+After the user approved #87/#88 ("main y haz la migracion luego sigue"), continued straight into
+#89 + #90 — no separate review gate.
+
+### #89 — conversion tracking + KPIs
+- `CommercialOpportunityState` +4 states; `CommercialActivityLog` append-only trail;
+  `convertedByUserId`/`convertedAt` + manual outcome fields on `CommercialOpportunity`.
+- `lib/commercial/kpis.ts` — `commercialKpis(filter)` (funnel + double attribution) + activity
+  trail readers. Pure `rollupFunnel` / `maxProgress` unit-tested.
+- `/admin/comercial` page; `opportunity-actions` channel select + outcome form; #88 ficha
+  "Historial comercial".
+
+### #90 — internal alerts
+- `lib/commercial/alert-rules.ts` — pure `evaluateAlerts` (10 rules, dedupe by company+kind+week).
+- `lib/commercial/alerts.ts` — `refreshAlerts` (reconcile, never resurrect reviewed/dismissed) +
+  config + list/status.
+- `/admin/alertas-comerciales` page + PATCH `[id]` + POST `config`. Consented companies only.
+
+### Migrations pending for production (apply with the `main` merge)
+1. `20260908205105_commercial_opportunity` (#87)
+2. `20260908213756_commercial_conversion_and_alerts` (#89/#90)
+
+### Status
+On `develop` (`5d4e3f3`, `567b5e9`). Full gate green (289 unit + build + e2e 231/3-flakes). NOT on
+`main` — the 2 migrations need the production DB connection string from the user first, then merge +
+beat-1 comments on #87–#90 + Hostinger redeploy.

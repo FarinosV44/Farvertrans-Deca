@@ -5,6 +5,8 @@ import { listCompanySegments, SEGMENT_LABEL } from "@/lib/admin/segments";
 import { companyTimeline } from "@/lib/admin/timeline";
 import { buildCarrierProfile } from "@/lib/commercial/carrier-profile";
 import { WEEKDAY_LABEL } from "@/lib/commercial/activity";
+import { carrierCommercialActivity } from "@/lib/commercial/kpis";
+import { OPPORTUNITY_STATE_LABEL } from "@/lib/commercial/opportunity-model";
 import { AccountActions } from "@/components/admin/account-actions";
 import { CompanyEditForm } from "@/components/admin/company-edit-form";
 import {
@@ -63,8 +65,10 @@ function FreqLine({ label, rows }: { label: string; rows: { name: string; count:
  */
 function CarrierProfileSection({
   profile,
+  commercialActivity,
 }: {
   profile: Awaited<ReturnType<typeof buildCarrierProfile>>;
+  commercialActivity: Awaited<ReturnType<typeof carrierCommercialActivity>>;
 }) {
   if (!profile.eligible) {
     return (
@@ -153,6 +157,29 @@ function CarrierProfileSection({
           ))}
         </Table>
       )}
+
+      {commercialActivity.length > 0 && (
+        <div>
+          <p className="mb-1 text-xs font-semibold text-[var(--color-text-muted)]">
+            Historial comercial
+          </p>
+          <ol className="space-y-1 text-sm" data-testid="carrier-commercial-activity">
+            {commercialActivity.map((a, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="w-24 shrink-0 font-mono text-xs text-[var(--color-text-muted)]">
+                  {day(a.createdAt)}
+                </span>
+                <span>
+                  {a.fromState ? OPPORTUNITY_STATE_LABEL[a.fromState] : "—"} →{" "}
+                  {a.toState ? OPPORTUNITY_STATE_LABEL[a.toState] : "—"}
+                  {a.actorEmail ? ` · ${a.actorEmail}` : ""}
+                  {a.note ? ` · "${a.note}"` : ""}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }
@@ -172,11 +199,12 @@ export default async function AdminEmpresaDetail({
 }) {
   const { id } = await params;
   const { from } = await searchParams;
-  const [c, segments, timeline, carrierProfile] = await Promise.all([
+  const [c, segments, timeline, carrierProfile, commercialActivity] = await Promise.all([
     getCompanyAdmin(id),
     listCompanySegments(),
     companyTimeline(id),
     buildCarrierProfile(id),
+    carrierCommercialActivity(id),
   ]);
   if (!c) notFound();
   const seg = segments.find((s) => s.id === id);
@@ -287,7 +315,7 @@ export default async function AdminEmpresaDetail({
       </Panel>
 
       <Panel title="Actividad de transporte · Perfil comercial" open>
-        <CarrierProfileSection profile={carrierProfile} />
+        <CarrierProfileSection profile={carrierProfile} commercialActivity={commercialActivity} />
       </Panel>
 
       <Panel title={`Equipo (${c.members.length})`}>
