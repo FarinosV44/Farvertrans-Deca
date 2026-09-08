@@ -1447,7 +1447,7 @@ to `B21810452` via `/admin/empresas/[id]`.
   saved-location schemas + wizard, added `formatLocationCityLine()` that joins only informed parts
   (no dangling `— `/`, `, no substitution). Historical payloads untouched. `deca-location.test.ts`
   new. 180 unit + 19 DeCA e2e. No migration.
-- Progress: #75 ✓ #70 ✓ #71 ✓ #69 ✓ #77 ✓ (all on `main`, D-129…D-133). Next: #76 #78 → #80 admin shell → #72/#73/#81/#82/#83/#74 → #79.
+- Progress: #75 ✓ #70 ✓ #71 ✓ #69 ✓ #77 ✓ #76 ✓ #78 ✓ (on `main`, D-129…D-135). Remaining: admin cluster #80/#72/#73/#81/#82/#83/#74 → #79. Migrations 20260907235352_deca_draft + 20260908000514_favorites need migrate deploy on prod.
 - Order: #75 ✓ → #70 (panel nav) → #71 (pre-gen checklist) → #69 (Modo Inspección) → #76 #77 #78
   (panel features) → #80 (admin shell) → #72 #73 #81 #82 #83 #74 (admin cluster) → #79 (final
   regression checklist).
