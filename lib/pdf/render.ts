@@ -4,6 +4,7 @@ import { DecaDocument } from "./deca-document";
 import { ensureFonts } from "./fonts";
 import { qrPngDataUri } from "./qr";
 import { APP_VERSION } from "@/lib/version";
+import { toDisplayDeca } from "@/lib/deca/display";
 import type { DecaPayload } from "@/lib/deca/schema";
 
 const MAX_BYTES = 5 * 1024 * 1024; // R-4
@@ -36,7 +37,11 @@ export async function renderDecaPdf(input: RenderInput): Promise<Buffer> {
   const qrDataUri = await qrPngDataUri(input.publicUrl);
   const buffer = await renderToBuffer(
     DecaDocument({
-      data: input.data,
+      // #86 p3 / FIX: every textual field renders uppercase, uniformly. The
+      // stored data_json keeps its original casing (legal content unchanged).
+      data: toDisplayDeca(
+        input.data as unknown as Record<string, unknown>,
+      ) as unknown as DecaPayload,
       publicUrl: input.publicUrl,
       qrDataUri,
       reference: input.reference,

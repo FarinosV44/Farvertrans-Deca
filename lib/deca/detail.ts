@@ -4,6 +4,7 @@ import { publicEnv } from "@/lib/env";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
 import type { DecaPayloadData } from "@/lib/data/history";
 import { DECA_ROLES } from "@/lib/deca/roles";
+import { toDisplayDeca } from "@/lib/deca/display";
 
 /**
  * The full data behind the post-generation document cockpit (PRODUCT #36) —
@@ -200,7 +201,9 @@ export async function getDecaCockpit(
     author: v.createdByUserId ? (emailById.get(v.createdByUserId) ?? null) : null,
     isCurrent: v.id === deca.currentVersionId,
     publicUrl: `${base}/d/${v.token}`,
-    data: (v.dataJson ?? {}) as DecaPayloadData,
+    // #86 p3 / FIX: uppercase every visible textual field, uniformly with the
+    // PDF and Modo Inspección. Stored data_json keeps its original casing.
+    data: toDisplayDeca((v.dataJson ?? {}) as Record<string, unknown>) as DecaPayloadData,
   });
 
   const versions = deca.versions.map(toVersion);
