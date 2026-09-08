@@ -4452,3 +4452,38 @@ remaining scope.
 - **Still outstanding (user):** Hostinger redeploy (production still runs a pre-#69 build);
   confirm p7 (Superadmin access from PC) works live; rotate the DB password + other secrets;
   asesoría legal review of the `LEGAL REVIEW PENDING` sections; beat-3 + close #85 and #86.
+
+## D-151 — #91 (URGENT): Super Admin backup password + WebAuthn "Connecting…" hang fix
+- Date / phase: 2026-09-08, Phase 5. User: urgent/blocking — restore reliable Super Admin access
+  before #87–#90. `SUPERADMIN_BACKUP_PASSWORD` already set in Hostinger prod; keep that exact name;
+  no SMS/external providers, no recurring cost.
+- **Backup password** replaces ONLY the extra Super Admin verification step (SECURITY #53), never
+  the app login:
+  - `lib/admin/backup-password.ts` — `SUPERADMIN_BACKUP_PASSWORD` read in the server route only
+    (`server-only` module, no `NEXT_PUBLIC_`; verified absent from `.next/static/*` and never
+    inlined). `checkBackupPassword` = constant-time, length-blind (`timingSafeEqual` over an HMAC of
+    each side, `FVD_HASH_SECRET`-keyed). Per-admin lockout: 5 failed attempts / 15 min via a
+    `AbuseCounter` key `sha256("admin_backup:<userId>")`.
+  - `POST /api/admin/2fa/backup` — requires a normal internal session (`getInternalUser` → 401
+    otherwise). Every failure path returns the SAME generic 400 (`invalid_code`) so a wrong password,
+    an unconfigured secret and anything else are indistinguishable; lockout is a 429. On success
+    `markTotpVerified(user.id)` sets the exact same `tv` session field TOTP/passkey set — no parallel
+    auth architecture. Audited (`admin_backup_password`, success/failure), never logging the value.
+  - `TotpVerifyForm` — a "Usar contraseña de emergencia" option below the always-visible code input
+    (hard nav on success, same as #86 p7).
+- **"Connecting…" hang fix** — the passkey ceremony could sit forever:
+  - `lib/auth/webauthn-client.ts` — every `fetch` wrapped in an `AbortController` + 15s timeout;
+    `startAuthentication` / `startRegistration` raced against a 70s ceremony timeout; explicit
+    timeout/abort error messages ("Se agotó el tiempo… usa tu código").
+  - `TotpVerifyForm.submitPasskey` / `TotpSetupForm` — `try/finally` so the loading flag is ALWAYS
+    cleared (this was the actual bug: `authenticateWithPasskey` hanging left `passkeyBusy=true`).
+  - `buildAuthenticationOptions` — explicit `timeout: 60000` passed to the authenticator.
+  - `auth-options` route — a structured breadcrumb log (no secret, no challenge) so an options line
+    with no matching `admin_passkey_verify` audit row identifies a hung ceremony.
+- **No migration.** Env var only (already in prod). `.env.example` / `.env.prod.example` /
+  `playwright.config.ts` seam updated.
+- Tests: `backup-password.test.ts` (3); `admin-2fa.spec.ts` +4 (grants access, generic reject,
+  needs a session, lockout, TOTP still works) — 19/19 admin-2fa + admin-passkey green at
+  `--workers=1`. typecheck + 222 unit + lint + production build green.
+- **On `develop`** (commit next). Merge to `main` next; the user redeploys Hostinger, then confirms
+  Super Admin access personally before #87–#90 continue.

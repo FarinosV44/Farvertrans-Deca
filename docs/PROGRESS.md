@@ -1561,3 +1561,20 @@ URLs/QR/tokens. Stored `data_json` unchanged (legal/versioned), so existing DeCA
 too. `SaveTemplate` uses `current.rawData` (form re-fill must not come back all-caps).
 Gate: typecheck + lint + prettier + 219 unit (1 new: `deca-display.test.ts`) + full e2e green
 (~12 specs' assertions updated to uppercase). On `develop` (commits `b46e6a7`, `3c1dc8c`).
+
+### #91 [URGENT] Super Admin backup password + WebAuthn "Connecting…" fix — D-151, 2026-09-08 — on `develop`
+User urgent/blocking, ahead of #87–#90. `SUPERADMIN_BACKUP_PASSWORD` already in Hostinger prod.
+- **Backup password** = an alternative on `/admin/2fa/verify` ("Usar contraseña de emergencia") that
+  satisfies ONLY the extra Super Admin verification (never the app login). `lib/admin/backup-password.ts`
+  (server-only, constant-time length-blind compare, 5-attempt / 15-min per-admin lockout) +
+  `POST /api/admin/2fa/backup` (normal internal session required; generic 400 on any failure; 429 on
+  lockout; `markTotpVerified` → identical `tv` session state). Value never reaches the client
+  (verified absent from `.next/static`).
+- **"Connecting…" hang fixed**: `webauthn-client.ts` — `AbortController` + 15s timeout on every
+  fetch, 70s ceremony timeout race, explicit error states; `submitPasskey` `try/finally` (the real
+  bug — a hanging ceremony left the loading flag stuck); `buildAuthenticationOptions` `timeout: 60000`.
+- **No migration.** Env var only. Gate: typecheck + 222 unit (3 new) + lint + production build +
+  19/19 admin-2fa/admin-passkey e2e green.
+- **NEXT: merge to `main`; the user redeploys Hostinger and confirms Super Admin access personally,
+  THEN #87–#90 continue.** (#87/#88 plan already agreed: eligibility = active CommercialConsent,
+  corridors in code, any internal user, billing manual-optional.)
