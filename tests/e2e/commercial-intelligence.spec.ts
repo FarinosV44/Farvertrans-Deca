@@ -168,6 +168,66 @@ test("#87/#88: a consented carrier surfaces on the radar with a profile; a non-c
       data: { state: "contacted" },
     });
     expect(refused.status()).toBe(409);
+
+    // ---- #89 activity trail + conversion + KPIs ----
+    const advance = await admin.request.patch(`/api/admin/oportunidades/${consentedId}`, {
+      data: {
+        state: "converted",
+        channel: "whatsapp",
+        note: "Nota de conversion e2e unica",
+        outcome: {
+          internalRef: "FV-2026-001",
+          loadsGenerated: 3,
+          revenueEur: 4500,
+          marginEur: 600,
+        },
+      },
+    });
+    expect(advance.status()).toBe(200);
+
+    const logs = await prisma.commercialActivityLog.findMany({ where: { companyId: consentedId } });
+    expect(logs.length).toBeGreaterThanOrEqual(1);
+    expect(logs.some((l) => l.channel === "whatsapp" && l.toState === "converted")).toBe(true);
+    const oppRow = await prisma.commercialOpportunity.findUnique({
+      where: { companyId: consentedId },
+    });
+    expect(oppRow).toMatchObject({
+      state: "converted",
+      internalRef: "FV-2026-001",
+      loadsGenerated: 3,
+      revenueEur: 4500,
+    });
+    expect(oppRow!.convertedByUserId).toBeTruthy();
+
+    await admin.goto("/admin/comercial");
+    await expect(admin.getByRole("heading", { name: "Panel comercial" })).toBeVisible();
+    await expect(admin.getByText("Facturación atribuida")).toBeVisible();
+    await expect(admin.getByRole("row", { name: new RegExp(consented) }).first()).toBeVisible();
+    await expect(admin.getByText("Nota de conversion e2e unica").first()).toBeVisible();
+
+    // the #88 ficha now shows the commercial history
+    await admin.goto(`/admin/empresas/${consentedId}`);
+    await expect(admin.getByTestId("carrier-commercial-activity")).toBeVisible();
+
+    // ---- #90 alert centre ----
+    await admin.request.post("/api/admin/alertas-comerciales/config", {
+      data: { minMovements: 2, priorityCorridors: ["es-francia"] },
+    });
+    await admin.goto("/admin/alertas-comerciales");
+    await expect(admin.getByRole("heading", { name: "Alertas comerciales" })).toBeVisible();
+    const alertRows = admin.getByRole("row", { name: new RegExp(consented) });
+    expect(await alertRows.count()).toBeGreaterThan(0);
+    for (let guard = 0; guard < 12 && (await alertRows.count()) > 0; guard++) {
+      await alertRows.first().getByRole("button", { name: "Descartar" }).click();
+      await admin.waitForResponse(
+        (r) =>
+          r.url().includes("/api/admin/alertas-comerciales/") && r.request().method() === "PATCH",
+      );
+      await admin.waitForTimeout(300);
+    }
+    // dismissed alerts stay dismissed on the next recompute (reload re-runs refreshAlerts)
+    await admin.reload();
+    await expect(admin.getByRole("row", { name: new RegExp(consented) })).toHaveCount(0);
   } finally {
     await close();
     await ctxA.close();
