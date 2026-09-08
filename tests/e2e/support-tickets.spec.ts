@@ -36,26 +36,30 @@ test("a technical ticket reaches the superadmin, is answered and moved through s
   const userCtx = await browser.newContext();
   const user = await userCtx.newPage();
   await registerCompany(user);
+  const subject = `No genera el PDF ${Date.now()}`;
 
   // open a ticket
   await user.goto("/panel/ayuda");
   await user.getByTestId("ticket-category").selectOption("generacion");
-  await user.fill('[data-testid="ticket-subject"]', "No genera el PDF en Chrome");
-  await user.fill('[data-testid="ticket-body"]', "Al pulsar GENERAR DECA no descarga nada y sale un error.");
-  await Promise.all([
+  await user.fill('[data-testid="ticket-subject"]', subject);
+  await user.fill(
+    '[data-testid="ticket-body"]',
+    "Al pulsar GENERAR DECA no descarga nada y sale un error.",
+  );
+  const [createRes] = await Promise.all([
     user.waitForResponse((r) => r.url().endsWith("/api/support") && r.status() === 201),
     user.getByTestId("ticket-submit").click(),
   ]);
+  const ticketId = (await createRes.json()).id as string;
   await expect(user.getByTestId("support-ticket-sent")).toBeVisible();
   await user.reload();
-  await expect(user.getByTestId("my-tickets")).toContainText("No genera el PDF en Chrome");
+  await expect(user.getByTestId("my-tickets")).toContainText(subject);
 
-  // superadmin sees it, replies and resolves it
+  // superadmin opens THIS ticket, replies and resolves it
   const { page: admin, close } = await internalPage(browser);
   await admin.goto("/admin/soporte");
-  await expect(admin.getByRole("cell", { name: "No genera el PDF en Chrome" })).toBeVisible();
-  await admin.getByRole("link", { name: /^\d+$/ }).first().click();
-  await expect(admin).toHaveURL(/\/admin\/soporte\/[a-z0-9]+$/i);
+  await expect(admin.getByRole("cell", { name: subject })).toBeVisible();
+  await admin.goto(`/admin/soporte/${ticketId}`);
   await expect(admin.getByText("Al pulsar GENERAR DECA")).toBeVisible();
 
   await admin.fill('[data-testid="ticket-admin-reply"]', "Prueba a vaciar la caché y reintentar.");
@@ -72,8 +76,7 @@ test("a technical ticket reaches the superadmin, is answered and moved through s
   ]);
 
   // the user sees the reply and can respond
-  await user.goto("/panel/ayuda");
-  await user.getByRole("link", { name: "Ver" }).first().click();
+  await user.goto(`/panel/ayuda/${ticketId}`);
   await expect(user.getByText("Prueba a vaciar la caché y reintentar.")).toBeVisible();
   await user.fill('[data-testid="ticket-reply-body"]', "Ya funciona, gracias.");
   await Promise.all([
