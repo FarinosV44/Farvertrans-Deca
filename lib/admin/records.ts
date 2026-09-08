@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { publicEnv } from "@/lib/env";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
 import { formatLocationShort } from "@/lib/deca/location";
+import { toDisplayDeca } from "@/lib/deca/display";
 import type { DecaPayloadData } from "@/lib/data/history";
 
 /**
@@ -59,7 +60,9 @@ export async function listDecaAdmin(
   const rows: DecaAdminRow[] = [];
   for (const d of decas) {
     if (!d.currentVersion) continue;
-    const data = (d.currentVersion.dataJson ?? {}) as DecaPayloadData;
+    const data = toDisplayDeca(
+      (d.currentVersion.dataJson ?? {}) as Record<string, unknown>,
+    ) as DecaPayloadData;
     const corrected = d._count.versions > 1;
     const status = isPubliclyAvailable(d.serviceEnd) ? "activo" : "no disponible";
     if (filter.status === "active" && status !== "activo") continue;
@@ -134,7 +137,9 @@ export async function getDecaAdmin(id: string) {
     : null;
 
   const base = publicEnv.baseUrl.replace(/\/$/, "");
-  const data = (deca.currentVersion.dataJson ?? {}) as DecaPayloadData;
+  const data = toDisplayDeca(
+    (deca.currentVersion.dataJson ?? {}) as Record<string, unknown>,
+  ) as DecaPayloadData;
 
   return {
     id: deca.id,

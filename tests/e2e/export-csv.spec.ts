@@ -99,15 +99,16 @@ test.describe("PRODUCT #34 — history export + workflow status", () => {
 
     expect(download.suggestedFilename()).toMatch(/^deca-historial-\d{4}-\d{2}-\d{2}\.csv$/);
     expect(csv).toContain("referencia,creado,fecha_carga");
-    expect(csv).toContain("Zaragoza");
+    // #86 p3 / FIX (D-150): localities render uppercase in every DeCA view, CSV included
+    expect(csv).toContain("ZARAGOZA");
     expect(csv).toContain("Vigente");
     // never another tenant's route
-    expect(csv).not.toContain("Bilbao");
+    expect(csv).not.toContain("BILBAO");
 
     // company B's own export cannot see A's document either
     const bRes = await b.request.get("/api/export/history");
     const bCsv = await bRes.text();
-    expect(bCsv).toContain("Bilbao");
+    expect(bCsv).toContain("BILBAO");
     expect(bCsv).not.toContain("Zaragoza");
 
     await aCtx.close();

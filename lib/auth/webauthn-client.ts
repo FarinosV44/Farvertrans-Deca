@@ -16,8 +16,47 @@ import {
 
 export { browserSupportsWebAuthn, platformAuthenticatorIsAvailable };
 
+/** Hard ceilings so an authentication request NEVER hangs the UI (#91). */
+const FETCH_TIMEOUT_MS = 15_000;
+const CEREMONY_TIMEOUT_MS = 70_000; // slightly above the 60s WebAuthn `timeout`
+
+class TimeoutError extends Error {
+  constructor() {
+    super("timeout");
+    this.name = "TimeoutError";
+  }
+}
+
+/** `fetch` that always settles — aborts (and rejects) after `FETCH_TIMEOUT_MS`. */
+async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Race a promise against a timeout so `startAuthentication`/`startRegistration`
+ *  can't leave the caller stuck on "Confirma en tu dispositivo…" forever (#91). */
+function withCeremonyTimeout<T>(p: Promise<T>): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new TimeoutError()), CEREMONY_TIMEOUT_MS),
+    ),
+  ]);
+}
+
 function friendlyError(e: unknown): string {
+  if (e instanceof TimeoutError) {
+    return "Se agotó el tiempo de espera. Inténtalo de nuevo o usa tu código.";
+  }
   const name = e instanceof Error ? e.name : "";
+  if (name === "AbortError") {
+    return "Se agotó el tiempo de espera. Inténtalo de nuevo o usa tu código.";
+  }
   if (name === "NotAllowedError") {
     return "Cancelado o no se completó a tiempo. Inténtalo de nuevo.";
   }
@@ -36,7 +75,14 @@ export type PasskeyResult<T> = { ok: true; data: T } | { ok: false; error: strin
 export async function registerPasskey(
   name?: string,
 ): Promise<PasskeyResult<{ recoveryCodes?: string[] }>> {
-  const optionsRes = await fetch("/api/admin/2fa/webauthn/register-options", { method: "POST" });
+  let optionsRes: Response;
+  try {
+    optionsRes = await fetchWithTimeout("/api/admin/2fa/webauthn/register-options", {
+      method: "POST",
+    });
+  } catch (e) {
+    return { ok: false, error: friendlyError(e) };
+  }
   if (!optionsRes.ok) {
     return { ok: false, error: "No se pudo iniciar el registro. Inténtalo de nuevo." };
   }
@@ -44,16 +90,21 @@ export async function registerPasskey(
 
   let response;
   try {
-    response = await startRegistration({ optionsJSON });
+    response = await withCeremonyTimeout(startRegistration({ optionsJSON }));
   } catch (e) {
     return { ok: false, error: friendlyError(e) };
   }
 
-  const verifyRes = await fetch("/api/admin/2fa/webauthn/register-verify", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ response, name }),
-  });
+  let verifyRes: Response;
+  try {
+    verifyRes = await fetchWithTimeout("/api/admin/2fa/webauthn/register-verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ response, name }),
+    });
+  } catch (e) {
+    return { ok: false, error: friendlyError(e) };
+  }
   const data = await verifyRes.json().catch(() => ({}));
   if (!verifyRes.ok) {
     return { ok: false, error: "No se pudo guardar la clave de acceso. Inténtalo de nuevo." };
@@ -61,9 +112,18 @@ export async function registerPasskey(
   return { ok: true, data: { recoveryCodes: data.recoveryCodes } };
 }
 
-/** Authenticate with an already-registered passkey (login challenge or step-up). */
+/**
+ * Authenticate with an already-registered passkey (login challenge or step-up).
+ * Every step has a hard timeout so the caller ALWAYS gets a result (#91) — no
+ * request can leave the UI stuck on "Confirma en tu dispositivo…".
+ */
 export async function authenticateWithPasskey(): Promise<PasskeyResult<Record<string, never>>> {
-  const optionsRes = await fetch("/api/admin/2fa/webauthn/auth-options", { method: "POST" });
+  let optionsRes: Response;
+  try {
+    optionsRes = await fetchWithTimeout("/api/admin/2fa/webauthn/auth-options", { method: "POST" });
+  } catch (e) {
+    return { ok: false, error: friendlyError(e) };
+  }
   if (!optionsRes.ok) {
     const data = await optionsRes.json().catch(() => ({}));
     if (data?.error?.code === "no_passkeys") {
@@ -75,16 +135,21 @@ export async function authenticateWithPasskey(): Promise<PasskeyResult<Record<st
 
   let response;
   try {
-    response = await startAuthentication({ optionsJSON });
+    response = await withCeremonyTimeout(startAuthentication({ optionsJSON }));
   } catch (e) {
     return { ok: false, error: friendlyError(e) };
   }
 
-  const verifyRes = await fetch("/api/admin/2fa/webauthn/auth-verify", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ response }),
-  });
+  let verifyRes: Response;
+  try {
+    verifyRes = await fetchWithTimeout("/api/admin/2fa/webauthn/auth-verify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ response }),
+    });
+  } catch (e) {
+    return { ok: false, error: friendlyError(e) };
+  }
   if (!verifyRes.ok) {
     return { ok: false, error: "Código o clave de acceso incorrectos." };
   }

@@ -1,5 +1,42 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { ADMIN, adminTotpCode, internalPage, loginAdminApi } from "./helpers/admin-auth";
+import { PrismaClient } from "@/prisma/generated/client";
+import { scryptSync, randomBytes } from "node:crypto";
+import { totpAt } from "@/lib/auth/totp";
+import { ADMIN_TEST_TOTP_SECRET } from "../fixtures/admin-totp-secret";
+
+const prisma = new PrismaClient();
+function hashPw(p: string) {
+  const salt = randomBytes(16);
+  return `scrypt$${salt.toString("hex")}$${scryptSync(p, salt, 64).toString("hex")}`;
+}
+
+/** A fresh internal user with TOTP enrolled (isolated backup-lockout counter). */
+async function freshTotpAdmin(): Promise<{ email: string; password: string }> {
+  const addr = `t91${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
+  const password = "Supersecret123!";
+  await prisma.user.create({
+    data: {
+      authUserId: `local:test-${addr}`,
+      email: addr,
+      passwordHash: hashPw(password),
+      role: "internal",
+      totpSecret: ADMIN_TEST_TOTP_SECRET,
+      totpEnabledAt: new Date(),
+    },
+  });
+  return { email: addr, password };
+}
+
+async function loginPw(page: Page, e: string, p: string) {
+  await page.goto("/entrar");
+  await page.fill("#email", e);
+  await page.fill("#password", p);
+  await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
+    page.getByTestId("register-submit").click(),
+  ]);
+}
 
 /**
  * SECURITY #53 — mandatory admin TOTP 2FA. Covers the owner's explicit
@@ -43,6 +80,79 @@ test.describe("SECURITY #53 — mandatory admin TOTP 2FA", () => {
     await expect(page).toHaveURL(/\/admin\/2fa\/verify/); // still gated
 
     await page.getByTestId("totp-verify-input").fill(adminTotpCode());
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/admin/2fa/verify") && r.status() === 200),
+      page.getByTestId("totp-verify-submit").click(),
+    ]);
+    await expect(page).toHaveURL(/\/admin$/);
+  });
+
+  test("#91: the backup password grants Super Admin access; a wrong one is rejected generically", async ({
+    page,
+  }) => {
+    const { email, password } = await freshTotpAdmin();
+    await loginPw(page, email, password);
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/2fa\/verify/);
+
+    // the code input is always available; the backup option sits below it
+    await expect(page.getByTestId("totp-verify-input")).toBeVisible();
+    await page.getByTestId("use-backup-password").click();
+    await expect(page.getByTestId("backup-password-input")).toBeVisible();
+
+    // wrong password → generic 400 error, still gated
+    await page.getByTestId("backup-password-input").fill("definitely-not-it");
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/admin/2fa/backup") && r.status() === 400),
+      page.getByTestId("backup-password-submit").click(),
+    ]);
+    await expect(page.getByTestId("backup-password-error")).toBeVisible();
+    await expect(page).toHaveURL(/\/admin\/2fa\/verify/);
+
+    // correct password → same Super Admin session as TOTP, lands on /admin
+    await page.getByTestId("backup-password-input").fill("e2e-backup-Sup3r!");
+    await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/admin/2fa/backup") && r.status() === 200),
+      page.getByTestId("backup-password-submit").click(),
+    ]);
+    await expect(page).toHaveURL(/\/admin$/);
+    // an admin API route that requires a fresh strong-auth check now works
+    const res = await page.request.get("/api/admin/search?q=acme");
+    expect(res.status()).not.toBe(404);
+  });
+
+  test("#91: the backup endpoint needs a normal session — never replaces the app login", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/admin/2fa/backup", {
+      data: { password: "e2e-backup-Sup3r!" },
+    });
+    expect(res.status()).toBe(401); // not logged in at all
+  });
+
+  test("#91: repeated wrong backup passwords lock the admin out (even the correct one)", async ({
+    page,
+  }) => {
+    const { email, password } = await freshTotpAdmin();
+    await loginPw(page, email, password);
+    for (let i = 0; i < 5; i++) {
+      const r = await page.request.post("/api/admin/2fa/backup", {
+        data: { password: `nope-${i}` },
+      });
+      expect(r.status()).toBe(400);
+    }
+    const locked = await page.request.post("/api/admin/2fa/backup", {
+      data: { password: "e2e-backup-Sup3r!" },
+    });
+    expect(locked.status()).toBe(429);
+  });
+
+  test("#91: TOTP still works alongside the backup option", async ({ page }) => {
+    const { email, password } = await freshTotpAdmin();
+    await loginPw(page, email, password);
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/2fa\/verify/);
+    await page.getByTestId("totp-verify-input").fill(totpAt(ADMIN_TEST_TOTP_SECRET));
     await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/admin/2fa/verify") && r.status() === 200),
       page.getByTestId("totp-verify-submit").click(),

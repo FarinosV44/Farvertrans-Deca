@@ -74,9 +74,10 @@ test.describe("BUILD 07 — anonymous 3-step DeCA creator", () => {
     // AC: the review summary shows the exact final data before generating
     const review = page.getByTestId("review-summary");
     await expect(review).toBeVisible();
-    await expect(review).toContainText(V.carrierAddress);
-    await expect(review).toContainText(V.shipperName);
-    await expect(review).toContainText(V.goods);
+    // #86 p3 / FIX (D-150): the review mirrors the document — textual data uppercase.
+    await expect(review).toContainText(V.carrierAddress.toUpperCase());
+    await expect(review).toContainText(V.shipperName.toUpperCase());
+    await expect(review).toContainText(V.goods.toUpperCase());
 
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });

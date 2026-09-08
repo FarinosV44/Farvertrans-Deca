@@ -106,7 +106,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.goto("/panel");
     await expect(page.getByRole("heading", { name: "Últimos documentos" })).toBeVisible();
     await expect(
-      page.getByText("Almacén Turia — Valencia → Plataforma Norte — Madrid").first(),
+      page.getByText("ALMACÉN TURIA — VALENCIA → PLATAFORMA NORTE — MADRID").first(),
     ).toBeVisible();
 
     await page.goto("/panel/historico");
@@ -127,8 +127,8 @@ test.describe("BUILD 10 — registered workspace", () => {
     await createDecaAuthed(page);
     await page.goto("/panel/historico");
 
-    // carrier filter (populated from real history)
-    await page.selectOption("#carrier", "Transportes Pérez SL");
+    // carrier filter (populated from real history — uppercase per #86 p3 / FIX)
+    await page.selectOption("#carrier", "TRANSPORTES PÉREZ SL");
     await page.getByRole("button", { name: "Filtrar" }).click();
     await expect(page.getByText("1 documento")).toBeVisible();
 
@@ -144,7 +144,7 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.goto("/panel/historico");
     const row = page
       .getByTestId("historico-table")
-      .locator("tr", { hasText: "Almacén Turia — Valencia → Plataforma Norte — Madrid" });
+      .locator("tr", { hasText: "ALMACÉN TURIA — VALENCIA → PLATAFORMA NORTE — MADRID" });
     await row.getByRole("link", { name: "Detalle" }).click();
     await expect(page).toHaveURL(/\/panel\/deca\/[a-z0-9]+$/i);
     await expect(page.getByRole("heading", { name: "Historial de versiones" })).toBeVisible();
@@ -238,7 +238,7 @@ test.describe("BUILD 10 — registered workspace", () => {
       .click();
     await expect(page.getByText("HABITUAL CARGAS SL")).toHaveCount(0);
     await page.goto("/panel/historico");
-    await expect(page.getByTestId("historico-table")).toContainText("Transportes Pérez SL");
+    await expect(page.getByTestId("historico-table")).toContainText("TRANSPORTES PÉREZ SL");
   });
 
   test("PRODUCT #56: Ctrl+K opens the command palette and navigates to a matching DeCA", async ({
@@ -252,12 +252,16 @@ test.describe("BUILD 10 — registered workspace", () => {
     await page.keyboard.press("Control+k");
     await expect(page.getByTestId("command-palette-input")).toBeVisible();
 
-    // searching by carrier name surfaces the DeCA
+    // searching by carrier name surfaces the DeCA (results render uppercase, #86 p3 / FIX)
     await page.getByTestId("command-palette-input").fill(DECA.carrier.name);
-    await expect(page.getByTestId("command-palette-results")).toContainText(DECA.carrier.name);
-    await expect(page.getByTestId("command-palette-results")).toContainText(DECA.loadLocation.name);
     await expect(page.getByTestId("command-palette-results")).toContainText(
-      DECA.unloadLocation.name,
+      DECA.carrier.name.toUpperCase(),
+    );
+    await expect(page.getByTestId("command-palette-results")).toContainText(
+      DECA.loadLocation.name.toUpperCase(),
+    );
+    await expect(page.getByTestId("command-palette-results")).toContainText(
+      DECA.unloadLocation.name.toUpperCase(),
     );
 
     // selecting a result navigates to that DeCA's detail page

@@ -217,7 +217,7 @@ test.describe("#29 — DeCA generation reliability", () => {
     await expect(failure).toBeVisible();
     await expect(page.getByTestId("failure-code")).toHaveText("AB34CD");
     // The user's work is intact — the review still holds every value.
-    await expect(page.getByTestId("review-summary")).toContainText(PAYLOAD.goods);
+    await expect(page.getByTestId("review-summary")).toContainText(PAYLOAD.goods.toUpperCase());
     await expect(page.locator("#tractorPlate")).toHaveValue(/1234/);
 
     // Retrying goes through to the real endpoint and succeeds.

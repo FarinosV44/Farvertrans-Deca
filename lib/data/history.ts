@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
 import { formatLocationShort, type TransportLocation } from "@/lib/deca/location";
+import { toDisplayDeca } from "@/lib/deca/display";
 import { rowMatches, type HistoryFilters } from "./history-filter";
 
 export type { HistoryFilters } from "./history-filter";
@@ -59,7 +60,11 @@ export async function listHistory(
   const rows: HistoryRow[] = [];
   for (const d of decas) {
     if (!d.currentVersion) continue;
-    const data = (d.currentVersion.dataJson ?? {}) as Data;
+    const raw = (d.currentVersion.dataJson ?? {}) as Data;
+    // #86 p3 / FIX: every visible textual field of the DeCA shows uppercase,
+    // uniformly with the PDF / detail / inspección. Filtering below is
+    // case-insensitive, so it works on the normalised values too.
+    const data = toDisplayDeca(raw as Record<string, unknown>) as Data;
     const row: HistoryRow = {
       id: d.id,
       reference: `DECA-${d.currentVersion.token.slice(0, 8).toUpperCase()}`,

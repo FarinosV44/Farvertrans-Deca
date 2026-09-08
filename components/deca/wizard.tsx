@@ -8,6 +8,7 @@ import { validateDeca } from "@/lib/deca/validate";
 import { leadSchema } from "@/lib/deca/lead";
 import { track, getSessionId } from "@/lib/analytics/client";
 import { looksLikeSpanishPlate } from "@/lib/deca/plate";
+import { upperText } from "@/lib/text/normalize";
 import { clientFingerprint, solveChallenge } from "@/lib/abuse/client";
 import { useT } from "@/lib/i18n/client";
 
@@ -225,6 +226,12 @@ function toPayload(f: FormState) {
 function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: number) => void }) {
   const t = useT();
   const r = t.crear.review;
+  // #86 p3 / FIX: the review mirrors the generated document, so every textual
+  // value shows uppercase here too. NIF, postal code, dates and weight keep
+  // their normal format.
+  const verbatim = new Set([r.nif, r.postalCode, r.loadDate, r.unloadDate, r.weight]);
+  const disp = (label: string, value: string) =>
+    verbatim.has(label) || !value ? value : upperText(value);
   const blocks: { title: string; step: number; key: string; rows: [string, string][] }[] = [
     {
       title: r.shipperTitle,
@@ -334,7 +341,7 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
               {b.rows.map(([k, v]) => (
                 <div key={k} className="flex flex-col">
                   <dt className="text-xs font-medium text-[var(--color-text-muted)]">{k}</dt>
-                  <dd className="text-sm break-words">{v || "—"}</dd>
+                  <dd className="text-sm break-words">{disp(k, v) || "—"}</dd>
                 </div>
               ))}
             </dl>

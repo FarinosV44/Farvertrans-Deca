@@ -87,6 +87,10 @@ export async function buildAuthenticationOptions(opts: {
     rpID,
     allowCredentials: opts.allowCredentialIds,
     userVerification: "preferred",
+    // #91: an explicit ceiling the browser passes to the authenticator so the
+    // ceremony cannot sit on "connecting…" indefinitely. The client also races
+    // it against its own timeout as a backstop.
+    timeout: 60_000,
   });
 }
 

@@ -4,6 +4,7 @@ import { publicEnv } from "@/lib/env";
 import { isPubliclyAvailable } from "@/lib/deca/deactivation";
 import type { DecaPayloadData } from "@/lib/data/history";
 import { DECA_ROLES } from "@/lib/deca/roles";
+import { toDisplayDeca } from "@/lib/deca/display";
 
 /**
  * The full data behind the post-generation document cockpit (PRODUCT #36) —
@@ -21,7 +22,11 @@ export type CockpitVersion = {
   author: string | null;
   isCurrent: boolean;
   publicUrl: string;
+  /** UPPERCASE-normalised for display (#86 p3 / FIX) — every view of the DeCA. */
   data: DecaPayloadData;
+  /** The payload AS STORED (original casing) — for re-filling forms (e.g. "guardar
+   * como plantilla"), never for display. */
+  rawData: DecaPayloadData;
 };
 
 export type CockpitData = {
@@ -200,7 +205,10 @@ export async function getDecaCockpit(
     author: v.createdByUserId ? (emailById.get(v.createdByUserId) ?? null) : null,
     isCurrent: v.id === deca.currentVersionId,
     publicUrl: `${base}/d/${v.token}`,
-    data: (v.dataJson ?? {}) as DecaPayloadData,
+    // #86 p3 / FIX: `data` uppercases every visible textual field, uniformly with
+    // the PDF and Modo Inspección; `rawData` keeps the stored casing for form re-fill.
+    data: toDisplayDeca((v.dataJson ?? {}) as Record<string, unknown>) as DecaPayloadData,
+    rawData: (v.dataJson ?? {}) as DecaPayloadData,
   });
 
   const versions = deca.versions.map(toVersion);

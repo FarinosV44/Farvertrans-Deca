@@ -99,10 +99,11 @@ test("one tap from the detail page → a clean inspection view of the version in
   await expect(card).toBeVisible();
   await expect(page.getByTestId("inspection-status")).toHaveText("VIGENTE");
   await expect(card).toContainText("Versión 1 · en vigor");
-  await expect(card).toContainText(V.shipperName);
-  await expect(card).toContainText(V.carrierName);
-  await expect(card).toContainText("Valencia");
-  await expect(card).toContainText("Madrid");
+  // #86 p3 / FIX (D-150): Modo Inspección shows the same uppercase as the PDF.
+  await expect(card).toContainText(V.shipperName.toUpperCase());
+  await expect(card).toContainText(V.carrierName.toUpperCase());
+  await expect(card).toContainText("VALENCIA");
+  await expect(card).toContainText("MADRID");
   await expect(card).toContainText("1234BCD"); // plates are stored normalised
   // a real QR
   await expect(card.locator('img[alt*="QR"]')).toHaveAttribute("src", /^data:image\/png;base64,/);
@@ -144,7 +145,7 @@ test("after a correction the inspection view follows the version in force, not t
   await page.goto(`/panel/deca/${decaId}/inspeccion`);
   await expect(page.getByTestId("inspection-status")).toHaveText("CORREGIDO");
   await expect(page.getByTestId("inspection-card")).toContainText("Versión 2 · en vigor");
-  await expect(page.getByTestId("inspection-card")).toContainText("Zaragoza");
+  await expect(page.getByTestId("inspection-card")).toContainText("ZARAGOZA");
   const newHref = await page.getByTestId("inspection-open-pdf").getAttribute("href");
   expect(newHref).not.toBe(oldHref);
 });
