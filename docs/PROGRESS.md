@@ -1623,3 +1623,39 @@ hard-navigates (`window.location.assign`) after a successful save; shows a clear
 administración caducada, vuelve a verificar" message on a 404 (stale admin 2FA) instead of a generic
 error; `force-dynamic` on `/admin/contenido` + `/admin/contenido/nuevo`. Also stabilises the
 documented `content-cms.spec.ts:60` flake. Needs the Hostinger redeploy to reach production.
+
+## D-152 (cont.) — #87/#88 merged to `main`; #89 + #90 built
+- **#87 + #88 merged to `main`** (`48176d2`, 2026-09-08, user: "main y haz la migracion luego
+  sigue") + `develop` fast-forwarded. Migration `20260908205105_commercial_opportunity` **still
+  pending on production** — needs the DB connection string from the user (not in this session's
+  `.env`, which is localhost).
+
+### #89 + #90 — conversion tracking + KPIs + internal alerts (D-154, 2026-09-08/09) — on `develop`
+- **#89** — `CommercialOpportunityState` +4 states (`not_interested`, `awaiting_load`,
+  `first_load_offered`, `first_load_awarded`); `CommercialActivityLog` (append-only who/when/from→to/
+  channel/note/route) + `convertedByUserId`/`convertedAt` + manual outcome fields (`internalRef`,
+  `firstPorteDate`, `loadsGenerated`, `revenueEur`, `marginEur` — whole euros) on
+  `CommercialOpportunity`. `setOpportunityState` now logs every action + records the internal
+  commercial operator on conversion (kept separate from the acquisition/referral operator).
+  `lib/commercial/kpis.ts` — `commercialKpis(filter)` (detected/contacted/interested/converted/rate/
+  loads/revenue/margin + funnel + attribution split by acquisition operator vs commercial operator)
+  + `recentCommercialActivity` / `carrierCommercialActivity`. New `/admin/comercial` page.
+  `opportunity-actions` gains a channel select + a conversion-outcome mini-form; the #88 ficha gets
+  a "Historial comercial" list.
+- **#90** — `CommercialAlert` + `CommercialAlertConfig` models. `lib/commercial/alert-rules.ts` —
+  pure `evaluateAlerts` (10 rules: upcoming priority zone, first-time corridor, multiple recent
+  same zone, route repeated 3×, growing activity, interesting uncontacted, stale follow-up,
+  reactivated, referral first DeCA, acquired recurring), de-duplicated by company+kind+week bucket.
+  `lib/commercial/alerts.ts` — `refreshAlerts` (recompute + reconcile; never resurrects
+  reviewed/dismissed), config get/save, list/count/setStatus. `/admin/alertas-comerciales` page
+  (recompute on load, config form, Revisada/Descartar) + `PATCH /api/admin/alertas-comerciales/[id]`
+  + `POST /api/admin/alertas-comerciales/config`. Only consented companies.
+- Nav: "Alertas comerciales" + "Panel comercial" under Crecimiento y contenido.
+- **Migration `20260908213756_commercial_conversion_and_alerts` — LOCAL DEV ONLY.**
+- Gate: typecheck + lint + prettier + **289 unit** (16 new: kpis 4, alert-rules 12) + production
+  build + full e2e **231 passed / 3** (all 3 = `internalPage`-contention flakes: `admin-growth:78`,
+  `content-cms:60`, `commercial-intelligence:83` — every one passes isolated / at `--workers=1`).
+- **On `develop`** (`5d4e3f3`, `567b5e9`). **NOT merged to `main`** yet — see next action.
+- **NEXT:** (1) get the production DB connection string from the user and apply the 2 pending
+  migrations (`20260908205105`, `20260908213756`); (2) merge `develop` → `main`; (3) beat-1 comments
+  on #87–#90; (4) the user redeploys Hostinger.
