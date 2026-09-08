@@ -551,6 +551,8 @@ model SavedCompany {
   name         String
   nif          String?
   address      String?
+  postalCode   String?        @map("postal_code")
+  city         String?
   contactName  String?        @map("contact_name")
   contactPhone String?        @map("contact_phone")
   contactEmail String?        @map("contact_email")

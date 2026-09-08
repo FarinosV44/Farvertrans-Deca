@@ -45,6 +45,10 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **Latest: #85 pre-launch UX batch (D-148) — on `develop`, not `main`.** WhatsApp channel label,
+  `SavedCompany` postal/city (migration `20260908170252`), discreet "Gratis durante 2026" landing
+  message. See the `#85` section near the end of this file. Keel updated to v5.20.0 this session
+  (lock stamp kept at v5.19.2 per the user).
 - **Done: BUILD 05–15.** Core anonymous flow (05–09) + registered workspace (10) + acquisition
   tracking (11) + operator dashboard (12) + sharing/versioning/abuse (13) + SEO cluster (14) + launch
   gate (15). All green: 47 unit + 57 e2e (6 compliance R-1…R-13 + axe on every public screen +
@@ -1491,3 +1495,24 @@ channel/contact ONLY) + `CommercialConsentEvent` audit; drafted legal sections
   (1) asesoría review of the `LEGAL REVIEW PENDING` privacy/terms sections; (2) redeploy Hostinger
   so the #84 code runs; (3) rotate the DB password + other secrets. No further code work on #84
   unless the legal review returns changes.
+
+### #85 [UX] pre-launch batch — WhatsApp channel + saved-company address + launch pricing (D-148, 2026-09-08) — on `develop`
+Three independent adjustments from GitHub issue #85. Batched question answers (user): keep the Keel
+lock stamp at v5.19.2 (Keel v5.20.0 shipped this session — chaining-only, no reconciliation for a
+`Chaining: off` project; the 3 skill copies were updated); pricing message scope "discreto";
+saved-company postal/city optional.
+- **Part 1 — "Teléfono" → "WhatsApp"** as the commercial-treatment contact channel. Label only —
+  the stored `CommercialContactChannel` enum keeps `phone`. All 8 dictionaries + new
+  `commercialChannelLabelEs()` for the ES-only admin `/admin/tratamiento-comercial`.
+- **Part 2 — `SavedCompany` + `postalCode` + `city`** (migration `20260908170252_saved_company_postal_city`,
+  additive nullable). Optional in `savedCompanySchema` (mirrors the DeCA party since #75/D-145).
+  `SavedDataManager` form + list; wizard party autofill fills CP + población from the picked saved
+  company. Editing stays the delete/re-add pattern (no per-record edit UI exists for any saved kind).
+- **Part 3 — "Gratis durante 2026 · Fase de lanzamiento"** discreet pill on the landing hero
+  (`launch-pricing-badge`); reworded `benefits[0].body` (dropped "sin plan de pago"), FAQ,
+  `finalCtaMicrocopy`, `auth.footNote` — all 8 dicts, anchored to 2026 → suscripción en 2027. No
+  panel pricing UI.
+- Gate: typecheck + lint (pre-existing warnings only) + prettier + **205 unit** (4 new) + keel:verify
+  green. Targeted e2e (`commercial-consent`, `master-data`, `landing`) — see test-points.
+- **On `develop` only.** Needs (user): merge → `main`; `prisma migrate deploy` for
+  `20260908170252` on production; beat-1/beat-3 comments; then the user closes #85.

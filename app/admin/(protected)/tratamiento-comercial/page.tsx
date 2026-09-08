@@ -4,6 +4,7 @@ import {
   recentCommercialEvents,
 } from "@/lib/admin/commercial";
 import { PageHeader, Table, Row, Cell, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
+import { commercialChannelLabelEs } from "@/lib/commercial/types";
 
 /**
  * Commercial-treatment visibility (#84). Read-only: the mode split, the
@@ -45,7 +46,7 @@ export default async function AdminTratamientoComercial() {
                 <Cell>{s.companyName}</Cell>
                 <Cell>{s.destination}</Cell>
                 <Cell mono>{s.availabilityDate.toISOString().slice(0, 10)}</Cell>
-                <Cell>{s.channel}</Cell>
+                <Cell>{commercialChannelLabelEs(s.channel)}</Cell>
                 <Cell>{s.status}</Cell>
                 <Cell mono>{t(s.preparedAt)}</Cell>
               </Row>
@@ -65,7 +66,7 @@ export default async function AdminTratamientoComercial() {
                 <Cell>{e.companyName}</Cell>
                 <Cell>{e.kind}</Cell>
                 <Cell>{e.mode ?? "—"}</Cell>
-                <Cell>{e.channel ?? "—"}</Cell>
+                <Cell>{commercialChannelLabelEs(e.channel)}</Cell>
                 <Cell mono>{e.legalVersion}</Cell>
                 <Cell mono>{t(e.createdAt)}</Cell>
               </Row>

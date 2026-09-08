@@ -41,6 +41,7 @@ export const it = {
       cta: "CREA UN DECA GRATIS",
       ctaSecondary: "ACCEDI",
       noCardNote: "Senza carta · Nessun limite di documenti durante la fase di lancio.",
+      launchBadge: "Gratis per tutto il 2026 · Fase di lancio",
     },
     trustRow: [
       "Nessuna registrazione per il tuo primo DeCA",
@@ -91,7 +92,7 @@ export const it = {
     benefits: [
       {
         title: "Gratis",
-        body: "Nessun limite di DeCA durante la fase di lancio. Senza carta, senza piano di pagamento.",
+        body: "Nessun limite di DeCA durante la fase di lancio del 2026. Senza carta. Dal 2027, in abbonamento.",
       },
       {
         title: "Veloce",
@@ -230,7 +231,7 @@ export const it = {
           },
           {
             q: `${BRAND.name} è gratis?`,
-            a: "Sì. Puoi creare e scaricare documenti senza carta e senza limiti fino al 31 dicembre 2026.",
+            a: "Sì. Puoi creare e scaricare documenti senza carta e senza limiti fino al 31 dicembre 2026. Dal 2027, DeCA Profesional funzionerà in abbonamento.",
           },
           {
             q: "Posso generare tutti i documenti che voglio?",
@@ -242,7 +243,7 @@ export const it = {
     finalCtaHeading: "Inizia ora. Senza carta.",
     finalCtaSubhead:
       "Crea il tuo DeCA, salva i tuoi dati abituali e inizia a lavorare da un unico spazio.",
-    finalCtaMicrocopy: "Gratis durante la fase di lancio · Senza carta",
+    finalCtaMicrocopy: "Gratis per tutto il 2026 · Fase di lancio · Senza carta",
   },
   auth: {
     heading: {
@@ -328,7 +329,7 @@ export const it = {
       toLogin: "Accedi",
       toRegister: "Crea il tuo account gratuito",
     },
-    footNote: "Gratis · Senza carta · I tuoi DeCA in un unico posto",
+    footNote: "Gratis per tutto il 2026 · Senza carta · I tuoi DeCA in un unico posto",
     errors: {
       acceptTerms: "Devi accettare i Termini e Condizioni e l'Informativa sulla Privacy.",
       generic: "Impossibile completare. Riprova.",
@@ -440,16 +441,16 @@ export const it = {
           "Per ogni nuovo DeCA viene preparata la scheda di disponibilità. Puoi disattivarla per un trasporto specifico prima di emetterlo.",
       },
       channelLegend: "Canale di contatto autorizzato",
-      channels: { email: "E-mail", phone: "Telefono", both: "E-mail e telefono" },
+      channels: { email: "E-mail", phone: "WhatsApp", both: "E-mail e WhatsApp" },
       channelEmailLabel: "E-mail per le proposte",
-      channelPhoneLabel: "Telefono per le proposte",
+      channelPhoneLabel: "WhatsApp per le proposte",
       previewTitle: "Dati che verranno condivisi",
       previewFields: {
         carrierName: "Azienda o nome del trasportatore",
         destination: "Destinazione o zona di disponibilità del veicolo",
         availabilityDate: "Data stimata di arrivo o disponibilità",
         contactEmail: "Indirizzo e-mail autorizzato",
-        contactPhone: "Numero di telefono autorizzato",
+        contactPhone: "Numero WhatsApp autorizzato",
       },
       previewNever:
         "L'origine, il caricatore, l'indirizzo di carico, la merce, il prezzo, le targhe, il conducente e il documento, l'URL o il QR del DeCA non vengono mai condivisi.",
@@ -673,7 +674,7 @@ export const it = {
       destination: "Destinazione o zona di disponibilità",
       date: "Data stimata di disponibilità",
       channel: "Canale di contatto",
-      channels: { email: "E-mail", phone: "Telefono", both: "E-mail e telefono" },
+      channels: { email: "E-mail", phone: "WhatsApp", both: "E-mail e WhatsApp" },
       previewTitle: "Verrà inviato solo:",
       manage: "Modifica la mia preferenza generale in Privacy",
     },

@@ -119,6 +119,8 @@ export type SavedData = {
     name: string;
     nif: string | null;
     address: string | null;
+    postalCode: string | null;
+    city: string | null;
     role: "shipper" | "carrier" | "both";
   }[];
   vehicles: {
@@ -1076,6 +1078,8 @@ export function CrearWizard({
                           shipperName: c.name,
                           shipperNif: c.nif ?? "",
                           shipperAddress: c.address ?? f.shipperAddress,
+                          shipperPostalCode: c.postalCode ?? f.shipperPostalCode,
+                          shipperCity: c.city ?? f.shipperCity,
                         }));
                         setPicked((p) => ({ ...p, shipperId: c.id }));
                       }
@@ -1197,6 +1201,8 @@ export function CrearWizard({
                           carrierName: c.name,
                           carrierNif: c.nif ?? "",
                           carrierAddress: c.address ?? f.carrierAddress,
+                          carrierPostalCode: c.postalCode ?? f.carrierPostalCode,
+                          carrierCity: c.city ?? f.carrierCity,
                         }));
                         setPicked((p) => ({ ...p, carrierId: c.id }));
                       }

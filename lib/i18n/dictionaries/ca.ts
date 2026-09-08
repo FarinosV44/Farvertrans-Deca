@@ -41,6 +41,7 @@ export const ca = {
       cta: "CREA UN DECA GRATIS",
       ctaSecondary: "ENTRA",
       noCardNote: "Sense targeta · Sense límit de documents durant la fase de llançament.",
+      launchBadge: "Gratis durant el 2026 · Fase de llançament",
     },
     trustRow: [
       "Sense registre per al teu primer DeCA",
@@ -91,7 +92,7 @@ export const ca = {
     benefits: [
       {
         title: "Gratis",
-        body: "Sense límit de DeCA durant la fase de captació. Sense targeta, sense pla de pagament.",
+        body: "Sense límit de DeCA durant la fase de llançament de 2026. Sense targeta. A partir del 2027, mitjançant subscripció.",
       },
       {
         title: "Ràpid",
@@ -229,7 +230,7 @@ export const ca = {
           },
           {
             q: `És gratis ${BRAND.name}?`,
-            a: "Sí. Pots crear i descarregar documents sense targeta i sense límit fins al 31 de desembre de 2026.",
+            a: "Sí. Pots crear i descarregar documents sense targeta i sense límit fins al 31 de desembre de 2026. A partir del 2027, DeCA Profesional funcionarà mitjançant subscripció.",
           },
           {
             q: "Puc generar tots els documents que vulgui?",
@@ -241,7 +242,7 @@ export const ca = {
     finalCtaHeading: "Comença ara. Sense targeta.",
     finalCtaSubhead:
       "Crea el teu DeCA, desa les teves dades habituals i comença a treballar des d'un únic espai.",
-    finalCtaMicrocopy: "Gratis durant la fase de llançament · Sense targeta",
+    finalCtaMicrocopy: "Gratis durant el 2026 · Fase de llançament · Sense targeta",
   },
   auth: {
     heading: {
@@ -327,7 +328,7 @@ export const ca = {
       toLogin: "Inicia sessió",
       toRegister: "Crea el teu compte gratis",
     },
-    footNote: "Gratis · Sense targeta · Els teus DeCA en un sol lloc",
+    footNote: "Gratis durant el 2026 · Sense targeta · Els teus DeCA en un sol lloc",
     errors: {
       acceptTerms: "Has d'acceptar els Termes i Condicions i la Política de Privacitat.",
       generic: "No s'ha pogut completar. Torna-ho a intentar.",
@@ -438,16 +439,16 @@ export const ca = {
           "Es prepara la fitxa de disponibilitat per a cada DeCA nou. Ho pots desactivar en un port concret abans d'emetre'l.",
       },
       channelLegend: "Canal de contacte autoritzat",
-      channels: { email: "Correu electrònic", phone: "Telèfon", both: "Correu i telèfon" },
+      channels: { email: "Correu electrònic", phone: "WhatsApp", both: "Correu i WhatsApp" },
       channelEmailLabel: "Correu per a propostes",
-      channelPhoneLabel: "Telèfon per a propostes",
+      channelPhoneLabel: "WhatsApp per a propostes",
       previewTitle: "Dades que es compartiran",
       previewFields: {
         carrierName: "Empresa o nom del transportista",
         destination: "Destinació o zona de disponibilitat del vehicle",
         availabilityDate: "Data estimada d'arribada o disponibilitat",
         contactEmail: "Adreça de correu autoritzada",
-        contactPhone: "Número de telèfon autoritzat",
+        contactPhone: "Número de WhatsApp autoritzat",
       },
       previewNever:
         "Mai no es comparteix l'origen, el carregador, l'adreça de càrrega, la mercaderia, el preu, les matrícules, el conductor ni el document, l'URL o el QR del DeCA.",
@@ -674,7 +675,7 @@ export const ca = {
       destination: "Destinació o zona de disponibilitat",
       date: "Data estimada de disponibilitat",
       channel: "Canal de contacte",
-      channels: { email: "Correu electrònic", phone: "Telèfon", both: "Correu i telèfon" },
+      channels: { email: "Correu electrònic", phone: "WhatsApp", both: "Correu i WhatsApp" },
       previewTitle: "Només s'enviarà:",
       manage: "Canvia la meva preferència general a Privadesa",
     },

@@ -32,3 +32,21 @@ export function sharedFieldKeys(channel: CommercialContactChannel | null): Share
   if (channel === "phone" || channel === "both") keys.push("contactPhone");
   return keys;
 }
+
+/**
+ * Spanish display labels for the authorised contact channel (#85). The admin
+ * area is ES-only by convention (D-117); the user-facing settings form and the
+ * wizard read their labels from the i18n dictionaries instead. The `phone`
+ * value is shown as "WhatsApp" (#85) — the stored enum value is unchanged.
+ */
+const COMMERCIAL_CHANNEL_LABEL_ES: Record<CommercialContactChannel, string> = {
+  email: "Correo electrónico",
+  phone: "WhatsApp",
+  both: "Correo y WhatsApp",
+};
+
+/** ES label for a stored channel value; echoes an unknown value unchanged. */
+export function commercialChannelLabelEs(channel: string | null | undefined): string {
+  if (!channel) return "—";
+  return COMMERCIAL_CHANNEL_LABEL_ES[channel as CommercialContactChannel] ?? channel;
+}

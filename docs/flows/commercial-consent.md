@@ -30,7 +30,9 @@ issue. Free use of the product is never conditioned on any of this.
   absent for team joins.
 - **`/panel/privacidad`** (`app/panel/privacidad/page.tsx` +
   `components/app/commercial-treatment-settings.tsx`) — the full control: three
-  mode radios, channel (`email`/`phone`/`both`) + the contact value, an exact
+  mode radios, channel (`email`/`phone`/`both`; the `phone` value is shown to
+  users as "WhatsApp" since #85 — the stored enum is unchanged) + the contact
+  value, an exact
   "datos que se compartirán" preview (`sharedFieldKeys()`), the acceptance date,
   a "Más información" disclosure, and a "Retirar autorización" button. Owner-only
   editable; members read-only. → `POST /api/company/consent`

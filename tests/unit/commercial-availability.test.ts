@@ -5,6 +5,7 @@ vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 
 import { buildAvailabilityPayload } from "@/lib/commercial/availability";
 import { sharedFieldKeys, type CommercialTreatmentState } from "@/lib/consent";
+import { commercialChannelLabelEs } from "@/lib/commercial/types";
 
 const deca = {
   carrier: { name: "Transportes Pérez SL" },
@@ -152,5 +153,17 @@ describe("sharedFieldKeys", () => {
     expect(sharedFieldKeys("both")).toContain("contactEmail");
     expect(sharedFieldKeys("both")).toContain("contactPhone");
     expect(sharedFieldKeys(null)).toEqual(["carrierName", "destination", "availabilityDate"]);
+  });
+});
+
+describe("commercialChannelLabelEs (#85 — WhatsApp replaces the 'Teléfono' label)", () => {
+  it("shows the phone channel as WhatsApp and never as 'Teléfono'", () => {
+    expect(commercialChannelLabelEs("phone")).toBe("WhatsApp");
+    expect(commercialChannelLabelEs("both")).toBe("Correo y WhatsApp");
+    expect(commercialChannelLabelEs("email")).toBe("Correo electrónico");
+    expect(commercialChannelLabelEs(null)).toBe("—");
+    expect(["phone", "both", "email"].map(commercialChannelLabelEs).join(" ")).not.toMatch(
+      /tel[eé]fono/i,
+    );
   });
 });

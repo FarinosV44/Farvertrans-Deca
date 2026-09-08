@@ -48,6 +48,7 @@ export const eu = {
       cta: "SORTU DECA DOAN",
       ctaSecondary: "SARTU",
       noCardNote: "Txartelik gabe · Dokumentu-mugarik gabe abiaraztearen fasean zehar.",
+      launchBadge: "2026an doan · Abiarazte-fasea",
     },
     trustRow: [
       "Erregistrorik gabe zure lehen DeCArako",
@@ -98,7 +99,7 @@ export const eu = {
     benefits: [
       {
         title: "Doan",
-        body: "DeCA mugarik gabe erakartze-fasean zehar. Txartelik gabe, ordainketa-planik gabe.",
+        body: "DeCA mugarik gabe 2026ko abiarazte-fasean. Txartelik gabe. 2027tik aurrera, harpidetza bidez.",
       },
       {
         title: "Azkarra",
@@ -237,7 +238,7 @@ export const eu = {
           },
           {
             q: `Doakoa al da ${BRAND.name}?`,
-            a: "Bai. Dokumentuak sortu eta deskargatu ditzakezu txartelik eta mugarik gabe 2026ko abenduaren 31ra arte.",
+            a: "Bai. Dokumentuak sortu eta deskargatu ditzakezu txartelik eta mugarik gabe 2026ko abenduaren 31ra arte. 2027tik aurrera, DeCA Profesional harpidetza bidez funtzionatuko du.",
           },
           {
             q: "Nahi ditudan dokumentu guztiak sortu ditzaket?",
@@ -249,7 +250,7 @@ export const eu = {
     finalCtaHeading: "Hasi orain. Txartelik gabe.",
     finalCtaSubhead:
       "Sortu zure DeCA, gorde zure ohiko datuak eta hasi lanean espazio bakar batetik.",
-    finalCtaMicrocopy: "Doan abiaraztearen fasean · Txartelik gabe",
+    finalCtaMicrocopy: "2026an doan · Abiarazte-fasea · Txartelik gabe",
   },
   auth: {
     heading: {
@@ -335,7 +336,7 @@ export const eu = {
       toLogin: "Hasi saioa",
       toRegister: "Sortu zure kontu doakoa",
     },
-    footNote: "Doakoa · Txartelik gabe · Zure DeCAak leku bakarrean",
+    footNote: "2026an doan · Txartelik gabe · Zure DeCAak leku bakarrean",
     errors: {
       acceptTerms:
         "Baldintzak eta Erabilera Baldintzak eta Pribatutasun Politika onartu behar dituzu.",
@@ -447,16 +448,16 @@ export const eu = {
           "Eskuragarritasun-fitxa DeCA berri bakoitzerako prestatzen da. Garraio jakin batean desaktiba dezakezu jaulki aurretik.",
       },
       channelLegend: "Baimendutako harremanetarako kanala",
-      channels: { email: "Posta elektronikoa", phone: "Telefonoa", both: "Posta eta telefonoa" },
+      channels: { email: "Posta elektronikoa", phone: "WhatsApp", both: "Posta eta WhatsApp" },
       channelEmailLabel: "Proposamenetarako posta",
-      channelPhoneLabel: "Proposamenetarako telefonoa",
+      channelPhoneLabel: "Proposamenetarako WhatsApp",
       previewTitle: "Partekatuko diren datuak",
       previewFields: {
         carrierName: "Enpresa edo garraiolariaren izena",
         destination: "Ibilgailuaren helmuga edo eskuragarritasun-eremua",
         availabilityDate: "Iristeko edo eskuragarri egoteko data estimatua",
         contactEmail: "Baimendutako helbide elektronikoa",
-        contactPhone: "Baimendutako telefono-zenbakia",
+        contactPhone: "Baimendutako WhatsApp zenbakia",
       },
       previewNever:
         "Ez dira inoiz partekatzen jatorria, kargatzailea, kargatzeko helbidea, salgaia, prezioa, matrikulak, gidaria, ezta DeCA dokumentua, URLa edo QRa ere.",
@@ -686,7 +687,7 @@ export const eu = {
       destination: "Helmuga edo eskuragarritasun-eremua",
       date: "Eskuragarritasun-data estimatua",
       channel: "Harremanetarako kanala",
-      channels: { email: "Posta elektronikoa", phone: "Telefonoa", both: "Posta eta telefonoa" },
+      channels: { email: "Posta elektronikoa", phone: "WhatsApp", both: "Posta eta WhatsApp" },
       previewTitle: "Hau bakarrik bidaliko da:",
       manage: "Aldatu nire hobespen orokorra Pribatutasunean",
     },

@@ -41,6 +41,7 @@ export const fr = {
       cta: "CRÉER UN DECA GRATUIT",
       ctaSecondary: "CONNEXION",
       noCardNote: "Sans carte · Sans limite de documents pendant la phase de lancement.",
+      launchBadge: "Gratuit en 2026 · Phase de lancement",
     },
     trustRow: [
       "Sans inscription pour votre premier DeCA",
@@ -91,7 +92,7 @@ export const fr = {
     benefits: [
       {
         title: "Gratuit",
-        body: "Aucune limite de DeCA pendant la phase de lancement. Sans carte, sans abonnement.",
+        body: "Aucune limite de DeCA pendant la phase de lancement 2026. Sans carte. À partir de 2027, sur abonnement.",
       },
       {
         title: "Rapide",
@@ -230,7 +231,7 @@ export const fr = {
           },
           {
             q: `${BRAND.name} est-il gratuit ?`,
-            a: "Oui. Vous pouvez créer et télécharger des documents sans carte et sans limite jusqu'au 31 décembre 2026.",
+            a: "Oui. Vous pouvez créer et télécharger des documents sans carte et sans limite jusqu'au 31 décembre 2026. À partir de 2027, DeCA Profesional fonctionnera sur abonnement.",
           },
           {
             q: "Puis-je générer autant de documents que je le souhaite ?",
@@ -242,7 +243,7 @@ export const fr = {
     finalCtaHeading: "Commencez maintenant. Sans carte.",
     finalCtaSubhead:
       "Créez votre DeCA, enregistrez vos données habituelles et commencez à travailler depuis un seul espace.",
-    finalCtaMicrocopy: "Gratuit pendant la phase de lancement · Sans carte",
+    finalCtaMicrocopy: "Gratuit en 2026 · Phase de lancement · Sans carte",
   },
   auth: {
     heading: {
@@ -328,7 +329,7 @@ export const fr = {
       toLogin: "Connectez-vous",
       toRegister: "Créez votre compte gratuit",
     },
-    footNote: "Gratuit · Sans carte · Vos DeCA au même endroit",
+    footNote: "Gratuit en 2026 · Sans carte · Vos DeCA au même endroit",
     errors: {
       acceptTerms:
         "Vous devez accepter les Conditions Générales et la Politique de Confidentialité.",
@@ -443,18 +444,18 @@ export const fr = {
       channelLegend: "Canal de contact autorisé",
       channels: {
         email: "Courrier électronique",
-        phone: "Téléphone",
-        both: "Courriel et téléphone",
+        phone: "WhatsApp",
+        both: "Courriel et WhatsApp",
       },
       channelEmailLabel: "Courriel pour les propositions",
-      channelPhoneLabel: "Téléphone pour les propositions",
+      channelPhoneLabel: "WhatsApp pour les propositions",
       previewTitle: "Données qui seront partagées",
       previewFields: {
         carrierName: "Entreprise ou nom du transporteur",
         destination: "Destination ou zone de disponibilité du véhicule",
         availabilityDate: "Date estimée d'arrivée ou de disponibilité",
         contactEmail: "Adresse électronique autorisée",
-        contactPhone: "Numéro de téléphone autorisé",
+        contactPhone: "Numéro WhatsApp autorisé",
       },
       previewNever:
         "L'origine, le chargeur, l'adresse de chargement, la marchandise, le prix, les plaques, le conducteur ainsi que le document, l'URL ou le QR du DeCA ne sont jamais partagés.",
@@ -685,8 +686,8 @@ export const fr = {
       channel: "Canal de contact",
       channels: {
         email: "Courrier électronique",
-        phone: "Téléphone",
-        both: "Courriel et téléphone",
+        phone: "WhatsApp",
+        both: "Courriel et WhatsApp",
       },
       previewTitle: "Seront envoyés uniquement :",
       manage: "Modifier ma préférence générale dans Confidentialité",
