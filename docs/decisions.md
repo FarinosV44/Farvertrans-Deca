@@ -4345,3 +4345,17 @@ remaining scope.
   separately if the above does not resolve it).
 - Tests: `admin-2fa.spec.ts` +2 (after verifying, reload + navigate + hit the challenge directly →
   stays in; the code input is always visible). `totp.test.ts` unchanged (window unchanged).
+
+### Slice 2+3 (parts 2 & 1, P1) — saved data editable + CP/población mandatory
+- **Part 1 — edit all 4 habitual kinds in place.** New `updateSaved()` in `lib/data/saved.ts`
+  (same per-kind schema as `createSaved`, `updateMany({where:{id,companyId}})` — keeps id / userId
+  (creator) / favorite / lastUsedAt) + `PATCH /api/saved/[kind]/[id]` (422 with `fields` on
+  invalid). `SavedDataManager` rebuilt: each row has an "Editar" toggle that opens the same form
+  pre-filled inline; on save it PATCHes and `router.refresh()`. `data-testid="edit-<kind>"`.
+- **Part 2 — CP + población mandatory on `SavedCompany`** (reverses D-148). `savedCompanySchema`
+  `postalCode`/`city` now `min(3)`/`min(2)` with explicit Spanish messages ("El código postal es
+  obligatorio." / "La población es obligatoria."), enforced frontend (per-field error shown under
+  the input, from the API's `fields`) and backend (422). DB columns stay nullable (existing rows);
+  new writes require them. Scoped to the habitual — the DeCA party fields stay optional (D-145).
+- Tests: `saved-schema.test.ts` rewritten (rejects a company with no CP / no city); `master-data.spec.ts`
+  +1 (edit in place, mandatory CP/città with per-field message, edited value flows to wizard autofill).

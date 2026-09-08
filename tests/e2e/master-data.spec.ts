@@ -62,7 +62,9 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     await page.getByTestId("c-role").selectOption("carrier");
     await page.fill("#c-name", "Transportista Habitual SL");
     await page.fill("#c-nif", "B22222222");
-    await page.fill("#c-address", "Calle Dos 2, Paterna");
+    await page.fill("#c-address", "Calle Dos 2");
+    await page.fill("#c-postal-code", "46980");
+    await page.fill("#c-city", "Paterna");
     await page
       .locator("section", { hasText: "Empresas y contactos" })
       .getByRole("button", { name: "Guardar" })
@@ -189,5 +191,49 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     await expect(page.getByText("Cargador Habitual SL")).toHaveCount(0);
     await page.goto("/panel/historico");
     await expect(page.getByTestId("historico-table")).toContainText("Cargador Habitual SL");
+  });
+
+  test("#86 p1/p2: a saved company can be edited in place; CP + población are mandatory", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/panel/datos");
+    const section = page.locator("section", { hasText: "Empresas y contactos" });
+    await section.getByText("Añadir").click();
+
+    // CP + población are mandatory (#86 part 2) — a clear per-field message
+    await page.fill("#c-name", "Habitual Edición SL");
+    await page.fill("#c-nif", "B33333333");
+    await page.fill("#c-address", "Calle Tres 3");
+    await section.getByRole("button", { name: "Guardar" }).click();
+    await expect(page.locator("#c-postal-code-error")).toBeVisible();
+    await expect(page.locator("#c-city-error")).toBeVisible();
+
+    await page.fill("#c-postal-code", "03001");
+    await page.fill("#c-city", "Alicante");
+    await section.getByRole("button", { name: "Guardar" }).click();
+    await expect(section.getByText("Habitual Edición SL")).toBeVisible();
+    await expect(section.locator("li", { hasText: "Habitual Edición SL" })).toContainText(
+      "Alicante",
+    );
+
+    // edit in place — no delete + recreate
+    await section
+      .locator("li", { hasText: "Habitual Edición SL" })
+      .getByTestId("edit-company")
+      .click();
+    await page.fill("#c-city", "Elche");
+    await page.fill("#c-postal-code", "03203");
+    await section.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(section.locator("li", { hasText: "Habitual Edición SL" })).toContainText("Elche");
+    await expect(section.getByText("Habitual Edición SL")).toHaveCount(1); // same row, not a new one
+
+    // the edited value flows into the wizard autofill
+    await page.goto("/crear");
+    await page
+      .getByTestId("autofill-shipper")
+      .selectOption({ label: "Habitual Edición SL — B33333333" });
+    await expect(page.locator("#shipperCity")).toHaveValue("Elche");
+    await expect(page.locator("#shipperPostalCode")).toHaveValue("03203");
   });
 });

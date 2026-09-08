@@ -17,10 +17,11 @@ export const savedCompanySchema = z.object({
   name: z.string().trim().min(2).max(200),
   nif: z.string().trim().min(3).max(20),
   address: z.string().trim().min(4).max(300),
-  // Optional, mirroring the DeCA party schema (#85 / D-145): a saved contact
-  // can carry its full domicilio so the "CP población" line is filled on reuse.
-  postalCode: z.string().trim().max(12).optional().default(""),
-  city: z.string().trim().max(120).optional().default(""),
+  // Mandatory (#86 part 2 — reverses #85/D-148's "optional"): a saved contact
+  // always carries its full domicilio so the DeCA "CP población" line is
+  // filled on reuse without retyping. Bounds match `savedLocationSchema`.
+  postalCode: z.string().trim().min(3, "El código postal es obligatorio.").max(12),
+  city: z.string().trim().min(2, "La población es obligatoria.").max(120),
   contactName: z.string().trim().max(200).optional().default(""),
   contactPhone: z.string().trim().max(40).optional().default(""),
   contactEmail: z.string().trim().max(200).optional().default(""),
