@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { contentWarnings, type ContentInput } from "@/lib/content/schema";
 
 type Values = ContentInput & { sourcesText: string; tagsText: string };
@@ -54,7 +53,6 @@ export function ContentEditor({
   id?: string;
   status?: string;
 }) {
-  const router = useRouter();
   const [v, setV] = useState<Values>({ ...EMPTY, ...initial });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,13 +116,24 @@ export function ContentEditor({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ ...payload(), _action: next }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.error?.message ?? "No se pudo guardar.");
+      const data = await res
+        .json()
+        .catch(() => ({}) as { id?: string; error?: { message?: string } });
+      if (!res.ok || !data?.id) {
+        setError(
+          data?.error?.message ??
+            (res.status === 404
+              ? "Tu sesión de administración ha caducado. Vuelve a verificar el código y reintenta."
+              : "No se pudo guardar."),
+        );
         return;
       }
-      router.push(`/admin/contenido/${data.id}`);
-      router.refresh();
+      // Hard navigation (not router.push): in production the App Router client
+      // cache can serve a stale/empty version of the destination after a soft
+      // navigation, so the freshly-saved content looked unsaved and the
+      // Publicar button never appeared (same class as D-149 / D-151).
+      const dest = `/admin/contenido/${data.id}`;
+      if (typeof window !== "undefined") window.location.assign(dest);
     } catch {
       setError("Sin conexión.");
     } finally {
