@@ -67,6 +67,11 @@ export const it = {
     freeValueSubhead:
       "Multiutente, cronologia, conservazione e riutilizzo dei dati inclusi senza costi durante la fase di lancio — funzioni che altre piattaforme DeCA fanno pagare a parte.",
     freeValueComingSoon: "Prossimamente",
+    integrationsCard: {
+      heading: "API / Integrazioni ERP",
+      body: "Collega il tuo TMS o ERP con DeCA Profesional quando ti serve.",
+      cta: "Richiedi un'integrazione",
+    },
     freeValueItems: [
       { label: "Genera DeCA" },
       { label: "PDF nativo + QR" },
@@ -78,8 +83,9 @@ export const it = {
       { label: "Luoghi abituali" },
       { label: "Duplicazione rapida" },
       { label: "Percorsi frequenti" },
+      { label: "Preferiti" },
+      { label: "Bozze automatiche" },
       { label: "Modalità ispezione" },
-      { label: "Accesso API / ERP" },
     ],
     productHeading: "Dal modulo al PDF con QR, senza passaggi superflui",
     benefits: [

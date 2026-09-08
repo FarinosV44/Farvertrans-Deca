@@ -74,6 +74,11 @@ export const eu = {
     freeValueSubhead:
       "Erabiltzaile anitz, historiala, zaintza eta datuen berrerabilera kostu gabe abioaldian — beste DeCA plataformek aparte kobratzen dituzten funtzioak.",
     freeValueComingSoon: "Laster",
+    integrationsCard: {
+      heading: "API / ERP integrazioak",
+      body: "Lotu zure TMS edo ERPa DeCA Profesional-ekin behar duzunean.",
+      cta: "Integrazioa eskatu",
+    },
     freeValueItems: [
       { label: "Sortu DeCA" },
       { label: "PDF natiboa + QR" },
@@ -85,8 +90,9 @@ export const eu = {
       { label: "Ohiko lekuak" },
       { label: "Bikoizte azkarra" },
       { label: "Ohiko ibilbideak" },
+      { label: "Gogokoak" },
+      { label: "Zirriborro automatikoak" },
       { label: "Ikuskapen modua" },
-      { label: "API / ERP sarbidea" },
     ],
     productHeading: "Formulariotik QR duen PDFra, urrats gehiagorik gabe",
     benefits: [

@@ -243,6 +243,23 @@ export default async function HomePage() {
               </li>
             ))}
           </ul>
+
+          {/* API / ERP integrations — an active demand signal, not "Próximamente" (#74) */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+            <div>
+              <p className="text-sm font-bold">{dict.landing.integrationsCard.heading}</p>
+              <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+                {dict.landing.integrationsCard.body}
+              </p>
+            </div>
+            <Link
+              href={authed ? "/panel/integraciones" : "/registro"}
+              data-testid="landing-integrations-cta"
+              className="inline-flex min-h-10 shrink-0 items-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary)] no-underline"
+            >
+              {dict.landing.integrationsCard.cta}
+            </Link>
+          </div>
         </section>
 
         {/* Product proof — DESIGN #55 §15: benefits list now uses the same

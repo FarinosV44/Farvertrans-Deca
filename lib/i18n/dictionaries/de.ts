@@ -67,6 +67,11 @@ export const de = {
     freeValueSubhead:
       "Mehrbenutzerbetrieb, Verlauf, Aufbewahrung und Datenwiederverwendung während der Startphase kostenlos inbegriffen — Funktionen, für die andere DeCA-Plattformen extra berechnen.",
     freeValueComingSoon: "Demnächst",
+    integrationsCard: {
+      heading: "API / ERP-Integrationen",
+      body: "Verbinden Sie Ihr TMS oder ERP mit DeCA Profesional, wenn Sie es brauchen.",
+      cta: "Integration anfragen",
+    },
     freeValueItems: [
       { label: "DeCA erstellen" },
       { label: "Natives PDF + QR" },
@@ -78,8 +83,9 @@ export const de = {
       { label: "Übliche Orte" },
       { label: "Schnelle Duplizierung" },
       { label: "Häufige Routen" },
+      { label: "Favoriten" },
+      { label: "Automatische Entwürfe" },
       { label: "Kontrollmodus" },
-      { label: "API-/ERP-Zugriff" },
     ],
     productHeading: "Vom Formular zum PDF mit QR-Code, ohne unnötige Schritte",
     benefits: [

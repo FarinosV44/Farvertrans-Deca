@@ -58,6 +58,11 @@ export const en = {
     freeValueSubhead:
       "Multi-user, history, custody and data reuse included at no cost during the launch phase — features other DeCA platforms charge extra for.",
     freeValueComingSoon: "Coming soon",
+    integrationsCard: {
+      heading: "API / ERP integrations",
+      body: "Connect your TMS or ERP with DeCA Profesional when you need to.",
+      cta: "Request an integration",
+    },
     freeValueItems: [
       { label: "Generate DeCA" },
       { label: "Native PDF + QR" },
@@ -69,8 +74,9 @@ export const en = {
       { label: "Regular places" },
       { label: "Fast duplication" },
       { label: "Frequent routes" },
+      { label: "Favourites" },
+      { label: "Auto-saved drafts" },
       { label: "Inspection mode" },
-      { label: "API / ERP access" },
     ],
     productHeading: "From the form to a PDF with QR, with no extra steps",
     benefits: [

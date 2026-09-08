@@ -67,6 +67,11 @@ export const ca = {
     freeValueSubhead:
       "Multiusuari, historial, custòdia i reutilització de dades inclosos sense cost durant la fase de llançament — funcions que altres plataformes de DeCA cobren a part.",
     freeValueComingSoon: "Properament",
+    integrationsCard: {
+      heading: "API / Integracions ERP",
+      body: "Connecta el teu TMS o ERP amb DeCA Profesional quan ho necessitis.",
+      cta: "Sol·licitar integració",
+    },
     freeValueItems: [
       { label: "Generar DeCA" },
       { label: "PDF natiu + QR" },
@@ -78,8 +83,9 @@ export const ca = {
       { label: "Llocs habituals" },
       { label: "Duplicat ràpid" },
       { label: "Rutes freqüents" },
+      { label: "Preferits" },
+      { label: "Esborranys automàtics" },
       { label: "Mode inspecció" },
-      { label: "Accés API / ERP" },
     ],
     productHeading: "Del formulari al PDF amb QR, sense passos de més",
     benefits: [

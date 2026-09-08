@@ -4016,3 +4016,33 @@ remaining scope.
 - **Tests:** `tests/e2e/favorites.spec.ts` — star a saved vehicle → it floats to the top, count
   stays 2 (no duplicate), un-star reverts the order. 180 unit + master-data/workspace/creator-v2 +
   compliance 8/8.
+
+## D-136 — #80 / #72 / #74: lean admin Resumen + activation funnel + integration requests
+- Date / phase: 2026-09-08, Phase 5.
+- **#80 shell:** `ADMIN_GROUPS` in `admin-nav.tsx` — Operación / Crecimiento y contenido / Seguridad,
+  with visible group labels. Sidebar was already persistent (D-030); this regroups + adds
+  `/admin/activacion` and `/admin/integraciones`, relabels "Errores" → "Incidencias" (route
+  `/admin/errores` kept).
+- **#80 Resumen** (`app/admin/(protected)/page.tsx`) rewritten to answer the three questions on one
+  screen: a 6-KPI strip (activas 30d / DeCA hoy / DeCA 30d / conversión 1er DeCA / incidencias
+  abiertas / éxito 7d), the activation funnel chips, "Empresas a contactar", "Alertas del sistema",
+  "Señales de oportunidad". Everything else is behind a "Más métricas" `<details>`.
+- **#72 engine — `lib/admin/segments.ts`:** `listCompanySegments` computes, per company, DeCA
+  totals/7d/30d, members, `dataComplete`, first/last DeCA, and a set of **documented rule-based
+  tags** (`SEGMENT_RULES`). `funnelFromSegments`, `companiesToContact` (onboarding parado / primer
+  uso sin repetición / alto uso / equipo — each row carries its reason), `opportunitySignals`
+  (#83). No AI, no scoring. `/admin/activacion` is the full funnel + contact table with "Ver
+  empresa"; no automated email.
+- **#74 — integration requests:** new `IntegrationRequest` model (migration
+  `20260908002549_integration_request` — new table; **needs migrate deploy on prod**).
+  `lib/integrations/` (`constants.ts` pure + `index.ts` server). `POST/PATCH /api/integraciones`.
+  `/panel/integraciones` (customer form, company + contact autofill, one request per company shown
+  back). `/admin/integraciones` (list + status triage new→reviewed→contact→discarded, DeCA-30d for
+  prioritisation). The landing "Acceso API / ERP · Próximamente" item is **removed** and replaced by
+  an active "API / Integraciones ERP" card with a "Solicitar integración" CTA. `FREE_VALUE_ITEMS`
+  also gains Favoritos + Borradores and marks Modo inspección **available** — no "Próximamente" left
+  on the landing (also #79). `t.landing.integrationsCard` + updated `freeValueItems` ×8.
+- **Tests:** `tests/e2e/admin-growth.spec.ts` — landing has no "Próximamente" + integration CTA;
+  a company request reaches `/admin/integraciones` and can be triaged; the Resumen shows the funnel
+  + "Empresas a contactar" with detailed KPIs behind "Más métricas". `admin.spec.ts` overview
+  assertion updated to the new lean structure. 180 unit + admin/landing/nav-links + compliance 8/8.

@@ -107,7 +107,10 @@ test.describe("ADMIN #33 — internal command center", () => {
       await expect(
         page.getByRole("navigation", { name: "Secciones de administración" }).first(),
       ).toBeVisible();
-      await expect(page.getByText("DeCA generados").first()).toBeVisible();
+      // #80: the first screen shows the lean KPI strip + the funnel; the
+      // detailed per-window KPIs live behind "Más métricas".
+      await expect(page.getByText("DeCA hoy").first()).toBeVisible();
+      await expect(page.getByTestId("admin-funnel")).toBeVisible();
 
       await page.goto("/admin/sistema");
       await expect(page.getByRole("heading", { name: "Sistema" })).toBeVisible();

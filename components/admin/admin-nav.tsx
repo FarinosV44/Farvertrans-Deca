@@ -4,21 +4,44 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/** Sections of the admin command center (ADMIN #33 §"Route / shell"). */
-export const ADMIN_SECTIONS: { href: string; label: string }[] = [
-  { href: "/admin", label: "Resumen" },
-  { href: "/admin/deca", label: "DeCA" },
-  { href: "/admin/empresas", label: "Empresas" },
-  { href: "/admin/usuarios", label: "Usuarios" },
-  { href: "/admin/captacion", label: "Captación" },
-  { href: "/admin/operadores", label: "Operadores" },
-  { href: "/admin/inteligencia-rutas", label: "Rutas" },
-  { href: "/admin/contenido", label: "Contenido" },
-  { href: "/admin/errores", label: "Errores" },
-  { href: "/admin/auditoria", label: "Auditoría" },
-  { href: "/admin/seguridad", label: "Seguridad" },
-  { href: "/admin/sistema", label: "Sistema" },
+/**
+ * Sections of the admin command center, grouped so the day-to-day operating
+ * views come first and the rest is one scroll down (#80).
+ */
+export const ADMIN_GROUPS: { label: string; items: { href: string; label: string }[] }[] = [
+  {
+    label: "Operación",
+    items: [
+      { href: "/admin", label: "Resumen" },
+      { href: "/admin/empresas", label: "Empresas" },
+      { href: "/admin/deca", label: "DeCA" },
+      { href: "/admin/usuarios", label: "Usuarios" },
+      { href: "/admin/activacion", label: "Activación" },
+      { href: "/admin/errores", label: "Incidencias" },
+      { href: "/admin/integraciones", label: "Integraciones" },
+      { href: "/admin/sistema", label: "Sistema" },
+    ],
+  },
+  {
+    label: "Crecimiento y contenido",
+    items: [
+      { href: "/admin/captacion", label: "Captación" },
+      { href: "/admin/operadores", label: "Operadores" },
+      { href: "/admin/inteligencia-rutas", label: "Rutas" },
+      { href: "/admin/contenido", label: "Contenido" },
+    ],
+  },
+  {
+    label: "Seguridad",
+    items: [
+      { href: "/admin/auditoria", label: "Auditoría" },
+      { href: "/admin/seguridad", label: "Seguridad" },
+    ],
+  },
 ];
+
+/** Flat list kept for anything that still iterates every section. */
+export const ADMIN_SECTIONS = ADMIN_GROUPS.flatMap((g) => g.items);
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/admin") return pathname === "/admin";
@@ -30,27 +53,36 @@ export function AdminNav({ email }: { email: string }) {
   const [open, setOpen] = useState(false);
 
   const links = (
-    <ul className="flex flex-col gap-0.5">
-      {ADMIN_SECTIONS.map((s) => {
-        const active = isActive(pathname, s.href);
-        return (
-          <li key={s.href}>
-            <Link
-              href={s.href}
-              aria-current={active ? "page" : undefined}
-              onClick={() => setOpen(false)}
-              className={`block rounded-[var(--radius-sm)] px-3 py-2 text-sm no-underline ${
-                active
-                  ? "bg-[var(--color-primary)] font-medium text-[var(--color-primary-contrast)]"
-                  : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
-              }`}
-            >
-              {s.label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="flex flex-col gap-3">
+      {ADMIN_GROUPS.map((g) => (
+        <div key={g.label}>
+          <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+            {g.label}
+          </p>
+          <ul className="flex flex-col gap-0.5">
+            {g.items.map((s) => {
+              const active = isActive(pathname, s.href);
+              return (
+                <li key={s.href}>
+                  <Link
+                    href={s.href}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => setOpen(false)}
+                    className={`block rounded-[var(--radius-sm)] px-3 py-1.5 text-sm no-underline ${
+                      active
+                        ? "bg-[var(--color-primary)] font-medium text-[var(--color-primary-contrast)]"
+                        : "text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                    }`}
+                  >
+                    {s.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 
   return (

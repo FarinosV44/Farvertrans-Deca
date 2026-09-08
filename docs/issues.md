@@ -210,6 +210,17 @@ anonymize-in-place (no hard delete, D-067).
   name hidden <460px, command-palette button hidden <520px; Ctrl+K unaffected). New
   `panel-nav.spec.ts` (360/768/1280/1440 × 7 pages, ≤2 actions). No schema/i18n.
 
+### I-080 — #80 admin shell + lean Resumen · **DONE, on `main`** (D-136)
+- `ADMIN_GROUPS` (Operación/Crecimiento/Seguridad); Resumen = 6-KPI strip + funnel + Empresas a
+  contactar + Alertas + Señales; rest behind Más métricas. `/admin/activacion` new.
+
+### I-072 — #72 activation funnel + Empresas a contactar · **DONE, on `main`** (D-136)
+- `lib/admin/segments.ts` — rule-based per-company tags + funnel + companiesToContact + opportunitySignals.
+
+### I-074 — #74 integration requests · **DONE, on `main`** (D-136)
+- `IntegrationRequest` model (migration `20260908002549` — needs migrate deploy). `/panel/integraciones`
+  form + `/admin/integraciones` triage. Landing "Próximamente" removed → active "Solicitar integración" card.
+
 ### I-078 — #78 P2 UX: favourites · **DONE, on `main`** (D-135)
 - Link: https://github.com/FarinosV44/Farvertrans-Deca/issues/78
 - company-scoped `favorite` flag on saved company/vehicle/location + template + new `favorite_route`

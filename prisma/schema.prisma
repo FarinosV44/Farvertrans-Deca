@@ -65,16 +65,17 @@ model Company {
   logoDataUri     String?         @map("logo_data_uri")
   createdAt       DateTime        @default(now()) @map("created_at")
 
-  users             User[]
-  decas             Deca[]
-  acquisition       Acquisition?
-  invites           CompanyInvite[]
-  commercialConsent CommercialConsent?
-  savedCompanies    SavedCompany[]
-  savedVehicles     SavedVehicle[]
-  savedLocations    SavedLocation[]
-  decaDrafts        DecaDraft[]
-  favoriteRoutes    FavoriteRoute[]
+  users               User[]
+  decas               Deca[]
+  acquisition         Acquisition?
+  invites             CompanyInvite[]
+  commercialConsent   CommercialConsent?
+  savedCompanies      SavedCompany[]
+  savedVehicles       SavedVehicle[]
+  savedLocations      SavedLocation[]
+  decaDrafts          DecaDraft[]
+  favoriteRoutes      FavoriteRoute[]
+  integrationRequests IntegrationRequest[]
 
   @@map("company")
 }
@@ -622,6 +623,28 @@ model FavoriteRoute {
 
   @@unique([companyId, routeKey])
   @@map("favorite_route")
+}
+
+/// A company's request to connect a TMS/ERP (#74). Measures demand before any
+/// public API is built — no keys are issued here. `need` is a short slug or
+/// free text; `status` is an internal triage state.
+model IntegrationRequest {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  userId       String?  @map("user_id")
+  system       String
+  need         String
+  contactName  String?  @map("contact_name")
+  contactEmail String?  @map("contact_email")
+  volumeNote   String?  @map("volume_note")
+  status       String   @default("new")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([status])
+  @@map("integration_request")
 }
 
 /// One-time password-reset token (ACCOUNT #23). Short TTL, single use.

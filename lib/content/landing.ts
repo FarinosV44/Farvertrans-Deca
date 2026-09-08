@@ -34,8 +34,9 @@ export const FREE_VALUE_ITEMS = [
   { key: "lugares", available: true },
   { key: "duplicar", available: true },
   { key: "rutas", available: true },
-  { key: "inspeccion", available: false },
-  { key: "api", available: false },
+  { key: "favoritos", available: true },
+  { key: "borradores", available: true },
+  { key: "inspeccion", available: true },
 ] as const;
 
 /**

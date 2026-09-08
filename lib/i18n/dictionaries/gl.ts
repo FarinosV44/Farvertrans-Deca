@@ -67,6 +67,11 @@ export const gl = {
     freeValueSubhead:
       "Multiusuario, historial, custodia e reutilización de datos incluídos sen custo durante a fase de lanzamento — funcións que outras plataformas de DeCA cobran á parte.",
     freeValueComingSoon: "Proximamente",
+    integrationsCard: {
+      heading: "API / Integracións ERP",
+      body: "Conecta o teu TMS ou ERP con DeCA Profesional cando o necesites.",
+      cta: "Solicitar integración",
+    },
     freeValueItems: [
       { label: "Xerar DeCA" },
       { label: "PDF nativo + QR" },
@@ -78,8 +83,9 @@ export const gl = {
       { label: "Lugares habituais" },
       { label: "Duplicado rápido" },
       { label: "Rutas frecuentes" },
+      { label: "Favoritos" },
+      { label: "Borradores automáticos" },
       { label: "Modo inspección" },
-      { label: "Acceso API / ERP" },
     ],
     productHeading: "Do formulario ao PDF con QR, sen pasos de máis",
     benefits: [
