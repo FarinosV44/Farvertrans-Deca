@@ -4417,3 +4417,25 @@ remaining scope.
   the ticket form is technical-only).
 - `panel-help.spec.ts` updated for the new channel shape (no `tel:`, WhatsApp present, legal email
   = info@praetoriaabogados.es).
+
+### Slice 7 (part 8, P2) — Superadmin operators / commercials / referrals module
+- **Model:** `Operator` gains `lastName` / `email` / `phone` / `notes` (migration
+  `20260908190836_operator_contact_fields`); `refCode` (unique) / `active` / `createdAt` already existed.
+- **`lib/admin/operators.ts`:** `createOperator` generates a collision-checked ref code from the
+  name (`<NAME slice 10><4 rand>`, alphabet without 0/O/1/I); `updateOperator` edits + toggles
+  `active`; `listOperators` adds the first-touch attributed-company count; `getOperator` returns the
+  operator + every attributed company (name, primary user, status, signup date, first-DeCA date,
+  DeCA count) + totals. `operatorLink()` = `<baseUrl>/registro?ref=<code>`.
+- **Attribution was ALREADY permanent and cookie-independent** (#11 / D-011: `Acquisition.firstRefCode`
+  written at signup, first-touch never overwritten). Part 8 reads it — no attribution change needed,
+  no double-attribution possible (first-touch is write-once).
+- **API:** `POST /api/admin/operadores`, `PATCH /api/admin/operadores/[id]` (`isInternalRequest` → 404).
+- **UI:** `/admin/operadores` gains a "Nuevo operador" form + a management table (copy link,
+  activate/deactivate) above the existing metrics table; `/admin/operadores/[id]` shows the link,
+  contact, notes, totals and the attributed-companies table.
+- **Commissions:** NOT built (the issue says not required now). The data model is left ready —
+  attribution + per-company DeCA counts are already queryable; a future `OperatorCommission` table
+  keyed by operator + period + company adds "comisión por alta / por cliente de pago / liquidación /
+  pagado / exportación" without touching anything recorded here. Noted on the operator detail page.
+- Tests: `operators.test.ts` (2); `operadores-module.spec.ts` (create → ref link → company signs up
+  via link → attributed on the detail page → deactivate keeps history).

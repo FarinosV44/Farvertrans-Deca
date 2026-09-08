@@ -1,24 +1,41 @@
 import Link from "next/link";
 import { operatorStats, type OperatorRow } from "@/lib/attribution/persist";
+import { listOperators } from "@/lib/admin/operators";
+import { OperatorManager } from "@/components/admin/operator-manager";
 import { PageHeader, Table, Row, Cell } from "@/components/admin/ui";
 
 const pct = (num: number, den: number) => (den > 0 ? `${Math.round((num / den) * 100)}%` : "—");
 
 export default async function AdminOperadores() {
-  const stats = await operatorStats();
+  const [stats, operators] = await Promise.all([operatorStats(), listOperators()]);
   const rows: OperatorRow[] = [...stats.operators, ...stats.unknown, stats.organic];
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Operadores"
-        lead="Métricas de uso real por código de operador: visitas de eventos y DeCA generados por las empresas captadas."
+        lead="Cuentas de operadores / comerciales / colaboradores (#86): cada uno con su enlace individual de captación. Debajo, las métricas de uso real por código."
         action={
           <Link href="/admin/captacion" className="text-sm no-underline">
             Gestionar captación →
           </Link>
         }
       />
+
+      <OperatorManager
+        operators={operators.map((o) => ({
+          id: o.id,
+          name: o.name,
+          lastName: o.lastName,
+          email: o.email,
+          refCode: o.refCode,
+          active: o.active,
+          companies: o.companies,
+          link: o.link,
+        }))}
+      />
+
+      <h2 className="pt-4 text-sm font-bold">Métricas por código</h2>
 
       <Table
         head={[

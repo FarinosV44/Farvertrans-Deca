@@ -21,10 +21,19 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-/// A Farvertrans operator/commercial whose ref_code appears in acquisition links.
+/// A Farvertrans operator / commercial / collaborator whose `ref_code` appears
+/// in acquisition links (#86 part 8). Each operator gets an individual
+/// `/registro?ref=<ref_code>` link; a company that registers through it is
+/// attributed first-touch and permanently (`Acquisition.firstRefCode`, #11),
+/// which is what future commission calculation will read. Deactivating an
+/// operator (`active = false`) never removes its attribution history.
 model Operator {
   id        String   @id @default(cuid())
   name      String
+  lastName  String?  @map("last_name")
+  email     String?
+  phone     String?
+  notes     String?
   refCode   String   @unique @map("ref_code")
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
