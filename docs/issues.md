@@ -5,7 +5,10 @@
 > Last inbound sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
 > (worked in D-042…D-111, awaiting the user's close), the launch batches **#59–#68** (all
 > implemented + on `main`, awaiting the user's close) and **#69–#84** (implemented; #84 on `main`),
-> plus **#85** (D-148, on `main`), **#86** (D-149, on `main`) + the p3 FIX (D-150) + #91 (D-151), on `develop`. No third-party
+> plus **#85** (D-148, on `main`), **#86** (D-149, on `main`) + the p3 FIX (D-150) on `main`,
+> **#91** (D-151, on `main` — user CONFIRMED Superadmin access works in prod), and **#87 + #88**
+> (D-152) + the /admin/contenido editor fix (D-153) **built on `develop`, NOT on `main`** —
+> the user reviews #87/#88 before #89/#90 and before the merge. No third-party
 > comments on any issue. #29–#38 closed.
 >
 > Earlier note (2026-09-04): #1–#28 all merged to `main`; every issue commented (beat 1); awaiting
@@ -405,3 +408,34 @@ anonymize-in-place (no hard delete, D-067).
 - **Replies:** beat-1 posted 2026-09-08 (comment 5590619965, ES). Beat-3 after the Hostinger redeploy.
 - **Pending:** redeploy Hostinger; the user confirms p7 (Superadmin from PC) live; rotate secrets;
   then beat 3 + close #86.
+
+## I-087 / I-088 — #87 Radar de oportunidades + #88 Perfil de transportista con afinidad · P1 Comercial · **BUILT on `develop`, NOT on `main`** (D-152)
+- 2026-09-08, after the user confirmed #91 (Superadmin access) works in production. User: build
+  #87 + #88, then review before #89/#90.
+- Pre-agreed: eligibility = active `CommercialConsent`; corridors in code; any internal user;
+  billing manual (that is #89).
+- **#87** — `Super Admin > Oportunidades` (`/admin/oportunidades`): every carrier with an active
+  commercial consent + its observed route activity from `DecaRouteIntel`; filters (origin/dest
+  country·province·city, unload-date range, activity 7/30/90d, corridor, operator, state, sort);
+  per-row manual state (`Revisar`/`Contactado`/`Interesado`/`No disponible`/`Descartado`/
+  `Convertido`) + WhatsApp/copy-email **only for the authorised channel + value** + ficha link.
+  New `CommercialOpportunity` model + migration `20260908205105` (local dev only).
+- **#88** — `/admin/empresas/[id]` "Actividad de transporte · Perfil comercial": activity 7/30/60/90d
+  + trend + busiest weekday, top routes with repeat frequency, frequent zones, recurring plates, and
+  a transparent rule-based "Afinidad Farvertrans" score with its full breakdown + objective
+  auto-tags. Rendered only when the company has an active consent.
+- Deliberately out of scope: #89 (conversion/KPIs/manual billing) + #90 (alerts) — reviewed next;
+  `tipo de vehículo` filter (data not stored). No automatic messaging.
+- Gate: typecheck + lint + prettier + 273 unit (51 new) + production build + full e2e 232 passed
+  (2 documented flakes, green at `--workers=1`).
+- **NOT merged to `main`** — the user reviews #87/#88 first; the migration goes to production with
+  that merge. No forge beat comment yet (posted after the review).
+
+## I-CMS-FIX — /admin/contenido editor could not save/publish a blog post (D-153)
+- 2026-09-08, user report mid-#87: "no deja publicar en el blog … y tampoco lo guarda."
+- Root cause: API save/publish both work; the App Router client cache served a stale/empty
+  `/admin/contenido/[id]` after the post-save soft navigation, so the saved content looked unsaved
+  and the "Publicar" button never appeared (same class as #86 p7 / #91).
+- Fix (`d9f825d`, on `develop`): hard navigation after save; clear "sesión caducada" message on a
+  404; `force-dynamic` on the list + nuevo pages. Also stabilises `content-cms.spec.ts:60`.
+- **Pending:** the Hostinger redeploy to reach production.

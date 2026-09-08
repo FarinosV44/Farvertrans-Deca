@@ -74,20 +74,21 @@ model Company {
   logoDataUri     String?         @map("logo_data_uri")
   createdAt       DateTime        @default(now()) @map("created_at")
 
-  users               User[]
-  decas               Deca[]
-  acquisition         Acquisition?
-  invites             CompanyInvite[]
-  commercialConsent   CommercialConsent?
-  commercialEvents    CommercialConsentEvent[]
-  availabilityShares  DecaAvailabilityShare[]
-  savedCompanies      SavedCompany[]
-  savedVehicles       SavedVehicle[]
-  savedLocations      SavedLocation[]
-  decaDrafts          DecaDraft[]
-  favoriteRoutes      FavoriteRoute[]
-  integrationRequests IntegrationRequest[]
-  supportTickets      SupportTicket[]
+  users                 User[]
+  decas                 Deca[]
+  acquisition           Acquisition?
+  invites               CompanyInvite[]
+  commercialConsent     CommercialConsent?
+  commercialEvents      CommercialConsentEvent[]
+  availabilityShares    DecaAvailabilityShare[]
+  savedCompanies        SavedCompany[]
+  savedVehicles         SavedVehicle[]
+  savedLocations        SavedLocation[]
+  decaDrafts            DecaDraft[]
+  favoriteRoutes        FavoriteRoute[]
+  integrationRequests   IntegrationRequest[]
+  supportTickets        SupportTicket[]
+  commercialOpportunity CommercialOpportunity?
 
   @@map("company")
 }
@@ -180,6 +181,42 @@ model DecaAvailabilityShare {
 
   @@index([companyId])
   @@map("deca_availability_share")
+}
+
+/// The commercial follow-up state for one carrier company, set by the internal
+/// team from the `Super Admin > Oportunidades` radar (#87). It is a workflow
+/// note, never a legal or billing state, and it is completely independent of
+/// the company's own `CommercialConsent` — losing every row here changes
+/// nothing about what a company has authorised. One row per company; absence
+/// means "not reviewed yet".
+model CommercialOpportunity {
+  id              String                     @id @default(cuid())
+  companyId       String                     @unique @map("company_id")
+  state           CommercialOpportunityState @default(review)
+  /// Free internal note (last contact, who to call, why discarded…). No PII rules
+  /// beyond the app-wide ones — this is an internal CRM-lite field.
+  note            String?
+  /// The internal user who last changed the state, for the activity trail.
+  updatedByUserId String?                    @map("updated_by_user_id")
+  contactedAt     DateTime?                  @map("contacted_at")
+  createdAt       DateTime                   @default(now()) @map("created_at")
+  updatedAt       DateTime                   @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([state])
+  @@map("commercial_opportunity")
+}
+
+/// Internal commercial follow-up state for a carrier (#87). `review` = surfaced
+/// by the radar, not yet acted on. The rest track a manual outreach lifecycle.
+enum CommercialOpportunityState {
+  review
+  contacted
+  interested
+  unavailable
+  discarded
+  converted
 }
 
 /// A registered user, linked 1:1 to a Supabase auth user by authUserId.

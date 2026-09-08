@@ -3,6 +3,8 @@ import { listContent, type ContentType, type ContentStatus } from "@/lib/content
 import { SEO_PAGES } from "@/content/seo/pages";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
 
+export const dynamic = "force-dynamic";
+
 type SP = { [k: string]: string | string[] | undefined };
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 

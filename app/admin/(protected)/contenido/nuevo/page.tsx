@@ -1,6 +1,8 @@
 import { PageHeader, BackLink } from "@/components/admin/ui";
 import { ContentEditor } from "@/components/admin/content-editor";
 
+export const dynamic = "force-dynamic";
+
 export default function NuevoContenido() {
   return (
     <div className="space-y-5">
