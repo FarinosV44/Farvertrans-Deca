@@ -50,6 +50,17 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
     return s ? `?${s}` : "/admin/empresas";
   };
 
+  // The current filter state, threaded to the detail page so "← Empresas"
+  // returns here with search + segment intact (#81).
+  const listQuery = (() => {
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    if (seg) p.set("seg", seg);
+    return p.toString();
+  })();
+  const rowHref = (id: string) =>
+    `/admin/empresas/${id}${listQuery ? `?from=${encodeURIComponent(listQuery)}` : ""}`;
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -120,7 +131,7 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
             <Row key={c.id}>
               <Cell>
                 <Link
-                  href={`/admin/empresas/${c.id}`}
+                  href={rowHref(c.id)}
                   className="font-medium no-underline"
                   data-testid="empresa-row-link"
                 >

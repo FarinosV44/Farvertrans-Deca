@@ -49,8 +49,15 @@ function Panel({
  * in collapsible sections, then the admin actions in their own separated zone.
  * The activity timeline (#83) is one of the sections.
  */
-export default async function AdminEmpresaDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminEmpresaDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id } = await params;
+  const { from } = await searchParams;
   const [c, segments, timeline] = await Promise.all([
     getCompanyAdmin(id),
     listCompanySegments(),
@@ -58,10 +65,24 @@ export default async function AdminEmpresaDetail({ params }: { params: Promise<{
   ]);
   if (!c) notFound();
   const seg = segments.find((s) => s.id === id);
+  // Return to the list with the filters that were active when this company was
+  // opened (#81). Next decodes the `from` value once, so it is already a plain
+  // query string ("q=…&seg=…"); re-validate it so only known keys survive.
+  const backHref = (() => {
+    if (!from) return "/admin/empresas";
+    const src = new URLSearchParams(from);
+    const out = new URLSearchParams();
+    for (const k of ["q", "seg"]) {
+      const v = src.get(k);
+      if (v) out.set(k, v);
+    }
+    const s = out.toString();
+    return s ? `/admin/empresas?${s}` : "/admin/empresas";
+  })();
 
   return (
     <div className="max-w-4xl space-y-4">
-      <BackLink href="/admin/empresas">Empresas</BackLink>
+      <BackLink href={backHref}>Empresas</BackLink>
       <PageHeader
         title={c.name}
         lead={`${c.nif ?? "sin NIF"} · alta ${day(c.createdAt)} · última actividad ${day(c.lastDecaAt)}`}

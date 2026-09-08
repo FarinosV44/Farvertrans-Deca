@@ -108,9 +108,24 @@ test("the admin Resumen shows the activation funnel and an 'empresas a contactar
     await firstChip.click();
     await expect(page).toHaveURL(/seg=/);
     await expect(page.getByTestId("empresa-clear")).toBeVisible();
-    await page.getByTestId("empresa-clear").click();
-    await expect(page).toHaveURL(/\/admin\/empresas$/);
     expect(chipName.length).toBeGreaterThan(0);
+
+    // #81 — opening a company from the filtered list, then "← Empresas",
+    // returns to the same filtered list (search + segment preserved).
+    const rows = page.getByTestId("empresa-row-link");
+    if ((await rows.count()) > 0) {
+      const segInUrl = new URL(page.url()).searchParams.get("seg");
+      await rows.first().click();
+      await expect(page).toHaveURL(/\/admin\/empresas\/[^/?]+(\?|$)/);
+      await page.getByTestId("admin-back").click();
+      await expect(page).toHaveURL(new RegExp(`seg=${segInUrl}`));
+      await expect(page.getByTestId("empresa-clear")).toBeVisible();
+    }
+
+    await page.goto("/admin/empresas");
+    await page.getByTestId("empresa-search").fill("zzz-no-match-xyz");
+    await page.getByRole("button", { name: "Buscar" }).click();
+    await expect(page).toHaveURL(/q=zzz-no-match-xyz/);
   } finally {
     await close();
   }

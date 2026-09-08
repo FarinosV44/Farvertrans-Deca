@@ -124,7 +124,7 @@ export function DefinitionList({ items }: { items: { label: string; value: React
 
 export function BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="text-sm no-underline hover:underline">
+    <Link href={href} data-testid="admin-back" className="text-sm no-underline hover:underline">
       ← {children}
     </Link>
   );
