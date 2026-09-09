@@ -11,7 +11,7 @@ export const metadata = { title: "Equipo", robots: { index: false } };
 
 export default async function EquipoPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const [members, invites] = await Promise.all([
     listMembers(user.companyId),

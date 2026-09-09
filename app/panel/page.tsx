@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
 // Registered workspace (BUILD 10) — actions first, no vanity dashboard.
 export default async function AppHome() {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   // PRODUCT #56 "Company dashboard improvements" — team activity, owner-only
   // (the same audience as the invite/role-management UI on /panel/equipo):

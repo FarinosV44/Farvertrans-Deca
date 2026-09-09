@@ -12,7 +12,7 @@ export const metadata = { title: "Privacidad y comunicaciones", robots: { index:
 
 export default async function PrivacidadPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const [treatment, t] = await Promise.all([
     getCommercialTreatment(user.companyId),

@@ -11,7 +11,7 @@ export const metadata = { title: "Plantillas", robots: { index: false } };
 
 export default async function PlantillasPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const templates = await listTemplates(user.companyId);
 

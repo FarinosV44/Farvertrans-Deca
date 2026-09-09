@@ -22,7 +22,7 @@ const fmt = (d: Date) => d.toISOString().replace("T", " ").slice(0, 16) + " UTC"
 
 export default async function DecaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const { id } = await params;
   const doc = await getDecaCockpit(id, { companyId: user.companyId });

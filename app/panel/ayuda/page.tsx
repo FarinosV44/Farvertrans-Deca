@@ -29,7 +29,7 @@ function ChannelLink({ href, label }: { href: string; label: string }) {
 
 export default async function AyudaPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId || !user.company) redirect("/registro");
+  if (!user?.companyId || !user.company) redirect("/registro/completar-empresa");
   const t = await getDictionary();
   const h = t.panel.help;
   const tech = techSupportChannels();

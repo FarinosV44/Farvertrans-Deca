@@ -11,7 +11,7 @@ export const metadata = { title: "Datos habituales", robots: { index: false } };
 
 export default async function DatosPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const saved = await listSaved(user.companyId);
 

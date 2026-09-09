@@ -12,7 +12,7 @@ export const metadata = { title: "Incidencia", robots: { index: false } };
 
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user?.companyId || !user.company) redirect("/registro");
+  if (!user?.companyId || !user.company) redirect("/registro/completar-empresa");
   const t = await getDictionary();
   const s = t.panel.help;
 

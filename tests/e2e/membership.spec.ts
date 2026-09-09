@@ -203,5 +203,32 @@ test.describe("#102 — the exact reported bug is fixed", () => {
       page.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
       page.getByTestId("register-submit").click(),
     ]);
+
+    // D-173 — the reported production bug: a logged-in, company-less user
+    // visiting `/panel` used to be sent to the full NEW-ACCOUNT registration
+    // form (`/registro`), which then correctly rejected their own email as
+    // already taken — a dead-end loop with no way back in. `/panel` must
+    // send them to the session-aware completion step instead, which lets
+    // them found a new company and actually reach a working panel.
+    await page.goto("/panel");
+    await expect(page).toHaveURL(/\/registro\/completar-empresa$/);
+
+    await page.fill("#companyName", "Empresa Recuperada SL");
+    await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
+    await page.getByTestId("accept-terms").check();
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes("/api/auth/complete-company") && r.status() === 200,
+      ),
+      page.getByTestId("complete-company-submit").click(),
+    ]);
+    await expect(page).toHaveURL(/\/panel$/);
+    await expect(page.getByTestId("app-crear")).toBeVisible();
   });
 });

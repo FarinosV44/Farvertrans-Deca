@@ -12,7 +12,7 @@ export const metadata = { title: "Integraciones", robots: { index: false } };
 /** #74 — "API / Integraciones ERP": a demand-signal form, not a live API. */
 export default async function IntegracionesPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId || !user.company) redirect("/registro");
+  if (!user?.companyId || !user.company) redirect("/registro/completar-empresa");
 
   const existing = await prisma.integrationRequest.findFirst({
     where: { companyId: user.companyId },

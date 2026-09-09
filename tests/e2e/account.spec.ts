@@ -38,9 +38,11 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     await expect(page).toHaveURL("/");
     await expect(page.getByTestId("header-login")).toBeVisible();
 
-    // /panel now redirects to registro (session gone)
+    // /panel now redirects to /entrar (session gone) — D-173: /panel's
+    // company-less-user redirect changed to `/registro/completar-empresa`,
+    // which itself bounces a session-less visitor on to `/entrar`.
     await page.goto("/panel");
-    await expect(page).toHaveURL(/\/registro/);
+    await expect(page).toHaveURL(/\/entrar/);
 
     // log back in from the header
     await page.goto("/");
@@ -252,8 +254,9 @@ test.describe("ACCOUNT #23 — registration, login, recovery, logout", () => {
     await freshCtx.close();
 
     // the OLD browser session (opened before the reset) must no longer work
+    // — D-173: /panel bounces a session-less visitor on to `/entrar` now.
     await oldPage.goto("/panel");
-    await expect(oldPage).toHaveURL(/\/registro/);
+    await expect(oldPage).toHaveURL(/\/entrar/);
     await oldCtx.close();
   });
 
