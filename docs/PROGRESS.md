@@ -45,23 +45,23 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #92 + #93 + #94 (D-156/D-157) — implemented on `develop`, NOT yet on `main`.**
+- **Latest: #92 + #93 + #94 (D-156/D-157/D-158) — MERGED to `main` (`9fcba7f`), production migration
+  APPLIED.**
   - **#94 [P0 Seguridad] — FIXED (`bf3ce0f`).** Every internal page under `app/admin/(protected)/`
     relied only on the group layout's `requireInternal()`; the App Router renders layout and page in
     parallel, so an anonymous `RSC: 1` request returned the page's full server-rendered payload
     (companies, NIFs, users — up to 7.74 MB) even though a plain navigation correctly 404'd. All 29
     internal pages now guard themselves; `scripts/keel-verify.mjs` fails the build if a future one
-    doesn't. **Production is exposed until the user redeploys** (the flaw predates #69).
+    doesn't. **The currently-deployed production build is still exposed until the user redeploys**
+    (the flaw predates #69).
   - **#92 saved Histórico views** + **#93 quick accesses on Inicio** — both per-user comfort layers
     over existing functionality, no new filters/screens/modules. New `SavedHistoryView` model +
     `User.quickActions`, migration `20260909075010_saved_history_views_and_quick_actions`
-    (**local dev only**, not yet applied to production).
+    **APPLIED to production** (36/36, table + `quick_actions` column verified directly).
   - Gate: typecheck + lint + prettier + keel-verify + 330 unit (40 new) + full e2e **249/249**
-    (production build). `docs/issues.md` updated (I-092/I-093/I-094), decisions D-156/D-157,
-    `docs/api/INDEX.md` + `docs/05-test-points.md` current.
-  - **NEXT:** commit this work to `develop`, push; then — same as the #87–#90 pattern — the pending
-    migration needs the production DB connection string from the user before `develop` → `main`; the
-    #94 fix is the more urgent of the two since it's a live P0 until redeployed.
+    (production build). `docs/issues.md` updated (I-092/I-093/I-094), decisions D-156/D-157/D-158,
+    `docs/api/INDEX.md` + `docs/05-test-points.md` current. Beat-1 comments posted on #92/#93/#94.
+  - **NEXT:** the user redeploys Hostinger — nothing else is pending in code.
 - **Previous: #85 pre-launch UX batch (D-148) — MERGED to `main` (`9d4d702`), production migration
   `20260908170252_saved_company_postal_city` APPLIED (31/31, columns verified).** WhatsApp channel
   label, `SavedCompany` postal/city, discreet "Gratis durante 2026" landing message. `develop` ==
@@ -234,15 +234,15 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- **Ready for `main` — URGENT (#94 is a live P0):** `develop` (`697b5c1`) holds the #94 security fix
-  (internal pages were readable, unauthenticated, over one RSC header) plus #92/#93. `main` still
-  runs the pre-#69 build and is exposed to #94 until the user redeploys Hostinger. Two pending
-  local-dev-only migrations need the production DB connection string before `develop` → `main`:
-  `20260908205105_commercial_opportunity` + `20260908213756_commercial_conversion_and_alerts` (#87–
-  #90) and `20260909075010_saved_history_views_and_quick_actions` (#92/#93).
-- BLOCKED ON THE USER (unchanged from D-155): production still runs a pre-#69 build, so nothing from
-  #85–#94 or #87–#90 is live yet — needs the Hostinger redeploy, then live-verify + close the issues,
-  then apply the pending migrations, then merge `develop` → `main`.
+- **#92 + #93 + #94 (D-156/D-158) — MERGED to `main` (`9fcba7f`), production migration
+  `20260909075010_saved_history_views_and_quick_actions` APPLIED (36/36, table + column verified).**
+  `develop` == `main`. Beat-1 comments posted on #92/#93/#94.
+- **BLOCKED ON THE USER, unchanged in kind since D-155:** production still runs a pre-#69 build, so
+  NOTHING from #85–#94 or #87–#90 is live yet — the user must redeploy Hostinger, then live-verify
+  and close the issues. **#94 is a live P0 until that redeploy happens** — the currently-deployed
+  build lets any unauthenticated caller read the whole internal admin area with one RSC header.
+- **Security note:** the DB password shared in chat this session is the same one shared in the
+  D-155 session — if it was not rotated then, it needs rotating now (D-158).
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*

@@ -4712,3 +4712,19 @@ placeholder substituted on the client. Caught by a real run, not by review.
 **Gate:** typecheck + lint + prettier + keel-verify + **330 unit** (40 new: quick-actions 14,
 history-views 26) + production build + **full e2e 249 passed / 0**, including the existing a11y
 checks over `/panel`, `/panel/historico` and `/panel/datos`.
+
+## D-158 — #92/#93/#94 merged to `main` + production migration applied (2026-09-09)
+- User explicit instruction: "push to main and after apply the migrations" — authorises the
+  `develop` → `main` merge per SKILL.md ("Git flow": only an explicit instruction authorises it).
+- `develop` → `main` merge `9fcba7f` (`--no-ff`), pushed. `develop` already in sync (no fast-forward
+  needed — `main` was already behind).
+- **Production migration applied** (user supplied `DATABASE_URL`/`DIRECT_URL` connection strings in
+  chat, used only as transient shell env vars for this one command — never written to any file,
+  never committed): `prisma migrate status` was clean beforehand (35/36, exactly the 1 expected
+  pending), then `prisma migrate deploy` applied `20260909075010_saved_history_views_and_
+  quick_actions`. After: "Database schema is up to date!" (36/36). Verified directly:
+  `user.quick_actions` column present, `saved_history_view` table present.
+- **Security note (recorded, not silently handled):** the connection string pasted in chat carries
+  the same DB password as the one shared in the D-155 session. If it was not rotated after that
+  session as noted there, it should be rotated now — a credential typed into a chat is exposed
+  wherever that chat is stored, this is now the second time.
