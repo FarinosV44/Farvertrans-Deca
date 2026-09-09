@@ -45,7 +45,19 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #95–#103 batch (D-161), 7 of 9 done, MERGED to `main` (`bfb9953`).**
+- **Latest: #108 — LIVE BUG fix, "Marcar como prueba" silently failed on a stale step-up (D-184),
+  MERGED to `main`.** User report: the button visibly did nothing. Root cause: the endpoint
+  (`set_test`) is step-up gated like block/deactivate/reactivate/edit, and `MarkTest` — unlike its
+  sibling `AccountActions` — never handled a `step_up_required` 401 at all, so it failed with zero
+  on-screen feedback whenever the admin's last TOTP check was >10 min old (normal during ordinary
+  browsing). Issue #108 opened before the fix (issue-capture policy). Reproduced red-first via a
+  new Playwright test (`admin-account-lifecycle.spec.ts`, `page.route()` forces the exact 401
+  without waiting out the real window), then `mark-test.tsx` rewritten to mirror
+  `AccountActions`'s error/step-up handling exactly. Gate: typecheck/lint/format clean; 377/377
+  unit; R-1…R-13 compliance 8/8; full e2e 287/288 (`--workers=3`) — the 2 apparent failures
+  (`commercial-intelligence.spec.ts:83`, `master-data.spec.ts:38`) are both pre-existing,
+  already-documented contention flakes, confirmed green together at `--workers=1`.
+- **Previous: #95–#103 batch (D-161), 7 of 9 done, MERGED to `main` (`bfb9953`).**
   - **#97 [P1 SEO] — internal-linking architecture (D-171).** The issue's own hub/"páginas
     estratégicas" example lists were grounded to real routes in a new pure module,
     `lib/content/internal-linking.ts` (`SEO_HUBS`, `STRATEGIC_ROUTES`, `pickCornerstones`,
