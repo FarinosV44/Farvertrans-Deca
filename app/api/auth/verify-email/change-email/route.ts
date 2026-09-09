@@ -73,15 +73,23 @@ export async function POST(req: Request) {
     const { token } = await createEmailVerification(user.id, email);
     const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/verificar-email/${encodeURIComponent(token)}`;
     const { sendMail } = await import("@/lib/mailer");
+    const { renderTransactionalHtml } = await import("@/lib/email-template");
     const { getDictionary } = await import("@/lib/i18n/server");
     const { isLocale, DEFAULT_LOCALE } = await import("@/lib/i18n/locale");
     const dict = await getDictionary(
       isLocale(user.preferredLocale) ? user.preferredLocale : DEFAULT_LOCALE,
     );
+    const text = dict.emails.verifyTextChangeEmail(BRAND.name, link);
     const mail = await sendMail({
       to: email,
       subject: dict.emails.verifySubject(BRAND.name),
-      text: dict.emails.verifyTextChangeEmail(BRAND.name, link),
+      text,
+      html: renderTransactionalHtml({
+        title: "Confirma tu correo electrónico",
+        text,
+        link,
+        ctaLabel: "Confirmar correo",
+      }),
     });
     delivery = mail.sent ? "sent" : "unconfigured";
     if (process.env.FVD_EXPOSE_RESET_TOKEN === "1") verifyTestToken = token;

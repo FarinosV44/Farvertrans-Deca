@@ -197,6 +197,25 @@
     removal, never actually exercising the automatic-fallback code path — added a new test that
     removes the user while B is still active, so the fallback itself has to do the work. 15/15
     team+membership e2e green, 357/357 unit green.
+  - **#106 [Emails] — unified transactional email system, deliverability-first (D-179/D-180).**
+    Started as "the invite email lands in spam" — investigated DNS (SPF missing Resend's include)
+    then the user corrected that with harder evidence (domain verified in Resend, direct sends
+    work) and opened #106 with a full spec generalising this to every email the app sends. Built
+    `lib/email-template.ts` — one shared, pure, unit-tested HTML shell (plain-text brand header,
+    never an `<img>` logo; optional title; optional company/role/expiry info block; one CTA +
+    the same link visible as plain text; explicit `<meta charset="utf-8">` — the fix for the
+    accents-render-as-"?" correction) — wired into all 8 `sendMail()` call sites in the app
+    (verification, resend, change-email, password reset, team invite, DeCA-ready lead email, the
+    driver document-share email, all 3 support-ticket notifications), each now sending `html`
+    alongside its existing, already-translated `text`. `sendMail()` itself now presents every send
+    as `${BRAND.name} <the same unchanged, verified address>`. The invite email specifically got
+    #106's exact requested structure: title, info block (Empresa/Rol asignado/Caduca — the role is
+    now actually threaded through from the invite form), one CTA, the exact requested footer. 17
+    new unit tests; 374/374 unit + 287/288 e2e (1 pre-existing documented flake, unrelated) green.
+    A real send of the FINAL template went out to the originally-affected address for the user to
+    confirm. **Not done:** per-locale email translations beyond the existing (already-correct)
+    `dict.emails.*` text — only CTA labels/titles are Spanish-only for now; Resend's click/open-
+    tracking dashboard setting could not be checked (restricted API key) — flagged for the user.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

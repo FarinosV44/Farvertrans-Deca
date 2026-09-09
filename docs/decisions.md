@@ -5112,6 +5112,79 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-179/D-180 — #106: unified transactional-email system, deliverability-first (2026-09-09)
+
+**User's request, in two parts:** (1) improve the team-invite email's deliverability (it was
+landing in Gmail spam) — check SPF/DKIM/DMARC and Resend's own delivery status first, then make
+the email itself more "transactional, less marketing" (stable recognisable sender, plain subject,
+clean minimal HTML with one CTA + the URL visible as plain text, a `text/plain` part alongside the
+HTML, no shorteners/redirects/tracking, a short legitimate footer, no unsubscribe language) —
+**without changing the invite logic itself**. (2) The user then opened issue #106 with a full,
+detailed spec generalising this to EVERY transactional email the app sends, plus two follow-up
+corrections mid-work: accented characters (á/é/í/ó/ú/ñ) must render correctly, never as "?"/
+mojibake; and apply it to every email, not just the one.
+
+**Investigation, evidence-based per the user's own instruction not to guess:** direct DNS lookups
+(no credentials needed) on `praetoriaabogados.es` showed the SPF record only authorised
+Hostinger's own mail servers (`include:_spf.mail.hostinger.com`), not Resend's — DKIM was present
+and correct. The user then corrected this: the domain is verified IN RESEND and a direct send from
+Resend works — so the cause had to be in the app's own send path, not DNS (see D-177, which is the
+code-level investigation this same session that preceded this content/format work).
+
+**What was built (`lib/email-template.ts`, new, pure, unit-tested):** a single shared HTML shell
+reused by EVERY transactional email in the app — a plain-text brand header (never an `<img>` logo:
+#106 explicitly asks to avoid depending on images to understand the message, and an image-heavy
+email is itself a spam-filter signal), an optional title (H1), an optional compact info block
+(key/value rows — company/role/expiry for the invite email), one inline-styled CTA button with the
+same real link shown again as visible plain text directly underneath, an optional short legitimate
+footer, and **`<meta charset="utf-8">` in the `<head>`** — the explicit fix for the accents
+correction: without it, some email clients render UTF-8 body bytes under a guessed/wrong charset,
+which is exactly what turns "á" into "?" or mojibake. Every other raw `https://` URL appearing
+anywhere in the body text (not just the one CTA link) is auto-linkified too, for emails that
+legitimately carry a second link (e.g. the anonymous-lead "DeCA is ready" email: view + create-
+account).
+
+**Applied to every `sendMail()` call site in the app** — not just the invite: registration
+verification, verify-email resend, change-email verification, password reset, the anonymous-lead
+DeCA-ready email, the driver document-share email, and all three support-ticket notifications
+(new ticket → superadmin, user reply → superadmin, admin reply → user). Each now sends BOTH `text`
+(the existing, already-correct, already-translated copy — no dictionary changes needed) AND a
+matching `html` built from the shared shell. Two internal notification emails that only ever
+referenced a RELATIVE admin path (`/admin/soporte/...`, not clickable from an email) now use the
+real absolute URL as their CTA link too — a small, incidental usability fix.
+
+**`sendMail()` itself (`lib/mailer.ts`)** now sends every email as
+`${BRAND.name} <the same verified, unchanged address>` instead of a bare address — "remitente
+estable y reconocible" — and accepts an optional `html`/`replyTo`. The verified sending
+address/domain itself is UNCHANGED (still Resend-verified `FVD_MAIL_FROM`) — only how it presents;
+this is a formatting change, not a new sender to verify.
+
+**The invite email specifically (`lib/team-invite-email.ts`)**, matching #106's own example
+structure: subject "Te han invitado a unirte a {EMPRESA} en DeCA Profesional" (no caps/emoji/
+"gratis"/urgency — verified by a unit test that greps for exactly those patterns), a body title
+"Te han invitado a unirte a {EMPRESA}", a compact info block (Empresa / Rol asignado / Caduca), one
+CTA "Aceptar invitación", the link visible as plain text underneath, and the exact footer text the
+issue specified. `createInvite()`'s caller now passes the actual assigned role through, so the
+email shows what it grants, not just that it grants something.
+
+**Verified:** 17 new unit tests across `email-template.test.ts` + `team-invite-email.test.ts`
+(UTF-8 declared and accented text passed through unescaped/unmangled; exactly the requested
+subject/title/info-block/footer shape; HTML-injection via an untrusted company name neutralised;
+no `<img>`/external asset; no unsubscribe language). Full regression: 374/374 unit, 287/288 e2e
+(the one failure is the already-documented `commercial-intelligence.spec.ts` contention flake,
+unrelated, green isolated earlier this session). A real test send of the FINAL template, through
+the exact same Resend call the app makes, was sent directly to the originally-affected address for
+the user to confirm accents render and check Inbox vs. Spam.
+
+**Deliberately not built:** per-locale HTML/CTA-label translations for the 7 non-Spanish
+dictionaries (the existing `dict.emails.*` TEXT is reused as-is and correctly localized already;
+only the CTA button's label text and the invite email's title/info-block labels are Spanish-only
+for now, consistent with D-002's "Spanish is the v1 default" and this session's own token-economy
+discipline) — flagged, not silently dropped, in case the user wants full per-locale email parity
+later. Click/open-tracking (the user's own checklist item) could not be verified or disabled from
+here — Resend's dashboard-level tracking setting is outside what the send-only, restricted API key
+this session was given can read or change; recommended as a manual check for the user.
+
 ## D-178 — #102 follow-up: multi-membership correctness, verified item by item against the user's explicit checklist (2026-09-09)
 
 **User's explicit request:** ensure a user belonging to several companies is handled correctly —

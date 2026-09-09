@@ -228,12 +228,15 @@ export async function POST(req: Request) {
         const { publicEnv } = await import("@/lib/env");
         const { BRAND } = await import("@/lib/brand");
         const { sendMail } = await import("@/lib/mailer");
+        const { renderTransactionalHtml } = await import("@/lib/email-template");
         const publicUrl = `${publicEnv.baseUrl.replace(/\/$/, "")}/d/${created.token}`;
         const claimUrl = `${publicEnv.baseUrl.replace(/\/$/, "")}/registro?claim=${encodeURIComponent(created.claimToken)}`;
+        const text = `Hola ${lead.leadName},\n\nTu Documento Electrónico de Control ya está generado:\n${publicUrl}\n\nCrea una cuenta para guardarlo, reutilizar tus datos y hacer el siguiente mucho más rápido:\n${claimUrl}\n\nEste enlace caduca en 30 días.`;
         await sendMail({
           to: lead.leadEmail,
           subject: `Tu DeCA está listo — ${BRAND.name}`,
-          text: `Hola ${lead.leadName},\n\nTu Documento Electrónico de Control ya está generado:\n${publicUrl}\n\nCrea una cuenta gratuita para guardarlo, reutilizar tus datos y hacer el siguiente mucho más rápido:\n${claimUrl}\n\nEste enlace caduca en 30 días.`,
+          text,
+          html: renderTransactionalHtml({ text, link: publicUrl, ctaLabel: "Ver mi DeCA" }),
         });
       } catch {
         // never block generation on a mail-provider hiccup
