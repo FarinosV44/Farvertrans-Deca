@@ -63,6 +63,16 @@ rows below marked **manual** need a phone and a second device.
 - [ ] `landing_view`, `deca_started`, `deca_generated` each fire once
 - [ ] No event payload contains a name, NIF, email or token (check the network tab)
 
+## 6a. Technical SEO (#95) — `npm run seo:audit -- https://<domain>`
+
+Repeatable, automated: crawls `sitemap.xml` and checks every canonical
+indexable page (status, canonical, robots signal, H1, title, meta description)
+plus a fixed list of routes that must NOT be indexable (`/panel`, `/admin`,
+`/entrar`, `/registro`, `/recuperar`, `/crear`, `/operadores`, `/api/health`).
+Exits non-zero on any problem — run it after every deploy.
+
+- [ ] `npm run seo:audit -- https://<domain>` exits 0 (all rows clean)
+
 ## 7. HTTPS, headers and public surface (#101)
 
 Run this against the **real production URL** after every deploy — TLS termination and
