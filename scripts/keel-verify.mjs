@@ -3,7 +3,8 @@
  * keel-verify — project release linter. Fails (exit 1) on a broken invariant.
  * Grows as the project grows; run before every commit and in CI.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { execSync } from "node:child_process";
 
 const problems = [];
@@ -72,6 +73,37 @@ try {
   else bad(`version drift: package.json ${pkg.version} vs lib/version.ts ${v}`);
 } catch (e) {
   bad(`version check failed: ${e.message}`);
+}
+
+// 5. SECURITY #94 — every internal page authorises ITSELF, never via the layout alone.
+//    A layout guard does not stop the page segment's Flight payload: Next renders
+//    layout and page in parallel, so `notFound()` in the layout still let an
+//    anonymous `RSC: 1` request read the whole internal payload. Prose could not
+//    keep this closed — a new page under the group would simply forget it — so the
+//    rule is mechanical: the page file must call a guard from `lib/admin/guard`.
+try {
+  const root = "app/admin/(protected)";
+  const pages = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir)) {
+      const p = join(dir, e);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (e === "page.tsx") pages.push(p.split("\\").join("/"));
+    }
+  };
+  if (existsSync(root)) {
+    walk(root);
+    const unguarded = pages.filter(
+      (f) => !/\b(requireInternal|requireStepUp)\s*\(/.test(readFileSync(f, "utf8")),
+    );
+    if (unguarded.length)
+      for (const f of unguarded) bad(`internal page without its own guard: ${f}`);
+    else ok(`all ${pages.length} internal pages call requireInternal() themselves (#94)`);
+  } else {
+    ok(`no ${root} directory — internal-page guard check not applicable`);
+  }
+} catch (e) {
+  bad(`internal-page guard check failed: ${e.message}`);
 }
 
 console.log("");

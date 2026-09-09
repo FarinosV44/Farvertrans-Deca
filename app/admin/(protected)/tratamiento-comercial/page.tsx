@@ -5,6 +5,7 @@ import {
 } from "@/lib/admin/commercial";
 import { PageHeader, Table, Row, Cell, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
 import { commercialChannelLabelEs } from "@/lib/commercial/types";
+import { requireInternal } from "@/lib/admin/guard";
 
 /**
  * Commercial-treatment visibility (#84). Read-only: the mode split, the
@@ -12,6 +13,10 @@ import { commercialChannelLabelEs } from "@/lib/commercial/types";
  * transmitted anywhere — a record sits at `pending` until withdrawn.
  */
 export default async function AdminTratamientoComercial() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const [counts, shares, events] = await Promise.all([
     commercialModeCounts(),
     recentAvailabilityShares(50),

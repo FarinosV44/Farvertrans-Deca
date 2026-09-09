@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { listDecaAdmin, type DecaAdminFilter } from "@/lib/admin/records";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 type SP = { [k: string]: string | string[] | undefined };
 
 export default async function AdminDeca({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : (sp[k] as string | undefined));
   const filter: DecaAdminFilter = {

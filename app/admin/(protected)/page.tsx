@@ -7,6 +7,7 @@ import {
   opportunitySignals,
 } from "@/lib/admin/segments";
 import { PageHeader, Kpi, KpiGrid, Badge } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%`);
 
@@ -16,6 +17,10 @@ const pct = (v: number | null) => (v === null ? "—" : `${Math.round(v * 100)}%
  * and pushes everything else behind "Más métricas".
  */
 export default async function AdminOverview() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const [metrics, alerts, content, segments] = await Promise.all([
     overviewMetrics(),
     operationalAlerts(),

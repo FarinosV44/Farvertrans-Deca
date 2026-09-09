@@ -4,6 +4,7 @@ import { generationHealth } from "@/lib/admin/metrics";
 import { listFailures } from "@/lib/admin/failures";
 import { APP_VERSION } from "@/lib/version";
 import { PageHeader, Badge, DefinitionList, Table, Row, Cell, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const TONE: Record<string, string> = { ok: "green", warn: "yellow", fail: "red", skipped: "muted" };
 const pct = (v: number | null) => (v === null ? "sin datos" : `${Math.round(v * 100)}%`);
@@ -17,6 +18,10 @@ const ago = (min: number | null) =>
         : `hace ${Math.round(min / 1440)} d`;
 
 export default async function AdminSistema() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const [report, health, incidents] = await Promise.all([
     runDiagnostics(),
     generationHealth(),

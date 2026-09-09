@@ -5,6 +5,7 @@ import { ALERT_RULES } from "@/lib/commercial/alert-rules";
 import { AlertActions } from "@/components/admin/alert-actions";
 import { AlertConfigForm } from "@/components/admin/alert-config-form";
 import { PageHeader, Table, Row, Cell, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,10 @@ const dt = (d: Date) => d.toISOString().slice(0, 10);
  * de-duplicated by rule + company + time bucket.
  */
 export default async function AdminAlertasComerciales() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   await refreshAlerts();
   const [pending, reviewed, config] = await Promise.all([
     listAlerts("pending"),

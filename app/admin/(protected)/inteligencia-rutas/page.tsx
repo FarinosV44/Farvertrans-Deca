@@ -2,6 +2,7 @@ import Link from "next/link";
 import { topCorridors, consentedCompanyCount } from "@/lib/admin/route-intelligence";
 import { rangeFromParam } from "@/lib/admin/range";
 import { PageHeader, Table, Row, Cell, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 type SP = { [k: string]: string | string[] | undefined };
 
@@ -15,6 +16,10 @@ export default async function AdminInteligenciaRutas({
 }: {
   searchParams: Promise<SP>;
 }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : (sp[k] as string | undefined));
   const range = rangeFromParam(one("range"));

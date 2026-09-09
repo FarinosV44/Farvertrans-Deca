@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { listUsersAdmin } from "@/lib/admin/records";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 type SP = { [k: string]: string | string[] | undefined };
 
 export default async function AdminUsuarios({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const q = Array.isArray(sp.q) ? sp.q[0] : (sp.q as string | undefined);
   const rows = await listUsersAdmin(q);

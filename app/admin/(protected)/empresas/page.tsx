@@ -6,6 +6,7 @@ import {
   type SegmentTag,
 } from "@/lib/admin/segments";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,10 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
  * every tag maps to a documented rule (`SEGMENT_RULES`), no opaque scoring.
  */
 export default async function AdminEmpresas({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const q = one(sp.q)?.trim() ?? "";
   const seg = one(sp.seg) as SegmentTag | undefined;

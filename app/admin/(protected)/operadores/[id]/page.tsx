@@ -2,8 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader, Table, Row, Cell, Empty } from "@/components/admin/ui";
 import { getOperator } from "@/lib/admin/operators";
+import { requireInternal } from "@/lib/admin/guard";
 
 export default async function AdminOperadorDetail({ params }: { params: Promise<{ id: string }> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const { id } = await params;
   const data = await getOperator(id);
   if (!data) notFound();

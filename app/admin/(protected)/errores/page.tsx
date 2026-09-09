@@ -3,6 +3,7 @@ import { listFailures, failureStageCounts } from "@/lib/admin/failures";
 import { GENERATION_STAGES } from "@/lib/deca/generation";
 import { rangeFromParam } from "@/lib/admin/range";
 import { PageHeader, Table, Row, Cell, Badge, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const STAGE_TONE: Record<string, string> = {
   validation: "muted",
@@ -18,6 +19,10 @@ const fmt = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
 type SP = { [k: string]: string | string[] | undefined };
 
 export default async function AdminErrores({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : (sp[k] as string | undefined));
   const range = rangeFromParam(one("range"));

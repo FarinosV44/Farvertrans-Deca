@@ -9,6 +9,7 @@ import { CORRIDORS } from "@/lib/commercial/corridors";
 import { commercialChannelLabelEs } from "@/lib/commercial/types";
 import { OpportunityActions } from "@/components/admin/opportunity-actions";
 import { PageHeader, Table, Row, Cell, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,10 @@ const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "—");
  * is messaged automatically.
  */
 export default async function AdminOportunidades({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
 
   const filter: OpportunityFilter = {
