@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Inter, Archivo, IBM_Plex_Mono } from "next/font/google";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import { getLocale, getDictionary } from "@/lib/i18n/server";
 import { LocaleProvider } from "@/lib/i18n/client";
 import { publicEnv } from "@/lib/env";
@@ -10,13 +10,11 @@ import { AttributionCapture } from "@/components/analytics/attribution-capture";
 import "./globals.css";
 
 // Sistema Vía (#67): Archivo carries the structural voice, IBM Plex Mono the
-// technical layer (references, NIF, tokens, timestamps). Inter stays as the
-// body/fallback face.
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
+// technical layer (references, NIF, tokens, timestamps). #96 (Core Web
+// Vitals): Inter (previously declared as a third "body/fallback face") was
+// removed — `--font-sans` never actually resolved to it (Archivo, loaded
+// first, always succeeds), so it was a whole extra font family downloaded
+// on every page for zero visual effect.
 const archivo = Archivo({
   subsets: ["latin"],
   display: "swap",
@@ -80,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = await getLocale();
   const dict = await getDictionary(locale);
   return (
-    <html lang={locale} className={`${inter.variable} ${archivo.variable} ${plexMono.variable}`}>
+    <html lang={locale} className={`${archivo.variable} ${plexMono.variable}`}>
       <body>
         <script
           type="application/ld+json"

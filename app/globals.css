@@ -37,8 +37,11 @@
   --radius-md: 3px;
   --radius-lg: 4px;
 
-  --font-sans: var(--font-archivo), var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto,
-    sans-serif;
+  /* #96 (Core Web Vitals): Inter was declared as a fallback here but never
+     actually rendered — Archivo (self-hosted, loads first) is the only sans
+     face this stack ever resolves to in practice — so it was removed from
+     `app/layout.tsx` entirely; a real system fallback covers the same gap. */
+  --font-sans: var(--font-archivo), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   --breakpoint-sm: 360px;

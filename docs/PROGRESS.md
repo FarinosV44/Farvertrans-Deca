@@ -119,11 +119,31 @@
     first paint on pages that are already dynamic anyway (auth) and gain nothing from static
     caching — applying the same client-swap trade-off there would be a pure UX regression with no
     offsetting benefit. Needs a real route-group restructuring or Partial Prerendering — recommended
-    as its own scoped follow-up, not a rushed call here. Remaining #96 scope (images/next-image
-    adoption, fonts, JS/CSS audit, a real before/after baseline, performance budgets) not yet
-    started this slice.
-  - **REMAINING: rest of #96 (see above), #100 (Search Console operational process).** #100 is
-    largely a multi-day operational process on its own — user's own instruction (AskUserQuestion)
+    as its own scoped follow-up, not a rushed call here.
+  - **#96 continued (D-174):** audited every `<img>` on the public site — fixed the one real gap
+    (`article-layout.tsx`'s `heroImage` had no reserved box, a CLS risk); everything else was
+    already correct (data-URI QR/product images with explicit dimensions). Removed `Inter`
+    entirely — declared as a fallback font but never actually rendered (`Archivo` always resolves
+    first), a whole extra font family downloaded on every page for zero visual effect; confirmed
+    Archivo's 4 weights and Plex Mono's 2 are each genuinely used, no further cut available. New
+    `scripts/perf-budget.mjs` (`npm run perf:budget`) — real-build-based JS-weight budgets per
+    priority route, 8/8 currently within budget. Traced `/crear`/`/entrar`/`/registro`'s heavier JS
+    (~98–107 kB above the shared baseline, vs. ~24 kB for the SEO cluster) to no single culprit —
+    documented as an open question needing a real bundle analyzer, not guessed at. **Still not
+    done:** the real mobile before/after baseline (LCP/INP/CLS/TTFB) — PageSpeed Insights returned
+    429 every attempt (no API key); a Playwright-based measurement was the fallback plan, not yet
+    built.
+  - **#102 URGENT PRODUCTION BUG, reported mid-session (D-173):** every page under `app/panel/**`
+    sent a company-less LOGGED-IN user (the normal outcome of being removed from a team) to the full
+    new-account signup form, which then correctly rejected their own email as already taken — a
+    dead-end loop, no way back in. Fixed: redirect to `/registro/completar-empresa` instead (already
+    built, session-aware, no email check — previously wired up only for Google sign-up). Reproduced
+    red-first via `git stash` against the pre-fix code. **Shipped to `main` immediately**, ahead of
+    and separate from the #96 slice — a live incident, not a scheduled release. Issue #104 opened
+    retroactively (already fixed) per this project's "Issue capture: on".
+  - **REMAINING: rest of #96 (real baseline, budgets are in but the measurement they'd gate on
+    isn't), #100 (Search Console operational process).** #100 is largely a multi-day operational
+    process on its own — user's own instruction (AskUserQuestion)
     was depth over a shallow pass if context ran out.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
