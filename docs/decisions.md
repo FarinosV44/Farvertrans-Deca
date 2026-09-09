@@ -4905,3 +4905,81 @@ rewrite is behaviourally compatible with every already-covered flow.
 implicitly by the full e2e suite (253/254, only the documented flake) rather than a dedicated new
 test, since every company-scoped query's tenant boundary is unchanged (still `WHERE companyId =
 <active>`) and the full suite already exercises cross-tenant isolation extensively.
+
+## D-164 — #102 merged to `main` + production migrations applied (2026-09-09)
+- `develop` → `main` merge `48f9415` (`--no-ff`), pushed.
+- Production migrations applied (transient shell env vars only, never written to disk):
+  `20260909125838_membership_model_and_company_is_test` (Membership table + `Company.isTest`) and
+  `20260909130849_audit_log_detail_field`. `prisma migrate status` was clean beforehand (36/38,
+  exactly the 2 expected pending), `migrate deploy` applied both, then verified directly: 38/38,
+  `users_with_company` (10) == `memberships` (10) — exact 1:1 backfill, nothing lost or duplicated —
+  `company.is_test` and `security_audit_log.detail` columns present.
+- `main` is now the fixed build. Production still needs the Hostinger redeploy to actually run it —
+  unchanged blocking item from D-155/D-158.
+
+## D-165 — #101: HSTS `preload` removed; headers/HTTPS audited (2026-09-09)
+
+Audited the public surface's HTTPS/header configuration against #101's checklist. Most of it was
+already correctly built from earlier security work (D-146 CSP, #53/#62 cookie flags, #94 real
+authorization replacing robots.txt-as-access-control): CSP with `frame-ancestors 'none'` and no
+`unsafe-eval` in production, `X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy`/
+`Permissions-Policy` on every route (the `next.config.ts` `headers()` block covers `/api/*` and
+`/d/*`, which `middleware.ts`'s matcher deliberately excludes), session cookie `HttpOnly`+`Secure`
+(prod)+`SameSite=Lax`, error boundary shows only a generic message (never a stack trace), and a
+single canonical host with a `www` → bare-domain 301 preserving the query string.
+
+**One real gap found and fixed:** `Strict-Transport-Security` carried `preload` with no documented
+subdomain inventory — exactly what the issue instructs against ("no activar preload a ciegas sin
+inventariar subdominios"). Removed. This is a no-behavior-change fix: the domain was never actually
+submitted to hstspreload.org, so the flag was inert either way — re-adding it needs a deliberate
+decision with a real subdomain inventory behind it, recorded here if it happens.
+
+**Not fixable in this repo, documented instead:** TLS termination and HTTP→HTTPS redirection happen
+at the Hostinger reverse-proxy layer by design (`docker-compose.prod.yml`: "Put a TLS-terminating
+reverse proxy... in front of :3000") — this app never terminates TLS itself. WAF/rate-limiting rules
+are Hostinger's own configuration, invisible from this repo. Both need external verification, added
+to `docs/production-smoke-checklist.md` §7 rather than claimed as done.
+
+**Regression coverage:** `tests/e2e/launch-gate.spec.ts` extended — the existing header test now
+also asserts the exact HSTS value (catches a `preload` regression), plus a new test proving the
+`/d/[token]` and `/api/*` routes carry the baseline headers `middleware.ts` does not cover directly.
+
+**Repeatable external check (the issue's own AC item):** `docs/production-smoke-checklist.md` §7 —
+curl-based checks for the redirect chain, HSTS's exact value, headers on all three route classes,
+mixed content, error-page leakage, cookie flags, and certificate validity, run against the real
+production URL after every deploy (mirrors the existing §0–§6 convention rather than a new
+document).
+
+## D-166 — #95: technical indexation audit, repeatable script, and a live invite-token bug fixed (2026-09-09)
+
+**Audit findings, verified with a real crawl against a production build (`npm run seo:audit`, new
+script), not by eyeballing code:** all 23 sitemap URLs are clean (200, self-referential canonical,
+exactly one H1, title, meta description present) and all 8 known private/app routes correctly carry
+either a real `noindex` signal or 404 — `robots.txt` is correctly NOT relied on as access control
+(that is #94's job). No gap found in canonicalization, sitemap contents, or robots/noindex
+classification — this area was already solidly built from earlier SEO work (#3, #14, #32, #46).
+
+**Deliverable:** `scripts/seo-audit.mjs` (`npm run seo:audit -- <url>`) — the exact report the
+issue's "Entregable" section specifies (status/indexable/canonical/robots/sitemap/H1/title/meta per
+URL), plain `fetch` + regex, no new dependency. Added to `docs/production-smoke-checklist.md` §6a
+for after every deploy — this is also #95's own AC item "existe un script/reporte repetible".
+
+**Unplanned but directly caused by running this work: found and fixed a real, live invite-link bug**
+(user report, reproduced with a direct DB query against production): re-inviting the same email
+(e.g. "Reenviar") created a SECOND `CompanyInvite` row with a different token — both stayed valid,
+so an admin who invited twice had two working links with no way to tell which was current. The
+specific link the user pasted matched neither of the two rows actually in the table, consistent
+with clicking a superseded one. Fixed in `lib/team.ts`'s `createInvite()`: a pending (unaccepted,
+unexpired) invite for the same (company, email) is now ROTATED in place (new token, refreshed
+expiry) instead of a new row being created — at most one valid link per person at any moment, and a
+superseded one fails cleanly with the existing "invitación no válida" screen. Verified directly
+against production data: the token in the reported link matched zero rows in `company_invite`
+(not "expired" — genuinely absent), while the two real invites that WERE created both carried a
+correct, non-expired `expiresAt` — hard evidence the expiry computation itself was never the bug.
+Regression: `tests/e2e/team.spec.ts` — new test re-invites the same email twice, asserts exactly one
+pending invite is shown, the first link now fails, the second works.
+
+**Also recorded, not code-fixable from here:** the user separately reported an invite email never
+arriving for a brand-new (never-registered) address while arriving fine for a known one — diagnosed
+as a likely Resend sandbox/domain-verification restriction (`docs/lessons-learned.md`), outside this
+repo's visibility.

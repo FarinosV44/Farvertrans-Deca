@@ -195,22 +195,45 @@ export async function createInvite(
     if (already) throw new TeamError("already_member", "Esta persona ya está en el equipo.");
   }
 
-  const token = randomBytes(32).toString("base64url");
-  const invite = await prisma.companyInvite.create({
-    data: {
-      companyId,
-      email,
-      tokenHash: sha256(token),
-      role,
-      invitedByUserId,
-      expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 864e5),
-    },
+  // #102 follow-up: re-inviting (e.g. clicking "Reenviar") used to create a
+  // SECOND, separate row with its own token — the old link kept working
+  // silently, so an admin who resent twice ended up with two valid links to
+  // the same person and no way to tell which one was current (the exact
+  // shape of a live report: two invites 4 minutes apart, the pasted link
+  // matching neither). Tokens are stored hashed and cannot be recovered to
+  // "resend the same one" — the correct fix is to ROTATE the existing
+  // pending invite's token in place, so there is at most one valid link per
+  // (company, email) at any moment and a superseded link fails cleanly.
+  const pending = await prisma.companyInvite.findFirst({
+    where: { companyId, email, acceptedAt: null, expiresAt: { gt: new Date() } },
   });
+
+  const token = randomBytes(32).toString("base64url");
+  const invite = pending
+    ? await prisma.companyInvite.update({
+        where: { id: pending.id },
+        data: {
+          tokenHash: sha256(token),
+          role,
+          invitedByUserId,
+          expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 864e5),
+        },
+      })
+    : await prisma.companyInvite.create({
+        data: {
+          companyId,
+          email,
+          tokenHash: sha256(token),
+          role,
+          invitedByUserId,
+          expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 864e5),
+        },
+      });
 
   const { recordAudit } = await import("@/lib/admin/audit");
   await recordAudit({
     actorId: invitedByUserId,
-    action: "team_invite_created",
+    action: pending ? "team_invite_resent" : "team_invite_created",
     targetType: "company_invite",
     targetId: invite.id,
     result: "success",

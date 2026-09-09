@@ -2,7 +2,15 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-09 07:20Z — 3 new since the previous sweep: **#92, #93** (P2 UX) and
+> Last inbound sweep: 2026-09-09 12:53Z — 9 new since the previous sweep: **#95–#101** (SEO/perf/
+> security batch, P0/P1) and **#102, #103** (P0 Equipo / P1 Superadmin), all opened by the user, no
+> third-party comments. #102 worked and merged to `main` this sweep (D-163/D-164); #103's own
+> title/body was edited by the user mid-session (re-fetched before starting it — narrower scope, no
+> hard-delete UI). #95, #96, #97, #98, #99, #100, #101, #103 queued next (D-161 order: #101 → #95 →
+> #99 → #103 → #96/#97/#98/#100). No new comments on any existing issue; nothing sitting in
+> `awaiting reporter`.
+>
+> Previous sweep: 2026-09-09 07:20Z — 3 new since the previous sweep: **#92, #93** (P2 UX) and
 > **#94** (P0 security), all opened by the user, no third-party comments anywhere. All three worked
 > in D-156/D-157 (this sweep's sprint). No new comments on any existing issue; nothing sitting in
 > `awaiting reporter`. Everything else unchanged from the 2026-09-08 sweep below.
@@ -53,6 +61,15 @@
 | 92 | [P2 UX] Vistas guardadas en Histórico | feat | medium | on `main`, awaiting deploy | E-092 |
 | 93 | [P2 UX] 3 accesos rápidos personalizados en Inicio | feat | medium | on `main`, awaiting deploy | E-092 |
 | 94 | [P0 Seguridad] Vulnerabilidad en rutas internas | fix | **critical** | **fixed**, on `main`, awaiting deploy | E-094 |
+| 95 | [P0 SEO] Auditoría técnica de indexación | audit | high | queued | E-095 |
+| 96 | [P0 SEO/Performance] Core Web Vitals móvil | perf | high | queued | E-096 |
+| 97 | [P1 SEO] Enlazado interno / autoridad temática | feat | medium | queued | E-097 |
+| 98 | [P1 SEO] Datos estructurados y señales de entidad | feat | medium | queued | E-098 |
+| 99 | [P1 SEO] Tests de regresión SEO | test | medium | queued | E-099 |
+| 100 | [P1 SEO] Search Console operativo | ops | medium | queued | E-100 |
+| 101 | [P0 Seguridad/Confianza] HTTPS/headers sin perjudicar SEO | audit | high | queued | E-101 |
+| 102 | [P0 Equipo] Corregir membresías | fix | **critical** | **fixed**, on `main`, migration applied | E-102 |
+| 103 | [P1 Superadmin] Archivar/marcar empresas de prueba | feat | medium | queued | E-103 |
 
 ### E-012 — Product V2 (#21–#28): brand, landing, accounts, workspace, creator, delivery, teams, acquisition
 - Status: **all 8 merged to `main`** (D-027). 8 commits, 8 new e2e specs, 4 migrations. Beat-1
@@ -530,3 +547,34 @@ anonymize-in-place (no hard delete, D-067).
 - Gate: typecheck + lint + prettier + keel-verify + 14 new unit (pure logic, test-first, observed
   red before the module existed) + 4 e2e (own suite) + full e2e 249/249.
 - **On `main`** (`9fcba7f`). Beat-1 comment posted on the issue.
+
+## I-102 — #102 [P0 Equipo] Corregir membresías · **FIXED, on `main`, migration applied** (D-163/D-164)
+- 2026-09-09. Reproduced the exact reported sequence before writing any fix: own company A →
+  invited to and accepted company B → A silently overwritten (no `Membership` table existed,
+  `User.companyId` was the only record) → removed from B → `companyId: null`, indistinguishable
+  from an account that never had a company (the "Crear cuenta gratis" symptom + Superadmin showing
+  0 members on the original company).
+- New `Membership` model (User↔Company N:M), migration
+  `20260909125838_membership_model_and_company_is_test`, backfilled 1:1 from every existing
+  `User.companyId` in the same migration (verified: 10/10 on production). `User.companyId`/
+  `companyRole` kept as an "active company" denormalization, written from exactly two choke points
+  (`joinCompany`/`leaveCompany` in `lib/team.ts`) — the ~71 files that only read them needed no
+  change.
+- UX per the issue's own spec: "Quitar" → "Eliminar acceso" with a confirm naming the company;
+  workspace switcher in the account menu; invite-link WhatsApp/copy fallback with prominent styling
+  when email delivery fails (raised by the user mid-session); Superadmin recovery tool
+  (`reassignUserToCompany`, audited, mandatory reason); `orphaned` alert + `duplicate_nif` segment
+  tag (passive — D-162, a hard duplicate-NIF block was tried and reverted: 42 e2e specs share one
+  placeholder NIF, proving the collision is legitimate in real use too).
+- Regression: `tests/e2e/membership.spec.ts` (5/5) reproduces the exact bug then proves it fixed;
+  `team.spec.ts` (7/7) needed only one change (accept the new confirm dialog).
+- Gate: typecheck + lint + prettier + keel-verify + 335 unit (5 new) + full e2e 253/254 (1 =
+  documented `master-data.spec.ts:38` flake, green isolated).
+- **AC checklist:** 7/8 items directly verified by the automated suite above. The 8th
+  ("Flujo probado manualmente con dos cuentas reales de prueba y dos workspaces") was not run as a
+  literal manual click-through — `tests/e2e/membership.spec.ts` drives the equivalent scenario
+  (two real accounts, two real workspaces, invite/accept/remove) end to end instead, which is the
+  stronger, repeatable form of the same check.
+- **On `main`** (`48f9415`). Production migrations applied and verified directly (36→38, exact
+  backfill match). **Production is not yet running this build** — needs the Hostinger redeploy
+  (unchanged blocking item from D-155/D-158). Beat-1 comment posted on the issue.

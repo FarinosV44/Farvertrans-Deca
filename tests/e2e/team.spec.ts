@@ -336,4 +336,49 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await ownerCtx.close();
     await memberCtx.close();
   });
+
+  test("#102 follow-up: re-inviting the same email rotates the link — only the latest one works", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+    const inviteEmail = email();
+
+    // First invite.
+    await owner.goto("/panel/equipo");
+    await owner.fill('[data-testid="invite-email"]', inviteEmail);
+    await owner.getByTestId("invite-submit").click();
+    await expect(owner.getByTestId("invite-msg")).toContainText(inviteEmail);
+    const firstLink = (await owner.getByTestId("invite-link").textContent())!.trim();
+
+    // Re-invite the SAME email — this used to create a second, independent
+    // token; both links stayed valid and nothing told the admin which one
+    // was current (the exact shape of a live report). Now it rotates the
+    // same pending invite in place.
+    await owner.fill('[data-testid="invite-email"]', inviteEmail);
+    await owner.getByTestId("invite-submit").click();
+    await expect(owner.getByTestId("invite-msg")).toContainText(inviteEmail);
+    const secondLink = (await owner.getByTestId("invite-link").textContent())!.trim();
+    expect(secondLink).not.toBe(firstLink);
+
+    // Exactly one pending invite is shown, never two.
+    await expect(owner.getByTestId("pending-invites").locator("li")).toHaveCount(1);
+
+    // The FIRST (superseded) link no longer resolves to a valid invite.
+    const staleCtx = await browser.newContext();
+    const stalePage = await staleCtx.newPage();
+    await stalePage.goto(firstLink.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(stalePage.getByRole("heading", { name: /no v.lida|inv.lida/i })).toBeVisible();
+    await staleCtx.close();
+
+    // The SECOND (current) link works.
+    const freshCtx = await browser.newContext();
+    const freshPage = await freshCtx.newPage();
+    await freshPage.goto(secondLink.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(freshPage.getByRole("heading", { name: "Únete al equipo" })).toBeVisible();
+    await freshCtx.close();
+
+    await ownerCtx.close();
+  });
 });

@@ -132,6 +132,31 @@ test.describe("BUILD 15 — launch gate", () => {
     expect(h["x-frame-options"]).toBe("DENY");
     expect(h["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(h["permissions-policy"]).toContain("geolocation=()");
+    // #101: HSTS present (this suite's `next start` runs with NODE_ENV=
+    // production, matching what a real deploy serves) but WITHOUT `preload`
+    // — the domain has never been submitted to hstspreload.org, and the
+    // issue's own instruction is not to set that flag without a documented
+    // subdomain inventory (D-165). `includeSubDomains` stays: `www` is the
+    // only known subdomain and it is already redirected + HTTPS-served.
+    expect(h["strict-transport-security"]).toBe("max-age=63072000; includeSubDomains");
+  });
+
+  test("#101: the public /d/[token] route and an API route also carry the baseline headers", async ({
+    request,
+  }) => {
+    // These bypass middleware.ts's matcher (which excludes /api/ and /d/) —
+    // next.config.ts's headers() is what actually protects them, and this
+    // guards against that split silently regressing to "protected nowhere".
+    const api = await request.get("/api/events", { data: {} }).catch(() => null);
+    if (api) {
+      const h = api.headers();
+      expect(h["x-content-type-options"]).toBe("nosniff");
+      expect(h["x-frame-options"]).toBe("DENY");
+    }
+    const doc = await request.get("/d/does-not-exist-at-all");
+    const h = doc.headers();
+    expect(h["x-content-type-options"]).toBe("nosniff");
+    expect(h["x-frame-options"]).toBe("DENY");
   });
 
   test("public tokens are high-entropy and not enumerable", async ({ request }) => {

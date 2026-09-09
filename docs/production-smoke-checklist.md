@@ -63,6 +63,48 @@ rows below marked **manual** need a phone and a second device.
 - [ ] `landing_view`, `deca_started`, `deca_generated` each fire once
 - [ ] No event payload contains a name, NIF, email or token (check the network tab)
 
+## 6a. Technical SEO (#95) — `npm run seo:audit -- https://<domain>`
+
+Repeatable, automated: crawls `sitemap.xml` and checks every canonical
+indexable page (status, canonical, robots signal, H1, title, meta description)
+plus a fixed list of routes that must NOT be indexable (`/panel`, `/admin`,
+`/entrar`, `/registro`, `/recuperar`, `/crear`, `/operadores`, `/api/health`).
+Exits non-zero on any problem — run it after every deploy.
+
+- [ ] `npm run seo:audit -- https://<domain>` exits 0 (all rows clean)
+
+## 7. HTTPS, headers and public surface (#101)
+
+Run this against the **real production URL** after every deploy — TLS termination and
+HTTP→HTTPS redirection happen at the Hostinger reverse-proxy layer (this app never
+terminates TLS itself; see `docker-compose.prod.yml`), so they cannot be checked by
+the automated e2e suite and must be verified externally here.
+
+- [ ] `curl -sI http://<domain>/` → a single redirect straight to `https://<domain>/`
+      (not a chain, not to `http://www.` or any other intermediate host)
+- [ ] `curl -sI https://www.<domain>/algo?x=1` → `301` to `https://<domain>/algo?x=1`
+      (query string preserved — `next.config.ts` redirects)
+- [ ] `curl -sI https://<domain>/` shows, exactly: `strict-transport-security:
+      max-age=63072000; includeSubDomains` (**no `preload`** — D-165; a `preload` value
+      here would mean someone re-added it without the subdomain-inventory decision
+      that omission was conditioned on)
+- [ ] Same page: `content-security-policy` present with `frame-ancestors 'none'` and
+      **no** `'unsafe-eval'`; `x-content-type-options: nosniff`; `x-frame-options: DENY`;
+      `referrer-policy: strict-origin-when-cross-origin`
+- [ ] `curl -sI https://<domain>/api/health` and `curl -sI https://<domain>/d/<a real token>`
+      both show `x-content-type-options: nosniff` + `x-frame-options: DENY` (the baseline
+      set from `next.config.ts`, which covers routes `middleware.ts` does not)
+- [ ] No mixed content: open DevTools Network on the home page and `/crear`, filter by
+      scheme — zero `http://` requests
+- [ ] View source on a public page — no stack trace, internal file path, env var name,
+      or SQL fragment anywhere in the HTML, even on a forced error (`/does-not-exist`)
+- [ ] The session cookie (`entrar` with any account) shows `HttpOnly`, `Secure`, `SameSite=Lax`
+      in DevTools → Application → Cookies
+- [ ] Certificate: valid chain, not self-signed, expiry > 30 days out
+      (`curl -vI https://<domain>/ 2>&1 | grep -i expire`)
+- [ ] QR/PDF still works exactly as in §2 above — hardening never breaks the public
+      inspection flow
+
 ## Launch blockers (issue #20 — cannot go live while any is true)
 
 - [ ] Hostinger returns 503
