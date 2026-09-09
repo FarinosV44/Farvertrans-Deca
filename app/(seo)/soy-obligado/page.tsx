@@ -8,6 +8,7 @@ import { publicEnv } from "@/lib/env";
 import { HERO } from "@/lib/content/landing";
 import { LEGAL_SOURCE } from "@/lib/content/landing";
 import { BRAND } from "@/lib/brand";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale";
 
 const CANONICAL = `${publicEnv.baseUrl}/soy-obligado`;
 
@@ -93,7 +94,7 @@ export default async function SoyObligadoPage({ searchParams }: { searchParams: 
           __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <SiteHeader nav />
+      <SiteHeader nav locale={DEFAULT_LOCALE} />
       <main id="contenido" className="mx-auto max-w-[640px] px-4 pb-24 pt-10 md:px-6 md:pb-12">
         <nav aria-label="Migas de pan" className="text-xs text-[var(--color-text-muted)]">
           <Link href="/" className="underline">

@@ -127,7 +127,7 @@ export default async function HomePage() {
           __html: JSON.stringify(landingJsonLd()).replace(/</g, "\\u003c"),
         }}
       />
-      <SiteHeader nav authed={authed} companyName={user?.company?.name} />
+      <SiteHeader nav authed={authed} companyName={user?.company?.name} locale={locale} />
 
       <main id="contenido" className="pb-24 md:pb-0">
         {/* Hero */}

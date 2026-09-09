@@ -1,8 +1,35 @@
 "use client";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
-import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n/locale";
+import { LOCALES, LOCALE_NAMES, LOCALE_COOKIE, isLocale, type Locale } from "@/lib/i18n/locale";
+import { HEADER_STRINGS } from "@/lib/i18n/header-strings";
 import { GlobeIcon, CheckIcon } from "@/components/panel/icons";
+
+function readLocaleCookie(): Locale | null {
+  const m = document.cookie.match(new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`));
+  const v = m ? decodeURIComponent(m[1]) : null;
+  return isLocale(v) ? v : null;
+}
+
+/**
+ * #96 (Core Web Vitals): patches the header's OTHER translated text nodes
+ * (marked `data-i18n-key` in `SiteHeader`) in place, client-side, with no
+ * server round-trip. Needed because a STATIC page (the SEO cluster, legal
+ * pages — #96) always server-renders the Spanish default so it stays
+ * cacheable; a visitor whose `fvd_locale` cookie already says otherwise (or
+ * who just switched) gets corrected here instead of via `getLocale()`.
+ * A DYNAMIC page's own `router.refresh()` already re-renders these same
+ * nodes correctly server-side, so this is a harmless no-op there (the text
+ * already matches).
+ */
+function applyHeaderStrings(locale: Locale) {
+  const strings = HEADER_STRINGS[locale];
+  for (const [key, value] of Object.entries(strings)) {
+    document.querySelectorAll(`[data-i18n-key="${key}"]`).forEach((el) => {
+      el.textContent = value;
+    });
+  }
+}
 
 /**
  * Locale picker (I18N #1, redesigned per #55 §4 for 8 locales:
@@ -19,11 +46,24 @@ import { GlobeIcon, CheckIcon } from "@/components/panel/icons";
  * Profesional"). A dropdown's footprint is now CONSTANT regardless of how
  * many locales exist or how long the brand name is.
  */
-export function LanguageSwitcher({ current }: { current: Locale }) {
+export function LanguageSwitcher({ current: serverCurrent }: { current: Locale }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<Locale | null>(null);
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  // #96: `serverCurrent` reflects what was actually rendered (the true
+  // locale on a dynamic page; a fixed default like "es" on a static one).
+  // On mount, correct it — and the header text — from the visitor's real
+  // cookie if the two differ, without waiting on a server round-trip.
+  const [current, setCurrent] = useState(serverCurrent);
+
+  useEffect(() => {
+    const cookieLocale = readLocaleCookie();
+    if (cookieLocale && cookieLocale !== serverCurrent) {
+      setCurrent(cookieLocale);
+      applyHeaderStrings(cookieLocale);
+    }
+  }, [serverCurrent]);
 
   async function switchTo(locale: Locale) {
     if (locale === current || busy) return;
@@ -34,6 +74,8 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ locale }),
       });
+      setCurrent(locale);
+      applyHeaderStrings(locale);
       if (detailsRef.current) detailsRef.current.open = false;
       startTransition(() => router.refresh());
     } finally {

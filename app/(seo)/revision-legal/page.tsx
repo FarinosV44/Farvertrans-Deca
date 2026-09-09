@@ -7,6 +7,7 @@ import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { PRAETORIA_REVIEWER_DISPLAY, reviewerPersonJsonLd } from "@/lib/content/legal-reviewer";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale";
 
 /**
  * Public author/reviewer page (SEO task #3/#6): explains, using ONLY the
@@ -75,7 +76,7 @@ export default function RevisionLegalPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <SiteHeader nav />
+      <SiteHeader nav locale={DEFAULT_LOCALE} />
       <main id="contenido" className="mx-auto max-w-[760px] px-4 pb-24 pt-10 md:px-6 md:pb-12">
         <nav aria-label="Migas de pan" className="text-xs text-[var(--color-text-muted)]">
           <Link href="/" className="underline">
