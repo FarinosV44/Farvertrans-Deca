@@ -45,27 +45,32 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #95–#103 batch started (D-161). #102 [P0 Equipo] — the reported membership-corruption
-  bug, root-caused and fixed (D-163).** `User.companyId` was a single FK with no `Membership`
-  table — accepting a second invite silently overwrote it (losing the user's own company), and
-  removing a member had nothing to delete except that same FK (`companyId: null`, indistinguishable
-  from "never had an account"), exactly reproducing the reported symptom. New `Membership` model
-  (User↔Company N:M) is now the source of truth; `User.companyId`/`companyRole` stay as an "active
-  company" denormalization kept in sync by exactly two choke points (`joinCompany`/`leaveCompany` in
-  `lib/team.ts`) — every one of the ~71 call sites that merely READ `user.companyId` needed no
-  change. Also: "Quitar" renamed to "Eliminar acceso" with a clarifying confirm; a workspace
-  switcher in the account menu (shown only when >1 membership); invite links get a WhatsApp/copy
-  fallback with prominent styling when email delivery fails; a Superadmin recovery tool
-  (`reassignUserToCompany`, audited, mandatory reason) for the specific affected case and any future
-  one shaped like it; a `duplicate_nif`/`orphaned` passive Superadmin segment tag (D-162: a hard
-  block was tried and reverted — 42 e2e spec files share one placeholder NIF, proving the same
-  collision is legitimate in real use too).
-  Gate: typecheck + lint + prettier + keel-verify + 335 unit (5 new) + full e2e 253/254 (1 =
-  documented `master-data.spec.ts:38` flake, green isolated), including the exact bug reproduced
-  then fixed (`tests/e2e/membership.spec.ts`, 5/5) and the pre-existing `team.spec.ts` (7/7,
-  unmodified except accepting the new confirm dialog).
-  **NEXT:** merge to `main` + apply the 2 pending migrations to production (user instruction), then
-  continue the #95–#103 batch: #101 → #95 → #99 → #103 → #96/#97/#98/#100 if context allows.
+- **Latest: #95–#103 batch (D-161), 3 of 9 done, MERGED to `main` (`0eb75cb`).**
+  - **#102 [P0 Equipo] — the reported membership-corruption bug, root-caused and fixed (D-163).**
+    `User.companyId` was a single FK — accepting a second invite silently overwrote it, removing a
+    member set `companyId: null` (indistinguishable from "never had an account"). New `Membership`
+    model (User↔Company N:M) is the source of truth now; `User.companyId`/`companyRole` stay as an
+    "active company" view kept in sync by exactly two choke points, so the ~71 read-only call sites
+    needed no change. Plus: "Eliminar acceso" rename+confirm, workspace switcher, Superadmin
+    recovery tool, `orphaned`/`duplicate_nif` alerts. Production migration applied and verified
+    (D-164).
+  - **#101 [P0 Seguridad] — audited; one real gap fixed (D-165):** HSTS `preload` removed (no
+    subdomain inventory existed, as the issue warned against) — no-behavior-change, since the domain
+    was never submitted to hstspreload.org. Everything else (CSP, cookie flags, robots-not-as-
+    access-control) was already correctly built.
+  - **#95 [P0 SEO] — audited with a real crawl, `npm run seo:audit` (D-166):** 23/23 sitemap URLs
+    clean, 8/8 private routes correctly noindex/404. **Found and fixed a live bug while running
+    it:** re-inviting the same email created a second, independently-valid invite token — the exact
+    shape of the user's "invitation expired" report on a freshly generated link (verified directly
+    against production data: the reported token matched zero DB rows, while real invites had a
+    correct 14-day expiry). Now rotates the pending invite in place.
+  - Gate across all three: typecheck + lint + prettier + keel-verify + 335 unit + full e2e 255/256
+    (documented `master-data.spec.ts:38` flake, green isolated). Beat-1 comments posted on #95/#101/
+    #102. No migration needed for #101/#95 (pure app-code changes).
+  - **Still separately flagged, not code-fixable from here:** invite emails not arriving for a
+    brand-new address (`docs/lessons-learned.md` — likely Resend sandbox restriction, needs the
+    user's dashboard).
+  - **NEXT:** continue the batch per D-161 order: #99 → #103 → #96/#97/#98/#100 if context allows.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

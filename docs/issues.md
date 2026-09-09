@@ -61,13 +61,13 @@
 | 92 | [P2 UX] Vistas guardadas en Histórico | feat | medium | on `main`, awaiting deploy | E-092 |
 | 93 | [P2 UX] 3 accesos rápidos personalizados en Inicio | feat | medium | on `main`, awaiting deploy | E-092 |
 | 94 | [P0 Seguridad] Vulnerabilidad en rutas internas | fix | **critical** | **fixed**, on `main`, awaiting deploy | E-094 |
-| 95 | [P0 SEO] Auditoría técnica de indexación | audit | high | queued | E-095 |
+| 95 | [P0 SEO] Auditoría técnica de indexación | audit | high | **audited, script + fix on `main`** | E-095 |
 | 96 | [P0 SEO/Performance] Core Web Vitals móvil | perf | high | queued | E-096 |
 | 97 | [P1 SEO] Enlazado interno / autoridad temática | feat | medium | queued | E-097 |
 | 98 | [P1 SEO] Datos estructurados y señales de entidad | feat | medium | queued | E-098 |
 | 99 | [P1 SEO] Tests de regresión SEO | test | medium | queued | E-099 |
 | 100 | [P1 SEO] Search Console operativo | ops | medium | queued | E-100 |
-| 101 | [P0 Seguridad/Confianza] HTTPS/headers sin perjudicar SEO | audit | high | queued | E-101 |
+| 101 | [P0 Seguridad/Confianza] HTTPS/headers sin perjudicar SEO | audit | high | **audited, fix on `main`** | E-101 |
 | 102 | [P0 Equipo] Corregir membresías | fix | **critical** | **fixed**, on `main`, migration applied | E-102 |
 | 103 | [P1 Superadmin] Archivar/marcar empresas de prueba | feat | medium | queued | E-103 |
 
@@ -578,3 +578,23 @@ anonymize-in-place (no hard delete, D-067).
 - **On `main`** (`48f9415`). Production migrations applied and verified directly (36→38, exact
   backfill match). **Production is not yet running this build** — needs the Hostinger redeploy
   (unchanged blocking item from D-155/D-158). Beat-1 comment posted on the issue.
+
+## I-101 — #101 [P0 Seguridad/Confianza] HTTPS/headers · **audited, fix on `main`** (D-165)
+- 2026-09-09. Audited: CSP, cookie flags, error-page leakage, robots-not-as-access-control — all
+  already correctly built from earlier security work. One real gap fixed: HSTS `preload` removed
+  (no subdomain inventory existed, exactly what the issue warns against); no-behavior-change since
+  the domain was never submitted to hstspreload.org. TLS termination/HTTP redirect and WAF rules
+  are Hostinger's own layer, documented as such in `docs/production-smoke-checklist.md` §7 rather
+  than claimed as verified. Regression: `tests/e2e/launch-gate.spec.ts` extended.
+- **On `main`** (`0eb75cb`). Beat-1 comment posted.
+
+## I-095 — #95 [P0 SEO] Auditoría técnica de indexación · **audited, script + fix on `main`** (D-166)
+- 2026-09-09. Real crawl against a production build (`npm run seo:audit`, new script): 23/23
+  sitemap URLs clean, 8/8 private routes correctly noindex/404. Deliverable matches the issue's own
+  "Entregable" spec exactly; wired into `docs/production-smoke-checklist.md` §6a.
+- **Live bug found and fixed while running this audit:** re-inviting the same email created a
+  second, independently-valid `CompanyInvite` token — reproduces the user's "invitation expired"
+  report on a freshly generated link (confirmed via direct production DB query: the reported token
+  matched zero rows; the real invites in the table had a correct 14-day expiry). `createInvite()`
+  now rotates the pending invite in place. Regression: `tests/e2e/team.spec.ts`.
+- **On `main`** (`0eb75cb`). Beat-1 comment posted.
