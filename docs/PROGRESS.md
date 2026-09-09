@@ -45,14 +45,37 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #84 registration opt-in restyled as a compact feature (D-159) — on `develop`
-  (`3792565`), NOT yet on `main`.** User-requested presentation-only change to the commercial-consent
-  checkbox on `/registro`: RouteIcon + "Oportunidades de carga" + "Opcional" badge in a light box,
-  short hint text, a closed-by-default disclosure ("Qué datos se comparten"). Supersedes D-146 point
-  4's "no 'opcional' label" only; every other #84 constraint verified unchanged (unchecked by
-  default, no pressure, required Terms/Privacy checkbox untouched, same storage/legal logic). Gate:
-  typecheck + lint + prettier + `commercial-consent.spec.ts` 14/14 unmodified. Awaiting the user's
-  instruction to merge to `main` (never done without one).
+- **Latest: #95–#103 batch started (D-161). #102 [P0 Equipo] — the reported membership-corruption
+  bug, root-caused and fixed (D-163).** `User.companyId` was a single FK with no `Membership`
+  table — accepting a second invite silently overwrote it (losing the user's own company), and
+  removing a member had nothing to delete except that same FK (`companyId: null`, indistinguishable
+  from "never had an account"), exactly reproducing the reported symptom. New `Membership` model
+  (User↔Company N:M) is now the source of truth; `User.companyId`/`companyRole` stay as an "active
+  company" denormalization kept in sync by exactly two choke points (`joinCompany`/`leaveCompany` in
+  `lib/team.ts`) — every one of the ~71 call sites that merely READ `user.companyId` needed no
+  change. Also: "Quitar" renamed to "Eliminar acceso" with a clarifying confirm; a workspace
+  switcher in the account menu (shown only when >1 membership); invite links get a WhatsApp/copy
+  fallback with prominent styling when email delivery fails; a Superadmin recovery tool
+  (`reassignUserToCompany`, audited, mandatory reason) for the specific affected case and any future
+  one shaped like it; a `duplicate_nif`/`orphaned` passive Superadmin segment tag (D-162: a hard
+  block was tried and reverted — 42 e2e spec files share one placeholder NIF, proving the same
+  collision is legitimate in real use too).
+  Gate: typecheck + lint + prettier + keel-verify + 335 unit (5 new) + full e2e 253/254 (1 =
+  documented `master-data.spec.ts:38` flake, green isolated), including the exact bug reproduced
+  then fixed (`tests/e2e/membership.spec.ts`, 5/5) and the pre-existing `team.spec.ts` (7/7,
+  unmodified except accepting the new confirm dialog).
+  **NEXT:** merge to `main` + apply the 2 pending migrations to production (user instruction), then
+  continue the #95–#103 batch: #101 → #95 → #99 → #103 → #96/#97/#98/#100 if context allows.
+- **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
+  (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
+  presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
+  "Oportunidades de carga" in a light box, checkbox with a short label, a small hint line, and a
+  closed-by-default disclosure ("Qué datos se comparten"). D-159 first added an "Opcional" badge
+  (superseding D-146 point 4); D-160, same session, removed the badge again on the user's follow-up
+  correction — the checkbox stays functionally optional, just not labelled as such. Every other #84
+  constraint verified unchanged: unchecked by default, no pressure, required Terms/Privacy checkbox
+  untouched, same storage/legal logic. Gate: typecheck + lint + prettier + keel-verify + 330 unit +
+  full e2e 249/249 + `commercial-consent.spec.ts` 14/14 unmodified.
 - **Previous: #92 + #93 + #94 (D-156/D-157/D-158) — MERGED to `main` (`9fcba7f`), production
   migration APPLIED.**
   - **#94 [P0 Seguridad] — FIXED (`bf3ce0f`).** Every internal page under `app/admin/(protected)/`

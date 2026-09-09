@@ -159,8 +159,9 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await expect(member).toHaveURL(/\/verificar-email/);
     await member.goto("/panel");
 
-    // owner removes the member
+    // owner removes the member — #102: now a confirm dialog naming the company
     await owner.goto("/panel/equipo");
+    owner.once("dialog", (d) => d.accept());
     await owner.getByTestId(`remove-member-${memberEmail}`).click();
     await expect(owner.getByTestId("member-list")).not.toContainText(memberEmail);
 

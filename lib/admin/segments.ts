@@ -20,6 +20,10 @@ export const SEGMENT_RULES = {
   api_interested: "Ha enviado una solicitud de integración (#74)",
   inactive_30d: "Tiene DeCA pero ninguno en los últimos 30 días",
   recent_incident: "Fallo de generación en los últimos 7 días",
+  /** #102: an active company with 0 memberships is never a permitted state. */
+  orphaned: "Empresa activa con 0 miembros",
+  /** #102: passive visibility only — never blocks registration (D-162). */
+  duplicate_nif: "Mismo CIF/NIF que otra empresa activa",
 } as const;
 
 export type SegmentTag = keyof typeof SEGMENT_RULES;
@@ -36,6 +40,8 @@ export const SEGMENT_LABEL: Record<SegmentTag, string> = {
   api_interested: "Interesado en API/ERP",
   inactive_30d: "Inactivo 30d",
   recent_incident: "Incidencia reciente",
+  orphaned: "Huérfana (0 miembros)",
+  duplicate_nif: "CIF/NIF duplicado",
 };
 
 const HIGH_VOLUME_30D = 30; // configurable threshold
@@ -68,6 +74,7 @@ function tagsFor(
   c: Omit<CompanySegment, "tags">,
   hasIncident: boolean,
   apiInterested: boolean,
+  hasDuplicateNif: boolean,
 ): SegmentTag[] {
   const t: SegmentTag[] = [];
   if (c.total === 0) t.push("registered_inactive");
@@ -81,6 +88,9 @@ function tagsFor(
   if (apiInterested) t.push("api_interested");
   if (c.total > 0 && c.d30 === 0) t.push("inactive_30d");
   if (hasIncident) t.push("recent_incident");
+  if (c.status === "active" && c.members === 0) t.push("orphaned");
+  // #102/D-162: passive visibility, never a block — see lib/auth/index.ts.
+  if (c.status === "active" && hasDuplicateNif) t.push("duplicate_nif");
   return t;
 }
 
@@ -92,7 +102,7 @@ export async function listCompanySegments(now = new Date()): Promise<CompanySegm
   const [companies, decaByCompany, failures, integ] = await Promise.all([
     prisma.company.findMany({
       include: {
-        _count: { select: { users: true } },
+        _count: { select: { memberships: true } },
         acquisition: { select: { firstDecaAt: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -126,6 +136,18 @@ export async function listCompanySegments(now = new Date()): Promise<CompanySegm
   const incidentCompanies = new Set(failures.map((f) => f.companyId!));
   const apiCompanies = new Set(integ.map((i) => i.companyId));
 
+  // #102/D-162: which ACTIVE companies share a NIF with another ACTIVE one —
+  // computed once here rather than per-row, and used only to tag, never to
+  // block (a real self-registration collision must never be refused).
+  const activeNifCounts = new Map<string, number>();
+  for (const c of companies) {
+    if (c.status !== "active" || !c.nif?.trim()) continue;
+    const key = c.nif.trim().toUpperCase();
+    activeNifCounts.set(key, (activeNifCounts.get(key) ?? 0) + 1);
+  }
+  const hasDuplicateNif = (nif: string | null) =>
+    !!nif?.trim() && (activeNifCounts.get(nif.trim().toUpperCase()) ?? 0) > 1;
+
   return companies.map((c) => {
     const agg = byCompany.get(c.id) ?? { total: 0, d7: 0, d30: 0, last: null };
     const base = {
@@ -136,7 +158,7 @@ export async function listCompanySegments(now = new Date()): Promise<CompanySegm
       contactName: c.contactName,
       email: c.email,
       createdAt: c.createdAt,
-      members: c._count.users,
+      members: c._count.memberships,
       total: agg.total,
       d7: agg.d7,
       d30: agg.d30,
@@ -144,7 +166,15 @@ export async function listCompanySegments(now = new Date()): Promise<CompanySegm
       lastDecaAt: agg.last,
       dataComplete: !!c.dataCompletedAt,
     };
-    return { ...base, tags: tagsFor(base, incidentCompanies.has(c.id), apiCompanies.has(c.id)) };
+    return {
+      ...base,
+      tags: tagsFor(
+        base,
+        incidentCompanies.has(c.id),
+        apiCompanies.has(c.id),
+        hasDuplicateNif(c.nif),
+      ),
+    };
   });
 }
 

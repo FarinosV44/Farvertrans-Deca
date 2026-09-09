@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getInternalUser, requireStepUp, StepUpRequiredError } from "@/lib/admin/guard";
-import { setUserStatus, LifecycleError } from "@/lib/admin/lifecycle";
+import { setUserStatus, reassignUserToCompany, LifecycleError } from "@/lib/admin/lifecycle";
 import { anonymizeUser, AnonymizeError } from "@/lib/admin/anonymize";
 
 export const runtime = "nodejs";
@@ -13,6 +13,16 @@ const schema = z.discriminatedUnion("action", [
     reason: z.string().trim().max(300).optional(),
   }),
   z.object({ action: z.literal("anonymize"), confirm: z.string() }),
+  // #102 recovery tool: reassociate an existing user to an existing company,
+  // audited — for the case Membership was already the right fix for, and any
+  // future one shaped like it. Never creates a company, never touches any
+  // OTHER membership the user holds.
+  z.object({
+    action: z.literal("reassign"),
+    companyId: z.string().min(1),
+    role: z.enum(["owner", "member", "read_only"]),
+    reason: z.string().trim().min(1).max(300),
+  }),
 ]);
 
 /**
@@ -54,6 +64,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         );
       await anonymizeUser({ actorId: actor.id, userId: id, headers: req.headers });
       return NextResponse.json({ ok: true, status: "anonymized" });
+    }
+
+    if (body.action === "reassign") {
+      await reassignUserToCompany({
+        actorId: actor.id,
+        userId: id,
+        companyId: body.companyId,
+        role: body.role,
+        reason: body.reason,
+        headers: req.headers,
+      });
+      return NextResponse.json({ ok: true });
     }
 
     const status = ({ block: "blocked", deactivate: "deactivated", reactivate: "active" } as const)[

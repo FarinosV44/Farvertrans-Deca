@@ -14,6 +14,8 @@ export async function recordAudit(entry: {
   targetId?: string;
   result: "success" | "failure";
   headers?: Headers;
+  /** Free-text context — WHY, not just what/who/when. Never secrets/PII beyond the action itself. */
+  detail?: string;
 }): Promise<void> {
   try {
     await prisma.securityAuditLog.create({
@@ -25,6 +27,7 @@ export async function recordAudit(entry: {
         result: entry.result,
         ip: entry.headers ? ipFrom(entry.headers) : undefined,
         userAgent: entry.headers?.get("user-agent")?.slice(0, 300) ?? undefined,
+        detail: entry.detail?.slice(0, 2000),
       },
     });
   } catch {

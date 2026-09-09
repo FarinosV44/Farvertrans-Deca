@@ -35,6 +35,7 @@ export default async function EquipoPage() {
           invites={invites.map((i) => ({ ...i, expiresAt: i.expiresAt.toISOString() }))}
           isAdmin={user.companyRole === "owner"}
           meId={user.id}
+          companyName={user.company?.name ?? "esta empresa"}
         />
       </main>
       <SiteFooter />

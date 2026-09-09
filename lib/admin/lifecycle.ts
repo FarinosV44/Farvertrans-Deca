@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { bumpSessionVersion } from "@/lib/auth";
 import { recordAudit } from "@/lib/admin/audit";
+import { joinCompany, type CompanyRoleValue } from "@/lib/team";
 
 /**
  * Superadmin account-lifecycle transitions (#62). Every call is audited, and
@@ -105,5 +106,45 @@ export async function setCompanyStatus(opts: {
     targetId: opts.companyId,
     result: "success",
     headers: opts.headers,
+  });
+}
+
+/**
+ * #102 recovery tool — "If automatic repair is not unambiguous, build a
+ * Superadmin tool to reassociate an existing user to an existing company,
+ * audited." Reassociating is exactly `joinCompany`: it creates the
+ * membership if it does not already exist (never duplicates one) and makes
+ * it the user's active company; it never touches any OTHER membership,
+ * never creates a company, and never deletes/anonymizes anything. Used both
+ * for the specific case reported in #102 and for any future one shaped
+ * like it.
+ */
+export async function reassignUserToCompany(opts: {
+  actorId: string;
+  userId: string;
+  companyId: string;
+  role: CompanyRoleValue;
+  reason: string;
+  headers?: Headers;
+}): Promise<void> {
+  const [user, company] = await Promise.all([
+    prisma.user.findUnique({ where: { id: opts.userId } }),
+    prisma.company.findUnique({ where: { id: opts.companyId } }),
+  ]);
+  if (!user) throw new LifecycleError("not_found", "Usuario no encontrado.");
+  if (!company) throw new LifecycleError("not_found", "Empresa no encontrada.");
+  if (!opts.reason.trim())
+    throw new LifecycleError("invalid_transition", "Indica un motivo para la reasignación.");
+
+  await prisma.$transaction((tx) => joinCompany(tx, opts.userId, opts.companyId, opts.role));
+
+  await recordAudit({
+    actorId: opts.actorId,
+    action: "user_reassigned_to_company",
+    targetType: "user",
+    targetId: opts.userId,
+    result: "success",
+    headers: opts.headers,
+    detail: `→ ${company.name} (${opts.companyId}) as ${opts.role}. Reason: ${opts.reason.trim()}`,
   });
 }
