@@ -170,11 +170,60 @@ describe("#66 — generated DeCA structural snapshot", () => {
     expect(out.toUpperCase()).toContain("FRANCIA");
   });
 
-  it("numbers the cells CMR-style (1–8)", async () => {
+  // #107: the CMR-style numbered cell badges (1–8) were REMOVED — the
+  // issue's own editorial-redesign brief explicitly flags them as one of
+  // the "looks like a dashboard, not a professional transport document"
+  // symptoms ("exceso de... numeritos de sección"). Structural sequencing
+  // still comes from the document's own layout order, not printed numbers.
+  it("no longer numbers the cells CMR-style — a deliberate #107 correction", async () => {
     const t = await text();
-    // the eight cell numbers appear as standalone tokens
-    for (const n of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
-      expect(t).toMatch(new RegExp(`(^| )${n}( |$)`));
+    // the exact old adjacency (a bare digit immediately before the section/
+    // field label it used to badge) is gone — checked per label rather than
+    // "no standalone digit anywhere", since the document legitimately
+    // contains plenty of real numbers (version, dates, weights, plates).
+    for (const label of [
+      "CARGADOR CONTRACTUAL",
+      "TRANSPORTISTA EFECTIVO",
+      "LUGAR DE CARGA",
+      "LUGAR DE DESCARGA",
+      "NATURALEZA DE LA MERCANCÍA",
+      "PESO O MEDIDA",
+      "MATRÍCULA TRACTORA",
+      "MATRÍCULA REMOLQUE",
+    ]) {
+      expect(
+        t.toUpperCase(),
+        `"${label}" must not be badged with a leftover cell number`,
+      ).not.toMatch(new RegExp(`\\b\\d\\s+${label}\\b`));
     }
+  });
+
+  it("shows a clean, editorial masthead — brand, reference, version, status — no CMR box numbering", async () => {
+    const t = await text();
+    expect(t).toContain("DeCA Profesional");
+    expect(t).toContain("Documento Electrónico de Control Administrativo");
+    expect(t).toContain("DECA-A4F2C9E1");
+    expect(t).toMatch(/Versión 1/);
+    expect(t.toUpperCase()).toContain("DOCUMENTO VIGENTE");
+  });
+
+  it("shows DOCUMENTO CORREGIDO and the modification timestamp for a version > 1", async () => {
+    const buf = await renderDecaPdf({
+      data: payload,
+      publicUrl: "https://decaprofesional.es/d/A4F2C9E1",
+      reference: "DECA-A4F2C9E1",
+      versionNo: 2,
+      createdAt: new Date("2026-10-06T08:41:00Z"),
+      modifiedAt: new Date("2026-10-07T10:00:00Z"),
+    });
+    const doc = await getDocument({ data: new Uint8Array(buf) }).promise;
+    const content = await (await doc.getPage(1)).getTextContent();
+    const t = content.items
+      .map((it) => ("str" in it ? it.str : ""))
+      .join(" ")
+      .replace(/\s+/g, " ");
+    expect(t.toUpperCase()).toContain("DOCUMENTO CORREGIDO");
+    expect(t).toContain("Versión 2");
+    expect(t).toContain("2026-10-07 10:00:00 UTC");
   });
 });

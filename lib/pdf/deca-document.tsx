@@ -5,127 +5,100 @@ import { DECA_ROLES } from "@/lib/deca/roles";
 import { formatLocationCityLine } from "@/lib/deca/location";
 
 /**
- * Premium corporate layout (PRODUCT #49). Structural inspiration only from
- * the owner-supplied reference — no competitor branding copied. Every value
- * stays a real `<Text>` node (R-3: native, selectable text, never an image)
- * and every mandatory field keeps exactly the same content as before; only
- * the visual system changed. QR stays in its own fixed bottom-right zone
- * with generous quiet space, never sharing a line with body text.
+ * #107 — editorial redesign (Vignelli-inspired: grid, typographic hierarchy,
+ * economy of means — never a literal copy of any specific Vignelli work,
+ * and never a CMR). Structural inspiration only from the owner-supplied
+ * reference — no competitor branding copied. Every value stays a real
+ * `<Text>` node (R-3: native, selectable text, never an image) and every
+ * mandatory field keeps EXACTLY the same content as before (#107's own "no
+ * tocar contenido legal ni estructura de datos") — only the visual system
+ * changed:
+ *  - a light masthead (no dark app-style header band, no rounded logo
+ *    badge) under one strong rule, like a document's own nameplate;
+ *  - the CMR-style numbered cell badges are GONE — #107 explicitly flags
+ *    them as one of the "looks like a dashboard" symptoms;
+ *  - the party/route "cards" (border + radius + fill) are gone too, replaced
+ *    by two plain typographic columns per section, separated by one hairline;
+ *  - the verification block is a full-width tinted band, not a floating
+ *    corner QR — reads as the document's own closing stamp;
+ *  - the footer is no longer `position: absolute` at the page's physical
+ *    bottom — it now flows right after the content. That absolute
+ *    positioning, reserving space regardless of how much content precedes
+ *    it, was the direct cause of #107's "too much empty white space in the
+ *    lower half" — a short DeCA now simply ends after its own content, no
+ *    artificial gap; `wrap={false}` keeps the whole verification band on
+ *    one page rather than splitting it across a page break.
  */
 
-// Sistema Vía (#67/#66): the document reads as an operational sheet — a
-// precise grid of numbered cells (CMR conventions) in the DeCA Profesional
-// identity. Still a DeCA: its own content and terminology.
-const NAVY = "#16181d"; // ink header band
-const NAVY_SOFT = "#33455e";
-const ACCENT = "#0a3d91"; // línea DeCA
-const BORDER = "#c9c4b8"; // firmer hairline for print
+const NAVY = "#16181d"; // ink — headings, primary text
+const ACCENT = "#0a3d91"; // línea DeCA — the one sparingly-used accent
+const BORDER = "#c9c4b8"; // firm hairline, holds up in print
 const MUTED = "#5c5f66";
-const BG_SOFT = "#f1efe9";
+const BG = "#fbfaf7"; // warm paper, matches the product's own --color-bg
+const BG_SOFT = "#f1efe9"; // the verification band's tint only
 
 const s = StyleSheet.create({
   page: {
-    paddingTop: 0,
-    paddingBottom: 64,
-    paddingHorizontal: 0,
+    paddingTop: 30,
+    paddingBottom: 30,
+    paddingHorizontal: 40,
     fontSize: 9.5,
     fontFamily: "Inter",
-    color: "#101828",
+    color: NAVY,
+    backgroundColor: BG,
   },
-  content: { paddingHorizontal: 36 },
 
-  // Header
-  header: {
-    backgroundColor: NAVY,
-    paddingHorizontal: 36,
-    paddingTop: 26,
-    paddingBottom: 18,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  brandMark: {
-    width: 26,
-    height: 26,
-    borderRadius: 6,
-    backgroundColor: ACCENT,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandMarkText: { color: "#ffffff", fontFamily: "Inter", fontWeight: 700, fontSize: 12 },
-  brandName: { color: "#ffffff", fontFamily: "Inter", fontWeight: 700, fontSize: 13 },
-  brandSub: { color: "#aeb9cc", fontSize: 8, marginTop: 1 },
-  customerLogo: { width: 96, height: 32, marginLeft: 14, objectFit: "contain" },
-  headerRight: { alignItems: "flex-end" },
-  docTitle: {
-    color: "#ffffff",
-    fontFamily: "Inter",
-    fontWeight: 700,
-    fontSize: 11,
-    letterSpacing: 0.4,
-  },
-  docMeta: { color: "#c7d0e0", fontSize: 8, marginTop: 3, textAlign: "right" },
-  statusPill: {
-    marginTop: 6,
-    alignSelf: "flex-end",
-    backgroundColor: "rgba(255,255,255,0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-    borderRadius: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-  },
-  statusPillText: {
-    color: "#ffffff",
-    fontSize: 7.5,
+  // Masthead — light, editorial, no colour block
+  masthead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  brandName: {
+    fontSize: 13,
     fontFamily: "Inter",
     fontWeight: 700,
     letterSpacing: 0.6,
-  },
-
-  // Section shell
-  section: { marginTop: 16 },
-  sectionHeading: {
-    fontSize: 8.5,
-    fontFamily: "Inter",
-    fontWeight: 700,
     color: NAVY,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    marginBottom: 8,
-    paddingBottom: 4,
-    borderBottomWidth: 1.5,
-    borderBottomColor: ACCENT,
   },
-
-  // CMR-style numbered cell headers
-  cellHeadRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
-  cellNo: {
+  brandSub: { fontSize: 8.5, color: MUTED, marginTop: 2 },
+  customerLogoRow: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 6 },
+  customerLogo: { width: 84, height: 28, objectFit: "contain" },
+  headerRight: { alignItems: "flex-end" },
+  docRef: { fontSize: 13, fontFamily: "Inter", fontWeight: 700, color: NAVY },
+  docMeta: { fontSize: 8.5, color: MUTED, marginTop: 3, textAlign: "right" },
+  statusRow: { flexDirection: "row", alignItems: "center", marginTop: 5 },
+  statusDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: ACCENT, marginRight: 5 },
+  statusText: {
     fontSize: 8,
     fontFamily: "Inter",
     fontWeight: 700,
-    color: "#ffffff",
-    backgroundColor: ACCENT,
-    width: 15,
-    height: 15,
-    borderRadius: 2,
-    textAlign: "center",
-    marginRight: 7,
-    paddingTop: 2.5,
+    letterSpacing: 0.5,
+    color: ACCENT,
+  },
+  mastheadRule: {
+    borderBottomWidth: 2,
+    borderBottomColor: ACCENT,
+    marginTop: 14,
+    marginBottom: 22,
   },
 
-  // Two-column party cards
-  cardsRow: { flexDirection: "row", gap: 12 },
-  card: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 3,
-    padding: 12,
-    backgroundColor: BG_SOFT,
+  // Section shell — a label + generous space, no coloured underline, no card.
+  section: { marginTop: 22 },
+  sectionHeading: {
+    fontSize: 8,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    color: MUTED,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 12,
   },
-  cardLabel: {
+
+  // Two-column editorial layout, shared by parties + route. One hairline
+  // down the middle instead of two bordered/filled cards.
+  twoCol: { flexDirection: "row" },
+  colLeft: { flex: 1, paddingRight: 18 },
+  colDivider: { width: 1, backgroundColor: BORDER },
+  colRight: { flex: 1, paddingLeft: 18 },
+
+  partyLabel: {
     fontSize: 7.5,
     fontFamily: "Inter",
     fontWeight: 700,
@@ -133,18 +106,11 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
-  // #86 p3 / FIX: the uppercase normalisation now happens at the data layer
-  // (`toDisplayDeca`, applied in lib/pdf/render.ts) so the PDF, the web detail
-  // and Modo Inspección are byte-identical in casing. No textTransform here.
-  cardValue: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: "#101828", marginTop: 4 },
-  fieldLabel: { fontSize: 7.5, color: MUTED, marginTop: 8 },
-  fieldValue: { fontSize: 9.5, color: "#101828", marginTop: 1.5 },
+  partyName: { fontSize: 13, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 5 },
+  fieldLabel: { fontSize: 7.5, color: MUTED, marginTop: 10 },
+  fieldValue: { fontSize: 10, color: NAVY, marginTop: 2, lineHeight: 1.35 },
 
-  // Route timeline
-  routeRow: { flexDirection: "row", gap: 12 },
-  routeCard: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 3, padding: 12 },
-  routeKind: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
-  routeKindText: {
+  routeKind: {
     fontSize: 8,
     fontFamily: "Inter",
     fontWeight: 700,
@@ -152,81 +118,70 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  routeName: { fontSize: 10.5, fontFamily: "Inter", fontWeight: 700, color: "#101828" },
-  routeAddress: { fontSize: 9, color: "#374151", marginTop: 3, lineHeight: 1.35 },
-  routeDate: { fontSize: 8.5, color: MUTED, marginTop: 7 },
-  routeDateValue: {
-    fontSize: 9.5,
-    fontFamily: "Inter",
-    fontWeight: 700,
-    color: NAVY_SOFT,
-    marginTop: 1,
+  routeName: { fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 6 },
+  routeAddress: { fontSize: 9.5, color: "#374151", marginTop: 4, lineHeight: 1.4 },
+  routeDateRow: { flexDirection: "row", alignItems: "baseline", marginTop: 10, gap: 6 },
+  routeDateLabel: { fontSize: 8.5, color: MUTED },
+  routeDateValue: { fontSize: 10.5, fontFamily: "Inter", fontWeight: 700, color: ACCENT },
+
+  // Goods / vehicle — one aligned row of technical fields, not a floating grid.
+  techRow: { flexDirection: "row" },
+  techField: { flex: 1, paddingRight: 14 },
+  techLabel: {
+    fontSize: 7.5,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
+  techValue: { fontSize: 10.5, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 4 },
 
-  // Goods / vehicle grid
-  grid: { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -8 },
-  gridBlock: { width: "50%", paddingHorizontal: 8, marginBottom: 10 },
-  gridLabel: { fontSize: 7.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.4 },
-  gridValue: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: "#101828", marginTop: 2 },
-
-  divider: { borderBottomWidth: 1, borderBottomColor: BORDER, marginTop: 16 },
-
-  // Footer / digital control
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    borderTopColor: BORDER,
-    paddingHorizontal: 36,
-    paddingTop: 12,
-    paddingBottom: 18,
+  // Verification band — the document's own closing stamp, not a corner QR.
+  verifyBand: {
+    marginTop: 26,
+    backgroundColor: BG_SOFT,
+    padding: 16,
+    borderRadius: 3,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
-  footerLeft: { flex: 1, paddingRight: 16 },
-  footerLabel: { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 },
-  footerUrl: { fontSize: 8, color: ACCENT, marginTop: 2, maxWidth: 360 },
-  footerOperator: { fontSize: 7, color: MUTED, marginTop: 8 },
+  verifyLeft: { flex: 1, paddingRight: 16 },
+  verifyLabel: {
+    fontSize: 7.5,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  verifyUrl: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: ACCENT, marginTop: 3 },
+  verifyMeta: { fontSize: 7.5, color: MUTED, marginTop: 8, lineHeight: 1.4 },
   qrBlock: { alignItems: "center" },
-  qr: { width: 70, height: 70 },
-  qrCaption: { fontSize: 6.5, color: MUTED, marginTop: 3, textAlign: "center" },
+  qr: { width: 66, height: 66 },
+  qrCaption: { fontSize: 6.5, color: MUTED, marginTop: 4, textAlign: "center" },
 
   pageNumber: {
     position: "absolute",
-    top: 10,
-    right: 36,
+    top: 14,
+    right: 40,
     fontSize: 7,
     color: MUTED,
   },
 });
 
-function CellNo({ n }: { n: number }) {
-  return <Text style={s.cellNo}>{n}</Text>;
-}
-
-function PartyCard({
-  n,
+function PartyColumn({
   role,
   name,
   nif,
   addressLines,
 }: {
-  n: number;
   role: string;
   name: string;
   nif: string;
   addressLines: string[];
 }) {
   return (
-    <View style={s.card}>
-      <View style={s.cellHeadRow}>
-        <CellNo n={n} />
-        <Text style={s.cardLabel}>{role}</Text>
-      </View>
-      <Text style={s.cardValue}>{name}</Text>
+    <View>
+      <Text style={s.partyLabel}>{role}</Text>
+      <Text style={s.partyName}>{name}</Text>
       <Text style={s.fieldLabel}>NIF / VAT</Text>
       <Text style={s.fieldValue}>{nif}</Text>
       <Text style={s.fieldLabel}>Domicilio</Text>
@@ -239,8 +194,7 @@ function PartyCard({
   );
 }
 
-function RouteCard({
-  n,
+function RouteColumn({
   kind,
   name,
   address,
@@ -251,7 +205,6 @@ function RouteCard({
   dateLabel,
   dateValue,
 }: {
-  n: number;
   kind: string;
   name: string;
   address: string;
@@ -263,30 +216,26 @@ function RouteCard({
   dateValue: string;
 }) {
   return (
-    <View style={s.routeCard}>
-      <View style={s.routeKind}>
-        <CellNo n={n} />
-        <Text style={s.routeKindText}>{kind}</Text>
-      </View>
+    <View>
+      <Text style={s.routeKind}>{kind}</Text>
       <Text style={s.routeName}>{name}</Text>
       <Text style={s.routeAddress}>{address}</Text>
       <Text style={s.routeAddress}>
         {formatLocationCityLine({ postalCode, city, province, country })}
       </Text>
-      <Text style={s.routeDate}>{dateLabel}</Text>
-      <Text style={s.routeDateValue}>{dateValue}</Text>
+      <View style={s.routeDateRow}>
+        <Text style={s.routeDateLabel}>{dateLabel}</Text>
+        <Text style={s.routeDateValue}>{dateValue}</Text>
+      </View>
     </View>
   );
 }
 
-function GridField({ n, label, value }: { n: number; label: string; value: string }) {
+function TechField({ label, value }: { label: string; value: string }) {
   return (
-    <View style={s.gridBlock}>
-      <View style={s.cellHeadRow}>
-        <CellNo n={n} />
-        <Text style={s.gridLabel}>{label}</Text>
-      </View>
-      <Text style={s.gridValue}>{value}</Text>
+    <View style={s.techField}>
+      <Text style={s.techLabel}>{label}</Text>
+      <Text style={s.techValue}>{value}</Text>
     </View>
   );
 }
@@ -304,7 +253,7 @@ export type DecaDocProps = {
   customerLogoDataUri?: string | null;
 };
 
-/** The compliant, premium DeCA document — every value is real selectable text (R-3). */
+/** The compliant DeCA document — every value is real selectable text (R-3). */
 export function DecaDocument(p: DecaDocProps) {
   const fmt = (d: Date) => d.toISOString().replace("T", " ").slice(0, 19) + " UTC";
   const isCorrection = p.versionNo > 1;
@@ -320,46 +269,50 @@ export function DecaDocument(p: DecaDocProps) {
       modificationDate={p.modifiedAt ?? p.createdAt}
     >
       <Page size="A4" style={s.page} wrap>
-        {/* HEADER */}
-        <View style={s.header} fixed>
-          <View style={s.brandRow}>
-            <View style={s.brandMark}>
-              <Text style={s.brandMarkText}>D</Text>
+        {/* MASTHEAD */}
+        <View>
+          {p.customerLogoDataUri && (
+            <View style={s.customerLogoRow}>
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image style={s.customerLogo} src={p.customerLogoDataUri} />
             </View>
+          )}
+          <View style={s.masthead}>
             <View>
               <Text style={s.brandName}>{BRAND.name}</Text>
-              <Text style={s.brandSub}>Documento Electrónico de Control</Text>
+              <Text style={s.brandSub}>Documento Electrónico de Control Administrativo</Text>
             </View>
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            {p.customerLogoDataUri && <Image style={s.customerLogo} src={p.customerLogoDataUri} />}
-          </View>
-          <View style={s.headerRight}>
-            <Text style={s.docTitle}>DeCA · {p.reference}</Text>
-            <Text style={s.docMeta}>
-              Versión {p.versionNo} · {fmt(p.createdAt)}
-            </Text>
-            <View style={s.statusPill}>
-              <Text style={s.statusPillText}>
-                {isCorrection ? "DOCUMENTO CORREGIDO" : "DOCUMENTO VIGENTE"}
+            <View style={s.headerRight}>
+              <Text style={s.docRef}>{p.reference}</Text>
+              <Text style={s.docMeta}>
+                Versión {p.versionNo} · {fmt(p.createdAt)}
               </Text>
+              <View style={s.statusRow}>
+                <View style={s.statusDot} />
+                <Text style={s.statusText}>
+                  {isCorrection ? "DOCUMENTO CORREGIDO" : "DOCUMENTO VIGENTE"}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
+        <View style={s.mastheadRule} />
 
-        <View style={s.content}>
-          {/* PARTIES */}
-          <View style={s.section}>
-            <Text style={s.sectionHeading}>Partes del transporte</Text>
-            <View style={s.cardsRow}>
-              <PartyCard
-                n={1}
+        {/* PARTIES */}
+        <View style={s.section}>
+          <Text style={s.sectionHeading}>Partes del transporte</Text>
+          <View style={s.twoCol}>
+            <View style={s.colLeft}>
+              <PartyColumn
                 role={DECA_ROLES.shipper.title}
                 name={p.data.shipper.name}
                 nif={p.data.shipper.nif}
                 addressLines={formatPartyAddressLines(p.data.shipper)}
               />
-              <PartyCard
-                n={2}
+            </View>
+            <View style={s.colDivider} />
+            <View style={s.colRight}>
+              <PartyColumn
                 role={DECA_ROLES.carrier.title}
                 name={p.data.carrier.name}
                 nif={p.data.carrier.nif}
@@ -367,13 +320,14 @@ export function DecaDocument(p: DecaDocProps) {
               />
             </View>
           </View>
+        </View>
 
-          {/* ROUTE */}
-          <View style={s.section}>
-            <Text style={s.sectionHeading}>Ruta del transporte</Text>
-            <View style={s.routeRow}>
-              <RouteCard
-                n={3}
+        {/* ROUTE */}
+        <View style={s.section}>
+          <Text style={s.sectionHeading}>Ruta del transporte</Text>
+          <View style={s.twoCol}>
+            <View style={s.colLeft}>
+              <RouteColumn
                 kind="Lugar de carga"
                 name={p.data.loadLocation.name}
                 address={p.data.loadLocation.address}
@@ -384,8 +338,10 @@ export function DecaDocument(p: DecaDocProps) {
                 dateLabel="Fecha de carga"
                 dateValue={p.data.loadDate}
               />
-              <RouteCard
-                n={4}
+            </View>
+            <View style={s.colDivider} />
+            <View style={s.colRight}>
+              <RouteColumn
                 kind="Lugar de descarga"
                 name={p.data.unloadLocation.name}
                 address={p.data.unloadLocation.address}
@@ -398,30 +354,32 @@ export function DecaDocument(p: DecaDocProps) {
               />
             </View>
           </View>
-
-          {/* GOODS + VEHICLE */}
-          <View style={s.section}>
-            <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
-            <View style={s.grid}>
-              <GridField n={5} label="Naturaleza de la mercancía" value={p.data.goods} />
-              <GridField n={6} label="Peso o medida" value={p.data.weight} />
-              <GridField n={7} label="Matrícula tractora" value={p.data.tractorPlate} />
-              <GridField n={8} label="Matrícula remolque" value={p.data.trailerPlate || "—"} />
-            </View>
-          </View>
-
-          <View style={s.divider} />
         </View>
 
-        {/* FOOTER / DIGITAL CONTROL */}
-        <View style={s.footer} fixed>
-          <View style={s.footerLeft}>
-            <Text style={s.footerLabel}>Documento público de verificación</Text>
-            <Text style={s.footerUrl}>{p.publicUrl}</Text>
-            <Text style={s.footerOperator}>
+        {/* GOODS + VEHICLE */}
+        <View style={s.section}>
+          <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
+          <View style={s.techRow}>
+            <TechField label="Naturaleza de la mercancía" value={p.data.goods} />
+            <TechField label="Peso o medida" value={p.data.weight} />
+          </View>
+          <View style={[s.techRow, { marginTop: 14 }]}>
+            <TechField label="Matrícula tractora" value={p.data.tractorPlate} />
+            <TechField label="Matrícula remolque" value={p.data.trailerPlate || "—"} />
+          </View>
+        </View>
+
+        {/* VERIFICATION — the document's own closing stamp, always with the content, never floating */}
+        <View style={s.verifyBand} wrap={false}>
+          <View style={s.verifyLeft}>
+            <Text style={s.verifyLabel}>Verificación pública</Text>
+            <Text style={s.verifyUrl}>{p.publicUrl}</Text>
+            <Text style={s.verifyMeta}>
               Generado el {fmt(p.createdAt)}
-              {p.modifiedAt ? ` · Modificado el ${fmt(p.modifiedAt)}` : ""} · {BRAND.name} v
-              {p.appVersion}
+              {p.modifiedAt ? ` · Modificado el ${fmt(p.modifiedAt)}` : ""}
+            </Text>
+            <Text style={s.verifyMeta}>
+              {BRAND.name} v{p.appVersion}
             </Text>
           </View>
           <View style={s.qrBlock}>
