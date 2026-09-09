@@ -26,9 +26,21 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const q = one(sp.q)?.trim() ?? "";
   const seg = one(sp.seg) as SegmentTag | undefined;
+  // #103 — "Activas" (the default) hides TEST-marked and non-active
+  // (archived/blocked/anonymized) companies, so they never contaminate the
+  // day-to-day list; both stay one click away, never deleted or hidden for good.
+  const estado =
+    (one(sp.estado) as "activas" | "archivadas" | "test" | "todas" | undefined) ?? "activas";
 
   const all = await listCompanySegments();
-  let rows = all;
+  let rows =
+    estado === "todas"
+      ? all
+      : estado === "test"
+        ? all.filter((c) => c.isTest)
+        : estado === "archivadas"
+          ? all.filter((c) => c.status !== "active")
+          : all.filter((c) => c.status === "active" && !c.isTest);
   if (q) {
     const ql = q.toLowerCase();
     rows = rows.filter(
@@ -49,7 +61,12 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
 
   const qp = (over: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    const merged = { q: q || undefined, seg, ...over };
+    const merged = {
+      q: q || undefined,
+      seg,
+      estado: estado === "activas" ? undefined : estado,
+      ...over,
+    };
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, String(v));
     const s = p.toString();
     return s ? `?${s}` : "/admin/empresas";
@@ -61,6 +78,7 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
     const p = new URLSearchParams();
     if (q) p.set("q", q);
     if (seg) p.set("seg", seg);
+    if (estado !== "activas") p.set("estado", estado);
     return p.toString();
   })();
   const rowHref = (id: string) =>
@@ -87,6 +105,7 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
           />
         </label>
         {seg && <input type="hidden" name="seg" value={seg} />}
+        {estado !== "activas" && <input type="hidden" name="estado" value={estado} />}
         <button
           type="submit"
           className="min-h-10 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)]"
@@ -99,6 +118,35 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
           </Link>
         )}
       </form>
+
+      {/* #103 — Activas is the default; TEST/archivadas never appear in the
+          normal list unless explicitly asked for, but are always one click
+          away — nothing is hidden for good. */}
+      <div className="flex flex-wrap gap-1.5" data-testid="estado-tabs" role="tablist">
+        {(
+          [
+            ["activas", "Activas"],
+            ["archivadas", "Archivadas"],
+            ["test", "TEST"],
+            ["todas", "Todas"],
+          ] as const
+        ).map(([value, label]) => (
+          <Link
+            key={value}
+            href={qp({ estado: value === "activas" ? undefined : value })}
+            role="tab"
+            aria-selected={estado === value}
+            data-testid={`estado-${value}`}
+            className={`rounded-[var(--radius-sm)] border px-2.5 py-1 text-xs font-medium no-underline ${
+              estado === value
+                ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]"
+                : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+            }`}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
 
       <div className="flex flex-wrap gap-1.5" data-testid="segment-chips">
         {chips.map((t) => {
@@ -142,6 +190,16 @@ export default async function AdminEmpresas({ searchParams }: { searchParams: Pr
                 >
                   {c.name}
                 </Link>
+                {c.isTest && (
+                  <span data-testid="empresa-test-badge" className="ml-1.5 inline-block">
+                    <Badge tone="yellow">TEST</Badge>
+                  </span>
+                )}
+                {c.status !== "active" && (
+                  <span data-testid="empresa-status-badge" className="ml-1.5 inline-block">
+                    <Badge tone="muted">{c.status}</Badge>
+                  </span>
+                )}
               </Cell>
               <Cell mono>{c.nif ?? "—"}</Cell>
               <Cell mono>{fmt(c.createdAt)}</Cell>

@@ -46,9 +46,15 @@ async function windowMetrics(w: Window, now: Date): Promise<WindowMetrics> {
       prisma.decaVersion.count({ where: { versionNo: 1, createdAt: { gte: since } } }),
       prisma.generationFailure.count({ where: { createdAt: { gte: since } } }),
       prisma.deca.count({ where: { createdAt: { gte: since }, companyId: null } }),
-      prisma.company.count({ where: { createdAt: { gte: since } } }),
+      // #103: TEST-marked companies excluded from business KPIs by default.
+      prisma.company.count({ where: { createdAt: { gte: since }, isTest: false } }),
+      // #103: TEST-marked companies excluded from business KPIs by default.
       prisma.deca.findMany({
-        where: { createdAt: { gte: since }, companyId: { not: null } },
+        where: {
+          createdAt: { gte: since },
+          companyId: { not: null },
+          company: { isTest: false },
+        },
         select: { companyId: true },
         distinct: ["companyId"],
       }),
@@ -85,7 +91,8 @@ export async function overviewMetrics(now = new Date()): Promise<OverviewMetrics
   const [windows, companies, users, deca, unresolvedFailures, prospectsAwaiting, refRows, srcRows] =
     await Promise.all([
       Promise.all((["today", "7d", "30d"] as Window[]).map((w) => windowMetrics(w, now))),
-      prisma.company.count(),
+      // #103: TEST-marked companies excluded from business KPIs by default.
+      prisma.company.count({ where: { isTest: false } }),
       prisma.user.count({ where: { role: "user" } }),
       prisma.deca.count(),
       prisma.generationFailure.count({ where: { resolvedAt: null, retriedOk: false } }),
