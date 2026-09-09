@@ -697,9 +697,20 @@ anonymize-in-place (no hard delete, D-067).
   contra un build real, 8/8 dentro de presupuesto ahora mismo. El peso mayor de
   `/crear`/`/entrar`/`/registro` se investigó sin encontrar una causa única — documentado como
   pregunta abierta, no arreglado a ciegas.
-- **Sigue sin hacerse:** el baseline real móvil antes/después (LCP/INP/CLS/TTFB) que pide el propio
-  issue — PageSpeed Insights devolvió 429 en cada intento (sin API key configurada); la alternativa
-  con Playwright (navegador real, emulación móvil + throttling) no se llegó a construir esta sesión.
+- 2026-09-09, cierre (D-175): nuevo `scripts/perf-baseline.mjs` (`npm run perf:baseline`) — navegador
+  real (Chromium), perfil móvil real (Pixel 5), throttling real (perfil "Slow 4G" + 4x CPU de
+  Lighthouse, para que sea comparable, no un umbral inventado). Ejecutado directamente contra
+  producción: LCP 1460-1960 ms en todas las rutas prioritarias (bien por debajo del umbral "good"
+  de 2500 ms incluso con throttling), CLS 0 en todas. Es el baseline "después" de esta sesión — no
+  existe un "antes" equivalente de antes de esta sesión, así que sirve como referencia para
+  cualquier trabajo futuro de #96.
+- **Checklist de aceptación del propio issue frente a lo hecho esta sesión:** baseline ✓, cuellos
+  de botella principales encontrados y en su mayoría corregidos ✓ (el peso JS de
+  `/crear`/`/entrar`/`/registro` queda como pregunta abierta), SEO/indexabilidad sin degradar ✓,
+  imágenes/fuentes sin CLS evitable ✓, caché/compresión de assets estáticos ya correcta ✓,
+  presupuestos añadidos ✓, verificado en producción ✓. **Sigue abierto, ambos documentados como
+  seguimiento propio en vez de decidido de prisa:** la arquitectura de caché del layout raíz
+  (D-172) y la pregunta del peso JS de `/crear`/`/entrar`/`/registro` (D-174).
 - **On `main`** (see PROGRESS.md).
 
 ## I-104 (D-173, urgent) — company-less logged-in user stuck in a dead-end loop
