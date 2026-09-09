@@ -381,4 +381,51 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
 
     await ownerCtx.close();
   });
+
+  test("D-176: clicking \"Reenviar\" on a pending invite shows the NEW working link", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+    const inviteEmail = email();
+
+    await owner.goto("/panel/equipo");
+    await owner.fill('[data-testid="invite-email"]', inviteEmail);
+    await owner.getByTestId("invite-submit").click();
+    await expect(owner.getByTestId("invite-msg")).toContainText(inviteEmail);
+    const firstLink = (await owner.getByTestId("invite-link").textContent())!.trim();
+
+    // D-176 — the reported bug: "Reenviar" rotates the invite's token (same
+    // mechanism as re-inviting, above) but used to throw the response away
+    // entirely, leaving the admin with no way to see the new link short of
+    // the email actually arriving. Every click silently invalidated
+    // whatever link was on screen — "I generate a new one and it's always
+    // expired", exactly as reported.
+    await Promise.all([
+      owner.waitForResponse(
+        (r) => r.url().includes("/api/team/invites") && r.request().method() === "POST",
+      ),
+      owner.getByTestId(`resend-invite-${inviteEmail}`).click(),
+    ]);
+    await expect(owner.getByTestId("invite-link")).toBeVisible();
+    const resentLink = (await owner.getByTestId("invite-link").textContent())!.trim();
+    expect(resentLink).not.toBe(firstLink);
+
+    // The link "Reenviar" just showed actually works.
+    const freshCtx = await browser.newContext();
+    const freshPage = await freshCtx.newPage();
+    await freshPage.goto(resentLink.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(freshPage.getByRole("heading", { name: "Únete al equipo" })).toBeVisible();
+    await freshCtx.close();
+
+    // The link shown before the resend is now correctly superseded.
+    const staleCtx = await browser.newContext();
+    const stalePage = await staleCtx.newPage();
+    await stalePage.goto(firstLink.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(stalePage.getByRole("heading", { name: /no v.lida|inv.lida/i })).toBeVisible();
+    await staleCtx.close();
+
+    await ownerCtx.close();
+  });
 });

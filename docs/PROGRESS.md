@@ -155,9 +155,21 @@
     fixed, budgets ✓, verified in production ✓. Two deliberately-scoped follow-ups remain open
     (root-layout caching architecture; the `/crear`/`/entrar`/`/registro` JS-weight question), each
     documented precisely enough for a future session to pick up without re-deriving anything.
-  - **REMAINING: #100 (Search Console operational process).** Largely a multi-day operational
-    process on its own — user's own instruction (AskUserQuestion) was depth over a shallow pass if
-    context ran out.
+  - **#100 — user's explicit call: leave it.** "if its manual we can leave it" — it is (Search
+    Console is a one-time operational/dashboard setup, not code). Not started; deliberately, by
+    the user's own decision, not a gap.
+  - **LIVE PRODUCTION BUG #2, reported mid-session with production credentials for direct
+    investigation (D-176):** every team invite link showed "no válida/ha caducado", generating a
+    new one changed nothing. Investigated directly against production (real DB rows, a manually
+    constructed real token proving the server-side invite logic itself was correct) before finding
+    the actual cause: `TeamManager`'s "Reenviar" button rotates the invite's token (#95/D-166's own
+    fix) but threw the response away entirely — no way to ever see the current, valid link short of
+    the email arriving. Fixed: `resend()` now shows the new link exactly like the main invite form
+    does. Reproduced red-first, shipped to `main` immediately. **Separately investigated (not a
+    code bug):** emails not arriving to some addresses — sent a real test email through the exact
+    same Resend call the app makes; Resend accepted it without error, ruling out an app-code cause.
+    Left as a deliverability/domain-configuration question for the user's Resend dashboard, not
+    guessed at further.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

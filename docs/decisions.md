@@ -5112,6 +5112,46 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-176 — LIVE PRODUCTION BUG: "Reenviar" on a pending invite silently discarded the new link (2026-09-09)
+
+**User's own words (urgent, mid-session, with production credentials to investigate directly):**
+every invite link "sale que no es válido, que ha caducado, y que genere uno nuevo — siempre sale lo
+mismo" (always says invalid/expired; generating a new one, always the same thing happens); the
+user's father needed this to add a colleague to the team.
+
+**Investigated directly against production** rather than guessing: read the actual `CompanyInvite`
+rows (all healthy — correct future `expiresAt`, `acceptedAt: null`); then, to rule out any
+server-side logic bug, manually created a token with the exact same hashing the app uses and hit
+the real `/registro?invite=...` route on production with it — it worked immediately ("Únete al
+equipo"), proving `createInvite`/`getInvitePreview`/`acceptInvite`/`consumeInviteToken` are all
+correct as written.
+
+**The actual bug, found by reading `TeamManager`'s `resend()`:** clicking "Reenviar" on a pending
+invite calls the SAME endpoint as inviting (`POST /api/team/invites`), which — per #95/D-166's own
+rotation fix — correctly ROTATES the invite's token, invalidating whatever link existed before.
+But `resend()` never read the response body at all (`.catch(() => {})` swallowed even network
+errors) — it just showed a generic "se ha vuelto a crear la invitación" message with NO link. Every
+click silently invalidated whatever was on screen and gave no way to see the new one short of the
+email actually arriving (itself unreliable — see below) — exactly the reported "always expired,
+generating a new one changes nothing" loop, because the admin had no way to ever see a link that
+was still current.
+
+**Fix:** `resend()` now mirrors `invite()`'s response handling exactly — parses the response, sets
+the same `link`/`delivered`/`msg` state, and both buttons get a `busy` guard against double-clicks.
+Reproduced red-first (a new e2e test, verified failing against `git stash`'d pre-fix code) then
+green. Merged to `main` immediately, ahead of and separate from any other slice — a live incident.
+
+**Separately investigated, NOT a code bug:** emails not arriving to some new accounts (reported
+alongside this). Sent a real test email through the exact same Resend call the app's own
+`sendMail()` makes (same endpoint, same headers, same `from`) directly to the affected address —
+Resend accepted it without error (a real message ID returned), and the app's `sendMail()` is
+byte-for-byte the same call. This rules out an application-code bug; the remaining explanation is
+deliverability downstream of Resend accepting the send (domain reputation / SPF-DKIM-DMARC for
+`praetoriaabogados.es`, or the recipient's own spam filtering) — outside what a code change can fix
+from here. Recommended: check the Resend dashboard's domain-verification page, and have the
+affected recipient check their spam folder for the diagnostic email sent during this
+investigation.
+
 ## D-175 — #96: Core Web Vitals — a real mobile baseline, measured against production (2026-09-09)
 
 New `scripts/perf-baseline.mjs` (`npm run perf:baseline`) — the piece D-174 flagged as still
