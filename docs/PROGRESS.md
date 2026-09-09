@@ -170,6 +170,20 @@
     same Resend call the app makes; Resend accepted it without error, ruling out an app-code cause.
     Left as a deliverability/domain-configuration question for the user's Resend dashboard, not
     guessed at further.
+  - **D-176 follow-up (D-177):** user explicitly corrected the DNS/SPF hypothesis (domain verified
+    in Resend, a direct send works) and asked for a precise end-to-end code re-read plus safe
+    logging, not more guessing. Re-read `lib/mailer.ts` + the invite API route line by line: every
+    piece the user asked about (`from`/`to`, env reads, `await`, `delivered` deriving from the real
+    provider response rather than the DB write) was already correct as written. The real gaps:
+    `sendMail()` logged failures but NEVER logged a success — the 2xx body (carrying Resend's own
+    message id) was never even read; the route's outer catch around the whole mail block had zero
+    logging, so an exception there (as opposed to inside `sendMail()` itself) vanished with no
+    trace. Fixed: full logging added (`mail_send_attempt`/`mail_provider_accepted` with the real
+    provider id/`team_invite_mail_result`/`team_invite_mail_threw`), UI copy reworded to the user's
+    exact requested phrasing. **Cannot go further from here:** the session's Resend API key is
+    send-only restricted (`GET /domains`/`GET /emails` both 401), so the next real attempt's logged
+    provider id needs to be checked against the Resend dashboard directly by the user — that is the
+    next diagnostic step, not another code change.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

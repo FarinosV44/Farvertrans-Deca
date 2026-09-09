@@ -68,7 +68,7 @@ export function TeamManager({
           // always gets a link they can hand over themselves.
           data.delivered
             ? `Invitación enviada a ${data.email}.`
-            : `No se pudo enviar el correo automáticamente. Comparte este enlace con ${data.email} tú mismo:`,
+            : `La invitación se ha creado, pero no hemos podido enviar el correo a ${data.email}. Puedes copiar el enlace o reintentar:`,
         );
         setEmail("");
         router.refresh();
@@ -127,7 +127,7 @@ export function TeamManager({
         setMsg(
           data.delivered
             ? `Invitación reenviada a ${data.email}. El enlace anterior ya no es válido.`
-            : `No se pudo enviar el correo automáticamente. Comparte este enlace con ${data.email} tú mismo (el anterior ya no es válido):`,
+            : `La invitación se ha creado, pero no hemos podido enviar el correo a ${data.email}. Puedes copiar el enlace o reintentar (el anterior ya no es válido):`,
         );
         router.refresh();
       }

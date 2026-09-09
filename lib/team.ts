@@ -180,7 +180,7 @@ export async function createInvite(
   invitedByUserId: string,
   emailRaw: string,
   role: CompanyRoleValue = "member",
-): Promise<{ token: string; email: string }> {
+): Promise<{ token: string; email: string; inviteId: string }> {
   await requireOwner(invitedByUserId, companyId);
 
   const email = normEmail(emailRaw);
@@ -239,7 +239,7 @@ export async function createInvite(
     result: "success",
   });
 
-  return { token, email };
+  return { token, email, inviteId: invite.id };
 }
 
 export async function revokeInvite(companyId: string, actingUserId: string, inviteId: string) {
