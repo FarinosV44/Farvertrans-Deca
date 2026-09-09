@@ -120,7 +120,12 @@ export default async function HomePage() {
       <TrackView event="landing_view" />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd()) }}
+        // #98: same escaping pattern as every other JSON-LD block on the site
+        // (security.md T-5) — this content is static today, but the pattern
+        // must not silently diverge the moment it stops being static.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(landingJsonLd()).replace(/</g, "\\u003c"),
+        }}
       />
       <SiteHeader nav authed={authed} companyName={user?.company?.name} />
 

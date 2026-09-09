@@ -87,39 +87,54 @@ test("block a company: members locked out, but its DeCA stays public; reactivate
   expect(company.status).toBe("active");
 });
 
-test("anonymise a company: PII gone, DeCA + audit kept", async ({ request }) => {
-  const { token, companyId, userId } = await newCompanyWithDeca();
+/**
+ * #103 follow-up (D-170) — SUPERSEDES the previous version of this test,
+ * which exercised company anonymization as a normal Superadmin action. The
+ * user's explicit correction: NO irreversible action may be reachable from
+ * normal Superadmin for a company — a compromised session, a human mistake,
+ * or a permissions bug must never be able to trigger one. `anonymize` is
+ * REJECTED for companies now; the underlying `anonymizeCompany()` function
+ * still exists in `lib/admin/anonymize.ts` as the building block for a
+ * future controlled, exceptional, out-of-band procedure — but it is wired
+ * to nothing reachable from the web, verified directly here.
+ */
+test("a company cannot be anonymized through Superadmin — no irreversible action is web-reachable", async ({
+  request,
+}) => {
+  const { token, companyId } = await newCompanyWithDeca();
   const decaCountBefore = await prisma.deca.count({ where: { companyId } });
   await loginAdminApi(request);
 
-  const bad = await request.patch(`/api/admin/empresas/${companyId}`, {
-    data: { action: "anonymize", confirm: "nope" },
-  });
-  expect(bad.status()).toBe(422);
+  for (const payload of [
+    { action: "anonymize", confirm: "ANONIMIZAR" },
+    { action: "anonymize", confirm: "nope" },
+    { action: "delete" },
+    { action: "hard_delete" },
+  ]) {
+    const res = await request.patch(`/api/admin/empresas/${companyId}`, { data: payload });
+    expect(res.status(), `"${payload.action}" must not be a recognised action`).toBe(422);
+  }
 
-  const ok = await request.patch(`/api/admin/empresas/${companyId}`, {
-    data: { action: "anonymize", confirm: "ANONIMIZAR" },
-  });
-  expect(ok.status()).toBe(200);
-
+  // Nothing about the company changed as a result of the attempts.
   const company = await prisma.company.findUniqueOrThrow({ where: { id: companyId } });
-  expect(company.status).toBe("anonymized");
-  expect(company.nif).toBeNull();
-  expect(company.email).toBeNull();
-  expect(company.anonymizedAt).not.toBeNull();
-
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-  expect(user.email).toMatch(/@anonymized\.invalid$/);
-  expect(user.status).toBe("anonymized");
-
-  // Documents and audit are untouched.
+  expect(company.status).toBe("active");
+  expect(company.nif).not.toBeNull();
+  expect(company.anonymizedAt).toBeNull();
   expect(await prisma.deca.count({ where: { companyId } })).toBe(decaCountBefore);
   expect((await request.get(`/d/${token}`)).status()).toBe(200);
-  expect(
-    await prisma.securityAuditLog.count({
-      where: { targetId: companyId, action: "company_anonymized" },
-    }),
-  ).toBe(1);
+
+  // Block/deactivate/reactivate stay available and reversible — never removed.
+  const blocked = await request.patch(`/api/admin/empresas/${companyId}`, {
+    data: { action: "block", reason: "test" },
+  });
+  expect(blocked.status()).toBe(200);
+  const reactivated = await request.patch(`/api/admin/empresas/${companyId}`, {
+    data: { action: "reactivate" },
+  });
+  expect(reactivated.status()).toBe(200);
+  expect((await prisma.company.findUniqueOrThrow({ where: { id: companyId } })).status).toBe(
+    "active",
+  );
 });
 
 test("edit the ficha: the superadmin fixes an invalid NIF the owner cannot touch", async ({

@@ -226,7 +226,7 @@ See `docs/03-technical-plan.md`.
 **F14/F15 analytics & SEO**
 - AC-31 `landing_view`, `click_crear_deca`, `signup_started`, `signup_completed`, `deca_started`, `deca_generated` are emitted at their moments and carry the `ref`/UTM snapshot; no event contains personal data.
 - AC-32 Every public page has a unique title, meta description, canonical and OG tags, exactly one h1, and appears in `sitemap.xml`; `/d/`, `/app`, `/api` are disallowed in robots and PDF responses carry `X-Robots-Tag: noindex`.
-- AC-33 `SoftwareApplication` schema is on the landing and `FAQPage` schema is present wherever an FAQ is visible and valid.
+- AC-33 `SoftwareApplication` and `WebSite` schema are on the landing. `FAQPage` schema is deliberately NOT emitted anywhere (D-169, #98) — Google's guidelines since 2023 restrict FAQ rich results to a narrow set of authoritative government/health sites, so a general-purpose FAQ schema does not qualify and would risk a manual-action-style disregard rather than a rich result; the FAQ content itself stays fully visible on the page, only its structured-data markup is withheld.
 
 **F16 abuse**
 - AC-34 A single user creating one DeCA, and an inspector fetching one `/d/` URL, are never shown a challenge.

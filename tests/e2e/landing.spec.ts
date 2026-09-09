@@ -45,7 +45,7 @@ test.describe("BUILD 06 — production landing", () => {
     expect(errors, errors.join(" | ")).toHaveLength(0);
   });
 
-  test("AC-33: JSON-LD has SoftwareApplication + FAQPage", async ({ page }) => {
+  test("AC-33: JSON-LD has SoftwareApplication + WebSite, never FAQPage", async ({ page }) => {
     await page.goto("/");
     const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
     const types = blocks.flatMap((b) => {
@@ -53,7 +53,11 @@ test.describe("BUILD 06 — production landing", () => {
       return (Array.isArray(parsed) ? parsed : [parsed]).map((x) => x["@type"]);
     });
     expect(types).toContain("SoftwareApplication");
-    expect(types).toContain("FAQPage");
+    expect(types).toContain("WebSite");
+    // #98 (D-169): deliberately absent — Google restricts FAQ rich results to
+    // a narrow set of authoritative sites; a regression that reintroduces it
+    // must fail here, per the corrected AC-33.
+    expect(types).not.toContain("FAQPage");
   });
 
   test("#21: the product brand is centralised and carries no company attribution", async ({

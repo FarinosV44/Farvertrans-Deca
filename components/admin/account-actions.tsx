@@ -135,7 +135,11 @@ export function AccountActions({
         </div>
       )}
 
-      {!isAnon && (
+      {/* #103 follow-up (D-170): a company has NO irreversible action reachable
+          from normal Superadmin — the endpoint itself rejects "anonymize" for
+          companies now, so this block would 422 if it were rendered here.
+          Kept for users only, unchanged from #62. */}
+      {!isAnon && kind === "usuarios" && (
         <details className="mt-4">
           <summary className="cursor-pointer text-sm text-[var(--color-danger)]">
             Eliminar / anonimizar (irreversible)

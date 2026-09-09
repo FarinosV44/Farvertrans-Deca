@@ -4,19 +4,26 @@ import { prisma } from "@/lib/prisma";
 import { getInternalUser, requireStepUp, StepUpRequiredError } from "@/lib/admin/guard";
 import { recordAudit } from "@/lib/admin/audit";
 import { setCompanyStatus, setCompanyTest, LifecycleError } from "@/lib/admin/lifecycle";
-import { anonymizeCompany, AnonymizeError } from "@/lib/admin/anonymize";
 import { companyDataSchema } from "@/lib/validation/company";
 import { companyDataComplete } from "@/lib/company/completeness";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * #103 follow-up (D-170): NO irreversible action is reachable from normal
+ * Superadmin for a company — `anonymize` (and any hard delete, which never
+ * existed here) is deliberately NOT in this union. A compromised Superadmin
+ * session, a human mistake, or a permissions bug can therefore never trigger
+ * an irreversible change to a company through this endpoint. If anonymizing
+ * a company is ever genuinely needed, it happens outside this route, through
+ * a controlled, exceptional technical procedure — never a web button.
+ */
 const schema = z.discriminatedUnion("action", [
   z.object({
     action: z.enum(["block", "deactivate", "reactivate"]),
     reason: z.string().trim().max(300).optional(),
   }),
-  z.object({ action: z.literal("anonymize"), confirm: z.string() }),
   z.object({ action: z.literal("edit"), data: companyDataSchema }),
   // #103 — "Marcar como prueba": visibility/metrics only, never access or data.
   z.object({ action: z.literal("set_test"), isTest: z.boolean() }),
@@ -87,16 +94,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ ok: true });
     }
 
-    if (body.action === "anonymize") {
-      if (body.confirm !== "ANONIMIZAR")
-        return NextResponse.json(
-          { error: { code: "confirm_required", message: 'Escribe "ANONIMIZAR" para confirmar.' } },
-          { status: 422 },
-        );
-      await anonymizeCompany({ actorId: actor.id, companyId: id, headers: req.headers });
-      return NextResponse.json({ ok: true, status: "anonymized" });
-    }
-
     const status = ({ block: "blocked", deactivate: "deactivated", reactivate: "active" } as const)[
       body.action
     ];
@@ -109,7 +106,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
     return NextResponse.json({ ok: true, status });
   } catch (e) {
-    if (e instanceof LifecycleError || e instanceof AnonymizeError) {
+    if (e instanceof LifecycleError) {
       const s = e.code === "not_found" ? 404 : 409;
       return NextResponse.json({ error: { code: e.code, message: e.message } }, { status: s });
     }

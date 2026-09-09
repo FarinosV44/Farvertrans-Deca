@@ -58,6 +58,14 @@ const organizationJsonLd = {
   name: LEGAL_ENTITY.name,
   url: LEGAL_ENTITY.corporateUrl,
   email: LEGAL_ENTITY.supportEmail,
+  // #98: the CIF is already public elsewhere on the site (legal pages,
+  // footer, LEGAL #52) — this only surfaces the same real value, never a
+  // new one. `logo` uses the icon.svg the browser tab already shows: no
+  // separate hosted wordmark image exists to reference instead, and
+  // inventing one to satisfy the schema is exactly what the issue's own
+  // "no marcar contenido que no existe" principle forbids.
+  taxID: LEGAL_ENTITY.cif,
+  logo: `${publicEnv.baseUrl}/icon.svg`,
   address: { "@type": "PostalAddress", streetAddress: LEGAL_ENTITY.address },
   contactPoint: {
     "@type": "ContactPoint",

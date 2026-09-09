@@ -96,6 +96,8 @@ export async function ContentPage({
       description: item.excerpt,
       datePublished: item.publishedAt?.toISOString(),
       dateModified: item.updatedAt.toISOString(),
+      // #98: "image cuando exista" — never a placeholder when neither is set.
+      ...(item.ogImage || item.heroImage ? { image: item.ogImage || item.heroImage } : {}),
       author: { "@type": "Organization", name: item.authorName || BRAND.name },
       // PRAETORIA, S.L. is the legal operator/publisher; DeCA Profesional is
       // its product brand (2026-09 legal-content pass, docs/decisions.md
