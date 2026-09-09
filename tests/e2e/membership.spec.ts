@@ -1,4 +1,9 @@
 import { test, expect, type APIRequestContext, type Page } from "@playwright/test";
+import { PrismaClient } from "@/prisma/generated/client";
+import { loginAdminApi } from "./helpers/admin-auth";
+
+const prisma = new PrismaClient();
+test.afterAll(() => prisma.$disconnect());
 
 /**
  * #102 — the reported bug, reproduced exactly, plus the issue's own AC
@@ -117,6 +122,61 @@ test.describe("#102 — the exact reported bug is fixed", () => {
     // a bare "Crear cuenta gratis" registration screen, which was the bug.
     await page.goto("/panel");
     await expect(page.getByRole("heading", { name: "Casa Original SL" })).toBeVisible();
+  });
+
+  /**
+   * D-178 (user's explicit follow-up on #102): the case above switches back
+   * to A BEFORE removal, so `leaveCompany`'s own fallback selection
+   * (`pickFallbackMembership`) is never actually exercised — by the time B
+   * removes the user, A was already their active company, and the "was
+   * this their active company?" guard short-circuits. THIS test removes
+   * the user while B — not A — is still active, so the automatic fallback
+   * itself is what has to land them back on A, with no manual switch and
+   * no onboarding screen in between.
+   */
+  test("D-178: member of A, joins B (active), removed from B → lands back on A automatically, no onboarding", async ({
+    page,
+    browser,
+  }) => {
+    const { email: userEmail } = await registerCompany(page, "Hogar SL");
+
+    const ctxB = await browser.newContext();
+    const pageB = await ctxB.newPage();
+    await registerCompany(pageB, "Trabajo SL");
+    const link = await invite(pageB.request, userEmail);
+
+    // Accept the invite — B becomes the active company. No switch back to A.
+    await page.goto(`/registro?invite=${tokenOf(link)}`);
+    await page.waitForURL("**/panel");
+    await expect(page.getByRole("heading", { name: "Trabajo SL" })).toBeVisible();
+
+    // Owner of B removes the shared user while B is still their active company.
+    await pageB.goto("/panel/equipo");
+    pageB.once("dialog", (d) => d.accept());
+    await pageB.getByTestId(`remove-member-${userEmail}`).click();
+    await expect(pageB.getByTestId("member-list")).not.toContainText(userEmail);
+    await ctxB.close();
+
+    // The fallback lands them straight on A — never the new-account signup
+    // form, never a "create your company" onboarding screen.
+    const res = await page.goto("/panel");
+    expect(res?.url()).toContain("/panel");
+    await expect(page.getByRole("heading", { name: "Trabajo SL" })).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Hogar SL" })).toBeVisible();
+
+    // Superadmin shows both real memberships — B's is gone (removed), A's
+    // is still there and marked as the active one.
+    const admin = await browser.newContext();
+    const adminPage = await admin.newPage();
+    await loginAdminApi(adminPage.request);
+    const user = await prisma.user.findFirstOrThrow({ where: { email: userEmail } });
+    await adminPage.goto(`/admin/usuarios/${user.id}`);
+    const membershipsSection = adminPage.locator("section:has(#memberships)");
+    await expect(membershipsSection.getByText("Hogar SL")).toBeVisible();
+    await expect(membershipsSection.getByText("Trabajo SL")).not.toBeVisible();
+    const activeRow = membershipsSection.getByRole("row").filter({ hasText: "Hogar SL" });
+    await expect(activeRow.getByText("activa", { exact: true })).toBeVisible();
+    await admin.close();
   });
 
   test("accepting the same invite twice is idempotent — no error, no reassignment", async ({

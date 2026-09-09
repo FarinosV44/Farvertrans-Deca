@@ -5112,6 +5112,50 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-178 — #102 follow-up: multi-membership correctness, verified item by item against the user's explicit checklist (2026-09-09)
+
+**User's explicit request:** ensure a user belonging to several companies is handled correctly —
+join a new one (B) without losing an existing one (A); if removed from the currently-active one,
+fall back automatically to another valid membership rather than the account or an onboarding
+screen; a specific list of sub-checks; specific tests (A + join B + removed from B + still enters A
++ no new-company onboarding).
+
+**Verified against the actual #102 code, item by item, rather than assumed:**
+
+| Requirement | Status | Where |
+|---|---|---|
+| Joining a company adds a membership, never replaces/destroys another | ✓ already correct | `joinCompany()` upserts ONE membership row, never touches others |
+| `activeWorkspace`/`activeCompany` kept separate from the membership set | ✓ already correct | `User.companyId`/`companyRole` (the "current view") vs. `Membership` (source of truth) — this exact split is #102's whole design |
+| Losing the active membership searches for another valid one and picks it automatically | ✓ already correct | `leaveCompany()` → `pickFallbackMembership()` |
+| Preference for the last-used workspace if there's history | ⚠️ partial — see below | currently picks the OLDEST remaining membership, not "most recently used" (no "last active" timestamp exists to prefer by) |
+| A chooser shown when the pick is ambiguous (several candidates) | ⚠️ partial — see below | no chooser at the moment of removal; the existing account-menu workspace switcher lets them change it afterward |
+| Only sent to "create a company" onboarding when NO valid membership remains | ✓ already correct (and directly tied to D-173, this same session) | `leaveCompany()` sets `companyId: null` only when `remaining.length === 0`; `/panel/**`'s D-173 fix sends that state to `/registro/completar-empresa` (attach a company to the existing account), never the new-account signup form |
+| Accepting an invite never overwrites `companyId` in a destructive way / never deletes the prior relationship | ✓ already correct | `joinCompany()` — the active pointer moving to the newly-joined company IS the intended behaviour (the user's own point 1); the OLD membership row is never touched |
+| "Eliminar acceso" removes only that one membership | ✓ already correct | `removeMember()` → `leaveCompany()` → `membership.delete` by the unique `(userId, companyId)` key |
+| Login afterwards selects a valid company correctly | ✓ already correct | `login()` doesn't need its own logic — `User.companyId` is kept correct at all times by `joinCompany`/`leaveCompany` being the ONLY two mutators (the file's own header comment states and enforces this) |
+| Superadmin shows every real membership a user holds | ✓ already correct, found already built | `getUserAdmin()` (`lib/admin/records.ts`) returns `memberships: [...]` with an `active` flag per row — rendered in `/admin/usuarios/[id]` under "Membresías (#102)" |
+| 0-member companies never appear from this flow except as a permitted state | ✓ already correct | the only way to reach 0 members is removing the last one, which surfaces as the existing `orphaned` company alert (`lib/admin/metrics.ts`) — a monitored, known state, not a silent gap |
+
+**The two ⚠️ items are deliberately NOT built further this pass**, and here is why rather than a
+silent gap: the user's own bug report, and every scenario in the new test below, only ever has ONE
+remaining membership after a removal — the tie-break rule (oldest vs. most-recently-used) and the
+"show a chooser" case cannot even be exercised by any real report so far. Building genuine
+"last-used" tracking needs a new column (nothing currently timestamps "which company was active
+right before this switch"), and a chooser-on-removal flow is a real, separate piece of UI. Both are
+real, buildable follow-ups — not silently dropped — but adding them now, un-asked-for and
+unverifiable against any actual scenario, is exactly the kind of scope expansion Keel's own rule
+warns against. Flagged here for the user to decide whether they're worth building.
+
+**New test, closing a real verification gap:** the EXISTING #102 test
+("removing a member from company B does not lock them out of company A") switches the user back to
+A manually BEFORE the removal — so `pickFallbackMembership`'s own selection logic was never
+actually exercised; the "was this their active company?" guard inside `leaveCompany` short-circuits
+before it. `tests/e2e/membership.spec.ts`'s new "D-178" test removes the user while B (not A) is
+still their active company, so the AUTOMATIC fallback itself has to do the work — verified it lands
+back on A with no manual switch and no onboarding screen, and separately verified via Superadmin
+that A shows as the active membership and B's is gone. 15/15 team+membership e2e green, 357/357
+unit green.
+
 ## D-177 — invite emails: end-to-end logging added, per the user's explicit correction to D-176 (2026-09-09)
 
 **User's explicit correction:** after D-176, the user reported the invite email genuinely never
