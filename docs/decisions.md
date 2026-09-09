@@ -5029,3 +5029,73 @@ deactivated`) with audit + session-kill, wired into `PATCH /api/admin/empresas/[
 
 Gate: typecheck + lint + prettier + keel-verify + 335 unit + full e2e 280/282 (2 documented
 `internalPage`-contention flakes, green isolated).
+
+## D-169 — #98: structured-data audit — FAQPage removed, WebSite/entity fields added (2026-09-09)
+
+**Audited what already existed before writing anything** (same discipline as #95/#101): `Organization`
+(root layout), `BlogPosting`/`Article` + `BreadcrumbList` (blog/guías/SEO cluster) were already
+solidly built — real `dateModified` from the DB/editorial data (never build time), `publisher`
+correctly distinguishing PRAETORIA (legal entity) from DeCA Profesional (product brand), `reviewedBy`
+only when a real reviewer is set (never invented), and matching VISIBLE editorial signals on-page
+("Por {author}", "Revisión legal: {reviewer}", "Última revisión: {date}") — not just in JSON-LD.
+`sameAs` correctly absent: no real social profiles exist yet to reference (verified by grep, not
+assumed).
+
+**Real gaps found and fixed:**
+- **`FAQPage` schema REMOVED from the landing** (`lib/content/landing.ts`) — it was being emitted
+  unconditionally, directly violating the issue's own instruction ("No usar FAQPage de forma
+  automática salvo que la página y las directrices vigentes lo justifiquen") with no exception ever
+  recorded. Google's guidelines since 2023 restrict FAQ rich results to a narrow set of authoritative
+  government/health sites for most search results; a commercial SaaS landing FAQ does not qualify.
+  The visible FAQ section is untouched — it renders from `dict.landing.faqGroups` (the i18n
+  dictionary), never from `lib/content/landing.ts`. The local `FAQ` constant that lived there was
+  only ever consumed by the removed schema builder — deleted as dead code rather than kept as a
+  second, un-rendered copy of the same questions.
+- **`WebSite` type added** to the landing (was missing entirely).
+- **`Organization.taxID`** (the CIF) and **`Organization.logo`** added — both reference data already
+  public elsewhere on the site (legal pages/footer for the CIF; the browser-tab icon.svg for the
+  logo, since no separate hosted wordmark image exists to reference — inventing one would have
+  violated the issue's own "no marcar contenido que no existe" principle).
+- **`image` added to Article/BlogPosting JSON-LD** when a hero/OG image exists — "cuando exista",
+  never a placeholder.
+- **Escaping normalized**: the landing's JSON-LD script tag was missing the `<`→`<` escaping
+  every other JSON-LD block on the site already used (defense-in-depth; the content is static today
+  but the pattern must not silently diverge).
+
+**Validation (issue's own AC item — "existen tests o validación automatizable para JSON-LD"):**
+`tests/e2e/seo-regression.spec.ts` (#99) already asserted JSON-LD parses on home/guide/post; extended
+to assert the specific `@type`s present (WebSite, SoftwareApplication, Organization) and — a direct
+regression guard — that `FAQPage` is absent, so a future change cannot silently reintroduce it.
+
+## D-170 — #103 correction: NO irreversible action reachable from normal Superadmin for a company (2026-09-09)
+
+**User's explicit correction, same session, after #103/D-168 shipped:** the "Anonimizar
+definitivamente" action (pre-existing from #62, deliberately left in place in D-168 as
+"out of scope to touch") must be removed from the normal Superadmin surface for companies entirely
+— not just hard delete. Rationale, in the user's own words: a compromised Superadmin session, a
+human mistake, or a permissions bug must never be able to trigger an irreversible action on a
+company. This is a later explicit instruction that supersedes D-168's scope call, applied here per
+SKILL.md's rule for exactly this situation.
+
+**What changed:**
+- `PATCH /api/admin/empresas/[id]`: the `anonymize` action removed from the schema's discriminated
+  union entirely — the endpoint now rejects it (422) exactly like any other unrecognised action,
+  verified directly with a test that also probes `delete`/`hard_delete`.
+- `AccountActions`: the "Eliminar / anonimizar (irreversible)" block now renders only for
+  `kind="usuarios"` — unchanged there, since the user's requirements list was scoped to company
+  management ("en la gestión de empresa") and did not ask for the user-anonymize path to change.
+  **Flagged to the user, not assumed:** if a symmetric restriction is wanted for user anonymization
+  too, that is a separate, explicit ask.
+- `anonymizeCompany()` (`lib/admin/anonymize.ts`) is KEPT, not deleted — now wired to nothing
+  reachable from the web, documented as the building block for the "controlled, exceptional
+  technical procedure" the issue's own text allows for if anonymization is ever genuinely needed
+  again (a future CLI/script, never a web button) — matching #103's original instruction not to
+  build that mechanism unless strictly necessary, which it still isn't.
+- Block/deactivate/reactivate (#62) and "Marcar como prueba" (#103/D-168) are unchanged — still the
+  complete, reversible, audited action set for company management.
+
+**Regression:** `tests/e2e/admin-account-lifecycle.spec.ts` — the test that previously exercised
+company anonymization as a normal action now asserts the opposite (anonymize/delete/hard_delete all
+rejected, block→reactivate still works) — a spec correction to the test, matching the spec
+correction to the product, per SKILL.md's rule that a test derived from a corrected requirement is
+rewritten, never silently deleted.

@@ -31,7 +31,13 @@ function jsonLdBlocks(html: string): unknown[] {
   const re = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) {
-    blocks.push(JSON.parse(m[1])); // throws (fails the test) on invalid JSON — the exact regression #99 asks to catch
+    // throws (fails the test) on invalid JSON — the exact regression #99 asks
+    // to catch. One <script> tag legitimately holds an ARRAY of JSON-LD
+    // objects (e.g. the landing's WebSite + SoftwareApplication) — flatten it
+    // so each object is checked individually, not the array as a whole.
+    const parsed = JSON.parse(m[1]);
+    if (Array.isArray(parsed)) blocks.push(...parsed);
+    else blocks.push(parsed);
   }
   return blocks;
 }
@@ -71,12 +77,19 @@ test.describe("#99 — SEO regression suite (critical routes)", () => {
     });
   }
 
-  test("home carries valid, parseable JSON-LD (WebSite/Organization)", async ({ request }) => {
+  test("home carries valid, parseable JSON-LD (WebSite/SoftwareApplication/Organization)", async ({
+    request,
+  }) => {
     const html = await (await request.get("/")).text();
-    const blocks = jsonLdBlocks(html); // throws on invalid JSON — that IS the regression check
-    expect(blocks.length, "home is expected to carry at least one JSON-LD block").toBeGreaterThan(
-      0,
-    );
+    const blocks = jsonLdBlocks(html) as { "@type"?: string }[]; // throws on invalid JSON
+    const types = blocks.map((b) => b["@type"]);
+    expect(types).toContain("WebSite");
+    expect(types).toContain("SoftwareApplication");
+    expect(types).toContain("Organization"); // emitted once, site-wide, in the root layout
+    // #98 (D-169): FAQPage was REMOVED — Google restricts FAQ rich results to
+    // a narrow set of authoritative sites, and the issue's own instruction is
+    // not to use it automatically. A regression that re-adds it must fail here.
+    expect(types).not.toContain("FAQPage");
   });
 
   test("a published guide and a published blog post carry valid JSON-LD + OG tags", async ({

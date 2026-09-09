@@ -65,6 +65,17 @@ export async function anonymizeUser(opts: {
   });
 }
 
+/**
+ * #103 follow-up (D-170): NOT wired to any web endpoint or Superadmin button
+ * — anonymizing a company is now deliberately unreachable from the normal
+ * web UI/API, so a compromised session, a human mistake, or a permissions
+ * bug can never trigger it. The function itself is kept, on purpose, as the
+ * building block for the "controlled, exceptional technical procedure"
+ * the issue asks for if this is ever genuinely needed — a CLI/script
+ * invoked outside Superadmin, never rebuilt as a web button. No such
+ * script exists yet (not requested; the original #103 spec said not to
+ * build one unless strictly necessary).
+ */
 export async function anonymizeCompany(opts: {
   actorId: string;
   companyId: string;

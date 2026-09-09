@@ -162,53 +162,31 @@ export const LEGAL_SOURCE = {
   url: "https://www.boe.es/buscar/act.php?id=BOE-A-2026-12784",
 };
 
-export const FAQ: { q: string; a: string }[] = [
-  {
-    q: "¿Qué es el DeCA?",
-    a: "El Documento Electrónico de Control Administrativo es la versión digital obligatoria del documento de control del transporte de mercancías por carretera. Sustituye al documento en papel.",
-  },
-  {
-    q: "¿Cuándo es obligatorio?",
-    a: "Desde el 5 de octubre de 2026 para el transporte interior, sin prórroga ni periodo transitorio: el DeCA debe generarse en formato electrónico desde el origen. El conductor puede llevarlo en copia electrónica en el móvil o en copia impresa con el código QR; un documento creado originalmente en papel y escaneado después no es un DeCA electrónico válido.",
-  },
-  {
-    q: "¿Quién tiene que hacerlo?",
-    a: "El cargador contractual y el transportista efectivo del transporte público de mercancías por carretera, en los términos de la normativa aplicable.",
-  },
-  {
-    q: "¿Es obligatorio para agencias de transporte?",
-    a: "Sí, cuando actúan como cargador contractual u operador que contrata el transporte, con las mismas obligaciones de generación y conservación.",
-  },
-  {
-    q: "¿Sirve un PDF escaneado?",
-    a: "No. El fichero debe ser un PDF nativo digital generado a partir de datos estructurados. Un escaneo o una imagen digitalizada no es válido.",
-  },
-  {
-    q: "¿Tiene que firmarse?",
-    a: "La resolución no exige firma electrónica. Sí exige PDF nativo, QR, URL HTTPS de descarga directa y registro de creación y modificaciones.",
-  },
-  {
-    q: "¿Qué datos debe contener?",
-    a: "Como mínimo: cargador contractual (nombre o razón social, NIF y domicilio), transportista efectivo (nombre o razón social y NIF), lugar y fecha de carga, lugar y fecha de descarga, naturaleza y peso de la mercancía, y matrícula del vehículo (tractora y remolque si es un conjunto articulado).",
-  },
-  {
-    q: "¿Cómo lo lleva el conductor?",
-    a: "Antes del inicio del servicio, en copia electrónica visible en el móvil o en copia impresa, siempre con el QR disponible.",
-  },
-  {
-    q: `¿Es gratis ${BRAND.name}?`,
-    a: "Sí. Puedes crear y descargar documentos sin tarjeta y sin límite hasta el 31 de diciembre de 2026.",
-  },
-  {
-    q: "¿Puedo generar todos los documentos que quiera?",
-    a: "Sí. No hay límite mensual. Solo aplicamos controles automáticos frente a usos abusivos que no afectan al uso normal ni a la inspección.",
-  },
-];
-
-/** JSON-LD for the landing (schema.org). Only emitted where the content is genuinely present. */
+/**
+ * JSON-LD for the landing (schema.org). Only emitted where the content is
+ * genuinely present.
+ *
+ * #98: `FAQPage` was REMOVED (D-169) — the issue's own instruction is
+ * explicit ("No usar FAQPage de forma automática salvo que la página y las
+ * directrices vigentes lo justifiquen") and Google's guidelines since 2023
+ * restrict FAQ rich results to a narrow set of authoritative government/
+ * health sites for most search results; a commercial landing FAQ does not
+ * qualify, and no exception was ever recorded here. The page's VISIBLE FAQ
+ * section is untouched — it renders from `dict.landing.faqGroups` (the i18n
+ * dictionary), never from this module. The local `FAQ` constant that used
+ * to live here was only ever consumed by the schema this JSON-LD builder
+ * emitted — removed as dead code alongside `FAQPage`, not kept as a second,
+ * un-rendered copy of the same questions.
+ */
 export function landingJsonLd() {
   const base = publicEnv.baseUrl;
   return [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: BRAND.name,
+      url: base,
+    },
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -218,15 +196,6 @@ export function landingJsonLd() {
       url: base,
       offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
       description: HERO.subhead,
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: FAQ.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
-      })),
     },
   ];
 }
