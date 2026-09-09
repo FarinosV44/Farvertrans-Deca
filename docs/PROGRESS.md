@@ -216,6 +216,24 @@
     confirm. **Not done:** per-locale email translations beyond the existing (already-correct)
     `dict.emails.*` text — only CTA labels/titles are Spanish-only for now; Resend's click/open-
     tracking dashboard setting could not be checked (restricted API key) — flagged for the user.
+  - **#107 [Design] — editorial redesign of the DeCA PDF, Vignelli-inspired (D-181).** The PDF
+    worked but read as "app-generated" — dark generic header, CMR-style numbered cell badges,
+    dashboard-style bordered cards, a large artificial empty gap in the lower half. Only
+    `lib/pdf/deca-document.tsx` touched (generation logic, legal content, QR/URL, versioning, data
+    structure all untouched, per the issue's own "no tocar" list): a light editorial masthead under
+    one strong rule; the numbered badges removed entirely; party/route cards replaced by plain
+    typographic columns separated by one hairline; goods/vehicle as aligned technical fields; the
+    verification block as a full-width tinted band (a closing stamp, not a corner add-on); and the
+    root cause of the empty-space complaint fixed — the footer was `position: absolute` at the
+    page's physical bottom regardless of content length; it now flows naturally after the content.
+    Hit and fixed a real `@react-pdf` bug along the way: a literal `\n` inside one `<Text>` node
+    crashes its text-layout engine — fixed with two separate `Text` nodes (the pattern the rest of
+    the codebase already used). QA visual per the issue's own request: rendered and READ 4 real
+    PDFs directly (short/long/full-trailer/corrected-v2) to compare before vs. after — confirmed
+    every complaint addressed, no text cutoff/overlap, corrected-version status renders correctly.
+    The existing structural snapshot test's one now-wrong assertion (numbered cells) was rewritten,
+    never deleted, to assert their deliberate absence; the "sacred" R-1…R-13 compliance suite run
+    unweakened (8/8). Full regression: 376/376 unit, 288/288 e2e, 0 failures.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

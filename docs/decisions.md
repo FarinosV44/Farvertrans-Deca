@@ -5112,6 +5112,63 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-181 — #107: editorial redesign of the DeCA PDF (Vignelli-inspired) (2026-09-09)
+
+**User's request:** the DeCA PDF works and carries every required field, but reads as "generated
+by an app" rather than a professional transport document — a dark generic header, CMR-style
+numbered cell badges, bordered/filled dashboard-style cards for the parties and route, and a large
+artificial empty gap in the lower half of the page. Redesign around Vignelli's own principles
+(grid, typographic hierarchy, economy of means — never a literal copy of a specific Vignelli work,
+never turning the DeCA into a CMR), with an explicit "no tocar": generation logic, legal content,
+QR/public URL, versioning, the DeCA reference, PDF integrity, and the underlying data structure.
+
+**Approach:** `lib/pdf/deca-document.tsx` (the @react-pdf component) is the ONLY file touched —
+`lib/pdf/render.ts` and the data schema are untouched, matching the "no tocar" list exactly. Every
+value that was mandatory before still renders, verbatim; only how it's laid out changed:
+- **Masthead** — a light, editorial nameplate (brand name, subtitle, reference, version, date,
+  status) under ONE strong 2pt accent rule, replacing the dark navy header band and its rounded
+  logo badge.
+- **CMR-style numbered cell badges (1–8) removed entirely** — explicitly named in the issue as one
+  of the "looks like a dashboard" symptoms.
+- **Party/route "cards" (border + radius + fill) removed** — replaced by two plain typographic
+  columns per section (role/kind label → bold name → labelled fields), separated by one hairline
+  down the middle instead of two boxed, backgrounded cards.
+- **Goods/vehicle** reorganised into aligned label-over-value technical fields, matching the same
+  typographic language as the other sections, instead of a floating 2×2 grid with its own badges.
+- **Verification block** is now a full-width, softly-tinted band (the same surface tint the
+  product's own design tokens use) holding the URL, reference/timestamps, and the QR together —
+  reads as the document's own closing stamp rather than a corner add-on.
+- **The root cause of "too much empty white space":** the old footer was `position: absolute` at
+  the page's physical bottom, reserving that space regardless of how much content preceded it. It
+  now flows normally, right after the content (`wrap={false}` keeps it from splitting across a
+  page break) — a short DeCA simply ends after its own content now; no artificial gap.
+
+**A real bug hit and fixed during the redesign, unrelated to the visual system itself:** a `<Text>`
+node with an embedded literal `\n` character crashes this version of `@react-pdf`'s text-layout
+engine (`Cannot read properties of undefined (reading 'unitsPerEm')`, deep in `@react-pdf/textkit`)
+— found by bisecting the new component section by section against a real render. Fixed by using
+two separate `<Text>` elements for the two lines instead (the pre-existing pattern the ORIGINAL
+component already used everywhere else — this was the one place the new code introduced an inline
+newline). Worth remembering: `@react-pdf` in this version/config does not tolerate `\n` inside a
+single `Text` child.
+
+**QA visual, per the issue's own request** — 4 real PDFs rendered (short data; long names/
+addresses; full trailer + all fields; a corrected v2 with `DOCUMENTO CORREGIDO` + modification
+timestamp) and read directly (this tool can read a PDF's rendered pages) to compare before/after.
+Confirmed: no dark header, no numbered badges, no dashboard cards, long content wraps cleanly with
+no overlap/cutoff, the corrected-version status/timestamp render correctly, and the empty-space
+problem is resolved — the short-data case now ends its content well before the page's natural
+end (previously more than half the page was blank; now the gap is proportionate, and disappears
+entirely for realistic-length data, as the long-names/full-trailer cases show).
+
+**Verified:** the existing structural snapshot (`tests/unit/deca-pdf-snapshot.test.ts`) — every
+mandatory field, both postal-code/no-province/no-town edge cases — still passes unchanged; its one
+test that asserted the OLD numbered-cell behaviour was REWRITTEN (never silently deleted) to assert
+the numbers are correctly gone, per the same-as-before rule for a deliberately corrected spec; two
+new tests added (clean masthead content; `DOCUMENTO CORREGIDO` + modification timestamp). The
+"sacred" R-1…R-13 compliance e2e suite — 8/8 green, unweakened. Full regression: 376/376 unit,
+288/288 e2e (0 failures, 1 skipped-by-design).
+
 ## D-179/D-180 — #106: unified transactional-email system, deliverability-first (2026-09-09)
 
 **User's request, in two parts:** (1) improve the team-invite email's deliverability (it was
