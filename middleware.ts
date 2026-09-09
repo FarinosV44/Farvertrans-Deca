@@ -44,7 +44,16 @@ export function middleware(req: NextRequest) {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   if (!isDev) {
-    res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    // #101: `includeSubDomains` is safe — the only known subdomain is `www`,
+    // already redirected to the bare host in next.config.ts and served over
+    // HTTPS. `preload` is DELIBERATELY OMITTED: the issue's own instruction
+    // is "no activar preload a ciegas sin inventariar subdominios", and this
+    // domain has never actually been submitted to hstspreload.org — the flag
+    // alone has no effect until that submission happens, so this is a
+    // no-behavior-change cleanup, not a downgrade. Re-add it only after a
+    // deliberate decision to submit (recorded in docs/decisions.md) with a
+    // real subdomain inventory behind it.
+    res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains");
   }
 
   // Server-side acquisition capture (F12 / EPIC 02).

@@ -4916,3 +4916,36 @@ test, since every company-scoped query's tenant boundary is unchanged (still `WH
   `company.is_test` and `security_audit_log.detail` columns present.
 - `main` is now the fixed build. Production still needs the Hostinger redeploy to actually run it —
   unchanged blocking item from D-155/D-158.
+
+## D-165 — #101: HSTS `preload` removed; headers/HTTPS audited (2026-09-09)
+
+Audited the public surface's HTTPS/header configuration against #101's checklist. Most of it was
+already correctly built from earlier security work (D-146 CSP, #53/#62 cookie flags, #94 real
+authorization replacing robots.txt-as-access-control): CSP with `frame-ancestors 'none'` and no
+`unsafe-eval` in production, `X-Content-Type-Options`/`X-Frame-Options`/`Referrer-Policy`/
+`Permissions-Policy` on every route (the `next.config.ts` `headers()` block covers `/api/*` and
+`/d/*`, which `middleware.ts`'s matcher deliberately excludes), session cookie `HttpOnly`+`Secure`
+(prod)+`SameSite=Lax`, error boundary shows only a generic message (never a stack trace), and a
+single canonical host with a `www` → bare-domain 301 preserving the query string.
+
+**One real gap found and fixed:** `Strict-Transport-Security` carried `preload` with no documented
+subdomain inventory — exactly what the issue instructs against ("no activar preload a ciegas sin
+inventariar subdominios"). Removed. This is a no-behavior-change fix: the domain was never actually
+submitted to hstspreload.org, so the flag was inert either way — re-adding it needs a deliberate
+decision with a real subdomain inventory behind it, recorded here if it happens.
+
+**Not fixable in this repo, documented instead:** TLS termination and HTTP→HTTPS redirection happen
+at the Hostinger reverse-proxy layer by design (`docker-compose.prod.yml`: "Put a TLS-terminating
+reverse proxy... in front of :3000") — this app never terminates TLS itself. WAF/rate-limiting rules
+are Hostinger's own configuration, invisible from this repo. Both need external verification, added
+to `docs/production-smoke-checklist.md` §7 rather than claimed as done.
+
+**Regression coverage:** `tests/e2e/launch-gate.spec.ts` extended — the existing header test now
+also asserts the exact HSTS value (catches a `preload` regression), plus a new test proving the
+`/d/[token]` and `/api/*` routes carry the baseline headers `middleware.ts` does not cover directly.
+
+**Repeatable external check (the issue's own AC item):** `docs/production-smoke-checklist.md` §7 —
+curl-based checks for the redirect chain, HSTS's exact value, headers on all three route classes,
+mixed content, error-page leakage, cookie flags, and certificate validity, run against the real
+production URL after every deploy (mirrors the existing §0–§6 convention rather than a new
+document).

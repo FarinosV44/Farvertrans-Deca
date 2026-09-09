@@ -127,3 +127,26 @@ create/edit path, not the gate. Also: a gate message must name the real blocker,
   substitute it there (`historico.views.removeConfirm`).
 - **Check added:** none mechanical — `tsc` accepts it and only a real render fails. This is why the
   e2e spec drives the actual page instead of asserting on props.
+
+## 2026-09-09 — Invite/verification emails: arrive for a known address, never for a brand-new one
+
+- **Symptom (user-reported from production):** inviting an email that ALREADY had an account (the
+  user's father) delivered fine; inviting/registering a genuinely new email that had never signed
+  up before never received anything.
+- **Not a code bug — verified:** `sendMail()` (`lib/mailer.ts`) and the invite route
+  (`app/api/team/invites/route.ts`) use the exact same code path for every recipient; nothing
+  branches on whether the address already has an account.
+- **Most likely cause (cannot be confirmed from this repo — needs the Resend dashboard):** Resend
+  restricts an account with an UNVERIFIED sending domain to delivering only to the account's own
+  verified email address(es) — this is standard sandbox/test-mode behaviour for every transactional
+  email provider of this kind. It exactly explains "a known/owned address works, a stranger's
+  doesn't."
+- **What to check (the user, in the Resend dashboard):** domain verification status for
+  `FVD_MAIL_FROM`'s domain (SPF/DKIM records); whether the account is still in test/sandbox mode;
+  the exact rejection reason in the `mail_provider_error` server logs (already logged with full
+  provider response body — `lib/mailer.ts` never swallows it — but only reachable from the
+  Hostinger server's own logs, not from this repo).
+- **What was fixed regardless (#102, D-163):** the admin-facing gap this exposed — an invite whose
+  email fails to deliver now gets a prominent (not subdued) warning plus a WhatsApp-share and
+  copy-link fallback, so a failed send is never a dead end even while the provider issue is being
+  resolved operationally.

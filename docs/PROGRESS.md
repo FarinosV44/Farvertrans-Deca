@@ -274,6 +274,18 @@
   build lets any unauthenticated caller read the whole internal admin area with one RSC header.
 - **Security note:** the DB password shared in chat this session is the same one shared in the
   D-155 session — if it was not rotated then, it needs rotating now (D-158).
+- **User-reported, tested on LIVE production (pre-redeploy code, not reproducible against today's
+  fix locally — 5/5 green on `tests/e2e/membership.spec.ts`'s exact "create invite → follow it
+  immediately" scenario):** an invite link shows "invitación no válida / caducada" right after being
+  generated. Also: an invite email never arrives for a genuinely new (never-registered) address
+  though it arrives for a known/existing one — very likely a Resend sandbox/domain-verification
+  restriction, not a code bug (`docs/lessons-learned.md`, 2026-09-09 entry). **Re-check BOTH after
+  the Hostinger redeploy** — if either persists against the actually-deployed #102 code, that is a
+  real bug to hunt with fresh server-log evidence, not before.
+- **Email delivery, general:** every e2e run locally shows `mail_provider_error 401 API key is
+  invalid` — expected locally (placeholder Resend key, per the existing lesson). Whether
+  production's `RESEND_API_KEY`/`FVD_MAIL_FROM` are correctly configured could not be verified from
+  this repo — ties into the invite-email report above.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
