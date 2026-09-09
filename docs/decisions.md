@@ -4905,3 +4905,14 @@ rewrite is behaviourally compatible with every already-covered flow.
 implicitly by the full e2e suite (253/254, only the documented flake) rather than a dedicated new
 test, since every company-scoped query's tenant boundary is unchanged (still `WHERE companyId =
 <active>`) and the full suite already exercises cross-tenant isolation extensively.
+
+## D-164 — #102 merged to `main` + production migrations applied (2026-09-09)
+- `develop` → `main` merge `48f9415` (`--no-ff`), pushed.
+- Production migrations applied (transient shell env vars only, never written to disk):
+  `20260909125838_membership_model_and_company_is_test` (Membership table + `Company.isTest`) and
+  `20260909130849_audit_log_detail_field`. `prisma migrate status` was clean beforehand (36/38,
+  exactly the 2 expected pending), `migrate deploy` applied both, then verified directly: 38/38,
+  `users_with_company` (10) == `memberships` (10) — exact 1:1 backfill, nothing lost or duplicated —
+  `company.is_test` and `security_audit_log.detail` columns present.
+- `main` is now the fixed build. Production still needs the Hostinger redeploy to actually run it —
+  unchanged blocking item from D-155/D-158.
