@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     );
 
   try {
-    const { token, email } = await createInvite(
+    const { token, email, inviteId } = await createInvite(
       user.companyId,
       user.id,
       parsed.data.email,
@@ -34,6 +34,14 @@ export async function POST(req: Request) {
     );
     const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/registro?invite=${encodeURIComponent(token)}`;
 
+    // D-177: the invite is created regardless — that half never depended on
+    // email. This block is ONLY about whether the email itself was actually
+    // handed to the provider; `delivered` must never be true just because
+    // the DB write above succeeded. The try/catch here used to swallow
+    // anything the dynamic import or the call itself threw with NO log line
+    // at all (`/* mailer best-effort */`) — the one gap `sendMail()`'s own
+    // logging couldn't cover, since it never runs if the import itself
+    // fails. Logged now, same redaction convention as `lib/mailer.ts`.
     let delivered = false;
     try {
       const { sendMail } = await import("@/lib/mailer");
@@ -43,8 +51,22 @@ export async function POST(req: Request) {
         text: `${user.company?.name ?? "Una empresa"} te ha invitado a su cuenta de ${BRAND.name}.\n\nÚnete con este enlace (caduca en 14 días):\n${link}\n\nSi ya tienes cuenta, inicia sesión desde ese mismo enlace.`,
       });
       delivered = mail.sent;
-    } catch {
-      /* mailer best-effort */
+      console.log(
+        JSON.stringify({
+          event: "team_invite_mail_result",
+          inviteId,
+          delivered,
+          providerId: mail.providerId,
+        }),
+      );
+    } catch (mailErr) {
+      console.error(
+        JSON.stringify({
+          event: "team_invite_mail_threw",
+          inviteId,
+          error: mailErr instanceof Error ? mailErr.message : String(mailErr),
+        }),
+      );
     }
 
     return NextResponse.json({ ok: true, link, email, delivered }, { status: 201 });

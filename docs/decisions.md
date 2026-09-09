@@ -5112,6 +5112,56 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-177 — invite emails: end-to-end logging added, per the user's explicit correction to D-176 (2026-09-09)
+
+**User's explicit correction:** after D-176, the user reported the invite email genuinely never
+arrives (even after the resend-link UI bug was fixed) while a direct test send through the same
+Resend API/domain does — and pushed back precisely on my DNS/SPF hypothesis: the domain is
+VERIFIED in Resend and a direct send from it works, so the cause must be in the app's own
+create/resend flow, not domain configuration. Explicit instructions: stop chasing DNS; check the
+exact function invoked, whether it truly calls the mailer, whether a `try/catch` swallows the
+provider's error, the exact `from`/`to` used, whether `RESEND_API_KEY` is available in that
+runtime, and add safe temporary logging (invite id, redacted recipient, sender, call started,
+provider response id, exact error — never a key or the full token) — then fix, not guess.
+
+**What the code read showed, precisely:** `sendMail()` (`lib/mailer.ts`) already logged provider
+errors and exceptions, but had **zero logging on the SUCCESS path** — the 2xx response body (which
+carries Resend's own message `id`) was never even read, so a "successful" send left no evidence at
+all to cross-reference against Resend's own dashboard. The API route's outer
+`try { ... } catch { /* mailer best-effort */ }` around the whole mail-sending block had **zero
+logging in the catch itself** — if the dynamic `import("@/lib/mailer")` or the call threw for any
+reason not already caught inside `sendMail()`, it vanished with no trace. Every other piece (the
+`from`/`to` values, the `RESEND_API_KEY`/`FVD_MAIL_FROM` env reads, `sendMail` being properly
+`await`ed, `delivered` correctly reflecting `res.ok` rather than the DB write) checked out exactly
+as written — verified by re-reading `app/api/team/invites/route.ts` and `lib/mailer.ts` end to end
+line by line, not just skimmed.
+
+**Fixed:**
+- `lib/mailer.ts`: logs `mail_unconfigured` (missing key/from), `mail_send_attempt` (before the
+  call — recipient redacted, sender, subject), `mail_provider_accepted` (2xx — WITH Resend's own
+  message `id`, parsed from the response body this time), `mail_provider_error` (unchanged,
+  already existed), `mail_provider_exception` (unchanged). `MailResult` gained an optional
+  `providerId` field.
+- `createInvite()` (`lib/team.ts`) now also returns the invite's own DB id.
+- `app/api/team/invites/route.ts`: the outer catch now logs `team_invite_mail_threw` with the
+  invite id and the exact error message instead of swallowing silently; a `team_invite_mail_result`
+  line logs the invite id, `delivered`, and the provider id together — so a single invite id
+  (visible to whoever reads the logs, safe to share) now has a complete, correlatable trail from
+  "form submitted" to "Resend accepted it as message X" or "here is exactly why it didn't".
+- UI copy (`components/app/team-manager.tsx`) reworded to the user's exact requested phrasing for
+  the not-delivered case: "La invitación se ha creado, pero no hemos podido enviar el correo a
+  {email}. Puedes copiar el enlace o reintentar." `delivered` was already never derived from the DB
+  write succeeding (confirmed by re-reading, not assumed) — this was a wording alignment, not a
+  logic fix, and is stated as such rather than overclaimed.
+
+**What this does NOT yet answer, and needs the user's Resend dashboard (Emails/Logs tab), not more
+code reading:** whether the actual invite sends show up there as Delivered/Bounced/Complained, or
+don't appear at all (which would mean the app never truly reached Resend despite `res.ok` — the
+restricted, send-only API key this session was given cannot read that back: `GET /domains` and
+`GET /emails` both 401 "restricted to only send emails", confirmed directly). The next real
+invite/resend attempt will now produce a `providerId` in the server logs — cross-referencing that
+exact id against the Resend dashboard is the next diagnostic step, not another code guess.
+
 ## D-176 — LIVE PRODUCTION BUG: "Reenviar" on a pending invite silently discarded the new link (2026-09-09)
 
 **User's own words (urgent, mid-session, with production credentials to investigate directly):**
