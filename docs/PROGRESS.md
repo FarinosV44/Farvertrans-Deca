@@ -234,9 +234,15 @@
 - Pre-launch only: real domain; RGPD review of anonymous-document retention; legal inspection check of generated DeCA; Hostinger VPS sizing.
 - Unverified external steps/assets: Supabase project, Hostinger VPS, DNS, transactional email, hCaptcha, GitHub secrets.
 - Forge EPICs: #1 landing, #2 attribution, #3 SEO, #4 compliance. Execution queue #5 onward.
-- Ready for `main`: the unverified-email panel banner (`a4a28bb`, this session) — small additive
-  feature, not yet forwarded (only CI/CD-fix commits were forwarded without re-asking this session).
-  `main` is at `04ad0e3`; `develop` is one commit ahead.
+- **Ready for `main` — URGENT (#94 is a live P0):** `develop` (`697b5c1`) holds the #94 security fix
+  (internal pages were readable, unauthenticated, over one RSC header) plus #92/#93. `main` still
+  runs the pre-#69 build and is exposed to #94 until the user redeploys Hostinger. Two pending
+  local-dev-only migrations need the production DB connection string before `develop` → `main`:
+  `20260908205105_commercial_opportunity` + `20260908213756_commercial_conversion_and_alerts` (#87–
+  #90) and `20260909075010_saved_history_views_and_quick_actions` (#92/#93).
+- BLOCKED ON THE USER (unchanged from D-155): production still runs a pre-#69 build, so nothing from
+  #85–#94 or #87–#90 is live yet — needs the Hostinger redeploy, then live-verify + close the issues,
+  then apply the pending migrations, then merge `develop` → `main`.
 
 ### Deferred items
 - Local SEO pages; long-tail/user-type SEO beyond core launch pages; public API; CSV *file upload*
