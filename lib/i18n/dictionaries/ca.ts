@@ -420,6 +420,28 @@ export const ca = {
       privacidad: "Privadesa",
       ayuda: "Ajuda",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Accessos ràpids",
+      customise: "Personalitzar",
+      save: "Desar",
+      cancel: "Cancel·lar",
+      restore: "Restaurar predeterminats",
+      hint: (max: number) => `Trieu fins a ${max} accessos a funcions que ja feu servir.`,
+      limit: (max: number) =>
+        `Heu triat el màxim de ${max} accessos. Desmarqueu-ne un per canviar-lo.`,
+      options: {
+        crear: "Nou DeCA",
+        historico: "Historial",
+        plantillas: "Plantilles",
+        empresas: "Empreses habituals",
+        vehiculos: "Vehicles",
+        lugares: "Llocs de càrrega/descàrrega",
+        equipo: "Equip",
+        empresa: "La meva empresa",
+        ayuda: "Ajuda",
+      },
+    },
     privacy: {
       title: "Privadesa i comunicacions",
       intro:
@@ -534,6 +556,28 @@ export const ca = {
     plate: "Matrícula",
     filter: "Filtrar",
     clear: "Netejar",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "Les meves vistes",
+      save: "Desar vista",
+      namePrompt: "Nom de la vista (per exemple: França, Aquesta setmana, València → Lió)",
+      rename: "Reanomenar",
+      remove: "Eliminar",
+      removeConfirm: (name: string) => `Voleu eliminar la vista "${name}"?`,
+      apply: "Aplicar vista",
+      duplicate: "Ja teniu una vista amb aquest nom.",
+      limit: (max: number) => `Heu arribat al màxim de ${max} vistes desades.`,
+      error: "No s'ha pogut desar la vista. Torneu-ho a provar.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Cercar",
+        from: "Des de",
+        to: "Fins a",
+        carrier: "Transportista",
+        plate: "Matrícula",
+        none: "Sense filtres",
+      },
+    },
     documentsCountOne: "document",
     documentsCountMany: "documents",
     exportCsv: "Exportar CSV",

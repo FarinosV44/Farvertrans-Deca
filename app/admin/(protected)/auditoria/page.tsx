@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listAuditLog, distinctAuditActions } from "@/lib/admin/audit-log";
 import { rangeFromParam } from "@/lib/admin/range";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const fmt = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
 
@@ -14,6 +15,10 @@ type SP = { [k: string]: string | string[] | undefined };
  * to an internal user instead of requiring a direct DB query.
  */
 export default async function AdminAuditoria({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : (sp[k] as string | undefined));
   const range = rangeFromParam(one("range"));

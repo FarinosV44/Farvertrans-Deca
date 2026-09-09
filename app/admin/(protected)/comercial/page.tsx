@@ -6,6 +6,7 @@ import {
 } from "@/lib/commercial/opportunity-model";
 import { CORRIDORS } from "@/lib/commercial/corridors";
 import { PageHeader, Table, Row, Cell, Empty, KpiGrid, Kpi } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,10 @@ const dt = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
  * conversion separate.
  */
 export default async function AdminComercial({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const filter = {
     from: one(sp, "from"),

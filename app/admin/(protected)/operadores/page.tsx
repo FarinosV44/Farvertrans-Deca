@@ -3,10 +3,15 @@ import { operatorStats, type OperatorRow } from "@/lib/attribution/persist";
 import { listOperators } from "@/lib/admin/operators";
 import { OperatorManager } from "@/components/admin/operator-manager";
 import { PageHeader, Table, Row, Cell } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const pct = (num: number, den: number) => (den > 0 ? `${Math.round((num / den) * 100)}%` : "—");
 
 export default async function AdminOperadores() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const [stats, operators] = await Promise.all([operatorStats(), listOperators()]);
   const rows: OperatorRow[] = [...stats.operators, ...stats.unknown, stats.organic];
 

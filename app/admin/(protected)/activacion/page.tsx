@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listCompanySegments, funnelFromSegments, companiesToContact } from "@/lib/admin/segments";
 import { PageHeader, Kpi, KpiGrid, Table, Row, Cell, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,10 @@ const BUCKET_LABEL: Record<string, string> = {
 
 /** #72 — the activation funnel + the actionable "companies to contact" list. */
 export default async function ActivacionPage() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const segments = await listCompanySegments();
   const funnel = funnelFromSegments(segments);
   const toContact = companiesToContact(segments);

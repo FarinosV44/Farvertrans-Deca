@@ -3,6 +3,7 @@ import { getFailure } from "@/lib/admin/failures";
 import { stageMessage, type GenerationStage } from "@/lib/deca/generation";
 import { PageHeader, DefinitionList, Badge, BackLink } from "@/components/admin/ui";
 import { FailureTriage } from "@/components/admin/failure-triage";
+import { requireInternal } from "@/lib/admin/guard";
 
 const fmt = (d: Date | null) => (d ? d.toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—");
 
@@ -11,6 +12,10 @@ export default async function FailureDetail({
 }: {
   params: Promise<{ correlationId: string }>;
 }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const { correlationId } = await params;
   const f = await getFailure(correlationId);
   if (!f) notFound();

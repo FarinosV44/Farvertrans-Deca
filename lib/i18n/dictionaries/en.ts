@@ -410,6 +410,28 @@ export const en = {
       privacidad: "Privacy",
       ayuda: "Help",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Quick access",
+      customise: "Customise",
+      save: "Save",
+      cancel: "Cancel",
+      restore: "Restore defaults",
+      hint: (max: number) => `Choose up to ${max} shortcuts to functions you already use.`,
+      limit: (max: number) =>
+        `You have chosen the maximum of ${max} shortcuts. Uncheck one to change it.`,
+      options: {
+        crear: "New DeCA",
+        historico: "History",
+        plantillas: "Templates",
+        empresas: "Frequent companies",
+        vehiculos: "Vehicles",
+        lugares: "Loading/unloading places",
+        equipo: "Team",
+        empresa: "My company",
+        ayuda: "Help",
+      },
+    },
     privacy: {
       title: "Privacy and communications",
       intro:
@@ -525,6 +547,28 @@ export const en = {
     plate: "Plate",
     filter: "Filter",
     clear: "Clear",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "My views",
+      save: "Save view",
+      namePrompt: "View name (for example: France, This week, Valencia → Lyon)",
+      rename: "Rename",
+      remove: "Delete",
+      removeConfirm: (name: string) => `Delete the view "${name}"?`,
+      apply: "Apply view",
+      duplicate: "You already have a view with that name.",
+      limit: (max: number) => `You have reached the maximum of ${max} saved views.`,
+      error: "The view could not be saved. Please try again.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Search",
+        from: "From",
+        to: "To",
+        carrier: "Carrier",
+        plate: "Plate",
+        none: "No filters",
+      },
+    },
     documentsCountOne: "document",
     documentsCountMany: "documents",
     exportCsv: "Export CSV",

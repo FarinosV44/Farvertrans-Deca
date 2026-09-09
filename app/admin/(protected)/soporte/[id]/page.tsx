@@ -4,8 +4,13 @@ import { PageHeader } from "@/components/admin/ui";
 import { getSupportTicket } from "@/lib/support/tickets";
 import { SUPPORT_STATUS_LABEL, SUPPORT_CATEGORY_LABEL } from "@/lib/support/schema";
 import { SupportTicketActions } from "@/components/admin/support-ticket-actions";
+import { requireInternal } from "@/lib/admin/guard";
 
 export default async function AdminSoporteDetail({ params }: { params: Promise<{ id: string }> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const { id } = await params;
   const ticket = await getSupportTicket(id);
   if (!ticket) notFound();

@@ -6,6 +6,9 @@ import { AppNav } from "@/components/app/app-nav";
 import { RowShare } from "@/components/deca/row-share";
 import { getCurrentUser } from "@/lib/auth";
 import { listHistory, listHistoryCarriers } from "@/lib/data/history";
+import { listViews } from "@/lib/data/saved-views";
+import { filtersFromParams, hasActiveFilters, MAX_HISTORY_VIEWS } from "@/lib/data/history-views";
+import { SavedViews } from "@/components/panel/saved-views";
 import { docWorkflowStatus } from "@/lib/deca/export";
 import { publicEnv } from "@/lib/env";
 import { getDictionary } from "@/lib/i18n/server";
@@ -45,7 +48,7 @@ export default async function HistoricoPage({
   if (!user?.companyId) redirect("/registro");
 
   const sp = await searchParams;
-  const [rows, carriers] = await Promise.all([
+  const [rows, carriers, savedViews] = await Promise.all([
     listHistory(user.companyId, {
       q: sp.q,
       from: sp.from,
@@ -54,7 +57,10 @@ export default async function HistoricoPage({
       plate: sp.plate,
     }),
     listHistoryCarriers(user.companyId),
+    // #92 — this user's own saved views; never the company's.
+    listViews(user.id),
   ]);
+  const currentFilters = filtersFromParams(sp);
   const t = await getDictionary();
   const active = sp.q || sp.from || sp.to || sp.carrier || sp.plate;
   const exportQuery = new URLSearchParams(
@@ -75,6 +81,21 @@ export default async function HistoricoPage({
       <main id="contenido" className="mx-auto max-w-[1000px] px-4 py-8 md:px-6">
         <h1 className="text-2xl font-bold">{t.historico.title}</h1>
         <AppNav current="historico" />
+
+        {/* #92 — a comfort layer above the filters, never a new section. */}
+        <SavedViews
+          views={savedViews}
+          current={currentFilters}
+          params={sp}
+          canSave={hasActiveFilters(currentFilters)}
+          t={{
+            ...t.historico.views,
+            // Resolved here: a dictionary function cannot cross into a Client
+            // Component. `{name}` is substituted there, where the name is known.
+            removeConfirm: t.historico.views.removeConfirm("{name}"),
+            limit: t.historico.views.limit(MAX_HISTORY_VIEWS),
+          }}
+        />
 
         <form className="mt-6 flex flex-wrap items-end gap-3" role="search">
           <div className="min-w-[200px] flex-1">

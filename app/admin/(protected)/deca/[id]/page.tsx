@@ -10,10 +10,15 @@ import {
   Row,
   Cell,
 } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 const fmt = (d: Date | null) => (d ? d.toISOString().replace("T", " ").slice(0, 19) + " UTC" : "—");
 
 export default async function AdminDecaDetail({ params }: { params: Promise<{ id: string }> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const { id } = await params;
   const d = await getDecaAdmin(id);
   if (!d) notFound();

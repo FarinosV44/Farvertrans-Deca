@@ -7,6 +7,7 @@ import {
   SUPPORT_CATEGORY_LABEL,
   type SupportStatus,
 } from "@/lib/support/schema";
+import { requireInternal } from "@/lib/admin/guard";
 
 /**
  * Superadmin technical-support inbox (#86 part 5). Every message from the
@@ -18,6 +19,10 @@ export default async function AdminSoporte({
 }: {
   searchParams: Promise<{ status?: string; from?: string; to?: string; company?: string }>;
 }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const status = (SUPPORT_STATUSES as readonly string[]).includes(sp.status ?? "")
     ? (sp.status as SupportStatus)

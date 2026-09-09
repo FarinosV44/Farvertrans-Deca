@@ -118,6 +118,7 @@ export function SavedDataManager({
 
       <Section<Company>
         title="Empresas y contactos"
+        anchor="empresas"
         Icon={BuildingIcon}
         kind="company"
         items={companies}
@@ -141,6 +142,7 @@ export function SavedDataManager({
       />
       <Section<Vehicle>
         title="Vehículos"
+        anchor="vehiculos"
         Icon={TruckIcon}
         kind="vehicle"
         items={vehicles}
@@ -157,6 +159,7 @@ export function SavedDataManager({
       />
       <Section<Location>
         title="Lugares de carga y descarga"
+        anchor="lugares"
         Icon={MapPinIcon}
         kind="location"
         items={locations}
@@ -194,6 +197,7 @@ type FormProps<T> = {
 
 function Section<T extends { id: string; favorite: boolean }>({
   title,
+  anchor,
   Icon,
   kind,
   items,
@@ -205,6 +209,8 @@ function Section<T extends { id: string; favorite: boolean }>({
   renderForm,
 }: {
   title: string;
+  /** #93: stable id so /panel/datos#<anchor> lands on this section. */
+  anchor: string;
   Icon: (props: { width?: number; height?: number }) => React.JSX.Element;
   kind: SavedKind;
   items: T[];
@@ -234,7 +240,7 @@ function Section<T extends { id: string; favorite: boolean }>({
     };
 
   return (
-    <section aria-labelledby={`sec-${title}`}>
+    <section id={anchor} aria-labelledby={`sec-${title}`} className="scroll-mt-24">
       <h2 id={`sec-${title}`} className="flex items-center gap-2 text-lg font-bold">
         <IconBadge size={32}>
           <Icon width={16} height={16} />

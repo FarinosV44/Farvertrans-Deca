@@ -426,6 +426,29 @@ export const de = {
       privacidad: "Datenschutz",
       ayuda: "Hilfe",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Schnellzugriffe",
+      customise: "Anpassen",
+      save: "Speichern",
+      cancel: "Abbrechen",
+      restore: "Standard wiederherstellen",
+      hint: (max: number) =>
+        `Wählen Sie bis zu ${max} Verknüpfungen zu Funktionen, die Sie bereits nutzen.`,
+      limit: (max: number) =>
+        `Sie haben das Maximum von ${max} Verknüpfungen gewählt. Entfernen Sie eine, um sie zu ändern.`,
+      options: {
+        crear: "Neues DeCA",
+        historico: "Verlauf",
+        plantillas: "Vorlagen",
+        empresas: "Häufige Unternehmen",
+        vehiculos: "Fahrzeuge",
+        lugares: "Be-/Entladeorte",
+        equipo: "Team",
+        empresa: "Mein Unternehmen",
+        ayuda: "Hilfe",
+      },
+    },
     privacy: {
       title: "Datenschutz und Kommunikation",
       intro:
@@ -542,6 +565,28 @@ export const de = {
     plate: "Kennzeichen",
     filter: "Filtern",
     clear: "Löschen",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "Meine Ansichten",
+      save: "Ansicht speichern",
+      namePrompt: "Name der Ansicht (zum Beispiel: Frankreich, Diese Woche, Valencia → Lyon)",
+      rename: "Umbenennen",
+      remove: "Löschen",
+      removeConfirm: (name: string) => `Ansicht löschen "${name}"?`,
+      apply: "Ansicht anwenden",
+      duplicate: "Sie haben bereits eine Ansicht mit diesem Namen.",
+      limit: (max: number) => `Sie haben das Maximum von ${max} gespeicherten Ansichten erreicht.`,
+      error: "Die Ansicht konnte nicht gespeichert werden. Bitte erneut versuchen.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Suchen",
+        from: "Von",
+        to: "Bis",
+        carrier: "Frachtführer",
+        plate: "Kennzeichen",
+        none: "Keine Filter",
+      },
+    },
     documentsCountOne: "Dokument",
     documentsCountMany: "Dokumente",
     exportCsv: "CSV exportieren",

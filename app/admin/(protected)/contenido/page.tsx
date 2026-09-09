@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listContent, type ContentType, type ContentStatus } from "@/lib/content/cms";
 import { SEO_PAGES } from "@/content/seo/pages";
 import { PageHeader, Table, Row, Cell, Badge, Empty } from "@/components/admin/ui";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,10 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 export default async function AdminContenido({ searchParams }: { searchParams: Promise<SP> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const sp = await searchParams;
   const one = (k: string) => (Array.isArray(sp[k]) ? sp[k]![0] : (sp[k] as string | undefined));
   const type = one("type") as ContentType | undefined;

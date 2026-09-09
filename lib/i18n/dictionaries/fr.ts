@@ -423,6 +423,29 @@ export const fr = {
       privacidad: "Confidentialité",
       ayuda: "Aide",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Accès rapides",
+      customise: "Personnaliser",
+      save: "Enregistrer",
+      cancel: "Annuler",
+      restore: "Restaurer les valeurs par défaut",
+      hint: (max: number) =>
+        `Choisissez jusqu'à ${max} raccourcis vers des fonctions que vous utilisez déjà.`,
+      limit: (max: number) =>
+        `Vous avez choisi le maximum de ${max} raccourcis. Décochez-en un pour le changer.`,
+      options: {
+        crear: "Nouveau DeCA",
+        historico: "Historique",
+        plantillas: "Modèles",
+        empresas: "Entreprises habituelles",
+        vehiculos: "Véhicules",
+        lugares: "Lieux de chargement/déchargement",
+        equipo: "Équipe",
+        empresa: "Mon entreprise",
+        ayuda: "Aide",
+      },
+    },
     privacy: {
       title: "Confidentialité et communications",
       intro:
@@ -542,6 +565,28 @@ export const fr = {
     plate: "Immatriculation",
     filter: "Filtrer",
     clear: "Effacer",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "Mes vues",
+      save: "Enregistrer la vue",
+      namePrompt: "Nom de la vue (par exemple : France, Cette semaine, Valence → Lyon)",
+      rename: "Renommer",
+      remove: "Supprimer",
+      removeConfirm: (name: string) => `Supprimer la vue "${name}"?`,
+      apply: "Appliquer la vue",
+      duplicate: "Vous avez déjà une vue portant ce nom.",
+      limit: (max: number) => `Vous avez atteint le maximum de ${max} vues enregistrées.`,
+      error: "La vue n'a pas pu être enregistrée. Réessayez.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Rechercher",
+        from: "Du",
+        to: "Au",
+        carrier: "Transporteur",
+        plate: "Immatriculation",
+        none: "Aucun filtre",
+      },
+    },
     documentsCountOne: "document",
     documentsCountMany: "documents",
     exportCsv: "Exporter en CSV",

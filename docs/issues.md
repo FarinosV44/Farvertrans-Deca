@@ -2,7 +2,12 @@
 
 > Living log of forge issues (GitHub: https://github.com/FarinosV44/Farvertrans-Deca/issues).
 > Inventory first, one entry per issue worked. Updated the moment an issue is triaged, worked, or closed.
-> Last inbound sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
+> Last inbound sweep: 2026-09-09 07:20Z — 3 new since the previous sweep: **#92, #93** (P2 UX) and
+> **#94** (P0 security), all opened by the user, no third-party comments anywhere. All three worked
+> in D-156/D-157 (this sweep's sprint). No new comments on any existing issue; nothing sitting in
+> `awaiting reporter`. Everything else unchanged from the 2026-09-08 sweep below.
+>
+> Previous sweep: 2026-09-08 — open on the forge: #1–#4, #24, #33, #40–#43, #46, #47, #56
 > (worked in D-042…D-111, awaiting the user's close), the launch batches **#59–#68** (all
 > implemented + on `main`, awaiting the user's close) and **#69–#84** (implemented; #84 on `main`),
 > plus **#85** (D-148, on `main`), **#86** (D-149, on `main`) + the p3 FIX (D-150) on `main`,
@@ -45,6 +50,9 @@
 | 26 | OPS 26 — driver delivery + QR verification | fix | high | on `main` | E-012 |
 | 27 | TEAM 27 — multi-user company workspaces | feat | medium | on `main` | E-012 |
 | 28 | GROWTH 28 — company acquisition engine | feat | high | on `main` | E-012 |
+| 92 | [P2 UX] Vistas guardadas en Histórico | feat | medium | implemented on `develop`, awaiting deploy | E-092 |
+| 93 | [P2 UX] 3 accesos rápidos personalizados en Inicio | feat | medium | implemented on `develop`, awaiting deploy | E-092 |
+| 94 | [P0 Seguridad] Vulnerabilidad en rutas internas | fix | **critical** | **fixed** on `develop`, awaiting deploy | E-094 |
 
 ### E-012 — Product V2 (#21–#28): brand, landing, accounts, workspace, creator, delivery, teams, acquisition
 - Status: **all 8 merged to `main`** (D-027). 8 commits, 8 new e2e specs, 4 migrations. Beat-1
@@ -463,3 +471,62 @@ anonymize-in-place (no hard delete, D-067).
   231 passed / 3 flakes de contención `internalPage` (verdes aislados).
 - **NO fusionado a `main`** — antes hay que aplicar las 2 migraciones a producción (falta la cadena
   de conexión de la BD del usuario), luego merge + beat-1 en #87–#90.
+
+## I-094 — #94 [P0 Seguridad] Vulnerabilidad en rutas internas · **FIXED on `develop`** (D-156)
+- 2026-09-09. User report: "podría existir una vulnerabilidad accesible desde alguna ruta relacionada
+  con operadores o con paneles internos" — no vector given, treated as P0 and reproduced before any
+  code changed, per the issue's own diagnosis-first instructions.
+- **Root cause, reproduced on a local production build:** every page under `app/admin/(protected)/`
+  had no guard of its own — only the group layout's `requireInternal()`. The App Router renders
+  layout and page in parallel, so the page's Flight payload was streamed even when the layout aborted
+  with `notFound()`. `curl -H "RSC: 1" <url>/admin/empresas`, unauthenticated, returned HTTP 200 with
+  478 KB of real company data (NIFs included); `/admin/activacion` returned 7.74 MB / 6080
+  company-name hits. A plain `page.goto()` correctly 404'd throughout, which is why the existing
+  `admin.spec.ts:79` stayed green the whole time.
+- **Fix:** `await requireInternal()` is now the first statement of all 29 internal pages (28 changed;
+  `/admin/seguridad` already had it). Not middleware — `verifySession` uses `node:crypto` (not
+  edge-capable) and the token carries no `role`.
+- **The class cannot reopen:** `scripts/keel-verify.mjs` now fails any `(protected)/**/page.tsx`
+  without its own guard call.
+- **Scope confirmed by enumeration, not assumption:** all 28 `/api/admin/*` routes and every
+  company-scoped `/api/*` route already had a real guard — no IDOR found elsewhere.
+- Regression: `tests/e2e/admin-rsc-authz.spec.ts` (3 RSC transports × anon/normal-customer/internal,
+  6 tests) — written first, observed failing on the real leak.
+- Gate: typecheck + lint + prettier + keel-verify + 16/16 targeted e2e (admin, admin-account-
+  lifecycle, admin-rsc-authz).
+- **On `develop`** (`bf3ce0f`). **Production is exposed until the user redeploys** — the
+  `(protected)` layout predates #69, so the currently-live build carries this. Beat-1 comment
+  pending on the forge issue (posted with this sweep).
+
+## I-092 — #92 [P2 UX] Vistas guardadas en Histórico · **implemented on `develop`** (D-157)
+- 2026-09-09. Saved combinations of the Histórico's existing filters (`q`, `from`, `to`, `carrier`,
+  `plate` — no new filter, pinned by a unit test), private per user (not per company).
+- `SavedHistoryView` model, migration `20260909075010_saved_history_views_and_quick_actions`
+  (local dev only), max 12 views/user, `@@unique([userId, name])`. Every read/write scoped by
+  `(id, userId)` — another user's id resolves 404, never a permission check that could be forgotten
+  (verified by an IDOR test, applying #94's lesson to a new surface).
+- `GET/POST /api/panel/vistas`, `PATCH/DELETE /api/panel/vistas/[id]` — zod at the boundary.
+- Chip row above the Histórico filters: save (only when filters are active)/apply-in-one-click/
+  rename/delete, active chip marked, "Limpiar filtros" untouched.
+- i18n: `historico.views` added key-for-key to all 8 catalogues.
+- Gate: typecheck + lint + prettier + keel-verify + 26 new unit (pure logic, test-first, observed
+  red before `lib/data/history-views.ts` existed) + 5 e2e (own suite) + full e2e 249/249.
+- **On `develop`** (this commit). Beat-1 comment pending on the forge issue.
+
+## I-093 — #93 [P2 UX] 3 accesos rápidos personalizados en Inicio · **implemented on `develop`** (D-157)
+- 2026-09-09. Up to 3 shortcuts on Inicio to functions that already exist, chosen per user
+  (`User.quickActions String[]`, same migration as #92). Catalogue of 9 existing destinations
+  (`lib/panel/quick-actions.ts`), no duplicates, no widget builder (no drag&drop/colours/sizes —
+  the issue rules those out explicitly).
+- **Deliberate omission, on the record:** the issue's example list includes "Rutas habituales", which
+  is not a real destination in the product — offering it would mean inventing a screen, which the
+  issue forbids. "Plantillas" ("Guarda las rutas que repites") is offered instead and covers the
+  intent.
+- `PUT /api/panel/accesos` — zod at the boundary; `parseQuickActions` is the real authority
+  (drops unknown keys/repeats/4th choice, never rejects with a 422 for a stale catalogue key).
+- `/panel/datos`'s three existing sections gained stable anchors (`#empresas`/`#vehiculos`/
+  `#lugares`) so the 3 data shortcuts address distinct destinations rather than 3 copies of one page.
+- i18n: `panel.quickActions` added key-for-key to all 8 catalogues.
+- Gate: typecheck + lint + prettier + keel-verify + 14 new unit (pure logic, test-first, observed
+  red before the module existed) + 4 e2e (own suite) + full e2e 249/249.
+- **On `develop`** (this commit). Beat-1 comment pending on the forge issue.

@@ -2,10 +2,15 @@ import { notFound } from "next/navigation";
 import { getContentById, type Source } from "@/lib/content/cms";
 import { PageHeader, BackLink, Badge } from "@/components/admin/ui";
 import { ContentEditor } from "@/components/admin/content-editor";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditarContenido({ params }: { params: Promise<{ id: string }> }) {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const { id } = await params;
   const c = await getContentById(id);
   if (!c) notFound();

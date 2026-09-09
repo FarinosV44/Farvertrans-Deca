@@ -2,11 +2,16 @@ import Link from "next/link";
 import { listIntegrationRequests } from "@/lib/integrations";
 import { PageHeader, Table, Row, Cell, Empty } from "@/components/admin/ui";
 import { IntegrationStatus } from "@/components/admin/integration-status";
+import { requireInternal } from "@/lib/admin/guard";
 
 export const dynamic = "force-dynamic";
 
 /** #74 — which systems and needs repeat most → what to build first. */
 export default async function AdminIntegraciones() {
+  // SECURITY #94: the guard lives in the PAGE, not only in the layout. Next
+  // renders layout and page in parallel, so a layout-only `notFound()` still
+  // let this segment's Flight payload reach an unauthorised caller.
+  await requireInternal();
   const rows = await listIntegrationRequests();
 
   return (
