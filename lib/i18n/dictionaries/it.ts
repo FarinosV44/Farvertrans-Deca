@@ -313,8 +313,15 @@ export const it = {
       andAccept: "e accetto i",
       termsAndConditions: "Termini e Condizioni",
     },
-    commercialOptIn:
-      "Voglio ricevere proposte personalizzate di carico da caricatori interessati, condividendo i dati minimi di disponibilità dei miei trasporti. Potrò modificarlo in qualsiasi momento.",
+    commercialOptIn: {
+      title: "Opportunità di carico",
+      badge: "Facoltativo",
+      label: "Avvisami se compare un trasporto compatibile con i miei percorsi",
+      hint: "Puoi disattivarlo quando vuoi.",
+      moreInfo: "Quali dati vengono condivisi",
+      moreInfoBody:
+        "Verranno condivisi solo i dati minimi necessari per proporti opportunità: destinazione del veicolo, data prevista e i dati di contatto che hai autorizzato.",
+    },
     submit: {
       register: "Crea account gratuito",
       login: "Accedi",

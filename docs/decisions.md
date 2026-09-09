@@ -4728,3 +4728,38 @@ checks over `/panel`, `/panel/historico` and `/panel/datos`.
   the same DB password as the one shared in the D-155 session. If it was not rotated after that
   session as noted there, it should be rotated now — a credential typed into a chat is exposed
   wherever that chat is stored, this is now the second time.
+
+## D-159 — #84 registration opt-in restyled as a product feature (2026-09-09)
+
+**User's explicit, detailed request** ("Haz un ajuste solo en el consentimiento comercial del
+registro...") supersedes D-146 point 4's "no 'opcional' label" — a later explicit request that
+contradicts a recorded decision supersedes it, per SKILL.md. Every OTHER #84 constraint from
+D-146 still holds and was verified to hold:
+- Still unchecked by default (`useState(false)`, unchanged) — verified by the existing e2e
+  (`commercial-consent.spec.ts`, "unchecked by default and never blocks signup", still green).
+- Still never names Farvertrans or any recipient — the new copy ("para proponerte oportunidades")
+  is if anything more conservative than the superseded text ("cargadores interesados").
+- Still no pressure, no pre-tick, never required — the required Privacy/Terms checkbox
+  (`data-testid="accept-terms"`) is a separate, untouched block above this one.
+- Legal storage/logic unchanged: same `commercialOptIn` boolean state, same wiring into
+  `POST /api/auth/register`, same `data-testid="commercial-opt-in"` on the actual input (the e2e
+  suite addresses it directly and needed no changes).
+
+**What changed, scoped to presentation only:**
+- `components/auth/register-form.tsx` — the checkbox is now inside a very light bordered box
+  (`RouteIcon` + title "Oportunidades de carga" + an "Opcional" badge), with a small secondary
+  line ("Puedes desactivarlo cuando quieras.") and a native `<details>`/`<summary>` disclosure
+  ("Qué datos se comparten", closed by default) reusing the exact pattern already in
+  `components/app/commercial-treatment-settings.tsx` — no new disclosure mechanism invented.
+- `lib/i18n/dictionaries/*.ts` (all 8) — `auth.commercialOptIn` restructured from a single string
+  into `{title, badge, label, hint, moreInfo, moreInfoBody}`, translated (not machine-literal) per
+  locale, matching each file's own established tú/vous/Sie register.
+- No new legal text is visible by default — the explanatory sentence lives behind the closed
+  disclosure, exactly as asked ("No añadir más texto jurídico visible de inicio").
+- Nothing else on `/registro` was touched: the rest of the form, its fields, its validation, and
+  the required Terms/Privacy checkbox are byte-identical to before this change.
+
+**Gate:** typecheck + lint + prettier green; the existing `commercial-consent.spec.ts` (14/14,
+unchanged) — the suite that exercises this exact checkbox (checked/unchecked, all 8 acceptance
+cases, withdrawal) — passed without modification, which is the evidence that only presentation
+changed.

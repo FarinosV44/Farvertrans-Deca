@@ -314,8 +314,15 @@ export const de = {
       andAccept: "gelesen und akzeptiere die",
       termsAndConditions: "Allgemeinen Geschäftsbedingungen",
     },
-    commercialOptIn:
-      "Ich möchte personalisierte Frachtangebote von interessierten Verladern erhalten und dafür die minimalen Verfügbarkeitsdaten meiner Transporte teilen. Ich kann das jederzeit ändern.",
+    commercialOptIn: {
+      title: "Frachtmöglichkeiten",
+      badge: "Optional",
+      label: "Benachrichtigen Sie mich, wenn ein zu meinen Routen passender Transport erscheint",
+      hint: "Sie können dies jederzeit deaktivieren.",
+      moreInfo: "Welche Daten werden geteilt",
+      moreInfoBody:
+        "Es werden nur die Mindestdaten geteilt, die nötig sind, um Ihnen Möglichkeiten vorzuschlagen: Zielort des Fahrzeugs, voraussichtliches Datum und die von Ihnen freigegebenen Kontaktdaten.",
+    },
     submit: {
       register: "Kostenloses Konto erstellen",
       login: "Anmelden",

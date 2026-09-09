@@ -313,8 +313,15 @@ export const fr = {
       andAccept: "et j'accepte les",
       termsAndConditions: "Conditions Générales",
     },
-    commercialOptIn:
-      "Je souhaite recevoir des propositions personnalisées de fret de la part de chargeurs intéressés, en partageant les informations minimales de disponibilité de mes transports. Je pourrai le modifier à tout moment.",
+    commercialOptIn: {
+      title: "Opportunités de fret",
+      badge: "Facultatif",
+      label: "Prévenez-moi si un transport compatible avec mes trajets apparaît",
+      hint: "Vous pouvez le désactiver quand vous le souhaitez.",
+      moreInfo: "Quelles données sont partagées",
+      moreInfoBody:
+        "Seules les données minimales nécessaires pour vous proposer des opportunités seront partagées : destination du véhicule, date prévue et les coordonnées que vous avez autorisées.",
+    },
     submit: {
       register: "Créer un compte gratuit",
       login: "Connexion",
