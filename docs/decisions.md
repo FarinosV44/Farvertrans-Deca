@@ -5112,6 +5112,55 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-175 — #96: Core Web Vitals — a real mobile baseline, measured against production (2026-09-09)
+
+New `scripts/perf-baseline.mjs` (`npm run perf:baseline`) — the piece D-174 flagged as still
+missing. A real browser (Chromium via Playwright, not a synthetic/local-only check), a real mobile
+device profile (`devices["Pixel 5"]`), and REAL throttling via CDP: Lighthouse's own published
+"Slow 4G" network profile (150 ms RTT, 1.6 Mbps down / 750 Kbps up) plus its default 4x CPU
+slowdown — chosen so the numbers are comparable to any Lighthouse/PSI report, not an invented
+threshold, matching the issue's own "medir también condiciones reales... no optimizar Lighthouse
+para la captura". Reports TTFB, FCP, LCP, CLS, and total/JS transfer bytes (via CDP's
+`Network.loadingFinished` `encodedDataLength` — the `content-length` HEADER undercounted almost
+everything to ~0, since Hostinger's CDN/Next serve most responses compressed and chunked with no
+`content-length` header at all; caught and fixed before trusting the first run's numbers).
+
+**Run directly against production** (`https://decaprofesional.es`) for the issue's own priority
+route list:
+
+| Route | TTFB | FCP/LCP | CLS | Total transfer | JS transfer |
+|---|---|---|---|---|---|
+| `/` | 337 ms | 1960 ms | 0 | 429 kB | 302 kB |
+| `/crear` | 180 ms | 1600 ms | 0 | 389 kB | 301 kB |
+| `/que-es-el-deca` | 192 ms | 1708 ms | 0 | 399 kB | 302 kB |
+| `/como-hacer-un-deca` | 191 ms | 1632 ms | 0 | 398 kB | 302 kB |
+| `/deca-obligatorio-2026` | 204 ms | 1632 ms | 0 | 398 kB | 302 kB |
+| `/guias` | 318 ms | 1460 ms | 0 | 406 kB | 303 kB |
+| `/blog` | 333 ms | 1636 ms | 0 | 398 kB | 301 kB |
+| `/registro` | 190 ms | 1656 ms | 0 | 367 kB | 288 kB |
+| `/entrar` | 198 ms | 1496 ms | 0 | 365 kB | 288 kB |
+
+**Reading it honestly:** LCP is comfortably under the 2500 ms "good" threshold on every priority
+route even under throttled mobile conditions, and CLS is 0 everywhere (consistent with the
+hero-image fix and the rest of the D-174 image audit). This is real, current data — not a
+before/after pair, since no equivalent measurement exists from before this session's fixes; it is
+the "after" baseline this session's own changes should be judged against going forward, and the
+"before" for any future #96 work. The JS transfer figures here (288–303 kB) run higher than the
+build output's own "First Load JS" column (103–235 kB, D-174) because they measure different
+things — the build column is Next's static analysis of one route's required chunks; this script
+counts every script resource an actual browser loads for the full page. Both are real and both are
+useful; neither is wrong.
+
+**#96's acceptance checklist against what this session actually did:** baseline done (this entry);
+top bottlenecks found and mostly fixed (site-wide no-caching — partially, D-172; hero-image CLS —
+fixed, D-174; a whole unused font family — fixed, D-174; `/crear`/`/entrar`/`/registro`'s heavier
+JS — found, not resolved, needs a bundle analyzer); SEO/indexability unaffected (verified, D-172's
+own regression suite); images/fonts CLS-safe (D-174); static-asset caching already correct
+(verified, D-172's investigation); budgets added (D-174); verified against production, not just
+local (this entry). **Still open:** the root-layout caching architecture (D-172) and the
+`/crear`/`/entrar`/`/registro` JS-weight investigation (D-174) — both explicitly flagged as their
+own follow-ups rather than rushed.
+
 ## D-174 — #96: Core Web Vitals — Inter font removed, hero-image CLS fix, performance budgets (2026-09-09)
 
 Continuing D-172's slice, the rest of the concretely achievable scope:

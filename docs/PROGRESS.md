@@ -129,10 +129,20 @@
     `scripts/perf-budget.mjs` (`npm run perf:budget`) — real-build-based JS-weight budgets per
     priority route, 8/8 currently within budget. Traced `/crear`/`/entrar`/`/registro`'s heavier JS
     (~98–107 kB above the shared baseline, vs. ~24 kB for the SEO cluster) to no single culprit —
-    documented as an open question needing a real bundle analyzer, not guessed at. **Still not
-    done:** the real mobile before/after baseline (LCP/INP/CLS/TTFB) — PageSpeed Insights returned
-    429 every attempt (no API key); a Playwright-based measurement was the fallback plan, not yet
-    built.
+    documented as an open question needing a real bundle analyzer, not guessed at.
+  - **#96 baseline (D-175):** new `scripts/perf-baseline.mjs` (`npm run perf:baseline`) — a real
+    browser (Chromium), a real mobile profile (Pixel 5), REAL throttling (Lighthouse's own "Slow
+    4G" + 4x CPU, for comparability, not an invented threshold). Run directly against production:
+    LCP 1460–1960 ms on every priority route (comfortably under the 2500 ms "good" threshold even
+    throttled), CLS 0 everywhere. This is the "after" baseline for this session's fixes — there is
+    no equivalent "before" measurement from prior to this session, so it stands as the baseline any
+    future #96 work is judged against. #96's own acceptance checklist: baseline ✓ (this), top
+    bottlenecks found and mostly fixed ✓ (D-172/D-174 above; the JS-weight one stays open),
+    SEO/indexability unaffected ✓ (D-172's regression suite), images/fonts CLS-safe ✓ (D-174),
+    static-asset caching already correct ✓ (verified during D-172), budgets added ✓ (D-174),
+    verified in production not just local ✓ (this). **Still genuinely open, both explicitly
+    flagged rather than rushed:** the root-layout caching architecture (D-172) and the
+    `/crear`/`/entrar`/`/registro` JS-weight question (D-174).
   - **#102 URGENT PRODUCTION BUG, reported mid-session (D-173):** every page under `app/panel/**`
     sent a company-less LOGGED-IN user (the normal outcome of being removed from a team) to the full
     new-account signup form, which then correctly rejected their own email as already taken — a
@@ -141,10 +151,13 @@
     red-first via `git stash` against the pre-fix code. **Shipped to `main` immediately**, ahead of
     and separate from the #96 slice — a live incident, not a scheduled release. Issue #104 opened
     retroactively (already fixed) per this project's "Issue capture: on".
-  - **REMAINING: rest of #96 (real baseline, budgets are in but the measurement they'd gate on
-    isn't), #100 (Search Console operational process).** #100 is largely a multi-day operational
-    process on its own — user's own instruction (AskUserQuestion)
-    was depth over a shallow pass if context ran out.
+  - **#96 substantially done this session** — baseline ✓, top real bottlenecks found and mostly
+    fixed, budgets ✓, verified in production ✓. Two deliberately-scoped follow-ups remain open
+    (root-layout caching architecture; the `/crear`/`/entrar`/`/registro` JS-weight question), each
+    documented precisely enough for a future session to pick up without re-deriving anything.
+  - **REMAINING: #100 (Search Console operational process).** Largely a multi-day operational
+    process on its own — user's own instruction (AskUserQuestion) was depth over a shallow pass if
+    context ran out.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
