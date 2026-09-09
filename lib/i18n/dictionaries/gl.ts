@@ -312,8 +312,14 @@ export const gl = {
       andAccept: "e acepto os",
       termsAndConditions: "Termos e Condicións",
     },
-    commercialOptIn:
-      "Quero recibir propostas personalizadas de carga de cargadores interesados, compartindo os datos mínimos de dispoñibilidade dos meus portes. Poderei cambialo en calquera momento.",
+    commercialOptIn: {
+      title: "Oportunidades de carga",
+      label: "Avísame se aparece un porte compatible coas miñas rutas",
+      hint: "Podes desactivalo cando queiras.",
+      moreInfo: "Que datos se comparten",
+      moreInfoBody:
+        "Só se compartirán os datos mínimos necesarios para propoñerche oportunidades: destino do vehículo, data prevista e os datos de contacto que teñas autorizado.",
+    },
     submit: {
       register: "Crear conta gratis",
       login: "Entrar",

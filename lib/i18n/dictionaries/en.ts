@@ -302,8 +302,14 @@ export const en = {
       andAccept: "and I accept the",
       termsAndConditions: "Terms and Conditions",
     },
-    commercialOptIn:
-      "I want to receive personalised freight offers from interested shippers, sharing the minimal availability details of my jobs. I can change this at any time.",
+    commercialOptIn: {
+      title: "Load opportunities",
+      label: "Notify me if a job compatible with my routes comes up",
+      hint: "You can turn this off anytime.",
+      moreInfo: "What data is shared",
+      moreInfoBody:
+        "Only the minimum data needed to propose opportunities will be shared: your vehicle's destination, the expected date, and the contact details you've authorised.",
+    },
     submit: {
       register: "Create free account",
       login: "Log in",

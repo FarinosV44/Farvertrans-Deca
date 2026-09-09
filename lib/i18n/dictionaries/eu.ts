@@ -320,8 +320,14 @@ export const eu = {
       andAccept: "eta onartzen ditut",
       termsAndConditions: "Baldintzak eta Erabilera Baldintzak",
     },
-    commercialOptIn:
-      "Interesa duten kargatzaileen karga-proposamen pertsonalizatuak jaso nahi ditut, nire garraioen eskuragarritasun-datu minimoak partekatuz. Noiznahi alda dezaket.",
+    commercialOptIn: {
+      title: "Karga-aukerak",
+      label: "Jakinarazi nire ibilbideekin bat datorren garraiorik agertzen bada",
+      hint: "Noiznahi desaktiba dezakezu.",
+      moreInfo: "Zer datu partekatzen diren",
+      moreInfoBody:
+        "Aukerak proposatzeko behar diren gutxieneko datuak bakarrik partekatuko dira: ibilgailuaren helmuga, aurreikusitako data eta baimendu dituzun kontaktu-datuak.",
+    },
     submit: {
       register: "Sortu kontu doakoa",
       login: "Sartu",

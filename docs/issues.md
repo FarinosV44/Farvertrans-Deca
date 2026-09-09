@@ -50,9 +50,9 @@
 | 26 | OPS 26 — driver delivery + QR verification | fix | high | on `main` | E-012 |
 | 27 | TEAM 27 — multi-user company workspaces | feat | medium | on `main` | E-012 |
 | 28 | GROWTH 28 — company acquisition engine | feat | high | on `main` | E-012 |
-| 92 | [P2 UX] Vistas guardadas en Histórico | feat | medium | implemented on `develop`, awaiting deploy | E-092 |
-| 93 | [P2 UX] 3 accesos rápidos personalizados en Inicio | feat | medium | implemented on `develop`, awaiting deploy | E-092 |
-| 94 | [P0 Seguridad] Vulnerabilidad en rutas internas | fix | **critical** | **fixed** on `develop`, awaiting deploy | E-094 |
+| 92 | [P2 UX] Vistas guardadas en Histórico | feat | medium | on `main`, awaiting deploy | E-092 |
+| 93 | [P2 UX] 3 accesos rápidos personalizados en Inicio | feat | medium | on `main`, awaiting deploy | E-092 |
+| 94 | [P0 Seguridad] Vulnerabilidad en rutas internas | fix | **critical** | **fixed**, on `main`, awaiting deploy | E-094 |
 
 ### E-012 — Product V2 (#21–#28): brand, landing, accounts, workspace, creator, delivery, teams, acquisition
 - Status: **all 8 merged to `main`** (D-027). 8 commits, 8 new e2e specs, 4 migrations. Beat-1
@@ -472,7 +472,7 @@ anonymize-in-place (no hard delete, D-067).
 - **NO fusionado a `main`** — antes hay que aplicar las 2 migraciones a producción (falta la cadena
   de conexión de la BD del usuario), luego merge + beat-1 en #87–#90.
 
-## I-094 — #94 [P0 Seguridad] Vulnerabilidad en rutas internas · **FIXED on `develop`** (D-156)
+## I-094 — #94 [P0 Seguridad] Vulnerabilidad en rutas internas · **FIXED, on `main`** (D-156)
 - 2026-09-09. User report: "podría existir una vulnerabilidad accesible desde alguna ruta relacionada
   con operadores o con paneles internos" — no vector given, treated as P0 and reproduced before any
   code changed, per the issue's own diagnosis-first instructions.
@@ -494,11 +494,11 @@ anonymize-in-place (no hard delete, D-067).
   6 tests) — written first, observed failing on the real leak.
 - Gate: typecheck + lint + prettier + keel-verify + 16/16 targeted e2e (admin, admin-account-
   lifecycle, admin-rsc-authz).
-- **On `develop`** (`bf3ce0f`). **Production is exposed until the user redeploys** — the
-  `(protected)` layout predates #69, so the currently-live build carries this. Beat-1 comment
-  pending on the forge issue (posted with this sweep).
+- **On `main`** (`9fcba7f`). **The currently-DEPLOYED build is still exposed until the user
+  redeploys Hostinger** — the `(protected)` layout predates #69, so production has this flaw live
+  right now even though `main` itself is fixed. Beat-1 comment posted on the issue.
 
-## I-092 — #92 [P2 UX] Vistas guardadas en Histórico · **implemented on `develop`** (D-157)
+## I-092 — #92 [P2 UX] Vistas guardadas en Histórico · **implemented, on `main`** (D-157)
 - 2026-09-09. Saved combinations of the Histórico's existing filters (`q`, `from`, `to`, `carrier`,
   `plate` — no new filter, pinned by a unit test), private per user (not per company).
 - `SavedHistoryView` model, migration `20260909075010_saved_history_views_and_quick_actions`
@@ -511,9 +511,9 @@ anonymize-in-place (no hard delete, D-067).
 - i18n: `historico.views` added key-for-key to all 8 catalogues.
 - Gate: typecheck + lint + prettier + keel-verify + 26 new unit (pure logic, test-first, observed
   red before `lib/data/history-views.ts` existed) + 5 e2e (own suite) + full e2e 249/249.
-- **On `develop`** (this commit). Beat-1 comment pending on the forge issue.
+- **On `main`** (`9fcba7f`). Beat-1 comment posted on the issue.
 
-## I-093 — #93 [P2 UX] 3 accesos rápidos personalizados en Inicio · **implemented on `develop`** (D-157)
+## I-093 — #93 [P2 UX] 3 accesos rápidos personalizados en Inicio · **implemented, on `main`** (D-157)
 - 2026-09-09. Up to 3 shortcuts on Inicio to functions that already exist, chosen per user
   (`User.quickActions String[]`, same migration as #92). Catalogue of 9 existing destinations
   (`lib/panel/quick-actions.ts`), no duplicates, no widget builder (no drag&drop/colours/sizes —
@@ -529,4 +529,4 @@ anonymize-in-place (no hard delete, D-067).
 - i18n: `panel.quickActions` added key-for-key to all 8 catalogues.
 - Gate: typecheck + lint + prettier + keel-verify + 14 new unit (pure logic, test-first, observed
   red before the module existed) + 4 e2e (own suite) + full e2e 249/249.
-- **On `develop`** (this commit). Beat-1 comment pending on the forge issue.
+- **On `main`** (`9fcba7f`). Beat-1 comment posted on the issue.

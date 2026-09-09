@@ -4712,3 +4712,71 @@ placeholder substituted on the client. Caught by a real run, not by review.
 **Gate:** typecheck + lint + prettier + keel-verify + **330 unit** (40 new: quick-actions 14,
 history-views 26) + production build + **full e2e 249 passed / 0**, including the existing a11y
 checks over `/panel`, `/panel/historico` and `/panel/datos`.
+
+## D-158 — #92/#93/#94 merged to `main` + production migration applied (2026-09-09)
+- User explicit instruction: "push to main and after apply the migrations" — authorises the
+  `develop` → `main` merge per SKILL.md ("Git flow": only an explicit instruction authorises it).
+- `develop` → `main` merge `9fcba7f` (`--no-ff`), pushed. `develop` already in sync (no fast-forward
+  needed — `main` was already behind).
+- **Production migration applied** (user supplied `DATABASE_URL`/`DIRECT_URL` connection strings in
+  chat, used only as transient shell env vars for this one command — never written to any file,
+  never committed): `prisma migrate status` was clean beforehand (35/36, exactly the 1 expected
+  pending), then `prisma migrate deploy` applied `20260909075010_saved_history_views_and_
+  quick_actions`. After: "Database schema is up to date!" (36/36). Verified directly:
+  `user.quick_actions` column present, `saved_history_view` table present.
+- **Security note (recorded, not silently handled):** the connection string pasted in chat carries
+  the same DB password as the one shared in the D-155 session. If it was not rotated after that
+  session as noted there, it should be rotated now — a credential typed into a chat is exposed
+  wherever that chat is stored, this is now the second time.
+
+## D-159 — #84 registration opt-in restyled as a product feature (2026-09-09)
+
+**User's explicit, detailed request** ("Haz un ajuste solo en el consentimiento comercial del
+registro...") supersedes D-146 point 4's "no 'opcional' label" — a later explicit request that
+contradicts a recorded decision supersedes it, per SKILL.md. Every OTHER #84 constraint from
+D-146 still holds and was verified to hold:
+- Still unchecked by default (`useState(false)`, unchanged) — verified by the existing e2e
+  (`commercial-consent.spec.ts`, "unchecked by default and never blocks signup", still green).
+- Still never names Farvertrans or any recipient — the new copy ("para proponerte oportunidades")
+  is if anything more conservative than the superseded text ("cargadores interesados").
+- Still no pressure, no pre-tick, never required — the required Privacy/Terms checkbox
+  (`data-testid="accept-terms"`) is a separate, untouched block above this one.
+- Legal storage/logic unchanged: same `commercialOptIn` boolean state, same wiring into
+  `POST /api/auth/register`, same `data-testid="commercial-opt-in"` on the actual input (the e2e
+  suite addresses it directly and needed no changes).
+
+**What changed, scoped to presentation only:**
+- `components/auth/register-form.tsx` — the checkbox is now inside a very light bordered box
+  (`RouteIcon` + title "Oportunidades de carga" + an "Opcional" badge), with a small secondary
+  line ("Puedes desactivarlo cuando quieras.") and a native `<details>`/`<summary>` disclosure
+  ("Qué datos se comparten", closed by default) reusing the exact pattern already in
+  `components/app/commercial-treatment-settings.tsx` — no new disclosure mechanism invented.
+- `lib/i18n/dictionaries/*.ts` (all 8) — `auth.commercialOptIn` restructured from a single string
+  into `{title, badge, label, hint, moreInfo, moreInfoBody}`, translated (not machine-literal) per
+  locale, matching each file's own established tú/vous/Sie register.
+- No new legal text is visible by default — the explanatory sentence lives behind the closed
+  disclosure, exactly as asked ("No añadir más texto jurídico visible de inicio").
+- Nothing else on `/registro` was touched: the rest of the form, its fields, its validation, and
+  the required Terms/Privacy checkbox are byte-identical to before this change.
+
+**Gate:** typecheck + lint + prettier green; the existing `commercial-consent.spec.ts` (14/14,
+unchanged) — the suite that exercises this exact checkbox (checked/unchecked, all 8 acceptance
+cases, withdrawal) — passed without modification, which is the evidence that only presentation
+changed.
+
+## D-160 — #84 opt-in: remove the visible "Opcional" badge (2026-09-09, same-session follow-up)
+
+**User correction, immediate:** "no pues si quita la etiqueta opcional que lo sea pero que no lo
+ponga" — remove the visible "Opcional" label; the checkbox stays functionally optional (unchecked
+by default, never required), it just isn't announced with a badge. This is closer to D-146's
+original "no 'opcional' label" than D-159 was, while keeping D-159's other changes (icon, title,
+compact box, hint line, closed-by-default disclosure).
+
+- `components/auth/register-form.tsx`: removed the badge `<span>`; the icon+title row is now
+  `RouteIcon` + "Oportunidades de carga" only.
+- `lib/i18n/dictionaries/*.ts` (all 8): removed the now-unused `badge` key from
+  `auth.commercialOptIn` — dead translated strings are not left in the catalogues.
+- Everything else from D-159 stands: same state, same wiring, same `data-testid`s, disclosure
+  unchanged.
+- **Gate:** typecheck + prettier + lint green; `commercial-consent.spec.ts` 14/14 unmodified,
+  re-run after this change.

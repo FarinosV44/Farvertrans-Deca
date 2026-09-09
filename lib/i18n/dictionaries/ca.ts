@@ -312,8 +312,14 @@ export const ca = {
       andAccept: "i accepto els",
       termsAndConditions: "Termes i Condicions",
     },
-    commercialOptIn:
-      "Vull rebre propostes personalitzades de càrrega de carregadors interessats, compartint les dades mínimes de disponibilitat dels meus ports. Ho podré canviar en qualsevol moment.",
+    commercialOptIn: {
+      title: "Oportunitats de càrrega",
+      label: "Avisa'm si apareix un port compatible amb les meves rutes",
+      hint: "Ho pots desactivar quan vulguis.",
+      moreInfo: "Quines dades es comparteixen",
+      moreInfoBody:
+        "Només es compartiran les dades mínimes necessàries per proposar-te oportunitats: destinació del vehicle, data prevista i les dades de contacte que hagis autoritzat.",
+    },
     submit: {
       register: "Crear compte gratis",
       login: "Entra",

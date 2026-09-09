@@ -304,8 +304,21 @@ export const es = {
       andAccept: "y acepto los",
       termsAndConditions: "Términos y Condiciones",
     },
-    commercialOptIn:
-      "Quiero recibir propuestas personalizadas de carga de cargadores interesados, compartiendo los datos mínimos de disponibilidad de mis portes. Podré cambiarlo en cualquier momento.",
+    /**
+     * #84 registration opt-in, restyled as a compact product feature rather
+     * than a legal clause (2026-09 request) — supersedes D-146 point 4's "no
+     * 'opcional' label" only for THIS badge; every other #84 constraint holds:
+     * unchecked by default, never names Farvertrans, no pressure. The deeper
+     * explanation lives behind `moreInfo`/`moreInfoBody`, never open by default.
+     */
+    commercialOptIn: {
+      title: "Oportunidades de carga",
+      label: "Avísame si aparece un porte compatible con mis rutas",
+      hint: "Puedes desactivarlo cuando quieras.",
+      moreInfo: "Qué datos se comparten",
+      moreInfoBody:
+        "Solo se compartirán los datos mínimos necesarios para proponerte oportunidades: destino del vehículo, fecha prevista y los datos de contacto que hayas autorizado.",
+    },
     submit: {
       register: "Crear cuenta gratis",
       login: "Entrar",
