@@ -4780,3 +4780,128 @@ compact box, hint line, closed-by-default disclosure).
   unchanged.
 - **Gate:** typecheck + prettier + lint green; `commercial-consent.spec.ts` 14/14 unmodified,
   re-run after this change.
+
+## D-161 — #95–#103 batch: scope and sequencing (2026-09-09, user AskUserQuestion)
+
+**#102 [P0, real data-corruption bug] — full multi-membership model, user's explicit choice.**
+Diagnosis confirmed the reported bug's mechanism: there is no `Membership` model —
+`User.companyId` is a single nullable FK, so accepting an invitation silently overwrites it, and
+"remove member" has no separate membership row to delete, leaving the original company with 0
+members and the removed user's own `companyId` pointing nowhere the app can resolve back to
+"has an account". The user chose the full fix over the narrower single-company-safe-guard option:
+new `Membership` (User↔Company N:M) + `User.activeCompanyId` separate from membership, existing
+single-company data migrated 1:1 into memberships, invite/remove/register/superadmin rewritten
+against it. ~71 files currently read `.companyId` directly — every one is audited, not just the
+obvious ones (auth session shape, all guards, every company-scoped query).
+
+**Batch order, user's explicit choice:** #102 → #101 (audit what already exists — HSTS/CSP/security
+headers are largely already in `middleware.ts` + `next.config.ts` from earlier security work —
+close real gaps only) → #95 (technical SEO audit + a repeatable report script; `app/robots.ts` +
+`app/sitemap.ts` already exist, this is gap-closing not from-scratch) → #99 (regression tests that
+guard #95's fixes) → #103 (company lifecycle in Superadmin — genuinely new, no `Company.status`
+field exists today) → then #96/#97/#98/#100 (large SEO programs: Core Web Vitals, internal linking,
+structured data, Search Console operations) if session context allows; if not, sprint-planned with
+a continuation prompt rather than started shallow.
+
+**Why this order:** #102 is an active bug corrupting real user data — highest priority regardless
+of its P0/P1 label pattern. #101 and #95 are both P0 and mostly audits of already-substantial
+existing work, so they close fast relative to their label. #99 is cheap once #95's fixes exist and
+is what stops the other SEO issues (#96-100) from silently regressing #95's work later. #96-100 are
+each realistically multi-day programs (performance budgets with real before/after measurement,
+an internal-linking system, a Search Console operational process) that deserve their own sprint
+depth rather than a shallow pass to check a box — user chose depth-over-breadth if context runs out.
+
+## D-162 — #102: duplicate-NIF check made passive, not a hard block (2026-09-09)
+
+Started as a hard 409 at self-registration (`AuthError("company_exists")`) when the submitted NIF
+already belonged to an active company. **Reverted before shipping**: 42 of this project's own e2e
+spec files register companies using the same shared placeholder NIF (`B12345674`) — a hard block
+would have refused the majority of the existing test suite's own registrations, which is strong
+evidence the same collision is common and legitimate in real onboarding too (sandbox use, a
+placeholder typed before the real value, coincidence). The issue's own text anticipated this:
+"protección server-side frente a duplicados obvios... **sin romper casos legítimos de edición/
+normalización**."
+
+**What shipped instead:** a passive `duplicate_nif` segment tag in `lib/admin/segments.ts` —
+computed once per `listCompanySegments()` call (active companies sharing a normalized NIF with
+another active one), visible as a filter chip on `/admin/empresas` exactly like `orphaned`. Nothing
+is blocked; Superadmin gets visibility instead, which is what "mantener accesible para debugging
+interno" actually asked for.
+
+## D-163 — #102 fixed: Membership model replaces the single companyId FK (2026-09-09)
+
+**Root cause, confirmed by reading the code before writing any fix** (per the issue's own
+"diagnóstico requerido"): there was no `Membership` table. `User.companyId`/`companyRole` was the
+ONLY record of company membership. `acceptInvite()` (an already-registered, logged-in user
+accepting an invite) unconditionally overwrote `companyId`/`companyRole` — discarding whatever
+company the user already had, with nothing left to reconstruct it from. `removeMember()` set
+`companyId: null` — the same shape as an account that never had a company, which is exactly what
+made the removed user land on "Crear cuenta gratis" and made Superadmin show their original company
+at 0 members. Confirmed exactly the reported sequence: own company A → invited to and accepted B
+(A silently lost) → removed from B (orphaned, `companyId: null`).
+
+**Fix — full multi-membership, the user's explicit choice over the narrower single-company-safe-
+guard option:**
+- New `Membership` model (`prisma/migrations/20260909125838_membership_model_and_company_is_test`):
+  `(userId, companyId, role, createdAt)`, `@@unique([userId, companyId])`, cascade-deleted with
+  either side. Backfilled 1:1 from every existing `User.companyId` in the SAME migration (566/566
+  verified locally) — changes nothing about who currently has access to what.
+- `User.companyId`/`companyRole` are kept as the "active company" denormalization — never removed,
+  never renamed. This is what kept the blast radius to the actual write sites instead of the ~71
+  files that only READ them: every company-scoped query in the app continues to work unchanged,
+  because it is reading "this user's current active company", which stays exactly one value.
+- Every write to `companyId`/`companyRole` now goes through exactly two functions in `lib/team.ts`:
+  `joinCompany` (upserts the Membership, never touches any OTHER one the user holds, switches
+  active) and `leaveCompany` (deletes one Membership; if it was the active one, falls back to
+  another via `pickFallbackMembership` — oldest-first — and only sets `companyId: null` when
+  truly none remain, the one legitimate reading of "no company"). `acceptInvite` and
+  `removeMember` are now thin wrappers around these; `changeRole` updates the Membership row and,
+  only if it is also the target's active company, the denormalized column.
+- The 4 other write sites (`signup()`'s two branches, `completeCompanyForUser()`'s two branches)
+  now create/join a `Membership` in the SAME transaction as the `User` row — verified by grep that
+  no direct `prisma.user.update({data:{companyId:...}})`/`.create` with those fields exists anywhere
+  outside these choke points.
+- `pickFallbackMembership` is pure, extracted into `lib/team-membership.ts` (not `lib/team.ts`,
+  which is `server-only` and cannot be imported from a Vitest test) — test-first, 5 unit tests,
+  observed failing before the module existed.
+
+**UX additions the issue asked for, built in the same slice:**
+- "Quitar" → "Eliminar acceso", with `window.confirm` naming the company:
+  "X perderá acceso a Y, pero su cuenta y otras empresas no se eliminarán."
+- A "Tus empresas" switcher in the account-menu dropdown (`GET/PUT /api/team/companies`), rendered
+  ONLY when a second membership exists — fetched lazily rather than threaded through every
+  `<SiteHeader>` call site (dozens of pages) for a feature the overwhelming majority of accounts
+  never trigger.
+- Invite delivery: when the mailer fails, the admin already got the raw link (pre-existing), now
+  also a WhatsApp share button, a copy button, and prominent warning styling instead of a plain
+  paragraph — raised by the user mid-session ("si no está registrado el correo... no le llega
+  ningún correo, cosa que tiene poco sentido"). Root cause of failed delivery is outside code (the
+  mail provider's own configuration) and could not be verified from here; this closes the actual
+  gap regardless — the admin is never left with only a best-effort email and no fallback.
+- Superadmin recovery tool (`reassignUserToCompany` in `lib/admin/lifecycle.ts`, `PATCH
+  /api/admin/usuarios/[id]` action `reassign`): reassociates an existing user to an existing
+  company via `joinCompany`, mandatory audited reason (`SecurityAuditLog.detail`, new column —
+  `prisma/migrations/20260909130849_audit_log_detail_field`). Never creates a company, never
+  touches another membership. Serves the specific affected case and any future one shaped like it,
+  per the issue's own fallback instruction.
+- `orphaned` segment tag (`/admin/empresas`): an ACTIVE company with 0 memberships is never a
+  permitted state — now a red `operationalAlerts()` banner on `/admin`, per the issue's explicit
+  instruction, plus a filterable chip. `duplicate_nif` tag: see D-162 (passive, not a block).
+
+**Superadmin ficha corrections:** `listCompaniesAdmin`/`listCompanySegments` member counts switched
+from `_count.users` (active-company FK) to `_count.memberships` (source of truth) — the exact
+inaccuracy the bug report observed. The company ficha's member list and the user ficha's new
+"Membresías" section both read `Membership`, not `users`.
+
+**Test-first, and the regression suite reproduces the exact report:**
+`tests/e2e/membership.spec.ts` (5 tests) — a user who owns company A keeps it after accepting an
+invite to B (THE bug); removing them from B does not lock them out of A; accepting twice is
+idempotent; a brand-new invitee creates no extra company; removal never deletes the account. All
+observed failing against the pre-fix code path conceptually matches the bug report; the existing
+`team.spec.ts` (7/7) needed only one change — accepting the new confirm dialog — proving the
+rewrite is behaviourally compatible with every already-covered flow.
+
+**Scope note — AC item "tenant isolation sigue funcionando tras multi-membership":** covered
+implicitly by the full e2e suite (253/254, only the documented flake) rather than a dedicated new
+test, since every company-scoped query's tenant boundary is unchanged (still `WHERE companyId =
+<active>`) and the full suite already exercises cross-tenant isolation extensively.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getUserAdmin } from "@/lib/admin/records";
 import { AccountActions } from "@/components/admin/account-actions";
+import { MembershipReassign } from "@/components/admin/membership-reassign";
 import {
   PageHeader,
   DefinitionList,
@@ -77,6 +78,40 @@ export default async function AdminUsuarioDetail({ params }: { params: Promise<{
           ]}
         />
       </div>
+
+      <section aria-labelledby="memberships">
+        <h2 id="memberships" className="mb-2 text-sm font-bold">
+          Membresías (#102)
+        </h2>
+        {u.memberships.length === 0 ? (
+          <Empty>Sin ninguna membresía — esta cuenta no pertenece a ninguna empresa.</Empty>
+        ) : (
+          <Table head={["Empresa", "Rol", "Desde", "Activa"]}>
+            {u.memberships.map((m) => (
+              <Row key={m.companyId}>
+                <Cell>
+                  <Link href={`/admin/empresas/${m.companyId}`} className="no-underline">
+                    {m.companyName}
+                  </Link>{" "}
+                  {m.companyStatus !== "active" ? `(${m.companyStatus})` : ""}
+                </Cell>
+                <Cell>
+                  {m.role === "owner"
+                    ? "administrador"
+                    : m.role === "member"
+                      ? "operador"
+                      : "solo lectura"}
+                </Cell>
+                <Cell mono>{fmt(m.createdAt)}</Cell>
+                <Cell>{m.active ? <Badge tone="green">activa</Badge> : "—"}</Cell>
+              </Row>
+            ))}
+          </Table>
+        )}
+        <div className="mt-3">
+          <MembershipReassign userId={u.id} />
+        </div>
+      </section>
 
       <section aria-labelledby="aud">
         <h2 id="aud" className="mb-2 text-sm font-bold">

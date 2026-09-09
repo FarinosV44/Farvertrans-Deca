@@ -66,6 +66,10 @@ model Company {
   statusReason    String?         @map("status_reason")
   statusChangedAt DateTime?       @map("status_changed_at")
   anonymizedAt    DateTime?       @map("anonymized_at")
+  /// #103 — excluded from business KPIs and hidden from the default Superadmin
+  /// list by default; never affects auth, panel access, or data integrity.
+  /// Reversible, audited (`company_marked_test` / `company_unmarked_test`).
+  isTest          Boolean         @default(false) @map("is_test")
   profile         CompanyProfile?
   /// Optional PDF header logo (PRODUCT #39), stored as a data URI (PNG/JPEG,
   /// size-capped — see lib/company/logo.ts). Read at DOCUMENT CREATION time
@@ -75,6 +79,7 @@ model Company {
   createdAt       DateTime        @default(now()) @map("created_at")
 
   users                 User[]
+  memberships           Membership[]
   decas                 Deca[]
   acquisition           Acquisition?
   invites               CompanyInvite[]
@@ -349,7 +354,16 @@ model User {
   anonymizedAt    DateTime?     @map("anonymized_at")
   createdAt       DateTime      @default(now()) @map("created_at")
 
+  /// #102: this is the ACTIVE company/role only — a denormalized "current
+  /// view" kept in sync by every mutation in `lib/team.ts`, read by every
+  /// company-scoped query in the app exactly as before. The SOURCE OF TRUTH
+  /// for "does this user belong to this company" is `Membership`, never this
+  /// column: accepting a second invite must never overwrite it away from a
+  /// membership that still exists, and removing one membership must fall
+  /// back to another the user still holds rather than nulling the account
+  /// into "no company" the way the pre-#102 bug did.
   company             Company?             @relation(fields: [companyId], references: [id])
+  memberships         Membership[]
   createdDecas        Deca[]               @relation("DecaCreatedBy")
   acquisition         Acquisition?
   savedCompanies      SavedCompany[]
@@ -552,6 +566,11 @@ model SecurityAuditLog {
   result     String
   ip         String?
   userAgent  String?  @map("user_agent")
+  /// #102/#103 — free-text context for actions whose audit value depends on
+  /// WHY, not just what/who/when (a Superadmin membership reassignment's
+  /// stated reason, a company marked TEST). Never a place for secrets or
+  /// personal data beyond what the action itself already concerns.
+  detail     String?
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([actorId])
@@ -624,6 +643,31 @@ model CompanyInvite {
   @@index([companyId])
   @@index([email])
   @@map("company_invite")
+}
+
+/// #102 — the SOURCE OF TRUTH for "does this user belong to this company",
+/// separate from `User.companyId`/`companyRole` (which stay a denormalized
+/// "currently active" view, never the record of membership itself). A user
+/// may hold more than one; the pre-#102 bug existed because there was no
+/// table like this one — accepting a second invite could only overwrite the
+/// single `User.companyId` FK, and removing a member had nothing to delete
+/// except that same FK, so "leave company B" and "lose company A" were the
+/// same operation. Every mutation goes through `lib/team.ts` — never a raw
+/// `prisma.user.update({ companyId })` anywhere else in the app.
+model Membership {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  companyId String      @map("company_id")
+  role      CompanyRole @default(member)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("membership")
 }
 
 /// First-touch / last-touch acquisition attribution, one row per user or company.

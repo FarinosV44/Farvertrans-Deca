@@ -24,15 +24,21 @@ export function TeamManager({
   invites,
   isAdmin,
   meId,
+  companyName,
 }: {
   members: Member[];
   invites: Invite[];
   isAdmin: boolean;
   meId: string;
+  /** #102: named in the "Eliminar acceso" confirmation, so it is unmistakable
+   *  that only THIS workspace's access is being revoked. */
+  companyName: string;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<CompanyRoleValue>("member");
+  const [delivered, setDelivered] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
@@ -54,10 +60,15 @@ export function TeamManager({
         setMsg(data?.error?.message ?? "No se pudo invitar.");
       } else {
         setLink(data.link);
+        setDelivered(!!data.delivered);
+        setCopied(false);
         setMsg(
+          // #102: whether the recipient already has an account or not, a
+          // failed send must never be the end of the road — the admin
+          // always gets a link they can hand over themselves.
           data.delivered
             ? `Invitación enviada a ${data.email}.`
-            : `Invitación creada. Copia el enlace y envíaselo a ${data.email}.`,
+            : `No se pudo enviar el correo automáticamente. Comparte este enlace con ${data.email} tú mismo:`,
         );
         setEmail("");
         router.refresh();
@@ -144,10 +155,22 @@ export function TeamManager({
                   <button
                     type="button"
                     data-testid={`remove-member-${m.email}`}
-                    onClick={() => del(`/api/team/members/${m.id}`)}
+                    onClick={() => {
+                      // #102: never a bare "Quitar" — the account and every
+                      // OTHER company it belongs to are unaffected, and the
+                      // confirm text says so explicitly rather than reading
+                      // like account deletion.
+                      if (
+                        window.confirm(
+                          `${m.email} perderá acceso a ${companyName}, pero su cuenta y otras empresas no se eliminarán.`,
+                        )
+                      ) {
+                        del(`/api/team/members/${m.id}`);
+                      }
+                    }}
                     className="text-[var(--color-danger)] underline"
                   >
-                    Quitar
+                    Eliminar acceso
                   </button>
                 </span>
               )}
@@ -195,14 +218,50 @@ export function TeamManager({
             </button>
           </form>
           {msg && (
-            <p className="mt-2 text-sm" data-testid="invite-msg">
+            <p
+              className={`mt-2 text-sm ${!delivered && link ? "font-medium text-[var(--color-warn)]" : ""}`}
+              data-testid="invite-msg"
+            >
               {msg}
             </p>
           )}
           {link && (
-            <p className="mt-1 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 font-mono text-xs break-all">
-              {link}
-            </p>
+            <div
+              className={`mt-1 rounded-[var(--radius-md)] border p-2 ${
+                delivered
+                  ? "border-[var(--color-border)] bg-[var(--color-surface)]"
+                  : "border-[var(--color-warn)] bg-[var(--color-warn-bg)]"
+              }`}
+            >
+              <p className="font-mono text-xs break-all" data-testid="invite-link">
+                {link}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(link)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-[var(--color-primary)] underline"
+                >
+                  Enviar por WhatsApp
+                </a>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(link);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    } catch {
+                      setCopied(false);
+                    }
+                  }}
+                  className="font-medium text-[var(--color-primary)] underline"
+                >
+                  {copied ? "Copiado" : "Copiar enlace"}
+                </button>
+              </div>
+            </div>
           )}
 
           {invites.length > 0 && (

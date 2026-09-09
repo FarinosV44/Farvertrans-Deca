@@ -215,7 +215,7 @@ export async function listCompaniesAdmin(q?: string, take = 300): Promise<Compan
         }
       : undefined,
     include: {
-      _count: { select: { users: true, decas: true } },
+      _count: { select: { memberships: true, decas: true } },
       decas: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
       acquisition: { select: { firstRefCode: true } },
     },
@@ -229,7 +229,7 @@ export async function listCompaniesAdmin(q?: string, take = 300): Promise<Compan
     nif: c.nif,
     status: c.status,
     createdAt: c.createdAt,
-    members: c._count.users,
+    members: c._count.memberships,
     totalDeca: c._count.decas,
     lastDecaAt: c.decas[0]?.createdAt ?? null,
     refCode: c.acquisition?.firstRefCode ?? null,
@@ -241,15 +241,17 @@ export async function getCompanyAdmin(id: string) {
   const company = await prisma.company.findUnique({
     where: { id },
     include: {
-      users: {
+      // #102: the ficha's member list must reflect Membership (the source of
+      // truth), not `users` (whose ACTIVE company this is) — a member who
+      // also belongs elsewhere, or whose active company is currently
+      // something else, must still show up here.
+      memberships: {
         select: {
-          id: true,
-          email: true,
           role: true,
-          companyRole: true,
           createdAt: true,
-          emailVerifiedAt: true,
-          status: true,
+          user: {
+            select: { id: true, email: true, role: true, emailVerifiedAt: true, status: true },
+          },
         },
       },
       acquisition: true,
@@ -328,16 +330,17 @@ export async function getCompanyAdmin(id: string) {
           revokedAt: company.commercialConsent.revokedAt,
         }
       : null,
-    members: company.users
+    members: company.memberships
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-      .map((u) => ({
-        id: u.id,
-        email: u.email,
-        role: u.role,
-        companyRole: u.companyRole,
-        createdAt: u.createdAt,
-        emailVerifiedAt: u.emailVerifiedAt,
-        status: u.status,
+      .map((m) => ({
+        id: m.user.id,
+        email: m.user.email,
+        role: m.user.role,
+        /** This membership's role — never the user's role in some OTHER active company. */
+        companyRole: m.role,
+        createdAt: m.createdAt,
+        emailVerifiedAt: m.user.emailVerifiedAt,
+        status: m.user.status,
       })),
     saved: { companies: savedCompanies, vehicles: savedVehicles, locations: savedLocations },
     acquisition: company.acquisition,
@@ -393,6 +396,14 @@ export async function getUserAdmin(id: string) {
     include: {
       company: { select: { id: true, name: true, nif: true, status: true } },
       _count: { select: { createdDecas: true } },
+      // #102: every membership, not only the active company — a user can now
+      // legitimately hold more than one, and this ficha is where Superadmin
+      // checks "does this account really have no company anywhere" before
+      // using the reassignment tool below.
+      memberships: {
+        include: { company: { select: { id: true, name: true, status: true } } },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
   if (!user) return null;
@@ -417,6 +428,14 @@ export async function getUserAdmin(id: string) {
     emailVerifiedAt: user.emailVerifiedAt,
     createdAt: user.createdAt,
     company: user.company,
+    memberships: user.memberships.map((m) => ({
+      companyId: m.companyId,
+      companyName: m.company.name,
+      companyStatus: m.company.status,
+      role: m.role,
+      createdAt: m.createdAt,
+      active: m.companyId === user.companyId,
+    })),
     createdDeca: user._count.createdDecas,
     audit: auditRows.map((r) => ({
       action: r.action,

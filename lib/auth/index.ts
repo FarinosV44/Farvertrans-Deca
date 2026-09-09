@@ -121,14 +121,23 @@ export async function signup(input: SignupInput): Promise<{
     const { consumeInviteToken, markInviteAccepted } = await import("@/lib/team");
     const inv = await consumeInviteToken(input.inviteToken);
     if (inv) {
-      const user = await prisma.user.create({
-        data: {
-          authUserId: `local:${crypto.randomUUID()}`,
-          email,
-          companyId: inv.companyId,
-          companyRole: inv.role,
-          passwordHash: hashPassword(input.password),
-        },
+      // #102: the user AND their Membership are created together — a brand
+      // new account has nothing to overwrite, but this is still the one
+      // place that must write both rows, never `companyId` alone.
+      const user = await prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            authUserId: `local:${crypto.randomUUID()}`,
+            email,
+            companyId: inv.companyId,
+            companyRole: inv.role,
+            passwordHash: hashPassword(input.password),
+          },
+        });
+        await tx.membership.create({
+          data: { userId: created.id, companyId: inv.companyId, role: inv.role },
+        });
+        return created;
       });
       await markInviteAccepted(inv.id);
       const { recordAudit } = await import("@/lib/admin/audit");
@@ -173,6 +182,10 @@ export async function signup(input: SignupInput): Promise<{
           passwordHash: hashPassword(input.password),
         },
       });
+      // #102: founding a company is also a membership in it, from row one.
+      await tx.membership.create({
+        data: { userId: user.id, companyId: company.id, role: "owner" },
+      });
       return { userId: user.id, companyId: company.id };
     });
     await recordTermsAcceptance(r.userId, r.companyId);
@@ -194,6 +207,12 @@ export async function signup(input: SignupInput): Promise<{
   // correo, dirección, código postal, población).
   const companyData = validatedCompanyData(input.company);
 
+  // #102 "no duplicar empresas" — DELIBERATELY NOT a hard block here (D-162):
+  // a real CIF/NIF collision at self-registration is common and legitimate in
+  // this product's own conventions (placeholder/shared NIFs during
+  // onboarding, sandbox use), so a hard 409 would refuse real signups.
+  // Superadmin gets a passive `duplicate_nif` segment tag instead — see D-162.
+
   const result = await prisma.$transaction(async (tx) => {
     const company = await tx.company.create({ data: companyData });
     const user = await tx.user.create({
@@ -205,6 +224,8 @@ export async function signup(input: SignupInput): Promise<{
         passwordHash: hashPassword(input.password),
       },
     });
+    // #102: founding a company is also a membership in it, from row one.
+    await tx.membership.create({ data: { userId: user.id, companyId: company.id, role: "owner" } });
     return { userId: user.id, companyId: company.id, joinedTeam: false };
   });
   await recordTermsAcceptance(result.userId, result.companyId);
@@ -275,13 +296,14 @@ export async function completeCompanyForUser(
   if (user.companyId) throw new AuthError("bad_input", "Esta cuenta ya tiene una empresa.");
 
   if (input.inviteToken) {
-    const { consumeInviteToken, markInviteAccepted } = await import("@/lib/team");
+    const { consumeInviteToken, markInviteAccepted, joinCompany } = await import("@/lib/team");
     const inv = await consumeInviteToken(input.inviteToken);
     if (inv) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { companyId: inv.companyId, companyRole: inv.role },
-      });
+      // #102: `user.companyId` was already confirmed null above, so this
+      // user holds no membership yet — `joinCompany` still runs (rather than
+      // a raw update) so this path can never again diverge from the one
+      // that creates memberships everywhere else.
+      await prisma.$transaction((tx) => joinCompany(tx, userId, inv.companyId, inv.role));
       await markInviteAccepted(inv.id);
       const { recordAudit } = await import("@/lib/admin/audit");
       await recordAudit({
@@ -303,9 +325,12 @@ export async function completeCompanyForUser(
     );
   }
   const companyData = validatedCompanyData(input.company); // #59
+  // #102 "no duplicar empresas" — deliberately not a hard block here either; see D-162.
 
   const result = await prisma.$transaction(async (tx) => {
     const company = await tx.company.create({ data: companyData });
+    // #102: founding a company is also a membership in it, from row one.
+    await tx.membership.create({ data: { userId, companyId: company.id, role: "owner" } });
     await tx.user.update({
       where: { id: userId },
       data: { companyId: company.id, companyRole: "owner" },

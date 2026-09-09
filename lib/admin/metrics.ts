@@ -187,6 +187,23 @@ export async function operationalAlerts(now = new Date()): Promise<Alert[]> {
     });
   }
 
+  // #102: a workspace with 0 memberships is never a permitted state for an
+  // ACTIVE company (an anonymized/deactivated one legitimately can have
+  // none) — it is exactly the shape the pre-#102 bug produced. Surfaced here
+  // rather than silently reconciled, per the issue's own instruction.
+  const orphaned = await prisma.company.count({
+    where: { status: "active", memberships: { none: {} } },
+  });
+  if (orphaned > 0) {
+    alerts.push({
+      level: "red",
+      title: `${orphaned} empresa${orphaned === 1 ? "" : "s"} activa${orphaned === 1 ? "" : "s"} sin ningún miembro`,
+      detail:
+        "Un workspace activo con 0 memberships no es un estado permitido — revísalo en la ficha de la empresa.",
+      href: "/admin/empresas?seg=orphaned",
+    });
+  }
+
   return alerts;
 }
 
