@@ -1,6 +1,6 @@
 import { test, expect, request as pwRequest } from "@playwright/test";
 import { PrismaClient } from "@/prisma/generated/client";
-import { loginAdminApi } from "./helpers/admin-auth";
+import { loginAdminApi, internalPage } from "./helpers/admin-auth";
 
 /**
  * #62 — superadmin account lifecycle. Blocking a company kills its members'
@@ -239,6 +239,48 @@ test("#103: TEST and archived companies are hidden from the default Superadmin l
   expect(allList).toContain(companyId);
 
   await ctx.dispose();
+});
+
+/**
+ * User report (2026-09-09): "el botón de marcar como prueba en el super admin
+ * no va" — clicking it visibly does nothing. Root cause: `MarkTest` (unlike
+ * `AccountActions`, which gates the very same step-up-protected endpoint) only
+ * ever checks `res.ok` and does nothing at all otherwise — a `step_up_required`
+ * 401 (the caller's last TOTP check is older than 10 min, per `requireStepUp`)
+ * is swallowed with no error, no message, no link to re-verify. The button
+ * LOOKS broken because nothing on screen tells the admin why it did nothing.
+ */
+test("D-184: 'Marcar como prueba' surfaces a step-up-required error instead of silently doing nothing", async ({
+  browser,
+}) => {
+  const { ctx, companyId } = await newCompanyWithDeca();
+  await ctx.dispose();
+
+  const { page, close } = await internalPage(browser);
+  try {
+    // Force the exact server response a stale-but-still-admin-session
+    // produces, without waiting out the real 10-minute step-up window.
+    await page.route(`**/api/admin/empresas/${companyId}`, async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "step_up_required", message: "Verifica tu identidad de nuevo." },
+        }),
+      });
+    });
+
+    await page.goto(`/admin/empresas/${companyId}`);
+    await page.getByTestId("mark-test-toggle").click();
+
+    await expect(page.getByText("Verifica tu identidad de nuevo para esta acción.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Verificar" })).toHaveAttribute(
+      "href",
+      "/admin/2fa/verify",
+    );
+  } finally {
+    await close();
+  }
 });
 
 test("#103: no hard-delete action exists — only the known reversible/audited ones are accepted", async () => {

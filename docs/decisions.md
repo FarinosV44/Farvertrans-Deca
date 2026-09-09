@@ -5681,3 +5681,47 @@ Full gate: typecheck/lint/format clean; **377/377 unit** (1 new); R-1…R-13 com
 unweakened; full e2e **287/288** — the 1 failure is the same pre-existing
 `commercial-intelligence.spec.ts:83` `--workers=3` contention flake documented in D-182, unrelated
 to this slice.
+
+## D-184 — #108: LIVE BUG — "Marcar como prueba" in Superadmin silently did nothing on a stale step-up (2026-09-09)
+
+**User's report, precisely:** "y otra cosa el boton de marcar como prueba en el super admin no va"
+(the "mark as test" button in Superadmin doesn't work) — no repro steps given, matching the "issue
+capture" policy: the issue was opened on the forge (#108) BEFORE the fix, exactly like every other
+user-reported bug this session.
+
+**Root cause, found by direct code comparison, not guessing:** `PATCH /api/admin/empresas/[id]`
+with `action: "set_test"` is step-up gated (`requireStepUp()` in `lib/admin/guard.ts`) — same class
+of endpoint as `block`/`deactivate`/`reactivate`/`edit`. `requireStepUp()` NEVER accepts a trusted-
+device cookie and always demands a TOTP check from the last 10 minutes, regardless of how long the
+broader 12h admin session has left — so during ordinary Superadmin browsing (looking through
+several companies in a row) it is entirely normal for this to go stale mid-session.
+`components/admin/account-actions.tsx` (the sibling component for block/deactivate/reactivate/
+anonymize on the very same kind of endpoint) already handles this correctly: it inspects
+`data.error.code === "step_up_required"` and renders a "Verifica tu identidad de nuevo para esta
+acción." message with a link to `/admin/2fa/verify`. `components/admin/mark-test.tsx` never grew
+this handling — it only ever checked `res.ok` and did nothing at all on ANY failure, step-up or
+otherwise. The button therefore looked completely broken, with zero on-screen feedback, exactly
+matching the report.
+
+**Reproduction, per the mandatory red-first rule:** a new Playwright test in
+`tests/e2e/admin-account-lifecycle.spec.ts` — `page.route()` intercepts the real PATCH call and
+forces the exact `401 { error: { code: "step_up_required" } }` response a stale-but-still-admin
+session produces (no need to wait out the real 10-minute window), clicks the actual
+`mark-test-toggle` button through a genuine logged-in admin UI session, and asserts the re-verify
+message + link appear. Confirmed FAILING against the unfixed component first (the assertion timed
+out — nothing appeared on screen, reproducing the report exactly), then fixed.
+
+**Fix:** `components/admin/mark-test.tsx` rewritten to mirror `AccountActions`'s error/step-up
+handling exactly rather than inventing a second pattern for the same class of endpoint — `error`/
+`stepUp` state, the same message and `/admin/2fa/verify` link, and a generic error message for any
+other non-ok response (previously also silently swallowed). No change to the endpoint, the
+underlying `setCompanyTest()` logic, or the `isTest` field/behaviour itself — all already correct,
+verified by the pre-existing `#103` API-level tests, which continue to pass unchanged.
+
+**Verified:** the new reproduction test now passes; the full `admin-account-lifecycle.spec.ts` file
+(8/8, including the pre-existing #103 API-level "marcar como prueba" tests) green. Full gate:
+typecheck/lint/format clean; 377/377 unit (untouched by this slice); R-1…R-13 compliance 8/8
+unweakened; full e2e 287/288 (`--workers=3`) — the 2 apparent failures
+(`commercial-intelligence.spec.ts:83`, `master-data.spec.ts:38`) are both pre-existing, already-
+documented `internalPage`-contention flakes, confirmed green together at `--workers=1`, unrelated
+to any file this slice touched.
