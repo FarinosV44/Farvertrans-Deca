@@ -94,12 +94,26 @@ export const step2Schema = step2RawSchema.refine(unloadNotBeforeLoad, {
 const MEANINGLESS_WEIGHT =
   /^(0+([.,]0+)?\s*(kg|kgs|t|tn|toneladas?|kilos?)?|-+|\.+|n\/?a|s\/?e|sin\s+especificar|desconocido)$/i;
 
+/**
+ * A bare number (only digits and a decimal/thousands separator, no unit at
+ * all) is assumed to be in tonnes — the unit this field asks for by default
+ * (2026-09-09, user request: people shouldn't have to type the unit
+ * themselves) — and gets " t" appended. Anything that already carries a
+ * unit (kg, another "12,5 t") or is a genuinely alternative measure ("una
+ * plataforma completa") is left exactly as typed — this only fills in the
+ * unit when none was given, never reformats or overrides one already there.
+ */
+const BARE_NUMBER = /^\d+([.,]\d+)?$/;
+const withDefaultWeightUnit = (w: string) => (BARE_NUMBER.test(w) ? `${w} t` : w);
+
 export const step3Schema = z.object({
   goods: trimmed(2, 300, "Describe la mercancía"),
-  weight: trimmed(1, 60, "Indica el peso o una medida alternativa").refine(
-    (w) => !MEANINGLESS_WEIGHT.test(w),
-    "Indica un peso real (p. ej. 12.000 kg) o una medida alternativa concreta",
-  ),
+  weight: trimmed(1, 60, "Indica el peso o una medida alternativa")
+    .transform(withDefaultWeightUnit)
+    .refine(
+      (w) => !MEANINGLESS_WEIGHT.test(w),
+      "Indica un peso real (p. ej. 12 t) o una medida alternativa concreta",
+    ),
   tractorPlate: z
     .string()
     .transform((s) => normalizePlate(s))

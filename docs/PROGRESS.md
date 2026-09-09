@@ -254,6 +254,22 @@
     typecheck/lint/format clean; 376/376 unit; R-1…R-13 compliance 8/8 unweakened; full e2e 287/288
     (the 1 failure is the pre-existing `commercial-intelligence.spec.ts:83` `--workers=3` contention
     flake, confirmed green at `--workers=1`, unrelated to this slice).
+  - **#107 live feedback on D-182's render (D-183) — 3 small PDF corrections + 1 unrelated field
+    default.** User reaction to a real render: the bare "VERSIÓN 1" field in the identification
+    strip "queda mal" and is redundant with the bottom of the page — removed; the remaining 3
+    fields (Referencia/Emitido/Estado) now split the row exactly evenly (`flex: 1` each, was
+    1.4/0.7/1.6/1.6). A follow-up clarified the version number should still appear SOMEWHERE, small,
+    at the very bottom — added as a 6.5pt footnote ("Versión N del documento") under the existing
+    "DeCA Profesional v0.1.0" software-version line in the verification band. Added a real drawn
+    brand mark (blue square + white checkmark, via `Svg`/`Rect`/`Path` — never a raster asset) next
+    to "DeCA Profesional" at the top. Separately: the weight field now defaults a bare number (no
+    unit typed at all) to tonnes (`withDefaultWeightUnit` in `lib/deca/schema.ts`) — mid-thread the
+    user changed the requested default from kg to tonnes and asked the form's label/hint to ask for
+    tonnes too (`es.ts` only, per the Spanish-only v1 scope); anything already carrying a unit or a
+    genuine alternative measure stays exactly as typed (unweakened VERBATIM guarantee, its own test
+    still passes unchanged). Gate: typecheck/lint/format clean; 377/377 unit (1 new); R-1…R-13
+    compliance 8/8 unweakened; full e2e 287/288 (same pre-existing `commercial-intelligence.spec.ts`
+    contention flake, unrelated).
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
