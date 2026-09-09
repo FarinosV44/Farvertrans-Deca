@@ -12,6 +12,7 @@ import { BRAND } from "@/lib/brand";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { reviewerPersonJsonLd } from "@/lib/content/legal-reviewer";
 import { SEO_PAGES, getSeoPage } from "@/content/seo/pages";
+import { DEFAULT_LOCALE } from "@/lib/i18n/locale";
 
 export const dynamicParams = false; // only the 10 known slugs render; anything else 404s
 
@@ -112,7 +113,7 @@ export default async function SeoPageView({ params }: { params: Promise<{ slug: 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <TrackView event="landing_view" />
-      <SiteHeader nav />
+      <SiteHeader nav locale={DEFAULT_LOCALE} />
 
       <main id="contenido" className="mx-auto max-w-[760px] px-4 pb-24 pt-10 md:px-6 md:pb-12">
         <nav aria-label="Migas de pan" className="text-xs text-[var(--color-text-muted)]">

@@ -102,10 +102,29 @@
   - **Still separately flagged, not code-fixable from here:** invite emails not arriving for a
     brand-new address (`docs/lessons-learned.md` — likely Resend sandbox restriction, needs the
     user's Resend dashboard).
-  - **REMAINING: #96 (Core Web Vitals/performance), #100 (Search Console operational process).**
-    Each is a genuinely multi-day program on its own (real before/after measurement, an operational
-    weekly process) — user's own instruction (AskUserQuestion) was depth over a shallow pass if
-    context ran out.
+  - **#96 [P0 Performance] — IN PROGRESS, one real finding fixed, one deeper one documented
+    (D-172).** Root cause: the whole public site is served `Cache-Control: no-store` (verified
+    directly against production AND a local production build; Hostinger CDN reports
+    `x-hcdn-cache-status: DYNAMIC`) because `cookies()` (via `getLocale()`, for the language
+    switcher) is called somewhere in every request's render tree — and `cookies()` anywhere makes
+    the WHOLE route dynamic in Next.js App Router, no per-branch opt-out. User chose (AskUserQuestion):
+    static-by-default, locale swaps client-side. **Fixed:** `SiteHeader`'s own `cookies()` read —
+    now an optional `locale` prop (static pages pass it, dynamic pages keep the old behaviour),
+    with `LanguageSwitcher` correcting the visible text client-side (`lib/i18n/header-strings.ts` +
+    `data-i18n-key`), verified end to end. **NOT fixed — a second, independent, deeper cause found
+    while verifying:** the ROOT layout (`app/layout.tsx`) ALSO calls `getLocale()` for every route,
+    with no exception, and this alone still keeps `Cache-Control: no-store` on every public page
+    including the SEO cluster. Not touched: `LocaleProvider`'s dictionary context has 9 real
+    `useT()` consumers (wizard, registration form, support forms) that need an accurate locale on
+    first paint on pages that are already dynamic anyway (auth) and gain nothing from static
+    caching — applying the same client-swap trade-off there would be a pure UX regression with no
+    offsetting benefit. Needs a real route-group restructuring or Partial Prerendering — recommended
+    as its own scoped follow-up, not a rushed call here. Remaining #96 scope (images/next-image
+    adoption, fonts, JS/CSS audit, a real before/after baseline, performance budgets) not yet
+    started this slice.
+  - **REMAINING: rest of #96 (see above), #100 (Search Console operational process).** #100 is
+    largely a multi-day operational process on its own — user's own instruction (AskUserQuestion)
+    was depth over a shallow pass if context ran out.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

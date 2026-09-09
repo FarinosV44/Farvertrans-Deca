@@ -666,3 +666,29 @@ anonymize-in-place (no hard delete, D-067).
 - No se han construido páginas pilar nuevas ni un motor de similitud más allá de "misma categoría" —
   el issue no lo exige y ya existía infraestructura suficiente; ver D-171.
 - **On `main`** (see PROGRESS.md). Beat-1 comment posted.
+
+## I-096 — #96 [P0 SEO/Performance] Core Web Vitals · **in progress, D-172**
+- 2026-09-09. Causa raíz confirmada directamente (producción real + un build de producción local):
+  todo el sitio público se sirve `Cache-Control: no-store` — el CDN de Hostinger lo confirma
+  (`x-hcdn-cache-status: DYNAMIC`) — porque `cookies()` (vía `getLocale()`, para el selector de
+  idioma) se llama en algún punto del árbol de render de CADA página, y en Next.js App Router eso
+  vuelve dinámica TODA la ruta, sin excepción por rama.
+- Pregunta al usuario (AskUserQuestion) sobre cómo resolverlo: eligió que el servidor renderice
+  siempre español (por defecto, D-002) y el selector de idioma corrija el texto en cliente tras la
+  hidratación.
+- **Corregido:** la lectura de `cookies()` propia de `SiteHeader` — ahora recibe un `locale`
+  opcional (las páginas estáticas lo pasan; las páginas ya dinámicas mantienen el comportamiento
+  anterior), con `LanguageSwitcher` corrigiendo el texto visible en cliente
+  (`lib/i18n/header-strings.ts` + `data-i18n-key`). Verificado de extremo a extremo.
+- **NO corregido — una segunda causa independiente y más profunda, encontrada al verificar:** el
+  layout raíz (`app/layout.tsx`) también llama a `getLocale()` para CADA ruta, sin excepción, y por
+  sí solo mantiene `Cache-Control: no-store` en todo el sitio incluido el clúster SEO. No se tocó
+  porque `LocaleProvider` tiene 9 consumidores reales (`useT()` en el asistente de creación, el
+  formulario de registro, soporte) que necesitan el idioma correcto en el primer pintado en páginas
+  que YA son dinámicas por otros motivos (sesión) y no ganan nada con el caché estático — aplicar el
+  mismo intercambio en cliente ahí sería una regresión pura sin beneficio. Necesita una
+  reestructuración real por grupos de rutas o Partial Prerendering — recomendado como un seguimiento
+  propio, no una decisión apresurada al final de esta investigación.
+- Resto del alcance de #96 (imágenes/`next/image`, fuentes, auditoría JS/CSS, baseline real
+  antes/después, presupuestos de rendimiento) aún no iniciado en esta sesión.
+- **On `main`** (see PROGRESS.md).
