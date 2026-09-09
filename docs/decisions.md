@@ -5099,3 +5099,49 @@ company anonymization as a normal action now asserts the opposite (anonymize/del
 rejected, block→reactivate still works) — a spec correction to the test, matching the spec
 correction to the product, per SKILL.md's rule that a test derived from a corrected requirement is
 rewritten, never silently deleted.
+
+## D-171 — #97: internal-linking architecture — hubs/strategic pages grounded to real URLs, audit script (2026-09-09)
+
+**The issue gives its hub list and "páginas estratégicas" list as examples ("por ejemplo") and its
+own text says the final list "debe ajustarse a las URLs reales" — so grounding them to real routes
+is the issue's own instruction, not a new product decision, and did not need a round-trip to the
+user.** New pure module `lib/content/internal-linking.ts`:
+- `SEO_HUBS` — the issue's 8 example thematic hubs, mapped onto the closest existing
+  `content/seo/pages.ts` pillar page. One example hub ("Incidencias y práctica operativa") has no
+  dedicated pillar page yet, so it has no own `slug` and falls back to `deca-pdf-qr`
+  (`DEFAULT_HUB_SLUG`) until a dedicated pillar is written — a content decision, not a code one, so
+  left as a documented gap rather than invented.
+- `STRATEGIC_ROUTES` — the issue's example strategic-page list, mapped onto real routes.
+- `pickCornerstones(currentSlug, alreadyLinked, max=3)` — a deterministic pick of up to 3 relevant
+  hub links per article, with natural per-hub anchor text (never a single artificial anchor
+  repeated site-wide) — replaces a hardcoded duplicate that already existed in
+  `components/content/article-layout.tsx` (behavior-preserving refactor, same 3 slugs/anchors).
+- `suggestRelatedByCategory(candidates, current, limit=5)` — same-category filter, for the CMS.
+
+**Real gap found while building this, not previously known:** `ContentItem.relatedSlugs` (the
+"Sigue leyendo" block's source) was saved by `content-editor.tsx`'s payload but had **no UI field
+to set it** — only reachable via seeding or a direct DB write. Added a "Contenido relacionado"
+fieldset: same-category one-click suggestions (`suggestRelatedByCategory`) plus a filterable manual
+picker over every other published item — satisfies the issue's "sugerir 3-5... por categoría/tema"
+and "permitir selección manual" ACs together, sourced from one `candidates` prop passed by the two
+admin pages (`listContent({status:"published"})`, server-side, no new API route needed).
+
+**New `scripts/internal-links-audit.mjs`** (`npm run seo:links-audit`), same style as #95's
+`seo-audit.mjs` — crawls the sitemap, builds the internal link graph, reports: orphan pages, thin
+strategic-page inbound linking, broken internal links, repeated-anchor smell (a small stoplist
+excludes legitimate site-wide chrome — logo, nav, footer — from that check), link-heavy pages,
+click depth from home (BFS). Only broken links are a hard failure (exit 1); the rest are editorial
+signals, consistent with the issue's own "seguridad frente a falsos positivos" instruction — an
+audit that blocks CI on a content judgement call would train the team to ignore it.
+
+**Run against the live build:** 0 broken links, 0 orphan pages, 4 repeated-anchor patterns (all the
+deliberate hub-reinforcement links from `pickCornerstones`/`CORNERSTONE_SLUGS`, expected and
+non-blocking), 2 strategic pages flagged thin (`/deca-gratis`, `/deca-empresas-transporte` — an
+editorial follow-up for the content team, not a code defect).
+
+**Deliberately not built in this slice:** new dedicated hub/pillar LANDING pages (the existing 15
+`content/seo/pages.ts` pages already serve that role almost 1:1 against the issue's own example
+list); an automatic "también te puede interesar" content-similarity engine beyond
+same-category matching (the issue asks for "sugerir", which same-category matching satisfies; a
+fancier similarity model is a bigger, separate piece of work the issue does not require). Per
+SKILL.md: not rebuilding what already works, and not expanding scope beyond the issue's own text.

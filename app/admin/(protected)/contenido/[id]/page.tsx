@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getContentById, type Source } from "@/lib/content/cms";
+import { getContentById, listContent, type Source } from "@/lib/content/cms";
 import { PageHeader, BackLink, Badge } from "@/components/admin/ui";
 import { ContentEditor } from "@/components/admin/content-editor";
 import { requireInternal } from "@/lib/admin/guard";
@@ -15,6 +15,12 @@ export default async function EditarContenido({ params }: { params: Promise<{ id
   const c = await getContentById(id);
   if (!c) notFound();
 
+  // #97 — related-content picker: every OTHER published item, as candidates.
+  const published = await listContent({ status: "published" });
+  const candidates = published
+    .filter((p) => p.id !== id)
+    .map((p) => ({ id: p.id, slug: p.slug, title: p.title, type: p.type, category: p.category }));
+
   const sources = (c.sources as unknown as Source[]) ?? [];
 
   return (
@@ -28,6 +34,7 @@ export default async function EditarContenido({ params }: { params: Promise<{ id
       <ContentEditor
         id={c.id}
         status={c.status}
+        candidates={candidates}
         initial={{
           type: c.type,
           slug: c.slug,

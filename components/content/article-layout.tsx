@@ -6,6 +6,7 @@ import { CtaButton } from "@/components/site/cta-button";
 import { TrackView } from "@/components/analytics/track-view";
 import { Markdown, extractHeadings } from "@/lib/content/markdown";
 import type { ContentItem, Source } from "@/lib/content/cms";
+import { pickCornerstones } from "@/lib/content/internal-linking";
 
 /**
  * Premium branded article layout for CMS guides + blog posts (SEO #32):
@@ -29,14 +30,13 @@ export function ArticleLayout({
   const sources = (item.sources as unknown as Source[]) ?? [];
   const reviewed = item.lastReviewedAt ? item.lastReviewedAt.toISOString().slice(0, 10) : null;
 
-  // Cornerstone guides (task: strengthen internal linking): always offer a
-  // path to them from every article, using varied Spanish anchor text, but
-  // never link an article to itself or duplicate an already-related slug.
-  const cornerstones: { slug: string; anchor: string }[] = [
-    { slug: "que-es-el-deca", anchor: "Qué es el DeCA y para qué sirve" },
-    { slug: "deca-obligatorio-2026", anchor: "Por qué el DeCA es obligatorio desde 2026" },
-    { slug: "como-hacer-un-deca", anchor: "Cómo hacer un DeCA paso a paso" },
-  ].filter((c) => c.slug !== item.slug && !related.some((r) => r.href === `/${c.slug}`));
+  // Cornerstone guides (#97 — internal-linking architecture): always offer a
+  // path to a relevant hub from every article, using varied Spanish anchor
+  // text, but never link an article to itself or duplicate an
+  // already-related slug. Shared with the SEO cluster pages via
+  // `lib/content/internal-linking.ts` so the hub set is defined once.
+  const alreadyRelatedSlugs = related.map((r) => r.href.replace(/^\//, ""));
+  const cornerstones = pickCornerstones(item.slug, alreadyRelatedSlugs);
 
   return (
     <>

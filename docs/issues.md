@@ -647,3 +647,22 @@ anonymize-in-place (no hard delete, D-067).
   usuarios (`kind=usuarios`, función distinta) no se tocó — fuera del alcance de esta petición,
   señalado al usuario en vez de asumido.
 - **On `main`** (`3b1465f`). Comentario de corrección posted en #103.
+
+## I-097 — #97 [P1 SEO] Enlazado interno inteligente y arquitectura de autoridad temática · **built, D-171**
+- 2026-09-09. El issue da sus listas de hubs y "páginas estratégicas" como ejemplo y pide
+  expresamente ajustarlas a las URLs reales — los 8 hubs de ejemplo se mapearon a las 15 páginas
+  `content/seo/pages.ts` ya existentes (`lib/content/internal-linking.ts`, `SEO_HUBS`), sin crear
+  páginas pilar nuevas porque ya cubrían casi 1:1 la lista del issue.
+- **Hueco real encontrado y corregido:** el editor de contenido guardaba `relatedSlugs` pero no
+  tenía ningún campo para editarlo — solo se podía fijar por seed o escritura directa en BD. Añadido
+  un selector "Contenido relacionado" en `components/admin/content-editor.tsx`: sugerencias de la
+  misma categoría con un clic, más una lista manual filtrable — cubre a la vez el "sugerir 3-5" y el
+  "permitir selección manual" del issue.
+- Nuevo `scripts/internal-links-audit.mjs` (`npm run seo:links-audit`): huérfanas, páginas
+  estratégicas con poco enlazado entrante, enlaces rotos (el único fallo duro), anchors repetidos,
+  páginas con exceso de enlaces, profundidad de clic desde home. Ejecutado contra un build real: 0
+  enlaces rotos, 0 huérfanas, 2 páginas estratégicas señaladas para refuerzo editorial
+  (`/deca-gratis`, `/deca-empresas-transporte`).
+- No se han construido páginas pilar nuevas ni un motor de similitud más allá de "misma categoría" —
+  el issue no lo exige y ya existía infraestructura suficiente; ver D-171.
+- **On `main`** (see PROGRESS.md). Beat-1 comment posted.

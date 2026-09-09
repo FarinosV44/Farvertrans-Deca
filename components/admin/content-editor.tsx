@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { contentWarnings, type ContentInput } from "@/lib/content/schema";
+import { suggestRelatedByCategory, type RelatedCandidate } from "@/lib/content/internal-linking";
 
 type Values = ContentInput & { sourcesText: string; tagsText: string };
 
@@ -48,15 +49,19 @@ export function ContentEditor({
   initial,
   id,
   status,
+  candidates = [],
 }: {
   initial?: Partial<Values>;
   id?: string;
   status?: string;
+  /** Other published guides/blog posts, for the related-content picker (#97). */
+  candidates?: RelatedCandidate[];
 }) {
   const [v, setV] = useState<Values>({ ...EMPTY, ...initial });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
+  const [relatedFilter, setRelatedFilter] = useState("");
 
   const set =
     <K extends keyof Values>(k: K) =>
@@ -76,6 +81,38 @@ export function ContentEditor({
       }),
     [v],
   );
+
+  // #97 — related-content picker: same-category suggestions (excluding this
+  // item itself once it has an id) plus a filterable manual list. Both draw
+  // from the same `candidates` prop; the suggestions are just a filtered
+  // subset, so "add" and the manual checkbox always agree.
+  const otherCandidates = useMemo(() => candidates.filter((c) => c.id !== id), [candidates, id]);
+  const suggested = useMemo(
+    () =>
+      suggestRelatedByCategory(otherCandidates, { id: id ?? "", category: v.category || null }, 5),
+    [otherCandidates, id, v.category],
+  );
+  const filteredCandidates = useMemo(() => {
+    const q = relatedFilter.trim().toLowerCase();
+    if (!q) return otherCandidates;
+    return otherCandidates.filter(
+      (c) => c.title.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q),
+    );
+  }, [otherCandidates, relatedFilter]);
+
+  function toggleRelated(slug: string) {
+    setV((s) => ({
+      ...s,
+      relatedSlugs: s.relatedSlugs.includes(slug)
+        ? s.relatedSlugs.filter((x) => x !== slug)
+        : [...s.relatedSlugs, slug],
+    }));
+  }
+  function addRelated(slug: string) {
+    setV((s) =>
+      s.relatedSlugs.includes(slug) ? s : { ...s, relatedSlugs: [...s.relatedSlugs, slug] },
+    );
+  }
 
   function payload() {
     return {
@@ -219,6 +256,91 @@ export function ContentEditor({
       {field("Imagen de portada (URL)", "heroImage")}
       {field("Fuentes (una por línea: Etiqueta | URL)", "sourcesText", { textarea: true, rows: 3 })}
       {field("Texto del CTA final", "ctaLabel", { placeholder: "Crea tu DeCA ahora" })}
+
+      <fieldset className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
+        <legend className="px-1 text-sm font-bold">Contenido relacionado</legend>
+        <p className="text-xs text-[var(--color-text-muted)]">
+          Se muestra en el bloque &ldquo;Sigue leyendo&rdquo; del artículo público (#97).
+        </p>
+
+        {v.relatedSlugs.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-2" data-testid="ce-related-selected">
+            {v.relatedSlugs.map((slug) => {
+              const c = otherCandidates.find((x) => x.slug === slug);
+              return (
+                <li key={slug}>
+                  <button
+                    type="button"
+                    onClick={() => toggleRelated(slug)}
+                    data-testid={`ce-related-remove-${slug}`}
+                    className="min-h-8 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs"
+                    title="Quitar"
+                  >
+                    {c?.title ?? slug} ✕
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {suggested.length > 0 && (
+          <div className="mt-3" data-testid="ce-related-suggested">
+            <p className="text-xs font-medium">Sugerencias (misma categoría)</p>
+            <ul className="mt-1 flex flex-wrap gap-2">
+              {suggested.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => addRelated(c.slug)}
+                    disabled={v.relatedSlugs.includes(c.slug)}
+                    data-testid={`ce-related-suggest-${c.slug}`}
+                    className="min-h-8 rounded-[var(--radius-sm)] border border-dashed border-[var(--color-border)] px-2 text-xs disabled:opacity-40"
+                  >
+                    + {c.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <label className="mt-3 block text-sm">
+          <span className="font-medium">Buscar contenido publicado</span>
+          <input
+            value={relatedFilter}
+            data-testid="ce-related-filter"
+            onChange={(e) => setRelatedFilter(e.target.value)}
+            placeholder="Filtrar por título o slug…"
+            className="mt-1 min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm"
+          />
+        </label>
+        <ul
+          className="mt-2 max-h-48 space-y-1 overflow-y-auto text-sm"
+          data-testid="ce-related-list"
+        >
+          {filteredCandidates.length === 0 && (
+            <li className="text-xs text-[var(--color-text-muted)]">Sin resultados.</li>
+          )}
+          {filteredCandidates.map((c) => (
+            <li key={c.id}>
+              <label className="flex items-center gap-2 py-0.5">
+                <input
+                  type="checkbox"
+                  checked={v.relatedSlugs.includes(c.slug)}
+                  onChange={() => toggleRelated(c.slug)}
+                  data-testid={`ce-related-item-${c.slug}`}
+                />
+                <span>{c.title}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">
+                  /{c.type === "guide" ? "guias" : "blog"}/{c.slug}
+                  {c.category ? ` · ${c.category}` : ""}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </fieldset>
 
       <fieldset className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
         <legend className="px-1 text-sm font-bold">SEO</legend>

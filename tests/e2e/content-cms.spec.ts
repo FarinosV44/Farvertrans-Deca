@@ -121,6 +121,70 @@ test.describe("SEO #32 — content CMS", () => {
     }
   });
 
+  test("#97: related-content picker — category suggestion and manual pick both work, and the link is public", async ({
+    browser,
+  }) => {
+    const slug = `guia-e2e-${rnd()}`;
+    const { page, close } = await internalPage(browser);
+    try {
+      await page.goto("/admin/contenido/nuevo");
+      await page.getByTestId("ce-title").fill("Guía de enlazado interno e2e");
+      await page.getByTestId("ce-slug").fill(slug);
+      await page
+        .getByTestId("ce-excerpt")
+        .fill("Un extracto suficientemente largo para pasar la validación mínima.");
+      await page
+        .getByTestId("ce-body")
+        .fill("## Sección\n\nContenido de prueba con [[cta]] al final.");
+      await page
+        .getByTestId("ce-metaDescription")
+        .fill("Meta descripción de longitud adecuada para que no salte el aviso editorial.");
+      // Same category as the seeded "como-corregir-un-deca" guide → it must
+      // appear as a same-category suggestion, addable with one click.
+      await page.getByTestId("ce-category").fill("Uso del producto");
+      const suggestBtn = page.getByTestId("ce-related-suggest-como-corregir-un-deca");
+      await expect(suggestBtn).toBeVisible();
+      await suggestBtn.click();
+      await expect(page.getByTestId("ce-related-remove-como-corregir-un-deca")).toBeVisible();
+      // clicking again is disabled — it's already added, never duplicated
+      await expect(suggestBtn).toBeDisabled();
+
+      // Manual pick, via the filterable list, of a second, differently-categorised item.
+      await page.getByTestId("ce-related-filter").fill("móvil");
+      const manualItem = page.locator('[data-testid^="ce-related-item-"]').first();
+      await expect(manualItem).toBeVisible();
+      await manualItem.check();
+
+      await Promise.all([
+        page.waitForResponse(
+          (r) => r.url().includes("/api/admin/contenido") && r.request().method() === "POST",
+        ),
+        page.getByTestId("ce-save-draft").click(),
+      ]);
+      await expect(page).toHaveURL(/\/admin\/contenido\/[a-z0-9]+$/i);
+      // both selections survived the save round-trip
+      await expect(page.getByTestId("ce-related-remove-como-corregir-un-deca")).toBeVisible();
+
+      await Promise.all([
+        page.waitForResponse(
+          (r) => r.url().includes("/api/admin/contenido/") && r.request().method() === "PATCH",
+        ),
+        page.getByTestId("ce-publish").click(),
+      ]);
+
+      const anon = await browser.newContext({ baseURL });
+      const anonPage = await anon.newPage();
+      const res = await anonPage.goto(`/guias/${slug}`);
+      expect(res?.status()).toBe(200);
+      await expect(
+        anonPage.getByRole("link", { name: /Cómo corregir o modificar un DeCA/ }),
+      ).toBeVisible();
+      await anon.close();
+    } finally {
+      await close();
+    }
+  });
+
   test("a duplicate slug is rejected", async ({ browser }) => {
     const { page, close } = await internalPage(browser);
     try {
