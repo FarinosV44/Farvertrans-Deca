@@ -5531,3 +5531,97 @@ list); an automatic "también te puede interesar" content-similarity engine beyo
 same-category matching (the issue asks for "sugerir", which same-category matching satisfies; a
 fancier similarity model is a bigger, separate piece of work the issue does not require). Per
 SKILL.md: not rebuilding what already works, and not expanding scope beyond the issue's own text.
+
+## D-182 — #107 second iteration: a deeper editorial pass on the DeCA PDF, per the user's explicit "not done yet" (2026-09-09)
+
+**User's request, precisely:** the first iteration (D-181) technically satisfied #107's letter but
+not its intent — "si el resultado sigue pareciendo una ficha web limpia pero simple, no está
+terminado." A second, much more detailed spec was given: fill the full A4 page with the
+verification/QR block closing it at the bottom; five clearly delimited zones (Identificación del
+DeCA, Partes del transporte, Ruta, Mercancía y vehículo, Verificación pública) using hairlines and
+very light backgrounds, never rounded SaaS cards; a masthead with more presence (a bigger "DeCA
+Profesional", a big ordered reference, "DOCUMENTO VIGENTE" as a technical stamp rather than
+software-style status text); cargador/transportista as two dense symmetric columns; a stronger
+ORIGEN→DESTINO composition on the route (dashed divider, discreet dots, "nada infantil"); goods/
+vehicle reworked as a real bordered technical table; a big, protagonist QR with full quiet zone and
+no logo over it; a very subtle watermark; a strict Swiss palette (no gradients, no drop shadows, no
+decorative elements). Same "no tocar funcionalidad" boundary as D-181 (no legal-data, QR/URL,
+versioning, or generation-logic changes). Same explicit QA bar: render at least 4 real PDFs, compare
+old vs new, do not consider it finished until the improvement is obvious at first sight.
+
+**What changed, `lib/pdf/deca-document.tsx` only (same "no tocar" boundary as D-181, re-verified):**
+- **Watermark** — a very light, oversized "D" monogram (`#eeeae0`, ~340pt, weight 700), rendered as
+  the FIRST child of `<Page>` with `fixed` so it repeats on every page and sits behind all later
+  content by render order, never hurting legibility.
+- **New "Identificación del DeCA" module** — a softly tinted zone, its own section heading, and a
+  4-field row (Referencia / Versión / Emitido / Estado) replacing the single masthead line the
+  first iteration used. Status renders as a bordered rectangle ("sello técnico"), not a coloured
+  dot + word.
+- **Masthead** — bigger brand presence (fontSize 19), the reference now large and prominent inside
+  its own field rather than a small inline detail.
+- **Route section** — a dashed centre divider (`borderStyle: "dashed"`, confirmed supported by this
+  `@react-pdf` version) instead of the parties section's solid hairline, plus a small filled
+  accent dot before "LUGAR DE CARGA"/"LUGAR DE DESCARGA" — a discreet origin/destination cue, not a
+  literal map or arrow.
+- **Goods/vehicle** — rebuilt as a real bordered 2×2 technical table (outer border + internal
+  dividing lines) via a small `TechCell({label, value, bordered?})` helper, replacing the label/
+  value pairs the first iteration used.
+- **Verification band** — QR enlarged again (66px to 96px, after 108px measured too heavy against
+  the new denser page — see trims below), the reference number now also printed inside the band
+  itself, caption text set to the exact requested phrase ("Escanea para verificar la versión
+  vigente").
+- **Page-filling, still `position`-free:** a `flex: 1` spacer `View` between the last content
+  section and the verification band (replacing the D-181 flow-only footer) pushes the band to the
+  true bottom of the page for short/medium content while still degrading gracefully — spacer
+  shrinks toward zero and the band flows onto a second page — for content long enough to need one,
+  same principle as D-181's fix but now actively filling the page rather than merely not
+  reserving artificial empty space.
+
+**Real bugs found and fixed while building this (all via direct visual re-render, not guessed):**
+- The new 4-field identification row visually merged adjacent values ("DECA-A4F2C9E11" reading as
+  one run) — caused by four equal `flex: 1` columns with no `paddingRight`. Fixed with
+  `paddingRight: 12` on every field plus unequal flex weights (1.4 / 0.7 / 1.6 / 1.6) so "Emitido"
+  and "Estado" get the room their content actually needs.
+- "EMITIDO" wrapped to two lines inside its field — fixed by widening its column further and
+  trimming the value font size (10.5 to 10); confirmed one-line on re-render.
+- Attempted `whiteSpace: "nowrap"` as a first fix for the above — confirmed via grepping
+  `@react-pdf/stylesheet` and `@react-pdf/layout` that this version does not implement `whiteSpace`
+  at all (zero matches); removed before it could cause silent no-op confusion, used the flex/
+  padding fix instead.
+- **A real page-count regression on the deliberately extreme "long names" stress case** (70+
+  character company names/addresses, unrealistic but part of the existing 4-case QA fixture): the
+  combined extra height of the new identification zone, the enlarged QR, and the more generous
+  section spacing pushed this one case from one page to two. Trimmed QR (108 to 96px), verify-band
+  padding (18 to 15), id-zone padding (14 to 12), id-row margin (10 to 8), section margin-top
+  (20 to 17), and verify-meta margin-top (10 to 8) to reclaim headroom. After the trims: the
+  extreme case still spans two pages, but degrades cleanly (page 1 fully and attractively filled
+  with real content; page 2 carries a normally-styled verification band near the top plus the
+  watermark, never a broken or near-empty-looking page); both realistic cases (full-trailer,
+  corrected-v2) remain single-page with the band anchored at the true bottom. Accepted as
+  reasonable, professional behaviour for an intentionally unrealistic edge case rather than
+  shrinking fonts further, which would have worked against the requested "premium" density.
+
+**QA visual, per the issue's own explicit bar** — the same 4-case fixture as D-181 (short data;
+long names/addresses; full trailer + all fields; corrected v2) re-rendered and read directly
+(before/after against D-181's own output, not just against the pre-#107 original). Confirmed: the
+five zones are visually distinct via hairlines/tint alone (no cards); the identification strip
+reads cleanly with no run-together values; the route's dashed divider and origin/destination dots
+render as intended; the goods/vehicle table has real borders on all four cells; the QR is large and
+uncluttered with the full requested surrounding text; the watermark is present but does not
+interfere with reading any field at normal viewing size; short/medium content now fills the page
+down to the verification band with no artificial gap in either direction (too much OR too little).
+
+**Verified:** `tests/unit/deca-pdf-snapshot.test.ts` — two assertions needed rewriting (never
+silently dropped) because the new structure changed what the OLD assertions were checking rather
+than because a requirement was removed: `"Identificación del DeCA"` as a literal contained phrase
+fails because `sectionHeading`'s `letterSpacing: 1` fragments pdfjs's text extraction into
+per-character runs (a text-extraction-layer artifact — the rendered PDF itself reads as one word;
+`idLabel`'s smaller `letterSpacing: 0.5` does not fragment the same way, so `"REFERENCIA"` is
+asserted instead) — and `"Versión 1"` / `"Versión 2"` as one adjacent phrase fails because the
+label and the value are now separate fields on separate lines by design, so the test now asserts
+the label and the numeral independently. All other structural assertions (mandatory fields, both
+postal-code edge cases, no-CMR-numbering) pass unchanged. Full suite: typecheck/lint/format clean;
+**376/376 unit**; R-1…R-13 compliance **8/8**, unweakened; full e2e **287/288** (1 skipped by
+design) with the one failure (`commercial-intelligence.spec.ts:83`) reproduced as the
+already-documented `--workers=3` contention flake — confirmed green at `--workers=1` in isolation,
+unrelated to this slice (no file this slice touched is anywhere in that spec's path).

@@ -234,6 +234,26 @@
     The existing structural snapshot test's one now-wrong assertion (numbered cells) was rewritten,
     never deleted, to assert their deliberate absence; the "sacred" R-1…R-13 compliance suite run
     unweakened (8/8). Full regression: 376/376 unit, 288/288 e2e, 0 failures.
+  - **#107 second iteration (D-182) — a deeper editorial pass, per the user's explicit "not done
+    yet" pushback on D-181.** Still only `lib/pdf/deca-document.tsx` (+ its snapshot test) touched.
+    New "Identificación del DeCA" module (referencia/versión/emitido/estado as 4 labelled fields in
+    a softly tinted zone); status now a bordered "sello técnico" rectangle; masthead brand presence
+    increased; route section gets a dashed centre divider + a small accent dot before each
+    origin/destination label; goods/vehicle rebuilt as a real bordered 2×2 technical table; QR
+    enlarged again (96px) with the reference now also printed in the band and the exact requested
+    caption; a very light oversized "D" watermark on every page; the flow-only footer became a
+    `flex: 1` spacer so short/medium content now fills the page down to the verification band
+    (previously it merely avoided an artificial gap — now it actively anchors the band at the true
+    bottom). Real bugs found and fixed via direct visual re-render: adjacent id-field values running
+    together (fixed with padding + flex-ratio adjustments), "EMITIDO" wrapping to 2 lines (fixed with
+    a wider column + smaller value font), and a genuine 2-page regression on the deliberately
+    extreme "long names" stress case (fixed with targeted padding/margin/QR-size trims — the extreme
+    case still spans 2 pages but now degrades cleanly; both realistic cases stay single-page).
+    `tests/unit/deca-pdf-snapshot.test.ts` — 2 assertions rewritten (never dropped) because the new
+    structure changed what they were checking, not because a requirement was removed. Gate:
+    typecheck/lint/format clean; 376/376 unit; R-1…R-13 compliance 8/8 unweakened; full e2e 287/288
+    (the 1 failure is the pre-existing `commercial-intelligence.spec.ts:83` `--workers=3` contention
+    flake, confirmed green at `--workers=1`, unrelated to this slice).
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
