@@ -45,7 +45,34 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #95–#103 batch (D-161), 5 of 9 done, MERGED to `main` (`7ceea98`).**
+- **Latest: #95–#103 batch (D-161), 7 of 9 done, MERGED to `main` (see below).**
+  - **#97 [P1 SEO] — internal-linking architecture (D-171).** The issue's own hub/"páginas
+    estratégicas" example lists were grounded to real routes in a new pure module,
+    `lib/content/internal-linking.ts` (`SEO_HUBS`, `STRATEGIC_ROUTES`, `pickCornerstones`,
+    `suggestRelatedByCategory`) — the 7 hubs map onto existing `content/seo/pages.ts` pillar pages,
+    no new pillar content was needed. **Real gap found and fixed: the CMS editor saved
+    `relatedSlugs` but had NO UI field to set it** — related content could only ever be set by
+    seeding/direct DB write. Added a "Contenido relacionado" picker (same-category one-click
+    suggestions + a filterable manual multi-select) to `components/admin/content-editor.tsx`.
+    `article-layout.tsx`'s hardcoded cornerstone-picking duplicate was refactored onto the shared
+    module (behavior-preserving). New `scripts/internal-links-audit.mjs` (`npm run
+    seo:links-audit`) — orphan pages, thin strategic-page inbound linking, broken internal links
+    (hard-fails), repeated-anchor smell, link-heavy pages, click depth from home — run against the
+    live build: 0 broken links, 0 orphans, 2 strategic pages flagged thin (`/deca-gratis`,
+    `/deca-empresas-transporte` — editorial follow-up, not a defect).
+  - **#98 [P1 SEO] — structured-data audit (D-169):** `Organization`/`Article`/`BlogPosting`/
+    `BreadcrumbList` were already solidly built (real `dateModified`, correct PRAETORIA-vs-brand
+    `publisher`, visible editorial signals). **Real gap: `FAQPage` removed** — it violated the
+    issue's own instruction and current Google guidelines; the visible FAQ content is untouched.
+    Added `WebSite`, `Organization.taxID`/`logo` (both already-public data, never invented), and
+    `image` on articles when present. Corrected the pre-existing `AC-33` spec line and its two tests
+    to match.
+  - **#103 SECURITY CORRECTION (D-170), same session, user's explicit follow-up:** company
+    anonymization removed ENTIRELY from normal Superadmin — not just hard delete. The web endpoint
+    now rejects `anonymize` for companies (422); the underlying function is kept only as a library
+    building block for a future out-of-band procedure, never a web button. User anonymization
+    (a separate, `kind=usuarios` path) was explicitly left untouched — out of this request's scope,
+    flagged to the user rather than assumed.
   - **#102 [P0 Equipo] — the reported membership-corruption bug, root-caused and fixed (D-163).**
     `User.companyId` was a single FK — accepting a second invite silently overwrote it, removing a
     member set `companyId: null` (indistinguishable from "never had an account"). New `Membership`
@@ -69,17 +96,16 @@
     hides TEST/non-active by default, nothing ever deleted from the view). Verified directly that
     no hard-delete action exists at the API (4 destructive action names all rejected 422).
     Archive/deactivate/reactivate reused from #62, not rebuilt.
-  - Gate across all five: typecheck + lint + prettier + keel-verify + 335 unit + full e2e (255–282
-    depending on suite growth per slice; only documented `internalPage`-contention flakes, all green
-    isolated). Beat-1 comments posted on #95/#99/#101/#102/#103.
+  - Gate across all six: typecheck + lint + prettier + keel-verify + 347 unit + full e2e
+    (255–289 depending on suite growth per slice; only documented `internalPage`-contention flakes,
+    all green isolated). Beat-1 comments posted on #95/#99/#101/#102/#103; #97 comment on merge.
   - **Still separately flagged, not code-fixable from here:** invite emails not arriving for a
     brand-new address (`docs/lessons-learned.md` — likely Resend sandbox restriction, needs the
     user's Resend dashboard).
-  - **REMAINING: #96 (Core Web Vitals/performance), #97 (internal linking architecture), #98
-    (structured data/entity signals), #100 (Search Console operational process).** Each is a
-    genuinely multi-day program on its own (real before/after measurement, a linking system, an
-    operational weekly process) — user's own instruction (AskUserQuestion) was depth over a shallow
-    pass across all four if context ran out. Not started this session; next session picks up here.
+  - **REMAINING: #96 (Core Web Vitals/performance), #100 (Search Console operational process).**
+    Each is a genuinely multi-day program on its own (real before/after measurement, an operational
+    weekly process) — user's own instruction (AskUserQuestion) was depth over a shallow pass if
+    context ran out.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
