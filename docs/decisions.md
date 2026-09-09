@@ -4983,3 +4983,20 @@ pending invite is shown, the first link now fails, the second works.
 arriving for a brand-new (never-registered) address while arriving fine for a known one — diagnosed
 as a likely Resend sandbox/domain-verification restriction (`docs/lessons-learned.md`), outside this
 repo's visibility.
+
+## D-167 — #99: SEO regression suite, runs in CI on every push (2026-09-09)
+
+Built as a Playwright e2e spec (`tests/e2e/seo-regression.spec.ts`) rather than a standalone script
+— this project's own convention already runs every `tests/e2e/*.spec.ts` file in CI
+(`.github/workflows/ci.yml`: `npm run test:e2e`), which is exactly the issue's "ejecutable en CI"
+requirement, with no new CI wiring needed. Complements `scripts/seo-audit.mjs` (#95): that script is
+the repeatable check against a REAL DEPLOYED origin; this suite is the one that runs on every commit
+against a fixed critical-route list and additionally checks OG tags and JSON-LD validity, which the
+deployed-origin script does not.
+
+Every assertion maps to one of the issue's own explicit "must block" regressions (accidental
+noindex, wrong/absent canonical, 404 on a core page, invalid JSON-LD, a sitemap listing a private
+path or a non-200 URL, robots.txt blanket-disallowing the site) — never a cosmetic threshold, per
+the issue's own "seguridad frente a falsos positivos" instruction. 23/23 passed against the current
+build with no assertion needing to be loosened, which is itself evidence #95's audit conclusions
+were accurate.
