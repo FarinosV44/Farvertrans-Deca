@@ -5,82 +5,86 @@ import { DECA_ROLES } from "@/lib/deca/roles";
 import { formatLocationCityLine } from "@/lib/deca/location";
 
 /**
- * #107 — editorial redesign (Vignelli-inspired: grid, typographic hierarchy,
- * economy of means — never a literal copy of any specific Vignelli work,
- * and never a CMR). Structural inspiration only from the owner-supplied
- * reference — no competitor branding copied. Every value stays a real
- * `<Text>` node (R-3: native, selectable text, never an image) and every
- * mandatory field keeps EXACTLY the same content as before (#107's own "no
- * tocar contenido legal ni estructura de datos") — only the visual system
- * changed:
- *  - a light masthead (no dark app-style header band, no rounded logo
- *    badge) under one strong rule, like a document's own nameplate;
- *  - the CMR-style numbered cell badges are GONE — #107 explicitly flags
- *    them as one of the "looks like a dashboard" symptoms;
- *  - the party/route "cards" (border + radius + fill) are gone too, replaced
- *    by two plain typographic columns per section, separated by one hairline;
- *  - the verification block is a full-width tinted band, not a floating
- *    corner QR — reads as the document's own closing stamp;
- *  - the footer is no longer `position: absolute` at the page's physical
- *    bottom — it now flows right after the content. That absolute
- *    positioning, reserving space regardless of how much content precedes
- *    it, was the direct cause of #107's "too much empty white space in the
- *    lower half" — a short DeCA now simply ends after its own content, no
- *    artificial gap; `wrap={false}` keeps the whole verification band on
- *    one page rather than splitting it across a page break.
+ * #107 — editorial redesign, second iteration (Vignelli/Swiss-inspired:
+ * grid, typographic hierarchy, economy of means — never a literal copy of
+ * a specific Vignelli work, never a CMR). Structural inspiration only from
+ * the owner-supplied reference — no competitor branding copied. Every
+ * value stays a real `<Text>` node (R-3) and every mandatory field keeps
+ * EXACTLY the same content as before — only the visual system changed:
+ *
+ *  - FIVE clearly delimited modules, each its own labelled zone on one
+ *    continuous grid (thin rules + generous-but-dense spacing, never a
+ *    rounded SaaS card): Identificación del DeCA, Partes del transporte,
+ *    Ruta, Mercancía y vehículo, Verificación pública.
+ *  - the masthead has real presence — a bigger brand line, a dedicated
+ *    "Identificación del DeCA" strip (Referencia/Versión/Emitido/Estado),
+ *    the status rendered as a bordered technical stamp, not coloured text.
+ *  - a very subtle full-page watermark (a large, low-contrast "D"
+ *    monogram) — decorative but never competing with legibility.
+ *  - the route section gets a discreet graphic device: a dashed vertical
+ *    axis between the two columns with a small filled dot marking each
+ *    point (origin/destination), not a literal map or icon.
+ *  - goods/vehicle is a real bordered technical table (2×2 grid with
+ *    visible cell rules), not floating label/value pairs.
+ *  - the QR is the largest single element on the page, in a full-width
+ *    band that anchors the bottom of the sheet: a `flex: 1` spacer between
+ *    the content and this band fills whatever vertical space is left on
+ *    the page, so the band always closes the page at its true bottom —
+ *    without EVER being `position: absolute` (which is what caused the
+ *    original "huge dead space" bug: it reserved that space regardless of
+ *    how much content preceded it). A flex spacer adapts either way: a
+ *    short DeCA gets a taller gap before a bottom-anchored band; a long
+ *    one that fills the page naturally gets almost no gap; content that
+ *    genuinely overflows to a second page just carries the band with it.
  */
 
 const NAVY = "#16181d"; // ink — headings, primary text
-const ACCENT = "#0a3d91"; // línea DeCA — the one sparingly-used accent
+const ACCENT = "#0a3d91"; // línea DeCA — the one corporate accent, used sparingly
 const BORDER = "#c9c4b8"; // firm hairline, holds up in print
 const MUTED = "#5c5f66";
 const BG = "#fbfaf7"; // warm paper, matches the product's own --color-bg
-const BG_SOFT = "#f1efe9"; // the verification band's tint only
+const BG_SOFT = "#f1efe9"; // tint for the identification strip + verification band
+const WATERMARK = "#eeeae0"; // barely-there tint, a hair off the paper colour
 
 const s = StyleSheet.create({
   page: {
-    paddingTop: 30,
-    paddingBottom: 30,
-    paddingHorizontal: 40,
+    paddingTop: 28,
+    paddingBottom: 28,
+    paddingHorizontal: 38,
     fontSize: 9.5,
     fontFamily: "Inter",
     color: NAVY,
     backgroundColor: BG,
   },
 
-  // Masthead — light, editorial, no colour block
-  masthead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  brandName: {
-    fontSize: 13,
+  watermark: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  watermarkText: {
+    fontSize: 340,
     fontFamily: "Inter",
     fontWeight: 700,
-    letterSpacing: 0.6,
-    color: NAVY,
-  },
-  brandSub: { fontSize: 8.5, color: MUTED, marginTop: 2 },
-  customerLogoRow: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 6 },
-  customerLogo: { width: 84, height: 28, objectFit: "contain" },
-  headerRight: { alignItems: "flex-end" },
-  docRef: { fontSize: 13, fontFamily: "Inter", fontWeight: 700, color: NAVY },
-  docMeta: { fontSize: 8.5, color: MUTED, marginTop: 3, textAlign: "right" },
-  statusRow: { flexDirection: "row", alignItems: "center", marginTop: 5 },
-  statusDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: ACCENT, marginRight: 5 },
-  statusText: {
-    fontSize: 8,
-    fontFamily: "Inter",
-    fontWeight: 700,
-    letterSpacing: 0.5,
-    color: ACCENT,
-  },
-  mastheadRule: {
-    borderBottomWidth: 2,
-    borderBottomColor: ACCENT,
-    marginTop: 14,
-    marginBottom: 22,
+    color: WATERMARK,
   },
 
-  // Section shell — a label + generous space, no coloured underline, no card.
-  section: { marginTop: 22 },
+  // Brand row — real presence, no colour block, no badge.
+  brandRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  brandName: {
+    fontSize: 19,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    letterSpacing: 0.3,
+    color: NAVY,
+  },
+  brandSub: { fontSize: 8.5, color: MUTED, marginTop: 3 },
+  customerLogo: { width: 84, height: 28, objectFit: "contain" },
+
   sectionHeading: {
     fontSize: 8,
     fontFamily: "Inter",
@@ -88,15 +92,53 @@ const s = StyleSheet.create({
     color: MUTED,
     letterSpacing: 1,
     textTransform: "uppercase",
-    marginBottom: 12,
   },
 
-  // Two-column editorial layout, shared by parties + route. One hairline
-  // down the middle instead of two bordered/filled cards.
+  // Identification strip — its own delimited module, a technical document's
+  // own title block (reference/version/issued/status), not tucked into a
+  // corner of the brand row.
+  idZone: { backgroundColor: BG_SOFT, borderRadius: 2, padding: 12, marginTop: 12 },
+  idRow: { flexDirection: "row", marginTop: 8 },
+  idField: { flex: 0.7, paddingRight: 12 },
+  idFieldRef: { flex: 1.4, paddingRight: 12 },
+  idFieldWide: { flex: 1.6, paddingRight: 12 },
+  idLabel: { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 },
+  idValueRef: { fontSize: 15, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 3 },
+  idValue: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 3 },
+  statusTag: {
+    alignSelf: "flex-start",
+    borderWidth: 1.2,
+    borderColor: ACCENT,
+    borderRadius: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginTop: 3,
+  },
+  statusTagText: {
+    fontSize: 8,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    letterSpacing: 0.5,
+    color: ACCENT,
+  },
+
+  mastheadRule: { borderBottomWidth: 2, borderBottomColor: ACCENT, marginTop: 16 },
+
+  // Section shell — a label + one continuous grid, no card.
+  section: { marginTop: 17 },
+  sectionBody: { marginTop: 10 },
+
+  // Two-column editorial layout, shared by parties + route.
   twoCol: { flexDirection: "row" },
-  colLeft: { flex: 1, paddingRight: 18 },
+  colLeft: { flex: 1, paddingRight: 16 },
+  colRight: { flex: 1, paddingLeft: 16 },
   colDivider: { width: 1, backgroundColor: BORDER },
-  colRight: { flex: 1, paddingLeft: 18 },
+  colDividerDashed: {
+    width: 0,
+    borderLeftWidth: 1,
+    borderLeftColor: ACCENT,
+    borderStyle: "dashed",
+  },
 
   partyLabel: {
     fontSize: 7.5,
@@ -106,10 +148,12 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
-  partyName: { fontSize: 13, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 5 },
-  fieldLabel: { fontSize: 7.5, color: MUTED, marginTop: 10 },
-  fieldValue: { fontSize: 10, color: NAVY, marginTop: 2, lineHeight: 1.35 },
+  partyName: { fontSize: 13, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 4 },
+  fieldLabel: { fontSize: 7.5, color: MUTED, marginTop: 7 },
+  fieldValue: { fontSize: 10, color: NAVY, marginTop: 1.5, lineHeight: 1.3 },
 
+  routeKindRow: { flexDirection: "row", alignItems: "center" },
+  routeDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: ACCENT, marginRight: 6 },
   routeKind: {
     fontSize: 8,
     fontFamily: "Inter",
@@ -119,49 +163,46 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
   },
   routeName: { fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 6 },
-  routeAddress: { fontSize: 9.5, color: "#374151", marginTop: 4, lineHeight: 1.4 },
-  routeDateRow: { flexDirection: "row", alignItems: "baseline", marginTop: 10, gap: 6 },
+  routeAddress: { fontSize: 9.5, color: "#374151", marginTop: 3, lineHeight: 1.35 },
+  routeDateRow: { flexDirection: "row", alignItems: "baseline", marginTop: 8, gap: 6 },
   routeDateLabel: { fontSize: 8.5, color: MUTED },
   routeDateValue: { fontSize: 10.5, fontFamily: "Inter", fontWeight: 700, color: ACCENT },
 
-  // Goods / vehicle — one aligned row of technical fields, not a floating grid.
-  techRow: { flexDirection: "row" },
-  techField: { flex: 1, paddingRight: 14 },
-  techLabel: {
-    fontSize: 7.5,
-    color: MUTED,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  techValue: { fontSize: 10.5, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 4 },
+  // Goods / vehicle — a real bordered technical table (2×2), not floating pairs.
+  techTable: { borderWidth: 1, borderColor: BORDER, borderRadius: 2 },
+  techTableRow: { flexDirection: "row" },
+  techTableRowBorder: { borderTopWidth: 1, borderTopColor: BORDER },
+  techCell: { flex: 1, padding: 10 },
+  techCellBorder: { borderLeftWidth: 1, borderLeftColor: BORDER },
+  techLabel: { fontSize: 7.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.4 },
+  techValue: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 4 },
 
-  // Verification band — the document's own closing stamp, not a corner QR.
+  spacer: { flex: 1, minHeight: 16 },
+
+  // Verification band — the document's closing stamp; the largest, most
+  // prominent element on the page. Anchored to the bottom via the spacer
+  // above it, never position:absolute.
   verifyBand: {
-    marginTop: 26,
     backgroundColor: BG_SOFT,
-    padding: 16,
     borderRadius: 3,
+    padding: 15,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  verifyLeft: { flex: 1, paddingRight: 16 },
-  verifyLabel: {
-    fontSize: 7.5,
-    color: MUTED,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  verifyUrl: { fontSize: 9, fontFamily: "Inter", fontWeight: 700, color: ACCENT, marginTop: 3 },
+  verifyLeft: { flex: 1, paddingRight: 20 },
+  verifyLabel: { fontSize: 8, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 },
+  verifyRef: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 5 },
+  verifyUrl: { fontSize: 9.5, fontFamily: "Inter", fontWeight: 700, color: ACCENT, marginTop: 4 },
   verifyMeta: { fontSize: 7.5, color: MUTED, marginTop: 8, lineHeight: 1.4 },
   qrBlock: { alignItems: "center" },
-  qr: { width: 66, height: 66 },
-  qrCaption: { fontSize: 6.5, color: MUTED, marginTop: 4, textAlign: "center" },
+  qr: { width: 96, height: 96 },
+  qrCaption: { fontSize: 7, color: MUTED, marginTop: 6, textAlign: "center", maxWidth: 96 },
 
   pageNumber: {
     position: "absolute",
     top: 14,
-    right: 40,
+    right: 38,
     fontSize: 7,
     color: MUTED,
   },
@@ -217,7 +258,10 @@ function RouteColumn({
 }) {
   return (
     <View>
-      <Text style={s.routeKind}>{kind}</Text>
+      <View style={s.routeKindRow}>
+        <View style={s.routeDot} />
+        <Text style={s.routeKind}>{kind}</Text>
+      </View>
       <Text style={s.routeName}>{name}</Text>
       <Text style={s.routeAddress}>{address}</Text>
       <Text style={s.routeAddress}>
@@ -231,9 +275,17 @@ function RouteColumn({
   );
 }
 
-function TechField({ label, value }: { label: string; value: string }) {
+function TechCell({
+  label,
+  value,
+  bordered,
+}: {
+  label: string;
+  value: string;
+  bordered?: boolean;
+}) {
   return (
-    <View style={s.techField}>
+    <View style={[s.techCell, ...(bordered ? [s.techCellBorder] : [])]}>
       <Text style={s.techLabel}>{label}</Text>
       <Text style={s.techValue}>{value}</Text>
     </View>
@@ -269,27 +321,41 @@ export function DecaDocument(p: DecaDocProps) {
       modificationDate={p.modifiedAt ?? p.createdAt}
     >
       <Page size="A4" style={s.page} wrap>
-        {/* MASTHEAD */}
-        <View>
-          {p.customerLogoDataUri && (
-            <View style={s.customerLogoRow}>
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image style={s.customerLogo} src={p.customerLogoDataUri} />
+        {/* WATERMARK — decorative only, behind every other element (render order = stacking order) */}
+        <View style={s.watermark} fixed>
+          <Text style={s.watermarkText}>D</Text>
+        </View>
+
+        {/* BRAND ROW */}
+        <View style={s.brandRow}>
+          <View>
+            <Text style={s.brandName}>{BRAND.name}</Text>
+            <Text style={s.brandSub}>Documento Electrónico de Control Administrativo</Text>
+          </View>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          {p.customerLogoDataUri && <Image style={s.customerLogo} src={p.customerLogoDataUri} />}
+        </View>
+
+        {/* IDENTIFICACIÓN DEL DECA — its own delimited module */}
+        <View style={s.idZone}>
+          <Text style={s.sectionHeading}>Identificación del DeCA</Text>
+          <View style={s.idRow}>
+            <View style={s.idFieldRef}>
+              <Text style={s.idLabel}>Referencia</Text>
+              <Text style={s.idValueRef}>{p.reference}</Text>
             </View>
-          )}
-          <View style={s.masthead}>
-            <View>
-              <Text style={s.brandName}>{BRAND.name}</Text>
-              <Text style={s.brandSub}>Documento Electrónico de Control Administrativo</Text>
+            <View style={s.idField}>
+              <Text style={s.idLabel}>Versión</Text>
+              <Text style={s.idValue}>{p.versionNo}</Text>
             </View>
-            <View style={s.headerRight}>
-              <Text style={s.docRef}>{p.reference}</Text>
-              <Text style={s.docMeta}>
-                Versión {p.versionNo} · {fmt(p.createdAt)}
-              </Text>
-              <View style={s.statusRow}>
-                <View style={s.statusDot} />
-                <Text style={s.statusText}>
+            <View style={s.idFieldWide}>
+              <Text style={s.idLabel}>Emitido</Text>
+              <Text style={s.idValue}>{fmt(p.createdAt)}</Text>
+            </View>
+            <View style={s.idFieldWide}>
+              <Text style={s.idLabel}>Estado</Text>
+              <View style={s.statusTag}>
+                <Text style={s.statusTagText}>
                   {isCorrection ? "DOCUMENTO CORREGIDO" : "DOCUMENTO VIGENTE"}
                 </Text>
               </View>
@@ -301,7 +367,7 @@ export function DecaDocument(p: DecaDocProps) {
         {/* PARTIES */}
         <View style={s.section}>
           <Text style={s.sectionHeading}>Partes del transporte</Text>
-          <View style={s.twoCol}>
+          <View style={[s.twoCol, s.sectionBody]}>
             <View style={s.colLeft}>
               <PartyColumn
                 role={DECA_ROLES.shipper.title}
@@ -322,10 +388,10 @@ export function DecaDocument(p: DecaDocProps) {
           </View>
         </View>
 
-        {/* ROUTE */}
+        {/* ROUTE — a discreet origin→destination graphic device */}
         <View style={s.section}>
           <Text style={s.sectionHeading}>Ruta del transporte</Text>
-          <View style={s.twoCol}>
+          <View style={[s.twoCol, s.sectionBody]}>
             <View style={s.colLeft}>
               <RouteColumn
                 kind="Lugar de carga"
@@ -339,7 +405,7 @@ export function DecaDocument(p: DecaDocProps) {
                 dateValue={p.data.loadDate}
               />
             </View>
-            <View style={s.colDivider} />
+            <View style={s.colDividerDashed} />
             <View style={s.colRight}>
               <RouteColumn
                 kind="Lugar de descarga"
@@ -356,23 +422,30 @@ export function DecaDocument(p: DecaDocProps) {
           </View>
         </View>
 
-        {/* GOODS + VEHICLE */}
+        {/* GOODS + VEHICLE — a real technical table */}
         <View style={s.section}>
           <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
-          <View style={s.techRow}>
-            <TechField label="Naturaleza de la mercancía" value={p.data.goods} />
-            <TechField label="Peso o medida" value={p.data.weight} />
-          </View>
-          <View style={[s.techRow, { marginTop: 14 }]}>
-            <TechField label="Matrícula tractora" value={p.data.tractorPlate} />
-            <TechField label="Matrícula remolque" value={p.data.trailerPlate || "—"} />
+          <View style={[s.techTable, s.sectionBody]}>
+            <View style={s.techTableRow}>
+              <TechCell label="Naturaleza de la mercancía" value={p.data.goods} />
+              <TechCell label="Peso o medida" value={p.data.weight} bordered />
+            </View>
+            <View style={[s.techTableRow, s.techTableRowBorder]}>
+              <TechCell label="Matrícula tractora" value={p.data.tractorPlate} />
+              <TechCell label="Matrícula remolque" value={p.data.trailerPlate || "—"} bordered />
+            </View>
           </View>
         </View>
 
-        {/* VERIFICATION — the document's own closing stamp, always with the content, never floating */}
+        {/* Fills whatever vertical space remains, so the band below always
+            closes the physical page — never position:absolute. */}
+        <View style={s.spacer} />
+
+        {/* VERIFICACIÓN PÚBLICA — the largest, most prominent element on the page */}
         <View style={s.verifyBand} wrap={false}>
           <View style={s.verifyLeft}>
             <Text style={s.verifyLabel}>Verificación pública</Text>
+            <Text style={s.verifyRef}>{p.reference}</Text>
             <Text style={s.verifyUrl}>{p.publicUrl}</Text>
             <Text style={s.verifyMeta}>
               Generado el {fmt(p.createdAt)}
@@ -385,7 +458,7 @@ export function DecaDocument(p: DecaDocProps) {
           <View style={s.qrBlock}>
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={s.qr} src={p.qrDataUri} />
-            <Text style={s.qrCaption}>Escanea para verificar</Text>
+            <Text style={s.qrCaption}>Escanea para verificar la versión vigente</Text>
           </View>
         </View>
 
