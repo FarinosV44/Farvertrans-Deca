@@ -17,7 +17,7 @@ export const metadata = { title: "Mi empresa", robots: { index: false } };
 
 export default async function EmpresaPage() {
   const user = await getCurrentUser();
-  if (!user?.companyId || !user.company) redirect("/registro");
+  if (!user?.companyId || !user.company) redirect("/registro/completar-empresa");
 
   const dataComplete = companyDataComplete(user.company, false);
   const canEdit = user.companyRole === "owner";

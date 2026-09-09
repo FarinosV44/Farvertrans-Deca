@@ -45,7 +45,7 @@ export default async function HistoricoPage({
   }>;
 }) {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const sp = await searchParams;
   const [rows, carriers, savedViews] = await Promise.all([

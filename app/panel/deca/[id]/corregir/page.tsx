@@ -10,7 +10,7 @@ export const metadata = { title: "Corregir DeCA", robots: { index: false } };
 
 export default async function CorregirPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const { id } = await params;
   const deca = await getDecaDetail(user.companyId, id);

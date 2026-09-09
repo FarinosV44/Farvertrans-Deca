@@ -37,7 +37,7 @@ function place(loc?: { city?: string; province?: string; name?: string }) {
 
 export default async function InspeccionPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user?.companyId) redirect("/registro");
+  if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const { id } = await params;
   const doc = await getDecaCockpit(id, { companyId: user.companyId });
