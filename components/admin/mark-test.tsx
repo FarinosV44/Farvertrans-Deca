@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
 /**
@@ -15,9 +15,18 @@ import Link from "next/link";
  * broken with zero feedback. Mirrors `AccountActions`'s error/step-up
  * handling exactly rather than inventing a second pattern for the same class
  * of endpoint.
+ *
+ * #108 follow-up (same report, live testing): the "Verificar" link carried no
+ * `next`, so `/admin/2fa/verify` always sent the admin back to the generic
+ * `/admin` dashboard after entering the code — not back to the company ficha
+ * they were on. From there the action looked "stuck": nothing on screen said
+ * to go back and click the button again. Now the link carries the CURRENT
+ * path as `next`, so verifying returns the admin to exactly this ficha, where
+ * step-up is now fresh and the retry just works.
  */
 export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stepUp, setStepUp] = useState(false);
@@ -63,7 +72,10 @@ export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
       {stepUp && (
         <p className="mt-2 text-sm text-[var(--color-danger)]">
           Verifica tu identidad de nuevo para esta acción.{" "}
-          <Link href="/admin/2fa/verify" className="underline">
+          <Link
+            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}`}
+            className="underline"
+          >
             Verificar
           </Link>
         </p>

@@ -5725,3 +5725,34 @@ unweakened; full e2e 287/288 (`--workers=3`) — the 2 apparent failures
 (`commercial-intelligence.spec.ts:83`, `master-data.spec.ts:38`) are both pre-existing, already-
 documented `internalPage`-contention flakes, confirmed green together at `--workers=1`, unrelated
 to any file this slice touched.
+
+### D-184 (cont.) — #108 follow-up: the re-verify link dropped the admin on `/admin`, not back on the ficha (2026-09-09)
+
+**User's live follow-up, precisely, testing the D-184 fix in real time:** "si pero es que pide el
+2fa pero le doy y solo recarga a otra pagina" then "y no va nada luego es como que se queda
+pillado" — enters the TOTP code, and instead of landing back where they were, the app "reloads to
+another page" and then "nothing works, it's like it gets stuck."
+
+**Root cause:** `/admin/2fa/verify` supports a `next` query param (`safeInternalPath(next,
+"/admin")`) precisely for this — but neither `MarkTest`'s nor `AccountActions`'s "Verificar" link
+ever set it, so both always defaulted to the generic `/admin` dashboard. An admin re-verifying from
+a company ficha was silently dropped on the dashboard with no indication anything still needed
+doing — reads exactly as "stuck": the action never visibly completes, and nothing on screen says to
+go back and retry.
+
+**Fix, same shape in both components (the identical defect, same endpoint class):** `usePathname()`
+now feeds the current path into the link — `` `/admin/2fa/verify?next=${encodeURIComponent(pathname)}` ``
+— so completing the challenge (`TotpVerifyForm`'s existing `window.location.assign(next)`, or the
+verify page's own "already fresh, skip the form" redirect when the session's step-up turns out to
+already be current) returns the admin to the EXACT ficha they were on. `safeInternalPath` already
+validates `next` is a same-origin path (AUTH #38) — `usePathname()` never returns a query string or
+scheme, so it round-trips cleanly with no new validation needed.
+
+**Verified, red-first:** extended the D-184 `MarkTest` test to also assert the "Verificar" link's
+href carries the correct `?next=` and, on following it, that the browser lands back on
+`/admin/empresas/[id]` (not `/admin`) — confirmed FAILING against the pre-fix components (`git
+stash` of just the two component files) before re-applying the fix. Added an equivalent test for
+`AccountActions` (`account-block`), since it carried the identical defect and nothing had ever
+exercised its step-up UI path before. Full gate: typecheck/lint/format clean; 377/377 unit
+(untouched); R-1…R-13 compliance 8/8; full e2e **290 passed, 1 skipped, 0 failures** — every
+previously-documented contention flake happened to sit quiet this run too.

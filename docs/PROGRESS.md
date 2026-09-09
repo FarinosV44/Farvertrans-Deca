@@ -57,6 +57,15 @@
   unit; R-1…R-13 compliance 8/8; full e2e 287/288 (`--workers=3`) — the 2 apparent failures
   (`commercial-intelligence.spec.ts:83`, `master-data.spec.ts:38`) are both pre-existing,
   already-documented contention flakes, confirmed green together at `--workers=1`.
+  - **#108 follow-up, same live testing session:** the "Verificar" re-verify link never set
+    `next`, so completing the 2FA challenge always dropped the admin on the generic `/admin`
+    dashboard instead of back on the ficha they were on — reported live as "recarga a otra
+    pagina... se queda pillado". Same defect in both `MarkTest` and `AccountActions` (identical
+    step-up pattern); both now build the link with `` `?next=${encodeURIComponent(pathname)}` ``
+    via `usePathname()`, so re-verifying returns the admin to the exact ficha. Confirmed red via
+    `git stash` of just the two component files, then green. Full gate: typecheck/lint/format
+    clean; 377/377 unit; R-1…R-13 compliance 8/8; full e2e **290 passed, 1 skipped, 0 failures**
+    (every previously-documented flake sat quiet this run).
 - **Previous: #95–#103 batch (D-161), 7 of 9 done, MERGED to `main` (`bfb9953`).**
   - **#97 [P1 SEO] — internal-linking architecture (D-171).** The issue's own hub/"páginas
     estratégicas" example lists were grounded to real routes in a new pure module,
