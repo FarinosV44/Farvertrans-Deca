@@ -45,7 +45,7 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #95–#103 batch (D-161), 7 of 9 done, MERGED to `main` (see below).**
+- **Latest: #95–#103 batch (D-161), 7 of 9 done, MERGED to `main` (`bfb9953`).**
   - **#97 [P1 SEO] — internal-linking architecture (D-171).** The issue's own hub/"páginas
     estratégicas" example lists were grounded to real routes in a new pure module,
     `lib/content/internal-linking.ts` (`SEO_HUBS`, `STRATEGIC_ROUTES`, `pickCornerstones`,
