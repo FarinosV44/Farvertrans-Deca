@@ -1,4 +1,14 @@
-import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  Image,
+  StyleSheet,
+  Svg,
+  Rect,
+  Path,
+} from "@react-pdf/renderer";
 import { type DecaPayload, formatPartyAddressLines } from "@/lib/deca/schema";
 import { BRAND } from "@/lib/brand";
 import { DECA_ROLES } from "@/lib/deca/roles";
@@ -16,9 +26,13 @@ import { formatLocationCityLine } from "@/lib/deca/location";
  *    continuous grid (thin rules + generous-but-dense spacing, never a
  *    rounded SaaS card): Identificación del DeCA, Partes del transporte,
  *    Ruta, Mercancía y vehículo, Verificación pública.
- *  - the masthead has real presence — a bigger brand line, a dedicated
- *    "Identificación del DeCA" strip (Referencia/Versión/Emitido/Estado),
- *    the status rendered as a bordered technical stamp, not coloured text.
+ *  - the masthead has real presence — a bigger brand line with its own
+ *    drawn mark (a blue square + white check, never a raster asset), a
+ *    dedicated "Identificación del DeCA" strip (Referencia/Emitido/Estado
+ *    — an even 3-way split; the bare version number reads poorly at that
+ *    size, so it moved to a small footnote in the verification band
+ *    instead, under the app-version line), the status rendered as a
+ *    bordered technical stamp, not coloured text.
  *  - a very subtle full-page watermark (a large, low-contrast "D"
  *    monogram) — decorative but never competing with legibility.
  *  - the route section gets a discreet graphic device: a dashed vertical
@@ -75,6 +89,8 @@ const s = StyleSheet.create({
 
   // Brand row — real presence, no colour block, no badge.
   brandRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  brandMarkWrap: { flexDirection: "row", alignItems: "center" },
+  brandMark: { width: 24, height: 24, marginRight: 9 },
   brandName: {
     fontSize: 19,
     fontFamily: "Inter",
@@ -99,9 +115,8 @@ const s = StyleSheet.create({
   // corner of the brand row.
   idZone: { backgroundColor: BG_SOFT, borderRadius: 2, padding: 12, marginTop: 12 },
   idRow: { flexDirection: "row", marginTop: 8 },
-  idField: { flex: 0.7, paddingRight: 12 },
-  idFieldRef: { flex: 1.4, paddingRight: 12 },
-  idFieldWide: { flex: 1.6, paddingRight: 12 },
+  idFieldRef: { flex: 1, paddingRight: 12 },
+  idFieldWide: { flex: 1, paddingRight: 12 },
   idLabel: { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 },
   idValueRef: { fontSize: 15, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 3 },
   idValue: { fontSize: 10, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 3 },
@@ -195,6 +210,7 @@ const s = StyleSheet.create({
   verifyRef: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 5 },
   verifyUrl: { fontSize: 9.5, fontFamily: "Inter", fontWeight: 700, color: ACCENT, marginTop: 4 },
   verifyMeta: { fontSize: 7.5, color: MUTED, marginTop: 8, lineHeight: 1.4 },
+  verifyDocVersion: { fontSize: 6.5, color: MUTED, marginTop: 2 },
   qrBlock: { alignItems: "center" },
   qr: { width: 96, height: 96 },
   qrCaption: { fontSize: 7, color: MUTED, marginTop: 6, textAlign: "center", maxWidth: 96 },
@@ -326,11 +342,25 @@ export function DecaDocument(p: DecaDocProps) {
           <Text style={s.watermarkText}>D</Text>
         </View>
 
-        {/* BRAND ROW */}
+        {/* BRAND ROW — the mark is drawn (Svg/Rect/Path), never a raster
+            asset, so it stays crisp at any zoom and needs no image file. */}
         <View style={s.brandRow}>
-          <View>
-            <Text style={s.brandName}>{BRAND.name}</Text>
-            <Text style={s.brandSub}>Documento Electrónico de Control Administrativo</Text>
+          <View style={s.brandMarkWrap}>
+            <Svg style={s.brandMark} viewBox="0 0 24 24">
+              <Rect x={0} y={0} width={24} height={24} rx={5} fill={ACCENT} />
+              <Path
+                d="M6.5 12.6L10 16.1L18 7.7"
+                stroke="#ffffff"
+                strokeWidth={2.4}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+            <View>
+              <Text style={s.brandName}>{BRAND.name}</Text>
+              <Text style={s.brandSub}>Documento Electrónico de Control Administrativo</Text>
+            </View>
           </View>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
           {p.customerLogoDataUri && <Image style={s.customerLogo} src={p.customerLogoDataUri} />}
@@ -343,10 +373,6 @@ export function DecaDocument(p: DecaDocProps) {
             <View style={s.idFieldRef}>
               <Text style={s.idLabel}>Referencia</Text>
               <Text style={s.idValueRef}>{p.reference}</Text>
-            </View>
-            <View style={s.idField}>
-              <Text style={s.idLabel}>Versión</Text>
-              <Text style={s.idValue}>{p.versionNo}</Text>
             </View>
             <View style={s.idFieldWide}>
               <Text style={s.idLabel}>Emitido</Text>
@@ -454,6 +480,7 @@ export function DecaDocument(p: DecaDocProps) {
             <Text style={s.verifyMeta}>
               {BRAND.name} v{p.appVersion}
             </Text>
+            <Text style={s.verifyDocVersion}>Versión {p.versionNo} del documento</Text>
           </View>
           <View style={s.qrBlock}>
             {/* eslint-disable-next-line jsx-a11y/alt-text */}

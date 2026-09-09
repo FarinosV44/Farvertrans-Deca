@@ -668,9 +668,9 @@ export const es = {
       loadDate: "Fecha de carga",
       unloadDate: "Fecha de descarga",
       goods: "Naturaleza de la mercancía",
-      weight: "Peso (o medida alternativa)",
+      weight: "Peso en toneladas (o medida alternativa)",
       weightHint:
-        "Ej.: 12000 kg, o «una plataforma completa» si el peso exacto no es determinable.",
+        "Ej.: 12 (se añade «t» automáticamente), o «una plataforma completa» si el peso exacto no es determinable.",
       tractorPlate: "Matrícula de la tractora",
       trailerPlate: "Matrícula del remolque / semirremolque",
       trailerHint: "Si no hay remolque, déjalo vacío.",

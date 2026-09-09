@@ -199,10 +199,12 @@ describe("#66 — generated DeCA structural snapshot", () => {
   });
 
   // #107 second iteration: "Identificación del DeCA" is its own delimited
-  // module (referencia/versión/emitido/estado as separate labelled fields),
-  // not a single "Versión N · fecha" phrase — so these check the label and
-  // value are both present, not an exact adjacent phrase.
-  it("shows a clean, editorial masthead — brand, reference, version, status — no CMR box numbering", async () => {
+  // module — Referencia/Emitido/Estado as an even 3-way split, so these
+  // check the label and value are both present, not an exact adjacent
+  // phrase. The version NUMBER moved out of this strip (2026-09-09
+  // correction, user: a bare digit there "looked bad") into a small
+  // footnote in the verification band, under the app-version line.
+  it("shows a clean, editorial masthead — brand, reference, status — no CMR box numbering", async () => {
     const t = await text();
     expect(t).toContain("DeCA Profesional");
     expect(t).toContain("Documento Electrónico de Control Administrativo");
@@ -212,12 +214,13 @@ describe("#66 — generated DeCA structural snapshot", () => {
     // checking the surrounding structural content is what actually matters.
     expect(t).toContain("REFERENCIA");
     expect(t).toContain("DECA-A4F2C9E1");
-    expect(t.toUpperCase()).toContain("VERSIÓN");
-    expect(t).toMatch(/\b1\b/); // the version number, somewhere in the id strip
+    expect(t.toUpperCase()).toContain("EMITIDO");
+    expect(t.toUpperCase()).toContain("ESTADO");
     expect(t.toUpperCase()).toContain("DOCUMENTO VIGENTE");
+    expect(t).toMatch(/Versión 1 del documento/);
   });
 
-  it("shows DOCUMENTO CORREGIDO and the modification timestamp for a version > 1", async () => {
+  it("shows DOCUMENTO CORREGIDO, the modification timestamp, and the new version number for a version > 1", async () => {
     const buf = await renderDecaPdf({
       data: payload,
       publicUrl: "https://decaprofesional.es/d/A4F2C9E1",
@@ -233,8 +236,7 @@ describe("#66 — generated DeCA structural snapshot", () => {
       .join(" ")
       .replace(/\s+/g, " ");
     expect(t.toUpperCase()).toContain("DOCUMENTO CORREGIDO");
-    expect(t.toUpperCase()).toContain("VERSIÓN");
-    expect(t).toMatch(/\b2\b/);
     expect(t).toContain("2026-10-07 10:00:00 UTC");
+    expect(t).toMatch(/Versión 2 del documento/);
   });
 });

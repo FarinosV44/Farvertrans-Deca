@@ -5625,3 +5625,59 @@ postal-code edge cases, no-CMR-numbering) pass unchanged. Full suite: typecheck/
 design) with the one failure (`commercial-intelligence.spec.ts:83`) reproduced as the
 already-documented `--workers=3` contention flake — confirmed green at `--workers=1` in isolation,
 unrelated to this slice (no file this slice touched is anywhere in that spec's path).
+
+## D-183 — #107 live feedback on D-182's render: 3 small corrections + 1 unrelated field default (2026-09-09)
+
+**User's feedback, precisely, on a real render of D-182's output:** the "Identificación del DeCA"
+strip's bare "VERSIÓN 1" field "queda mal" (looks bad) and is redundant — "abajo del todo ya pone
+la version" (the bottom of the page already shows a version). Then, in the same turn, three more
+requests: rebalance the identification strip so the remaining fields (Referencia/Emitido/Estado)
+get an even share of the space; add a real drawn brand mark (a blue square with a white checkmark)
+next to "DeCA Profesional" at the very top; and — after building the removal — a follow-up
+clarification that if the document version has to appear anywhere, it should be small, at the very
+bottom, under the "DeCA Profesional v0.1.0" software-version line (not gone entirely, just moved
+and shrunk). Separately, unrelated to the PDF: the weight field should default to a unit
+automatically so people don't have to type it, and — mid-thread — the user changed the requested
+default unit from kilograms to tonnes and asked for the form's own label/hint to ask for tonnes too.
+
+**PDF changes, `lib/pdf/deca-document.tsx` only:**
+- The standalone "Versión" field (a bare digit in its own column) is REMOVED from the
+  identification strip; `idFieldRef`/`idFieldWide` both now carry `flex: 1` so Referencia/Emitido/
+  Estado split the row exactly evenly (previously 1.4/0.7/1.6/1.6 across 4 fields).
+- The document's own version number did NOT disappear from the page — per the user's own
+  follow-up, it now prints as a small footnote (`Versión N del documento`, 6.5pt) in the
+  verification band, directly under the existing `DeCA Profesional v{appVersion}` (software
+  version) line — the two numbers were already adjacent in intent, now they're adjacent on paper
+  too, at a scale that reads as a footnote rather than a document field.
+- A real brand mark, drawn (not a raster asset) via `@react-pdf/renderer`'s `Svg`/`Rect`/`Path`
+  primitives: a rounded blue square (`ACCENT`, the one corporate accent already used elsewhere)
+  with a white checkmark path, 24×24, placed left of "DeCA Profesional" in its own
+  `brandMarkWrap` row. Stays crisp at any zoom, adds no image file/asset pipeline, and reuses the
+  document's own accent colour rather than inventing a new one.
+
+**Weight field, `lib/deca/schema.ts` + `lib/i18n/dictionaries/es.ts` (unrelated to the PDF, same
+turn):** a NEW `withDefaultWeightUnit()` transform in `step3Schema` — a bare number (only digits
+and a decimal/thousands separator, nothing else) gets " t" appended automatically; anything that
+already carries a unit ("12.500 kg", "12,5 t") or is a genuine alternative measure ("una plataforma
+completa") is left exactly as typed, preserving the field's existing VERBATIM guarantee (its own
+comment, and the dedicated unit test above it, both predate this slice and are unweakened — the
+transform only fills in a MISSING unit, never reformats or overrides one already present). The
+Spanish label/hint were updated to ask for tonnes explicitly ("Peso en toneladas (o medida
+alternativa)" / hint shows "12" as the example, notes the unit is added automatically) — only
+`es.ts` touched, matching D-002's Spanish-only v1 scope; the other 7 locale dictionaries are
+unused in production and were left as they are, consistent with how the rest of the codebase
+treats them.
+
+**Verified:** `tests/unit/deca-pdf-snapshot.test.ts` — the masthead test's version-number
+assertions were rewritten (not dropped) to check for the new footnote text instead of the old
+id-strip phrasing; the corrected-version test gained an equivalent check
+(`Versión 2 del documento`). `tests/unit/deca-validate.test.ts` — one new test added
+("defaults a bare number (no unit at all) to tonnes") covering 4 input shapes; the pre-existing
+VERBATIM and meaningless-weight tests pass unchanged (none of their fixtures are bare numbers).
+Visual QA: the same 4-case fixture (short/long-names/full-trailer/corrected-v2) re-rendered and
+read directly — confirmed the brand mark renders cleanly, the 3-field strip is visually even with
+no run-together text, and the version footnote appears exactly where and how the user asked.
+Full gate: typecheck/lint/format clean; **377/377 unit** (1 new); R-1…R-13 compliance **8/8**
+unweakened; full e2e **287/288** — the 1 failure is the same pre-existing
+`commercial-intelligence.spec.ts:83` `--workers=3` contention flake documented in D-182, unrelated
+to this slice.
