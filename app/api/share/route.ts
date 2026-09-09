@@ -39,10 +39,13 @@ export async function POST(req: Request) {
 
   const url = `${publicEnv.baseUrl}/d/${parsed.data.token}`;
   const { sendMail } = await import("@/lib/mailer");
+  const { renderTransactionalHtml } = await import("@/lib/email-template");
+  const text = `Documento electrónico de control (DeCA) del transporte.\n\nDescarga directa (sin registro):\n${url}\n\nEnviado con ${BRAND.name}.`;
   const result = await sendMail({
     to: parsed.data.to,
     subject: "Documento de control del transporte (DeCA)",
-    text: `Documento electrónico de control (DeCA) del transporte.\n\nDescarga directa (sin registro):\n${url}\n\nEnviado con ${BRAND.name}.`,
+    text,
+    html: renderTransactionalHtml({ text, link: url, ctaLabel: "Ver documento" }),
   });
 
   return NextResponse.json(

@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mailer";
+import { renderTransactionalHtml } from "@/lib/email-template";
+import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
 import {
   SUPPORT_CATEGORY_LABEL,
@@ -46,19 +48,26 @@ export async function createSupportTicket(input: NewTicketInput) {
 
   // Notify the superadmin that a new ticket landed — no ticket detail beyond
   // the reference and subject (the panel is where it is read and answered).
+  const adminLink = `${publicEnv.baseUrl.replace(/\/$/, "")}/admin/soporte/${ticket.id}`;
+  const notifyText = [
+    `Nueva incidencia técnica #${ticket.number}.`,
+    `Empresa: ${input.companyName ?? "—"}`,
+    `Usuario: ${input.userName ?? "—"} <${input.userEmail}>`,
+    `Categoría: ${SUPPORT_CATEGORY_LABEL[input.category]}`,
+    ``,
+    input.body,
+    ``,
+    `Responde desde el panel: ${adminLink}`,
+  ].join("\n");
   void sendMail({
     to: NOTIFY(),
     subject: `[Soporte #${ticket.number}] ${ticket.subject}`,
-    text: [
-      `Nueva incidencia técnica #${ticket.number}.`,
-      `Empresa: ${input.companyName ?? "—"}`,
-      `Usuario: ${input.userName ?? "—"} <${input.userEmail}>`,
-      `Categoría: ${SUPPORT_CATEGORY_LABEL[input.category]}`,
-      ``,
-      input.body,
-      ``,
-      `Responde desde el panel: /admin/soporte/${ticket.id}`,
-    ].join("\n"),
+    text: notifyText,
+    html: renderTransactionalHtml({
+      text: notifyText,
+      link: adminLink,
+      ctaLabel: "Ver incidencia",
+    }),
   });
 
   return ticket;
@@ -100,10 +109,17 @@ export async function addUserReply(ticketId: string, userId: string, body: strin
       ? "in_review"
       : (ticket.status as SupportStatus);
   await prisma.supportTicket.update({ where: { id: ticketId }, data: { status } });
+  const adminLink = `${publicEnv.baseUrl.replace(/\/$/, "")}/admin/soporte/${ticket.id}`;
+  const notifyText = `El usuario ha respondido en la incidencia #${ticket.number}.\n\n${body}\n\n${adminLink}`;
   void sendMail({
     to: NOTIFY(),
     subject: `[Soporte #${ticket.number}] Nueva respuesta del usuario`,
-    text: `El usuario ha respondido en la incidencia #${ticket.number}.\n\n${body}\n\n/admin/soporte/${ticket.id}`,
+    text: notifyText,
+    html: renderTransactionalHtml({
+      text: notifyText,
+      link: adminLink,
+      ctaLabel: "Ver incidencia",
+    }),
   });
   return { ok: true };
 }
@@ -161,19 +177,28 @@ export async function updateSupportTicket(
     await prisma.supportTicketMessage.create({
       data: { ticketId: id, authorType: "admin", authorId: adminId, body: patch.body },
     });
+    const userLink = `${publicEnv.baseUrl.replace(/\/$/, "")}/panel/ayuda/${ticket.id}`;
+    const userText = [
+      `Hola,`,
+      ``,
+      `Hemos respondido a tu incidencia #${ticket.number} ("${ticket.subject}"):`,
+      ``,
+      patch.body,
+      ``,
+      `Puedes responder desde tu panel:`,
+      userLink,
+      ``,
+      `— Equipo de ${BRAND.name}`,
+    ].join("\n");
     void sendMail({
       to: ticket.userEmail,
       subject: `[Soporte #${ticket.number}] Respuesta a tu incidencia`,
-      text: [
-        `Hola,`,
-        ``,
-        `Hemos respondido a tu incidencia #${ticket.number} ("${ticket.subject}"):`,
-        ``,
-        patch.body,
-        ``,
-        `Puedes responder desde tu panel, en Ayuda.`,
-        `— Equipo de ${BRAND.name}`,
-      ].join("\n"),
+      text: userText,
+      html: renderTransactionalHtml({
+        text: userText,
+        link: userLink,
+        ctaLabel: "Ver mi incidencia",
+      }),
     });
   }
 

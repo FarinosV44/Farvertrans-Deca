@@ -103,11 +103,19 @@ export async function POST(req: Request) {
     const { token } = await createEmailVerification(created.userId, b.email);
     const link = `${publicEnv.baseUrl.replace(/\/$/, "")}/verificar-email/${encodeURIComponent(token)}`;
     const { sendMail } = await import("@/lib/mailer");
+    const { renderTransactionalHtml } = await import("@/lib/email-template");
     const dict = await getDictionary(locale);
+    const text = dict.emails.verifyTextInitial(BRAND.name, link);
     const mail = await sendMail({
       to: b.email,
       subject: dict.emails.verifySubject(BRAND.name),
-      text: dict.emails.verifyTextInitial(BRAND.name, link),
+      text,
+      html: renderTransactionalHtml({
+        title: "Confirma tu correo electrónico",
+        text,
+        link,
+        ctaLabel: "Confirmar correo",
+      }),
     });
     emailSent = mail.sent;
     if (!mail.sent) {

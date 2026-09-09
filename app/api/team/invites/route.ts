@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createInvite, TeamError } from "@/lib/team";
 import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
+import { buildInviteEmail } from "@/lib/team-invite-email";
 
 export const runtime = "nodejs";
 
@@ -45,11 +46,17 @@ export async function POST(req: Request) {
     let delivered = false;
     try {
       const { sendMail } = await import("@/lib/mailer");
-      const mail = await sendMail({
-        to: email,
-        subject: `Te han invitado a ${BRAND.name}`,
-        text: `${user.company?.name ?? "Una empresa"} te ha invitado a su cuenta de ${BRAND.name}.\n\nÚnete con este enlace (caduca en 14 días):\n${link}\n\nSi ya tienes cuenta, inicia sesión desde ese mismo enlace.`,
+      // D-179 (deliverability review): transactional, not marketing —
+      // simple subject, minimal HTML + plain-text parts, the real
+      // decaprofesional.es link shown twice (button + visible plain text),
+      // no images, no tracked/shortened links, a short legitimate footer,
+      // no unsubscribe language. See lib/team-invite-email.ts.
+      const { subject, text, html } = buildInviteEmail({
+        companyName: user.company?.name ?? "Una empresa",
+        role: parsed.data.role,
+        link,
       });
+      const mail = await sendMail({ to: email, subject, text, html, replyTo: BRAND.supportEmail });
       delivered = mail.sent;
       console.log(
         JSON.stringify({
