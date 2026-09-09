@@ -304,7 +304,6 @@ export const en = {
     },
     commercialOptIn: {
       title: "Load opportunities",
-      badge: "Optional",
       label: "Notify me if a job compatible with my routes comes up",
       hint: "You can turn this off anytime.",
       moreInfo: "What data is shared",

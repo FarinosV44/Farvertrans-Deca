@@ -313,7 +313,6 @@ export const es = {
      */
     commercialOptIn: {
       title: "Oportunidades de carga",
-      badge: "Opcional",
       label: "Avísame si aparece un porte compatible con mis rutas",
       hint: "Puedes desactivarlo cuando quieras.",
       moreInfo: "Qué datos se comparten",

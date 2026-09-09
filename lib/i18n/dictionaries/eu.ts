@@ -322,7 +322,6 @@ export const eu = {
     },
     commercialOptIn: {
       title: "Karga-aukerak",
-      badge: "Aukerakoa",
       label: "Jakinarazi nire ibilbideekin bat datorren garraiorik agertzen bada",
       hint: "Noiznahi desaktiba dezakezu.",
       moreInfo: "Zer datu partekatzen diren",

@@ -4763,3 +4763,20 @@ D-146 still holds and was verified to hold:
 unchanged) — the suite that exercises this exact checkbox (checked/unchecked, all 8 acceptance
 cases, withdrawal) — passed without modification, which is the evidence that only presentation
 changed.
+
+## D-160 — #84 opt-in: remove the visible "Opcional" badge (2026-09-09, same-session follow-up)
+
+**User correction, immediate:** "no pues si quita la etiqueta opcional que lo sea pero que no lo
+ponga" — remove the visible "Opcional" label; the checkbox stays functionally optional (unchecked
+by default, never required), it just isn't announced with a badge. This is closer to D-146's
+original "no 'opcional' label" than D-159 was, while keeping D-159's other changes (icon, title,
+compact box, hint line, closed-by-default disclosure).
+
+- `components/auth/register-form.tsx`: removed the badge `<span>`; the icon+title row is now
+  `RouteIcon` + "Oportunidades de carga" only.
+- `lib/i18n/dictionaries/*.ts` (all 8): removed the now-unused `badge` key from
+  `auth.commercialOptIn` — dead translated strings are not left in the catalogues.
+- Everything else from D-159 stands: same state, same wiring, same `data-testid`s, disclosure
+  unchanged.
+- **Gate:** typecheck + prettier + lint green; `commercial-consent.spec.ts` 14/14 unmodified,
+  re-run after this change.

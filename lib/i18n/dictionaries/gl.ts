@@ -314,7 +314,6 @@ export const gl = {
     },
     commercialOptIn: {
       title: "Oportunidades de carga",
-      badge: "Opcional",
       label: "Avísame se aparece un porte compatible coas miñas rutas",
       hint: "Podes desactivalo cando queiras.",
       moreInfo: "Que datos se comparten",

@@ -315,7 +315,6 @@ export const fr = {
     },
     commercialOptIn: {
       title: "Opportunités de fret",
-      badge: "Facultatif",
       label: "Prévenez-moi si un transport compatible avec mes trajets apparaît",
       hint: "Vous pouvez le désactiver quand vous le souhaitez.",
       moreInfo: "Quelles données sont partagées",

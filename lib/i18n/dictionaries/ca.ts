@@ -314,7 +314,6 @@ export const ca = {
     },
     commercialOptIn: {
       title: "Oportunitats de càrrega",
-      badge: "Opcional",
       label: "Avisa'm si apareix un port compatible amb les meves rutes",
       hint: "Ho pots desactivar quan vulguis.",
       moreInfo: "Quines dades es comparteixen",

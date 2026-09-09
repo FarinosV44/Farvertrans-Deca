@@ -352,23 +352,24 @@ export function RegisterForm({
 
         {mode === "register" && !joiningTeam && (
           // #84, restyled as a compact opt-in feature rather than a legal
-          // clause (product-copy change only — see D-159): a very light box,
-          // never pre-ticked, the deeper explanation stays behind a disclosure
-          // that is closed by default. Legal storage/logic is unchanged.
+          // clause (product-copy change only — see D-159/D-160): a very light
+          // box, never pre-ticked, the deeper explanation stays behind a
+          // disclosure that is closed by default. Legal storage/logic is
+          // unchanged. D-160: no visible "Opcional" badge — it IS optional
+          // (unchecked, never required) but the box does not say so; being
+          // the one checkbox on the page with no required-looking styling is
+          // what signals that on its own.
           <div
             data-testid="commercial-opt-in-box"
             className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
           >
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center gap-1.5">
               <RouteIcon
                 width={16}
                 height={16}
                 className="shrink-0 text-[var(--color-text-muted)]"
               />
               <span className="text-sm font-semibold">{t.auth.commercialOptIn.title}</span>
-              <span className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                {t.auth.commercialOptIn.badge}
-              </span>
             </div>
             <label className="mt-2 flex items-start gap-2 text-sm">
               <input

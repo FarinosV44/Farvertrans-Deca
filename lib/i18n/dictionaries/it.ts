@@ -315,7 +315,6 @@ export const it = {
     },
     commercialOptIn: {
       title: "Opportunità di carico",
-      badge: "Facoltativo",
       label: "Avvisami se compare un trasporto compatibile con i miei percorsi",
       hint: "Puoi disattivarlo quando vuoi.",
       moreInfo: "Quali dati vengono condivisi",

@@ -316,7 +316,6 @@ export const de = {
     },
     commercialOptIn: {
       title: "Frachtmöglichkeiten",
-      badge: "Optional",
       label: "Benachrichtigen Sie mich, wenn ein zu meinen Routen passender Transport erscheint",
       hint: "Sie können dies jederzeit deaktivieren.",
       moreInfo: "Welche Daten werden geteilt",
