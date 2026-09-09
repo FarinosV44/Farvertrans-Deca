@@ -45,7 +45,20 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #95–#103 batch (D-161), 5 of 9 done, MERGED to `main` (`7ceea98`).**
+- **Latest: #95–#103 batch (D-161), 6 of 9 done, MERGED to `main` (`3b1465f`).**
+  - **#98 [P1 SEO] — structured-data audit (D-169):** `Organization`/`Article`/`BlogPosting`/
+    `BreadcrumbList` were already solidly built (real `dateModified`, correct PRAETORIA-vs-brand
+    `publisher`, visible editorial signals). **Real gap: `FAQPage` removed** — it violated the
+    issue's own instruction and current Google guidelines; the visible FAQ content is untouched.
+    Added `WebSite`, `Organization.taxID`/`logo` (both already-public data, never invented), and
+    `image` on articles when present. Corrected the pre-existing `AC-33` spec line and its two tests
+    to match.
+  - **#103 SECURITY CORRECTION (D-170), same session, user's explicit follow-up:** company
+    anonymization removed ENTIRELY from normal Superadmin — not just hard delete. The web endpoint
+    now rejects `anonymize` for companies (422); the underlying function is kept only as a library
+    building block for a future out-of-band procedure, never a web button. User anonymization
+    (a separate, `kind=usuarios` path) was explicitly left untouched — out of this request's scope,
+    flagged to the user rather than assumed.
   - **#102 [P0 Equipo] — the reported membership-corruption bug, root-caused and fixed (D-163).**
     `User.companyId` was a single FK — accepting a second invite silently overwrote it, removing a
     member set `companyId: null` (indistinguishable from "never had an account"). New `Membership`
@@ -75,11 +88,10 @@
   - **Still separately flagged, not code-fixable from here:** invite emails not arriving for a
     brand-new address (`docs/lessons-learned.md` — likely Resend sandbox restriction, needs the
     user's Resend dashboard).
-  - **REMAINING: #96 (Core Web Vitals/performance), #97 (internal linking architecture), #98
-    (structured data/entity signals), #100 (Search Console operational process).** Each is a
-    genuinely multi-day program on its own (real before/after measurement, a linking system, an
-    operational weekly process) — user's own instruction (AskUserQuestion) was depth over a shallow
-    pass across all four if context ran out. Not started this session; next session picks up here.
+  - **REMAINING: #96 (Core Web Vitals/performance), #97 (internal linking architecture), #100
+    (Search Console operational process).** Each is a genuinely multi-day program on its own (real
+    before/after measurement, a linking system, an operational weekly process) — user's own
+    instruction (AskUserQuestion) was depth over a shallow pass if context ran out.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +

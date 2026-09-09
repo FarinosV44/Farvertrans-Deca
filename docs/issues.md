@@ -64,7 +64,7 @@
 | 95 | [P0 SEO] Auditoría técnica de indexación | audit | high | **audited, script + fix on `main`** | E-095 |
 | 96 | [P0 SEO/Performance] Core Web Vitals móvil | perf | high | queued | E-096 |
 | 97 | [P1 SEO] Enlazado interno / autoridad temática | feat | medium | queued | E-097 |
-| 98 | [P1 SEO] Datos estructurados y señales de entidad | feat | medium | queued | E-098 |
+| 98 | [P1 SEO] Datos estructurados y señales de entidad | feat | medium | **audited, fix on `main`** | E-098 |
 | 99 | [P1 SEO] Tests de regresión SEO | test | medium | **suite en `main`, corre en CI** | E-099 |
 | 100 | [P1 SEO] Search Console operativo | ops | medium | queued | E-100 |
 | 101 | [P0 Seguridad/Confianza] HTTPS/headers sin perjudicar SEO | audit | high | **audited, fix on `main`** | E-101 |
@@ -623,3 +623,27 @@ anonymize-in-place (no hard delete, D-067).
   administración de empresas — las cuatro rechazadas (422), empresa y DeCA intactos.
 - **On `main`** (`7ceea98`, sin migración nueva — la columna `isTest` ya se aplicó con #102). Beat-1
   comment posted.
+
+## I-098 — #98 [P1 SEO] Datos estructurados y señales de entidad · **audited, fix on `main`** (D-169)
+- 2026-09-09. Auditado antes de tocar nada: `Organization`, `Article`/`BlogPosting` + `BreadcrumbList`
+  en blog/guías/páginas SEO ya estaban bien construidos — `dateModified` real (de la base de datos,
+  nunca del build), `publisher` distinguiendo correctamente PRAETORIA de la marca del producto,
+  `reviewedBy` solo con revisor real, señales editoriales también visibles en pantalla (no solo en
+  JSON-LD). `sameAs` correctamente ausente (no hay perfiles sociales reales aún, verificado).
+- **Hueco real encontrado y corregido:** `FAQPage` se emitía sin condición en la portada —
+  violación directa de la propia instrucción del issue. Retirado (contenido visible intacto).
+  Añadido `WebSite` (faltaba), CIF y logo en `Organization` (datos ya públicos, nunca inventados),
+  `image` en artículos cuando existe.
+- `AC-33` en `docs/02-functional-spec.md` corregido para reflejar la nueva realidad; los dos tests
+  existentes que afirmaban `FAQPage` reescritos para afirmar su ausencia.
+- **On `main`** (`3b1465f`). Beat-1 comment posted.
+
+## D-170 (Superadmin correction) — user's explicit follow-up on #103, same session
+- 2026-09-09. Tras el beat-1 de #103, el usuario pidió expresamente eliminar TAMBIÉN la acción
+  "Anonimizar definitivamente" de la gestión de empresas en Superadmin — ninguna acción irreversible
+  debe ser alcanzable desde la interfaz web normal. `anonymize` eliminado del endpoint
+  `PATCH /api/admin/empresas/[id]` (422 si se solicita); la función queda como base para un
+  procedimiento técnico excepcional fuera de Superadmin, nunca como botón web. Anonimización de
+  usuarios (`kind=usuarios`, función distinta) no se tocó — fuera del alcance de esta petición,
+  señalado al usuario en vez de asumido.
+- **On `main`** (`3b1465f`). Comentario de corrección posted en #103.
