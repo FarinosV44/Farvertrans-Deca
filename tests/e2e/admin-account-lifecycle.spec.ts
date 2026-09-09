@@ -249,8 +249,14 @@ test("#103: TEST and archived companies are hidden from the default Superadmin l
  * 401 (the caller's last TOTP check is older than 10 min, per `requireStepUp`)
  * is swallowed with no error, no message, no link to re-verify. The button
  * LOOKS broken because nothing on screen tells the admin why it did nothing.
+ *
+ * Same report, live follow-up: "le doy [el 2FA] y solo recarga a otra pagina
+ * ... y no va nada luego es como que se queda pillado". The "Verificar" link
+ * carried no `next`, so `/admin/2fa/verify` always sent the admin back to the
+ * generic `/admin` dashboard, not the ficha they were on — nothing on screen
+ * said to go back and retry, which read as the flow getting stuck.
  */
-test("D-184: 'Marcar como prueba' surfaces a step-up-required error instead of silently doing nothing", async ({
+test("D-184: 'Marcar como prueba' surfaces a step-up-required error and returns the admin to this exact ficha, not /admin", async ({
   browser,
 }) => {
   const { ctx, companyId } = await newCompanyWithDeca();
@@ -274,10 +280,55 @@ test("D-184: 'Marcar como prueba' surfaces a step-up-required error instead of s
     await page.getByTestId("mark-test-toggle").click();
 
     await expect(page.getByText("Verifica tu identidad de nuevo para esta acción.")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Verificar" })).toHaveAttribute(
+    const verificar = page.getByRole("link", { name: "Verificar" });
+    await expect(verificar).toHaveAttribute(
       "href",
-      "/admin/2fa/verify",
+      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}`,
     );
+
+    // Following it (this session's own step-up is already fresh from
+    // internalPage()'s login, so the verify page's own "already fresh, don't
+    // re-render the challenge" short-circuit fires immediately here — the
+    // same code path a real re-verification lands on) must return the admin
+    // to THIS ficha, never the generic /admin dashboard.
+    await verificar.click();
+    await page.waitForURL(new RegExp(`/admin/empresas/${companyId}$`));
+  } finally {
+    await close();
+  }
+});
+
+// #108 follow-up: `AccountActions` (Bloquear/Dar de baja/Reactivar) gates the
+// exact same step-up-protected endpoint class and carried the identical
+// missing-`next` defect — fixed the same way, verified the same way.
+test("D-184: account-lifecycle actions (Bloquear) also return the admin to this exact ficha after re-verifying", async ({
+  browser,
+}) => {
+  const { ctx, companyId } = await newCompanyWithDeca();
+  await ctx.dispose();
+
+  const { page, close } = await internalPage(browser);
+  try {
+    await page.route(`**/api/admin/empresas/${companyId}`, async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "step_up_required", message: "Verifica tu identidad de nuevo." },
+        }),
+      });
+    });
+
+    await page.goto(`/admin/empresas/${companyId}`);
+    await page.getByTestId("account-block").click();
+
+    const verificar = page.getByRole("link", { name: "Verificar" });
+    await expect(verificar).toHaveAttribute(
+      "href",
+      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}`,
+    );
+    await verificar.click();
+    await page.waitForURL(new RegExp(`/admin/empresas/${companyId}$`));
   } finally {
     await close();
   }

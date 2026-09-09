@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button, Pill, type PillTone } from "@/components/ui";
 
@@ -24,6 +24,11 @@ const STATUS_TONE: Record<Status, PillTone> = {
  * Superadmin account-lifecycle controls (#62) — the first client-interactive
  * component in `/admin`. Step-up gated server-side; a `step_up_required`
  * response surfaces a "verifica tu identidad" link rather than failing silently.
+ *
+ * #108 follow-up: the re-verify link now carries the current path as `next`,
+ * so completing the 2FA challenge returns the admin to this exact ficha
+ * instead of dropping them on the generic `/admin` dashboard with no obvious
+ * next step (reported live as the flow feeling "stuck" after entering the code).
  */
 export function AccountActions({
   kind,
@@ -39,6 +44,7 @@ export function AccountActions({
   name: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stepUp, setStepUp] = useState(false);
@@ -84,7 +90,10 @@ export function AccountActions({
       {stepUp && (
         <p className="mt-3 text-sm text-[var(--color-danger)]">
           Verifica tu identidad de nuevo para esta acción.{" "}
-          <Link href="/admin/2fa/verify" className="underline">
+          <Link
+            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}`}
+            className="underline"
+          >
             Verificar
           </Link>
         </p>
