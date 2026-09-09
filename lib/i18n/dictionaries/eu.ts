@@ -429,6 +429,29 @@ export const eu = {
       privacidad: "Pribatutasuna",
       ayuda: "Laguntza",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Sarbide azkarrak",
+      customise: "Pertsonalizatu",
+      save: "Gorde",
+      cancel: "Utzi",
+      restore: "Lehenetsiak berrezarri",
+      hint: (max: number) =>
+        `Aukeratu gehienez ${max} sarbide dagoeneko erabiltzen dituzun funtzioetara.`,
+      limit: (max: number) =>
+        `Gehienezko kopurua aukeratu duzu: ${max} sarbide. Desmarkatu bat aldatzeko.`,
+      options: {
+        crear: "DeCA berria",
+        historico: "Historia",
+        plantillas: "Txantiloiak",
+        empresas: "Ohiko enpresak",
+        vehiculos: "Ibilgailuak",
+        lugares: "Karga/deskarga lekuak",
+        equipo: "Taldea",
+        empresa: "Nire enpresa",
+        ayuda: "Laguntza",
+      },
+    },
     privacy: {
       title: "Pribatutasuna eta komunikazioak",
       intro:
@@ -548,6 +571,28 @@ export const eu = {
     plate: "Matrikula",
     filter: "Iragazi",
     clear: "Garbitu",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "Nire ikuspegiak",
+      save: "Gorde ikuspegia",
+      namePrompt: "Ikuspegiaren izena (adibidez: Frantzia, Aste hau, Valentzia → Lyon)",
+      rename: "Berrizendatu",
+      remove: "Ezabatu",
+      removeConfirm: (name: string) => `Ikuspegia ezabatu "${name}"?`,
+      apply: "Aplikatu ikuspegia",
+      duplicate: "Izen hori duen ikuspegi bat baduzu jada.",
+      limit: (max: number) => `Gehienezko kopurura iritsi zara: ${max} gordetako ikuspegi.`,
+      error: "Ezin izan da ikuspegia gorde. Saiatu berriro.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Bilatu",
+        from: "Hemendik",
+        to: "Hona",
+        carrier: "Garraiolaria",
+        plate: "Matrikula",
+        none: "Iragazkirik gabe",
+      },
+    },
     documentsCountOne: "dokumentu",
     documentsCountMany: "dokumentu",
     exportCsv: "Esportatu CSV",

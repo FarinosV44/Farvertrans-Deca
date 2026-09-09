@@ -420,6 +420,27 @@ export const gl = {
       privacidad: "Privacidade",
       ayuda: "Axuda",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Accesos rápidos",
+      customise: "Personalizar",
+      save: "Gardar",
+      cancel: "Cancelar",
+      restore: "Restaurar predeterminados",
+      hint: (max: number) => `Escolle ata ${max} accesos a funcións que xa usas.`,
+      limit: (max: number) => `Escolliches o máximo de ${max} accesos. Desmarca un para cambialo.`,
+      options: {
+        crear: "Novo DeCA",
+        historico: "Historial",
+        plantillas: "Modelos",
+        empresas: "Empresas habituais",
+        vehiculos: "Vehículos",
+        lugares: "Lugares de carga/descarga",
+        equipo: "Equipo",
+        empresa: "A miña empresa",
+        ayuda: "Axuda",
+      },
+    },
     privacy: {
       title: "Privacidade e comunicacións",
       intro:
@@ -534,6 +555,28 @@ export const gl = {
     plate: "Matrícula",
     filter: "Filtrar",
     clear: "Limpar",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "As miñas vistas",
+      save: "Gardar vista",
+      namePrompt: "Nome da vista (por exemplo: Francia, Esta semana, Valencia → Lyon)",
+      rename: "Renomear",
+      remove: "Eliminar",
+      removeConfirm: (name: string) => `Eliminar a vista "${name}"?`,
+      apply: "Aplicar vista",
+      duplicate: "Xa tes unha vista con ese nome.",
+      limit: (max: number) => `Acadaches o máximo de ${max} vistas gardadas.`,
+      error: "Non se puido gardar a vista. Téntao de novo.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Buscar",
+        from: "Desde",
+        to: "Ata",
+        carrier: "Transportista",
+        plate: "Matrícula",
+        none: "Sen filtros",
+      },
+    },
     documentsCountOne: "documento",
     documentsCountMany: "documentos",
     exportCsv: "Exportar CSV",

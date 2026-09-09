@@ -74,3 +74,56 @@ companies can have a malformed identifier AND the owner cannot edit it (it is lo
 Result: a permanent, unresolvable "completa tus datos". A retroactive check on an existing row must
 only assert what that row's owner can actually change; format/checksum rules belong on the
 create/edit path, not the gate. Also: a gate message must name the real blocker, never a fixed list.
+
+## 2026-09-09 — #94: a layout guard is not an authorization boundary in the App Router
+
+- **Symptom:** every `/admin/*` page returned its full server-rendered payload — companies, users,
+  NIFs, DeCA, acquisition — to an **unauthenticated** caller that sent one header, `RSC: 1`.
+  `/admin/activacion` alone returned 7.74 MB with 6080 company-name hits. Meanwhile a normal browser
+  navigation answered 404 correctly and every existing admin test stayed green.
+- **Cause:** the pages had no guard of their own; the only one was the `(protected)` group layout's
+  `requireInternal()`. Next renders layout and page in PARALLEL, so the page's data fetch ran and its
+  Flight payload was streamed even though the layout aborted with `notFound()`. The layout aborting
+  does not un-send what the page already produced.
+- **Fix:** authorise inside the PAGE — the component that actually fetches. `await requireInternal()`
+  is now the first statement of all 29 internal pages. Middleware was not an option here:
+  `verifySession` uses `node:crypto` (not edge-capable) and the session token carries `uid` but not
+  `role`.
+- **Check added:** `scripts/keel-verify.mjs` fails when any `app/admin/(protected)/**/page.tsx`
+  lacks a guard call, so the next admin page cannot forget it. Regression suite:
+  `tests/e2e/admin-rsc-authz.spec.ts`, which asserts on the BYTES returned rather than on the status
+  code — the status was 200 both before and after the fix, so a status assertion would have proved
+  nothing.
+- **The transferable lesson:** a test that only drives the browser tests only the transport the
+  browser happens to use. `page.goto()` and an `RSC: 1` fetch take different paths through the same
+  route, and for eight months only one of them was ever exercised. Any "X cannot reach Y" claim needs
+  the raw request, not just the rendered page.
+
+## 2026-09-09 — Playwright's `reuseExistingServer` will silently adopt a hand-started server
+
+- **Symptom:** six admin e2e tests failed with `POST /api/deca` → 403 `email_not_verified` and
+  `/crear` timeouts. They also failed on an untouched `git stash` baseline, which read convincingly
+  as "pre-existing breakage" — and it was not.
+- **Cause:** a server started by hand for `curl` probing was still on :3000, and
+  `reuseExistingServer: !process.env.CI` adopted it. That server lacked the config's test seams
+  (`FVD_DISABLE_ABUSE_CHECKS`, `FVD_EXPOSE_RESET_TOKEN`, `SUPERADMIN_BACKUP_PASSWORD`), so the suite
+  ran against a subtly different product.
+- **Fix:** `taskkill //F //IM node.exe //T` before running the suite and let Playwright start its own
+  server. All 249 passed immediately after.
+- **The transferable lesson:** comparing against a stashed baseline proves the change is not the
+  cause; it does NOT prove the failure is real. Both runs shared the same wrong server. When a
+  baseline "confirms" a pre-existing failure, check what is actually serving the requests before
+  believing it.
+
+## 2026-09-09 — dictionary entries that are functions cannot cross into a Client Component
+
+- **Symptom:** `/panel` rendered without the new block and the server logged `Functions cannot be
+  passed directly to Client Components`, pointing at `hint` and `limit`.
+- **Cause:** several i18n values are `(max: number) => string`, and the whole `t.panel.quickActions`
+  object was passed as a prop to a `"use client"` component. Every string in it serialises; the two
+  functions do not.
+- **Fix:** resolve them on the server (`t.panel.quickActions.hint(MAX_QUICK_ACTIONS)`), and where the
+  argument is only known on the client, pass the string with a literal `{name}` placeholder and
+  substitute it there (`historico.views.removeConfirm`).
+- **Check added:** none mechanical — `tsc` accepts it and only a real render fails. This is why the
+  e2e spec drives the actual page instead of asserting on props.

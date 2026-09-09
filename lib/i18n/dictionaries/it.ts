@@ -422,6 +422,28 @@ export const it = {
       privacidad: "Privacy",
       ayuda: "Aiuto",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Accessi rapidi",
+      customise: "Personalizza",
+      save: "Salva",
+      cancel: "Annulla",
+      restore: "Ripristina predefiniti",
+      hint: (max: number) => `Scegli fino a ${max} scorciatoie a funzioni che già usi.`,
+      limit: (max: number) =>
+        `Hai scelto il massimo di ${max} scorciatoie. Deseleziona una per cambiarla.`,
+      options: {
+        crear: "Nuovo DeCA",
+        historico: "Storico",
+        plantillas: "Modelli",
+        empresas: "Aziende abituali",
+        vehiculos: "Veicoli",
+        lugares: "Luoghi di carico/scarico",
+        equipo: "Squadra",
+        empresa: "La mia azienda",
+        ayuda: "Aiuto",
+      },
+    },
     privacy: {
       title: "Privacy e comunicazioni",
       intro:
@@ -537,6 +559,28 @@ export const it = {
     plate: "Targa",
     filter: "Filtra",
     clear: "Cancella",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "Le mie viste",
+      save: "Salva vista",
+      namePrompt: "Nome della vista (per esempio: Francia, Questa settimana, Valencia → Lione)",
+      rename: "Rinomina",
+      remove: "Elimina",
+      removeConfirm: (name: string) => `Eliminare la vista "${name}"?`,
+      apply: "Applica vista",
+      duplicate: "Hai già una vista con questo nome.",
+      limit: (max: number) => `Hai raggiunto il massimo di ${max} viste salvate.`,
+      error: "Non è stato possibile salvare la vista. Riprova.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Cerca",
+        from: "Da",
+        to: "A",
+        carrier: "Vettore",
+        plate: "Targa",
+        none: "Nessun filtro",
+      },
+    },
     documentsCountOne: "documento",
     documentsCountMany: "documenti",
     exportCsv: "Esporta CSV",

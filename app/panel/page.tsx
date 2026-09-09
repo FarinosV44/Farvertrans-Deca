@@ -24,6 +24,8 @@ import {
   TruckIcon,
   IconBadge,
 } from "@/components/panel/icons";
+import { QuickActions } from "@/components/panel/quick-actions";
+import { MAX_QUICK_ACTIONS } from "@/lib/panel/quick-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +113,21 @@ export default async function AppHome() {
                 )}
               </div>
             )}
+
+            {/* #93 — up to three shortcuts this user chose, to functions that
+                already exist. Sits under the primary actions so it prioritises
+                rather than competes with them. */}
+            <QuickActions
+              initial={user.quickActions}
+              labels={t.panel.quickActions.options}
+              t={{
+                ...t.panel.quickActions,
+                // Resolved here: a dictionary function cannot cross into a
+                // Client Component ("Functions cannot be passed directly").
+                hint: t.panel.quickActions.hint(MAX_QUICK_ACTIONS),
+                limit: t.panel.quickActions.limit(MAX_QUICK_ACTIONS),
+              }}
+            />
 
             <section className="mt-8" aria-labelledby="ultimos">
               <div className="flex items-center justify-between">

@@ -45,7 +45,24 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #85 pre-launch UX batch (D-148) — MERGED to `main` (`9d4d702`), production migration
+- **Latest: #92 + #93 + #94 (D-156/D-157) — implemented on `develop`, NOT yet on `main`.**
+  - **#94 [P0 Seguridad] — FIXED (`bf3ce0f`).** Every internal page under `app/admin/(protected)/`
+    relied only on the group layout's `requireInternal()`; the App Router renders layout and page in
+    parallel, so an anonymous `RSC: 1` request returned the page's full server-rendered payload
+    (companies, NIFs, users — up to 7.74 MB) even though a plain navigation correctly 404'd. All 29
+    internal pages now guard themselves; `scripts/keel-verify.mjs` fails the build if a future one
+    doesn't. **Production is exposed until the user redeploys** (the flaw predates #69).
+  - **#92 saved Histórico views** + **#93 quick accesses on Inicio** — both per-user comfort layers
+    over existing functionality, no new filters/screens/modules. New `SavedHistoryView` model +
+    `User.quickActions`, migration `20260909075010_saved_history_views_and_quick_actions`
+    (**local dev only**, not yet applied to production).
+  - Gate: typecheck + lint + prettier + keel-verify + 330 unit (40 new) + full e2e **249/249**
+    (production build). `docs/issues.md` updated (I-092/I-093/I-094), decisions D-156/D-157,
+    `docs/api/INDEX.md` + `docs/05-test-points.md` current.
+  - **NEXT:** commit this work to `develop`, push; then — same as the #87–#90 pattern — the pending
+    migration needs the production DB connection string from the user before `develop` → `main`; the
+    #94 fix is the more urgent of the two since it's a live P0 until redeployed.
+- **Previous: #85 pre-launch UX batch (D-148) — MERGED to `main` (`9d4d702`), production migration
   `20260908170252_saved_company_postal_city` APPLIED (31/31, columns verified).** WhatsApp channel
   label, `SavedCompany` postal/city, discreet "Gratis durante 2026" landing message. `develop` ==
   `main`. See the `#85` section near the end of this file. Keel updated to v5.20.0 this session

@@ -4623,3 +4623,92 @@ remaining scope.
   isolated / at `--workers=1`).
 - **On `develop`** (`5d4e3f3`, `567b5e9`). NOT merged to `main` — waiting to apply the 2 migrations
   to production first (needs the DB connection string from the user), then merge + beat comments.
+
+## D-156 — #94 P0: internal pages authorise themselves, not through the layout (2026-09-09)
+
+**Reported:** internally, as "possible vulnerability reachable from some `operadores`/internal
+route", with no vector. Treated as P0 pre-launch and reproduced before any code changed.
+
+**Root cause (reproduced, not inferred).** Every page under `app/admin/(protected)/` had NO
+authorization of its own; the only guard was the group layout's `requireInternal()`. The App Router
+renders layout and page in PARALLEL, so the page segment's Flight payload was produced and streamed
+even though the layout aborted with `notFound()`. One header was the whole exploit:
+
+    curl -H "RSC: 1" https://<host>/admin/empresas      # unauthenticated → HTTP 200 + data
+
+Measured on a local production build, anonymous: `/admin/activacion` 7.74 MB / 6080 company-name
+hits, `/admin/usuarios` 557 KB / 313, `/admin/empresas` 478 KB / 240 + NIF, `/admin/captacion`
+240 KB / 367, `/admin/oportunidades` 260 KB / 230, `/admin/deca` 409 KB / 213 — and every remaining
+`/admin/*` page leaked its own payload. A plain `page.goto()` answered 404 throughout, which is
+exactly why `admin.spec.ts:79` was green the whole time.
+
+**Why it was invisible.** The reference behaviour was already in the codebase: `/operadores`,
+`/operadores/captacion` and every `/panel/*` page call their guard INSIDE the page and returned
+4.5 KB with no data under the identical request. The layout-only pattern was introduced with the
+`(protected)` group in `5e5bcf7` (the #53 2FA work) and looked equivalent.
+
+**Fix.** `await requireInternal()` is now the first statement of all 29 internal pages (28 changed;
+`/admin/seguridad` already had it). NOT middleware: `verifySession` uses `node:crypto` so it cannot
+run at the edge, and the session token carries only `uid`, never `role` — middleware could not
+decide this without a DB query. The central authorization function is unchanged; what changed is
+that every render entry point calls it.
+
+**The check, so the class cannot reopen.** `scripts/keel-verify.mjs` now fails when any
+`app/admin/(protected)/**/page.tsx` lacks a guard call. Prose would not have held this: the next
+admin page would simply have forgotten, exactly as these 28 did.
+
+**Scope, verified by enumeration rather than assumed.** All 28 `/api/admin/*` routes and every
+company-scoped `/api/*` route already call a real guard; no IDOR was found. `/api/share` takes the
+public unguessable token, not an id, so it is not a vector.
+
+**Production impact:** the `(protected)` layout predates #69, so the build currently deployed
+carries this. It is live until the user redeploys.
+
+**Regression test:** `tests/e2e/admin-rsc-authz.spec.ts` — 3 RSC transports × anonymous /
+normal-customer / internal, asserting on the bytes that leave the server. Written first and observed
+failing on the real leak; the `prefetch` transport did not leak and the test records that.
+
+## D-157 — #92 saved Histórico views + #93 quick accesses on Inicio, both PER USER (2026-09-09)
+
+**Scope, held to what the issues allow.** Both are comfort layers over functions that already
+exist. #92 creates NO new filter: `HISTORY_FILTER_KEYS` is exactly the five the Histórico form
+already submits (`q`, `from`, `to`, `carrier`, `plate`), pinned by a unit test so the module and the
+page cannot drift apart. #93 creates no new screen or module.
+
+**Per-user, not per-company** — the issues ask for it and it is also the safer default: one
+operator's views or shortcuts must never reorder a colleague's screen. This is deliberately the
+opposite scope from favourites (#78), which are company-shared. `SavedHistoryView` is keyed by
+`userId`; `User.quickActions` is a per-user column.
+
+**Data model.** Migration `20260909075010_saved_history_views_and_quick_actions`: new
+`saved_history_view` table (per-user, `@@unique([userId, name])`, `onDelete: Cascade`, max 12 per
+user) + `user.quick_actions TEXT[] DEFAULT '{}'`. Additive and backward-compatible — an existing
+user has no views and an empty selection, which renders the three defaults.
+
+**Authorization from line one (#94's lesson applied to a new surface).** Every saved-view operation
+is scoped by `(id, userId)` in the WHERE clause, so another user's id resolves to "not found"
+rather than reaching a check that could be forgotten. Proven by an IDOR test in the e2e spec, not
+just by reading the code.
+
+**DELIBERATE OMISSION — "Rutas habituales" (#93's option list).** There is no such destination in
+the product: recurring routes are the "Rutas frecuentes" block on Inicio itself and saved templates.
+Offering it would mean inventing a screen, which #93 explicitly forbids ("No crear nuevas funciones
+para llenar este bloque"). "Plantillas" — whose own page reads "Guarda las rutas que repites" — is
+offered instead and covers the intent. The catalogue therefore ships 9 options, not 10.
+
+**Small enabling change, on the record:** `SavedDataManager`'s three existing sections gained stable
+ids (`#empresas`, `#vehiculos`, `#lugares`) so #93's three data shortcuts address distinct
+destinations instead of three copies of `/panel/datos`. No new screen, no new function — the
+sections were already there, they were simply not addressable.
+
+**i18n:** `historico.views` + `panel.quickActions` added key-for-key to all 8 catalogues (es, en,
+ca, gl, eu, fr, de, it); `satisfies Messages` and `tsc` are what prove parity. `describeFilters()`
+takes its labels as a parameter rather than inlining Spanish, per the code-style rule.
+
+**RSC boundary:** the dictionary's `hint`/`limit`/`removeConfirm` are functions, which cannot cross
+into a Client Component. They are resolved server-side; `removeConfirm` carries a literal `{name}`
+placeholder substituted on the client. Caught by a real run, not by review.
+
+**Gate:** typecheck + lint + prettier + keel-verify + **330 unit** (40 new: quick-actions 14,
+history-views 26) + production build + **full e2e 249 passed / 0**, including the existing a11y
+checks over `/panel`, `/panel/historico` and `/panel/datos`.

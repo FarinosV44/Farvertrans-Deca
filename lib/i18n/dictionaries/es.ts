@@ -412,6 +412,28 @@ export const es = {
       privacidad: "Privacidad",
       ayuda: "Ayuda",
     },
+    /** #93 — up to three per-user quick accesses on Inicio. */
+    quickActions: {
+      title: "Accesos rápidos",
+      customise: "Personalizar",
+      save: "Guardar",
+      cancel: "Cancelar",
+      restore: "Restaurar predeterminados",
+      hint: (max: number) => `Elige hasta ${max} accesos a funciones que ya usas.`,
+      limit: (max: number) =>
+        `Has elegido el máximo de ${max} accesos. Desmarca uno para cambiarlo.`,
+      options: {
+        crear: "Nuevo DeCA",
+        historico: "Historial",
+        plantillas: "Plantillas",
+        empresas: "Empresas habituales",
+        vehiculos: "Vehículos",
+        lugares: "Lugares de carga/descarga",
+        equipo: "Equipo",
+        empresa: "Mi empresa",
+        ayuda: "Ayuda",
+      },
+    },
     privacy: {
       title: "Privacidad y comunicaciones",
       intro:
@@ -527,6 +549,28 @@ export const es = {
     plate: "Matrícula",
     filter: "Filtrar",
     clear: "Limpiar",
+    /** #92 — saved views over the filters this page already has. */
+    views: {
+      myViews: "Mis vistas",
+      save: "Guardar vista",
+      namePrompt: "Nombre de la vista (por ejemplo: Francia, Esta semana, Valencia → Lyon)",
+      rename: "Renombrar",
+      remove: "Eliminar",
+      removeConfirm: (name: string) => `¿Eliminar la vista "${name}"?`,
+      apply: "Aplicar vista",
+      duplicate: "Ya tienes una vista con ese nombre.",
+      limit: (max: number) => `Has alcanzado el máximo de ${max} vistas guardadas.`,
+      error: "No se pudo guardar la vista. Inténtalo de nuevo.",
+      /** The same five filter names this page already shows above the table. */
+      filterLabels: {
+        q: "Buscar",
+        from: "Desde",
+        to: "Hasta",
+        carrier: "Transportista",
+        plate: "Matrícula",
+        none: "Sin filtros",
+      },
+    },
     documentsCountOne: "documento",
     documentsCountMany: "documentos",
     exportCsv: "Exportar CSV",
