@@ -45,14 +45,16 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #84 registration opt-in restyled as a compact feature (D-159) — on `develop`
-  (`3792565`), NOT yet on `main`.** User-requested presentation-only change to the commercial-consent
-  checkbox on `/registro`: RouteIcon + "Oportunidades de carga" + "Opcional" badge in a light box,
-  short hint text, a closed-by-default disclosure ("Qué datos se comparten"). Supersedes D-146 point
-  4's "no 'opcional' label" only; every other #84 constraint verified unchanged (unchecked by
-  default, no pressure, required Terms/Privacy checkbox untouched, same storage/legal logic). Gate:
-  typecheck + lint + prettier + `commercial-consent.spec.ts` 14/14 unmodified. Awaiting the user's
-  instruction to merge to `main` (never done without one).
+- **Latest: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
+  (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
+  presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
+  "Oportunidades de carga" in a light box, checkbox with a short label, a small hint line, and a
+  closed-by-default disclosure ("Qué datos se comparten"). D-159 first added an "Opcional" badge
+  (superseding D-146 point 4); D-160, same session, removed the badge again on the user's follow-up
+  correction — the checkbox stays functionally optional, just not labelled as such. Every other #84
+  constraint verified unchanged: unchecked by default, no pressure, required Terms/Privacy checkbox
+  untouched, same storage/legal logic. Gate: typecheck + lint + prettier + keel-verify + 330 unit +
+  full e2e 249/249 + `commercial-consent.spec.ts` 14/14 unmodified.
 - **Previous: #92 + #93 + #94 (D-156/D-157/D-158) — MERGED to `main` (`9fcba7f`), production
   migration APPLIED.**
   - **#94 [P0 Seguridad] — FIXED (`bf3ce0f`).** Every internal page under `app/admin/(protected)/`
