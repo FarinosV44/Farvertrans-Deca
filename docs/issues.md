@@ -65,11 +65,11 @@
 | 96 | [P0 SEO/Performance] Core Web Vitals móvil | perf | high | queued | E-096 |
 | 97 | [P1 SEO] Enlazado interno / autoridad temática | feat | medium | queued | E-097 |
 | 98 | [P1 SEO] Datos estructurados y señales de entidad | feat | medium | queued | E-098 |
-| 99 | [P1 SEO] Tests de regresión SEO | test | medium | queued | E-099 |
+| 99 | [P1 SEO] Tests de regresión SEO | test | medium | **suite en `main`, corre en CI** | E-099 |
 | 100 | [P1 SEO] Search Console operativo | ops | medium | queued | E-100 |
 | 101 | [P0 Seguridad/Confianza] HTTPS/headers sin perjudicar SEO | audit | high | **audited, fix on `main`** | E-101 |
 | 102 | [P0 Equipo] Corregir membresías | fix | **critical** | **fixed**, on `main`, migration applied | E-102 |
-| 103 | [P1 Superadmin] Archivar/marcar empresas de prueba | feat | medium | queued | E-103 |
+| 103 | [P1 Superadmin] Archivar/marcar empresas de prueba | feat | medium | **implementado, on `main`** | E-103 |
 
 ### E-012 — Product V2 (#21–#28): brand, landing, accounts, workspace, creator, delivery, teams, acquisition
 - Status: **all 8 merged to `main`** (D-027). 8 commits, 8 new e2e specs, 4 migrations. Beat-1
@@ -598,3 +598,28 @@ anonymize-in-place (no hard delete, D-067).
   matched zero rows; the real invites in the table had a correct 14-day expiry). `createInvite()`
   now rotates the pending invite in place. Regression: `tests/e2e/team.spec.ts`.
 - **On `main`** (`0eb75cb`). Beat-1 comment posted.
+
+## I-099 — #99 [P1 SEO] Tests de regresión SEO · **suite en `main`, corre en CI** (D-167)
+- 2026-09-09. `tests/e2e/seo-regression.spec.ts` — no un script aparte: este proyecto ya ejecuta
+  todo lo que hay en `tests/e2e/` en CI (`npm run test:e2e`), así que cumple "ejecutable en CI" sin
+  añadir nada al workflow. Complementa el script de #95 (pensado para correr contra un entorno ya
+  desplegado): esta suite corre en cada commit contra la lista de rutas críticas del issue, y añade
+  OG tags + validez de JSON-LD, que el script de #95 no cubre.
+- Cada comprobación corresponde a una regresión que el propio issue marca como "debe bloquear"
+  (noindex accidental, canonical ausente/incorrecto, 404 en página core, JSON-LD inválido, sitemap
+  con URL privada o que no da 200, robots.txt bloqueando todo el sitio) — nunca un umbral cosmético.
+- 23/23 en verde sin relajar ninguna comprobación.
+- **On `main`** (`d7e6ace`). Beat-1 comment posted.
+
+## I-103 — #103 [P1 Superadmin] Archivar/marcar empresas de prueba · **implementado, on `main`** (D-168)
+- 2026-09-09. Construido según el alcance reducido que el usuario editó a mitad de sesión (re-leído
+  antes de empezar): **sin ninguna vía de borrado destructivo en Superadmin**, ni siquiera protegida.
+- Archivar/desactivar/reactivar YA existía de #62 (`setCompanyStatus`, auditado, cierre de sesión) —
+  reutilizado, no reconstruido. Nuevo: `Company.isTest` + toggle "Marcar como prueba" (reversible,
+  auditado, nunca toca acceso ni datos); pestañas Activas/Archivadas/TEST/Todas en
+  `/admin/empresas` (Activas oculta TEST/no-activas por defecto, todo sigue a un clic); KPIs de
+  negocio excluyen empresas TEST.
+- **Verificado directamente:** `delete`/`hard_delete`/`remove`/`purge` enviados al endpoint de
+  administración de empresas — las cuatro rechazadas (422), empresa y DeCA intactos.
+- **On `main`** (`7ceea98`, sin migración nueva — la columna `isTest` ya se aplicó con #102). Beat-1
+  comment posted.
