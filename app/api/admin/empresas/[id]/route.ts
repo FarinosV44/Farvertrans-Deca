@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getInternalUser, requireStepUp, StepUpRequiredError } from "@/lib/admin/guard";
 import { recordAudit } from "@/lib/admin/audit";
-import { setCompanyStatus, LifecycleError } from "@/lib/admin/lifecycle";
+import { setCompanyStatus, setCompanyTest, LifecycleError } from "@/lib/admin/lifecycle";
 import { anonymizeCompany, AnonymizeError } from "@/lib/admin/anonymize";
 import { companyDataSchema } from "@/lib/validation/company";
 import { companyDataComplete } from "@/lib/company/completeness";
@@ -18,6 +18,8 @@ const schema = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("anonymize"), confirm: z.string() }),
   z.object({ action: z.literal("edit"), data: companyDataSchema }),
+  // #103 — "Marcar como prueba": visibility/metrics only, never access or data.
+  z.object({ action: z.literal("set_test"), isTest: z.boolean() }),
 ]);
 
 /**
@@ -54,6 +56,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = parsed.data;
 
   try {
+    if (body.action === "set_test") {
+      await setCompanyTest({
+        actorId: actor.id,
+        companyId: id,
+        isTest: body.isTest,
+        headers: req.headers,
+      });
+      return NextResponse.json({ ok: true, isTest: body.isTest });
+    }
+
     if (body.action === "edit") {
       const d = body.data;
       const company = await prisma.company.update({

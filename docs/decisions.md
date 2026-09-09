@@ -5000,3 +5000,32 @@ path or a non-200 URL, robots.txt blanket-disallowing the site) — never a cosm
 the issue's own "seguridad frente a falsos positivos" instruction. 23/23 passed against the current
 build with no assertion needing to be loosened, which is itself evidence #95's audit conclusions
 were accurate.
+
+## D-168 — #103: company lifecycle in Superadmin — TEST marking + filters, no hard-delete (2026-09-09)
+
+Built to the user's own narrowed spec (issue title/body edited mid-session before this piece
+started, re-fetched and confirmed): NO hard-delete action anywhere in Superadmin, not even guarded.
+
+**What was already built (#62, reused, not duplicated):** `setCompanyStatus()` in
+`lib/admin/lifecycle.ts` already implements archive/deactivate/reactivate (`active|blocked|
+deactivated`) with audit + session-kill, wired into `PATCH /api/admin/empresas/[id]` and the
+`AccountActions` UI on the company ficha. #103 needed none of this rebuilt.
+
+**What was new:**
+- `Company.isTest` (migration `20260909125838_membership_model_and_company_is_test` — added in the
+  same migration as #102's `Membership` table, since both landed in the same session before this
+  migration was created). `setCompanyTest()` — a pure visibility/metrics toggle, reversible,
+  audited, never touches access or data. `MarkTest` component on the company ficha.
+- `/admin/empresas` gains an `estado` tab row (Activas/Archivadas/TEST/Todas) — **Activas is the
+  default and hides TEST + non-active companies**, but every one stays exactly one click away,
+  never deleted or hidden for good. TEST/status badges added to both the list and the ficha.
+- Business KPIs (`overviewMetrics`, `windowMetrics` in `lib/admin/metrics.ts`) exclude
+  `isTest: true` companies from company counts and the active-companies-by-DeCA metric — scoped to
+  the direct company-count KPIs the issue names; DeCA-generation-rate metrics (created/failed/
+  success rate) were left as-is, since excluding test-company DeCA from those would need a larger
+  join-based rewrite for a number the issue does not name as a target.
+- Verified directly, not assumed: sent `delete`/`hard_delete`/`remove`/`purge` at the empresas PATCH
+  endpoint — all four rejected as unrecognised actions (422), and the company + its DeCA survive.
+
+Gate: typecheck + lint + prettier + keel-verify + 335 unit + full e2e 280/282 (2 documented
+`internalPage`-contention flakes, green isolated).

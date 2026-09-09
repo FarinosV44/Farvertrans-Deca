@@ -51,6 +51,8 @@ export type CompanySegment = {
   name: string;
   nif: string | null;
   status: string;
+  /** #103 — "Marcar como prueba": visibility/metrics only. */
+  isTest: boolean;
   contactName: string | null;
   email: string | null;
   createdAt: Date;
@@ -155,6 +157,7 @@ export async function listCompanySegments(now = new Date()): Promise<CompanySegm
       name: c.name,
       nif: c.nif,
       status: c.status,
+      isTest: c.isTest,
       contactName: c.contactName,
       email: c.email,
       createdAt: c.createdAt,

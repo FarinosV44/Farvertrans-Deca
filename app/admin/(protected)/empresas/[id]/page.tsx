@@ -8,6 +8,7 @@ import { WEEKDAY_LABEL } from "@/lib/commercial/activity";
 import { carrierCommercialActivity } from "@/lib/commercial/kpis";
 import { OPPORTUNITY_STATE_LABEL } from "@/lib/commercial/opportunity-model";
 import { AccountActions } from "@/components/admin/account-actions";
+import { MarkTest } from "@/components/admin/mark-test";
 import { CompanyEditForm } from "@/components/admin/company-edit-form";
 import {
   PageHeader,
@@ -250,6 +251,7 @@ export default async function AdminEmpresaDetail({
         <Badge tone={c.status === "active" ? "green" : c.status === "blocked" ? "red" : "muted"}>
           {c.status}
         </Badge>
+        {c.isTest && <Badge tone="yellow">TEST</Badge>}
         {seg?.tags.slice(0, 4).map((t) => (
           <Badge key={t} tone="muted">
             {SEGMENT_LABEL[t]}
@@ -421,6 +423,7 @@ export default async function AdminEmpresaDetail({
           Acciones de administración
         </h2>
         <div className="space-y-4">
+          <MarkTest id={c.id} isTest={c.isTest} />
           <AccountActions
             kind="empresas"
             id={c.id}

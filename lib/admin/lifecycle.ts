@@ -148,3 +148,31 @@ export async function reassignUserToCompany(opts: {
     detail: `→ ${company.name} (${opts.companyId}) as ${opts.role}. Reason: ${opts.reason.trim()}`,
   });
 }
+
+/**
+ * #103 — "Marcar como prueba" toggle. Purely a visibility/metrics label:
+ * never touches access, sessions, or any data. Reversible, audited. The
+ * heavier lifecycle transitions (archive/deactivate/reactivate) already
+ * exist as `setCompanyStatus` above (#62); #103 explicitly does NOT add a
+ * hard-delete action to Superadmin.
+ */
+export async function setCompanyTest(opts: {
+  actorId: string;
+  companyId: string;
+  isTest: boolean;
+  headers?: Headers;
+}): Promise<void> {
+  const company = await prisma.company.findUnique({ where: { id: opts.companyId } });
+  if (!company) throw new LifecycleError("not_found", "Empresa no encontrada.");
+
+  await prisma.company.update({ where: { id: opts.companyId }, data: { isTest: opts.isTest } });
+
+  await recordAudit({
+    actorId: opts.actorId,
+    action: opts.isTest ? "company_marked_test" : "company_unmarked_test",
+    targetType: "company",
+    targetId: opts.companyId,
+    result: "success",
+    headers: opts.headers,
+  });
+}
