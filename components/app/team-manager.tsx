@@ -100,15 +100,41 @@ export function TeamManager({
   }
 
   async function resend(memberEmail: string) {
-    setEmail(memberEmail);
-    await fetch("/api/team/invites", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: memberEmail }),
-    }).catch(() => {});
-    setMsg(`Se ha vuelto a crear la invitación para ${memberEmail}.`);
-    setEmail("");
-    router.refresh();
+    // D-176: this used to fire the request and throw the response away —
+    // "Reenviar" ROTATES the invite's token in place (#95/D-166: at most one
+    // valid link per email at any moment), so the previous link the admin
+    // may have already copied or been shown becomes invalid the instant
+    // this succeeds. Never showing the NEW link left no way back in short
+    // of the email actually arriving — exactly the reported "I keep
+    // generating a new one and it's always expired" loop, since every
+    // click here silently invalidated whatever was on screen.
+    setBusy(true);
+    setMsg(null);
+    setLink(null);
+    try {
+      const res = await fetch("/api/team/invites", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: memberEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMsg(data?.error?.message ?? "No se pudo reenviar la invitación.");
+      } else {
+        setLink(data.link);
+        setDelivered(!!data.delivered);
+        setCopied(false);
+        setMsg(
+          data.delivered
+            ? `Invitación reenviada a ${data.email}. El enlace anterior ya no es válido.`
+            : `No se pudo enviar el correo automáticamente. Comparte este enlace con ${data.email} tú mismo (el anterior ya no es válido):`,
+        );
+        router.refresh();
+      }
+    } catch {
+      setMsg("Sin conexión.");
+    }
+    setBusy(false);
   }
 
   return (
@@ -284,14 +310,16 @@ export function TeamManager({
                         type="button"
                         data-testid={`resend-invite-${i.email}`}
                         onClick={() => resend(i.email)}
-                        className="underline"
+                        disabled={busy}
+                        className="underline disabled:opacity-55"
                       >
                         Reenviar
                       </button>
                       <button
                         type="button"
                         onClick={() => del(`/api/team/invites/${i.id}`)}
-                        className="text-[var(--color-danger)] underline"
+                        disabled={busy}
+                        className="text-[var(--color-danger)] underline disabled:opacity-55"
                       >
                         Revocar
                       </button>
