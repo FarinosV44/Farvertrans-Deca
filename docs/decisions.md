@@ -5112,6 +5112,49 @@ rewritten, never silently deleted.
 
 **Deploy:** merged to `main` immediately, ahead of and separate from the in-progress #96 slice — this is a live incident, not a scheduled release. Still blocked on the user redeploying Hostinger, same standing blocker as every other fix this session.
 
+## D-174 — #96: Core Web Vitals — Inter font removed, hero-image CLS fix, performance budgets (2026-09-09)
+
+Continuing D-172's slice, the rest of the concretely achievable scope:
+
+- **Images:** audited every `<img>` on the public site. Only one was a real gap —
+  `article-layout.tsx`'s editor-supplied `heroImage` had no dimensions at all, a genuine CLS risk.
+  Fixed with a fixed `aspect-[1200/630]` box (reserves the space before load) rather than
+  `next/image`: the URL is an arbitrary editor-entered one with no fixed host to allowlist, and the
+  field is not in real use yet (no seeded/published article sets it) — revisit once a real host is
+  known. Every other `<img>` (QR codes, the landing's product-proof illustration, admin-only logo
+  previews) is already a `data:`/generated-content image with explicit dimensions and a documented
+  eslint-disable — `next/image` would add overhead there, not remove it, confirmed by reading each
+  one rather than trusting the lint warning at face value.
+- **Fonts:** `Inter` was declared (`next/font/google`) as a third typeface but never actually
+  rendered — `--font-sans` resolves to `Archivo` (self-hosted, always loads successfully) first,
+  so Inter was a whole extra font family downloaded on every single page for zero visual effect.
+  Removed entirely (`app/layout.tsx`, `app/globals.css`). Verified Archivo's 4 declared weights
+  (400/500/600/700) and Plex Mono's 2 (400/500) are each genuinely used across the codebase — no
+  further reduction available there; a separate, unrelated finding (`font-extrabold`/800 and
+  `font-mono font-semibold`/600 appear in a few places with no matching loaded weight, so the
+  browser synthesises them) is a rendering-fidelity question, not "unneeded weight", and is out of
+  this issue's scope.
+- **JS bundle:** checked the priority routes' "First Load JS" from the build output.
+  `/`, the SEO cluster, `/guias`, `/blog` are lean (23–25 kB above the 103 kB shared baseline).
+  `/crear`, `/entrar`, `/registro` are heavier (~98–107 kB above baseline) — traced every client
+  component's own imports on those pages and found nothing individually heavy (no unexpected
+  third-party library); the gap is most likely the inherent cost of substantial client-side React
+  trees (forms with live validation) vs. the SEO pages' near-static output, but confirming that
+  precisely needs a real bundle analyzer, which isn't installed. Left as an open question rather
+  than a guessed fix — documented here so a future session with that tooling doesn't have to
+  re-derive where the investigation stopped.
+- **Performance budgets:** new `scripts/perf-budget.mjs` (`npm run perf:budget`) — runs a real
+  production build and checks each priority route's "First Load JS" against a budget. Budgets are
+  the actual measured size at the time this was written (after the fixes above) plus a small
+  margin, per the issue's own "los umbrales deben basarse en medición actual, no en números
+  inventados". Standalone, like `seo-audit.mjs`/`internal-links-audit.mjs` — not wired into
+  `test:e2e`'s CI job, since that would rebuild production twice on every push; it's a deploy-time/
+  when-touching-a-public-page tool.
+- **Not done this slice:** the real mobile before/after baseline (LCP/INP/CLS/TTFB) the issue's own
+  AC asks for — the PageSpeed Insights API returned 429 (rate-limited, no API key configured) every
+  time it was tried; a Playwright-based real-browser measurement (mobile emulation + throttling)
+  was the fallback plan but wasn't reached this slice. Recommended as the next concrete step.
+
 ## D-172 — #96: Core Web Vitals — root cause found (site-wide no-store); SiteHeader fixed, a deeper blocker documented, not fixed (2026-09-09)
 
 **User's explicit decision (AskUserQuestion):** on discovering that the whole public site is served `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` (confirmed directly against production and against a local production build; Hostinger's own CDN reports `x-hcdn-cache-status: DYNAMIC`), the user chose **"static-by-default, locale swaps client-side"** over leaving it dynamic or a full per-locale-URL redesign: the server renders the D-002 Spanish default and is fully static/CDN-cacheable; the language switcher corrects the visible text client-side post-hydration for a visitor whose `fvd_locale` cookie says otherwise — accepting a brief flash of Spanish for a returning non-Spanish visitor, and that only the Spanish version is ever crawlable (already true in practice — no other locale is in the sitemap or targeted by any SEO page).

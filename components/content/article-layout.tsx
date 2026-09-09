@@ -80,11 +80,20 @@ export function ArticleLayout({
         </div>
 
         {item.heroImage && (
+          // #96 (Core Web Vitals): a fixed aspect-ratio reserves the image's
+          // box before it loads — the CLS this editor-supplied image would
+          // otherwise cause, since its real dimensions aren't known ahead of
+          // time. Not `next/image`: the URL is an arbitrary editor-entered
+          // one (no fixed remote host to allowlist), and this field is not
+          // in real use yet (no seeded/published article sets it) — revisit
+          // if/when a real host is known.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.heroImage}
             alt=""
-            className="mt-6 w-full rounded-[var(--radius-lg)] border border-[var(--color-border)]"
+            width={1200}
+            height={630}
+            className="mt-6 aspect-[1200/630] w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] object-cover"
           />
         )}
 

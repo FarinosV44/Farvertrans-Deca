@@ -28,6 +28,7 @@
     "diagnose": "node scripts/diagnose.mjs",
     "seo:audit": "node scripts/seo-audit.mjs",
     "seo:links-audit": "node scripts/internal-links-audit.mjs",
+    "perf:budget": "node scripts/perf-budget.mjs",
     "keel:verify": "node scripts/keel-verify.mjs",
     "keel:doctor": "node scripts/keel-doctor.mjs",
     "backup": "node scripts/backup.mjs",

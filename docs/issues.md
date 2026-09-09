@@ -689,6 +689,25 @@ anonymize-in-place (no hard delete, D-067).
   mismo intercambio en cliente ahí sería una regresión pura sin beneficio. Necesita una
   reestructuración real por grupos de rutas o Partial Prerendering — recomendado como un seguimiento
   propio, no una decisión apresurada al final de esta investigación.
-- Resto del alcance de #96 (imágenes/`next/image`, fuentes, auditoría JS/CSS, baseline real
-  antes/después, presupuestos de rendimiento) aún no iniciado en esta sesión.
+- 2026-09-09, continuación (D-174): imágenes auditadas — un hueco real corregido (`heroImage` sin
+  caja reservada, riesgo de CLS), el resto ya estaba bien. `Inter` eliminado por completo — se
+  declaraba como fallback pero nunca se renderizaba (`Archivo` siempre resuelve primero), una
+  familia de fuente entera descargada en cada página sin ningún efecto visual. Nuevo
+  `scripts/perf-budget.mjs` (`npm run perf:budget`): presupuestos de peso JS por ruta prioritaria
+  contra un build real, 8/8 dentro de presupuesto ahora mismo. El peso mayor de
+  `/crear`/`/entrar`/`/registro` se investigó sin encontrar una causa única — documentado como
+  pregunta abierta, no arreglado a ciegas.
+- **Sigue sin hacerse:** el baseline real móvil antes/después (LCP/INP/CLS/TTFB) que pide el propio
+  issue — PageSpeed Insights devolvió 429 en cada intento (sin API key configurada); la alternativa
+  con Playwright (navegador real, emulación móvil + throttling) no se llegó a construir esta sesión.
 - **On `main`** (see PROGRESS.md).
+
+## I-104 (D-173, urgent) — company-less logged-in user stuck in a dead-end loop
+- 2026-09-09. Reportado en directo por el usuario mid-sesión: su padre, tras ser eliminado del
+  equipo, se quedaba sin poder ni iniciar sesión ni registrarse — `/panel` lo enviaba al formulario
+  completo de alta, que rechazaba correctamente su propio correo por ya existir. Causa: las 13
+  páginas bajo `app/panel/**` redirigían a `/registro` en vez de a `/registro/completar-empresa`
+  (ya existente, pensado exactamente para esto, pero solo conectado al alta con Google). Reproducido
+  en rojo con `git stash` contra el código previo, luego verde. **On `main`** de inmediato, antes y
+  aparte del resto de #96 — incidente en vivo, no una entrega programada. Issue #104 abierto
+  retroactivamente (ya corregido) por la política "Issue capture: on" de este proyecto.
