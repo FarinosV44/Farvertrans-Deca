@@ -184,6 +184,19 @@
     send-only restricted (`GET /domains`/`GET /emails` both 401), so the next real attempt's logged
     provider id needs to be checked against the Resend dashboard directly by the user — that is the
     next diagnostic step, not another code change.
+  - **#102 follow-up, multi-membership correctness (D-178):** user asked for a full checklist
+    verification (join B without losing A, automatic fallback on removal, no onboarding unless
+    truly company-less, Superadmin visibility, etc.) plus specific tests. Verified every item
+    against the actual code — all already correct from the earlier #102 rebuild this session,
+    including something already fully built that hadn't been mentioned back to the user:
+    Superadmin's `/admin/usuarios/[id]` already lists every real membership with an `active` flag.
+    Two soft preferences ("last-used" tie-break instead of oldest; a chooser when the pick is
+    ambiguous) are flagged as real, deliberately-not-built follow-ups — no scenario reported so far
+    ever has more than one remaining candidate, so building either would be unverified speculation.
+    Closed a real verification gap: the existing passing #102 test switched back to A BEFORE
+    removal, never actually exercising the automatic-fallback code path — added a new test that
+    removes the user while B is still active, so the fallback itself has to do the work. 15/15
+    team+membership e2e green, 357/357 unit green.
 - **Previous: #84 registration opt-in restyled as a compact feature (D-159/D-160) — MERGED to `main`
   (`f41073d`). No production migration needed (UI/i18n only, no schema change).** User-requested
   presentation-only change to the commercial-consent checkbox on `/registro`: RouteIcon +
