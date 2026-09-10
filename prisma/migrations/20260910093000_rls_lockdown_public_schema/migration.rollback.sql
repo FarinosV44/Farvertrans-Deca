@@ -19,15 +19,20 @@ BEGIN
   END LOOP;
 END $$;
 
--- 2'. Restore the Supabase default privileges for role `postgres` in `public`.
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-  GRANT ALL ON TABLES    TO "anon", "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-  GRANT ALL ON SEQUENCES TO "anon", "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-  GRANT ALL ON FUNCTIONS TO "anon", "authenticated";
+-- 2' + 1'. Restore the Supabase default privileges + re-grant on everything
+--          currently in `public`. Guarded: only where the Supabase roles exist.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon')
+     AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
 
--- 1'. Re-grant on everything currently in `public`.
-GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA "public" TO "anon", "authenticated";
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "public" TO "anon", "authenticated";
-GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA "public" TO "anon", "authenticated";
+    EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES    TO "anon", "authenticated"';
+    EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon", "authenticated"';
+    EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "anon", "authenticated"';
+
+    EXECUTE 'GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA "public" TO "anon", "authenticated"';
+    EXECUTE 'GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "public" TO "anon", "authenticated"';
+    EXECUTE 'GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA "public" TO "anon", "authenticated"';
+
+  END IF;
+END $$;
