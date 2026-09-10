@@ -19,6 +19,7 @@ export type HeaderStrings = {
   loginCta: string;
   panelCta: string;
   howItWorks: string;
+  plans: string;
   regulation: string;
   guides: string;
   blog: string;
@@ -34,6 +35,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Entrar",
     panelCta: "Ir a mi panel",
     howItWorks: "Cómo funciona",
+    plans: "Planes",
     regulation: "Normativa",
     guides: "Guías",
     blog: "Blog",
@@ -44,6 +46,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Entra",
     panelCta: "Anar al meu panell",
     howItWorks: "Com funciona",
+    plans: "Plans",
     regulation: "Normativa",
     guides: "Guies",
     blog: "Blog",
@@ -54,6 +57,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Sartu",
     panelCta: "Joan nire panelera",
     howItWorks: "Nola funtzionatzen duen",
+    plans: "Planak",
     regulation: "Araudia",
     guides: "Gidak",
     blog: "Bloga",
@@ -64,6 +68,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Entrar",
     panelCta: "Ir ao meu panel",
     howItWorks: "Como funciona",
+    plans: "Plans",
     regulation: "Normativa",
     guides: "Guías",
     blog: "Blog",
@@ -74,6 +79,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Log in",
     panelCta: "Go to my dashboard",
     howItWorks: "How it works",
+    plans: "Plans",
     regulation: "Regulation",
     guides: "Guides",
     blog: "Blog",
@@ -84,6 +90,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Connexion",
     panelCta: "Aller à mon espace",
     howItWorks: "Comment ça marche",
+    plans: "Formules",
     regulation: "Réglementation",
     guides: "Guides",
     blog: "Blog",
@@ -94,6 +101,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Anmelden",
     panelCta: "Zu meinem Bereich",
     howItWorks: "So funktioniert's",
+    plans: "Tarife",
     regulation: "Vorschriften",
     guides: "Anleitungen",
     blog: "Blog",
@@ -104,6 +112,7 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     loginCta: "Accedi",
     panelCta: "Vai al mio pannello",
     howItWorks: "Come funziona",
+    plans: "Piani",
     regulation: "Normativa",
     guides: "Guide",
     blog: "Blog",

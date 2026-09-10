@@ -107,7 +107,7 @@
 | GET /sitemap.xml | route | app/sitemap.ts | docs/reference/endpoints.md | Public indexable pages only |
 | EVENT_NAMES / eventInputSchema / pickRefSnapshot() | const/fn | lib/analytics/events.ts | docs/reference/lib.md | Closed event set + ingest schema + ref/UTM extraction |
 | track() / getSessionId() | function | lib/analytics/client.ts | docs/reference/lib.md | Client-side fire-and-forget analytics + opaque session id |
-| landingJsonLd() + HERO/STEPS/BENEFITS/LEGAL_* | fn/const | lib/content/landing.ts | docs/reference/lib.md | Landing copy + schema.org JSON-LD builder — emits `WebSite` + `SoftwareApplication`; deliberately never `FAQPage` (D-169, #98) |
+| landingJsonLd() + HERO/STEPS/BENEFITS/LEGAL_*/PLANS | fn/const | lib/content/landing.ts | docs/reference/lib.md | Landing copy + schema.org JSON-LD builder — emits `WebSite` + `SoftwareApplication`; deliberately never `FAQPage` (D-169, #98). `PLANS` = informational 2027 pricing figures for the `#planes` section (#109), no billing logic |
 | CtaButton / SiteHeader / SiteFooter / MobileCta / DecaPreview / TrackView | component | components/site/*, components/analytics/* | docs/reference/lib.md | Landing UI building blocks |
 | getEnv() | function | lib/env.ts | docs/reference/lib.md | Parse & cache the validated server environment (fail-closed) |
 | publicEnv | const | lib/env.ts | docs/reference/lib.md | Client-safe env values |

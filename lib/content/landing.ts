@@ -163,6 +163,24 @@ export const LEGAL_SOURCE = {
 };
 
 /**
+ * "Planes 2027" (#109) — PURELY INFORMATIONAL. No billing, no `Plan` model, no
+ * migrations, no limit enforcement, no feature flags. These figures preview the
+ * pricing planned for January 2027; every launch-period account keeps its
+ * current access unchanged until then.
+ *
+ * Only the non-translatable facts live here (one source of truth): monthly
+ * amount, and the previewed per-month DeCA / user limits. The tier names,
+ * targets, taglines and feature copy come from `dict.landing.plans` per locale,
+ * merged positionally (same pattern as `FREE_VALUE_ITEMS` / `PERSONAS`).
+ * `featured` marks the recommended tier. `id` is stable and never shown.
+ */
+export const PLANS = [
+  { id: "starter", amount: "19,99", decaPerMonth: "100", users: "2", featured: false },
+  { id: "professional", amount: "49,99", decaPerMonth: "300", users: "5", featured: true },
+  { id: "business", amount: "89,99", decaPerMonth: "1.000", users: "15", featured: false },
+] as const;
+
+/**
  * JSON-LD for the landing (schema.org). Only emitted where the content is
  * genuinely present.
  *

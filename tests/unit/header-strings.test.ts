@@ -39,6 +39,7 @@ describe("#96 — header-strings.ts stays in sync with the full dictionaries", (
     expect(slice.loginCta).toBe(full.common.loginCta);
     expect(slice.panelCta).toBe(full.common.panelCta);
     expect(slice.howItWorks).toBe(full.nav.howItWorks);
+    expect(slice.plans).toBe(full.nav.plans);
     expect(slice.regulation).toBe(full.nav.regulation);
     expect(slice.guides).toBe(full.nav.guides);
     expect(slice.blog).toBe(full.nav.blog);

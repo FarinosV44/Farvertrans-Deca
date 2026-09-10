@@ -5889,3 +5889,60 @@ previously-documented contention flake happened to sit quiet this run too.
   production) would flag it. Can be re-synced later via the Supabase SQL editor if desired.
 - Pre-existing `format:check` red (`lib/team-invite-email.ts`, `tests/e2e/team.spec.ts`, unformatted
   since #106 / `3be422e`, before this session) is untouched — flagged to the user separately.
+
+### D-187 — #110: PDF verification URL overlapped the QR — layout fix (2026-09-10)
+- User report: the long public-verification URL in the PDF's "Verificación pública" band ran under
+  the QR code. Issue #110 opened (issue-capture policy).
+- Root cause: the band was a flex row with `justify-content: space-between` + a ~20pt padding
+  cushion, no hard constraint. The verification URL is a single space-less token; `@react-pdf` 4.x
+  has NO `word-break`/`overflow-wrap` and hyphenation is disabled project-wide (U+200B / U+00AD are
+  not honoured as break points either — verified). With `decaprofesional.es` it cleared the QR by
+  ~20pt; with the longer Hostinger fallback domain or a longer token it overflowed across the QR.
+- Fix (layout only — `lib/pdf/deca-document.tsx`, no content/QR/logic change):
+  - Strict two-column band: `verifyLeft` = `flex:1` + `minWidth:0` + `maxWidth:377` + `overflow:hidden`;
+    `qrColumn` = fixed `width:112` (96 QR + 8pt quiet zone each side) + `flexShrink/flexGrow:0`.
+  - Removed `justifyContent:"space-between"`.
+  - New `urlLines()` helper splits the displayed URL into ≤40-char lines rendered as stacked
+    `<Text>` nodes (the only wrap mechanism @react-pdf honours here — nested/stacked Text). The QR
+    still encodes the exact unmodified `publicUrl`.
+  - QR size unchanged (96pt); `qrCaption` width 96, stays centred.
+- Verified: new `tests/unit/deca-pdf-verify-block.test.ts` (5 tests) renders the real PDF, locates
+  the QR rect from the content-stream CTM, asserts no verification text reaches the QR — standard
+  token, long Hostinger domain, oversized token. Confirmed RED pre-fix (4/5 fail) → GREEN post-fix.
+  5 real PDFs rendered and inspected: all single-page, URL wraps to 2–3 lines, 156–192pt clear of
+  the QR. Gate: tsc clean; 382/382 unit (incl. 9 existing PDF snapshot); R-1…R-13 compliance 8/8
+  (R-5/R-6 QR-URL check unaffected); lint/keel-verify clean. Pre-existing `format:check` reds in
+  `lib/team-invite-email.ts` + `tests/e2e/team.spec.ts` untouched (unrelated, since #106).
+
+### D-188 — #109: informational "Planes 2027" section on the landing (2026-09-10)
+- Added an informational-only pricing preview section inside the home (`#planes`), between
+  `#incluido` and `#producto`. NO billing, NO `Plan` model, NO migrations, NO limit enforcement,
+  NO feature flags, NO forms — the figures are display strings only and every launch-period account
+  keeps its current access.
+- Files: `components/site/plans-section.tsx` (new server component); `lib/content/landing.ts`
+  (`PLANS` const — the amounts + previewed DeCA/user limits, one source of truth); `dict.landing.plans`
+  in all 8 locales (es/ca/eu/gl/en/fr/de/it) + `nav.plans`; `lib/i18n/header-strings.ts` (+`plans`,
+  8 locales) and its sync test; `components/site/site-header.tsx` (discreet desktop "Planes" →
+  `/#planes` nav link, `data-i18n-key="plans"` so the client locale-swap covers it); `app/page.tsx`
+  (renders `<PlansSection>`). Mobile: no hamburger/nav system added — the section is
+  scroll-discoverable with a prominent green "gratis hasta 31/12/2026" badge + `PLANES 2027` eyebrow.
+- 3 cards STARTER 19,99 / PROFESSIONAL 49,99 (recomendado) / BUSINESS 89,99 €/mes. Live features
+  are only ones that actually exist today; **"Próximamente"** (no year wording, per the user's
+  correction) on: 2-year retention, priority/phone support, API, ERP/TMS, technical onboarding.
+  API/ERP/TMS shown only under Business, with the compatibility disclaimer.
+- Existing API/ERP landing card (`integrationsCard`) reworded per the issue to a "preparing
+  integrations, part of Business" message in all 8 locales; its request flow is unchanged.
+- **Deviation from the issue's literal copy:** the issue asked for "Precios sin IVA ·…"; AC-26
+  (`tests/e2e/landing.spec.ts`) forbids the token "precios" anywhere in the landing body (keyword
+  cannibalisation with `/deca-gratis`, D-105). Used **"IVA no incluido · Facturación mensual · Sin
+  permanencia"** instead — same meaning, keeps AC-26 green. The nav label "Planes" and eyebrow
+  "PLANES 2027" are fine (only the exact phrase "planes y precios" is on the forbidden list).
+- Comparison table (issue §15, optional) deliberately omitted — the 3 cards already convey the
+  ladder and a table risked horizontal scroll on small screens (the issue permits omitting it).
+- Verified: `tests/e2e/plans.spec.ts` (9 tests — renders at `#planes`, exact amounts + limits,
+  free-until-31/12/2026, Professional=recomendado only, live-vs-Próximamente split, Starter has no
+  API/ERP, no billing verbs, desktop "Planes" link, no 320px horizontal scroll, `#incluido` intact).
+  Gate: tsc clean; 382/382 unit (incl. header-strings sync 10/10); `landing.spec.ts` (AC-26 "no
+  precios / no form" green), `i18n-header.spec.ts`, `a11y.spec.ts` (badge contrast fixed — solid
+  `--color-success` + white text), `persona.spec.ts` all green; no horizontal overflow at
+  320/375/390/430/768/1024/1280/1440; lint + keel-verify clean.
