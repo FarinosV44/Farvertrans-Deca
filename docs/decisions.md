@@ -6009,3 +6009,16 @@ previously-documented contention flake happened to sit quiet this run too.
   at 360px") failed in CI on `fcab06e`.
 - Fix: `sm:` → `md:` (768px) for the row switch and `w-auto`, dropped `whitespace-nowrap`. Below
   768px the buttons stack full-width. panel-nav 6/6 green, no overflow at 360.
+
+### D-191 — Mi empresa page: mobile two-column overlap in the contact/company cards (2026-09-10)
+- Reported: on `/panel/empresa` (`Datos de contacto` and `Datos de la empresa`), the two-column
+  grid crowded on phones and a long value (contact email) overlapped the adjacent field.
+- Cause: the grids used `sm:grid-cols-2`, and this theme sets `--breakpoint-sm: 360px`, so it was
+  two columns on every phone; the value `<dd>` had no wrapping rule.
+- Fix (`components/app/company-profile-form.tsx` + `app/panel/empresa/page.tsx`):
+  `sm:grid-cols-2` → `md:grid-cols-2` (and `sm:col-span-2` → `md:col-span-2`); grid cells/labels
+  `min-w-0`; values `break-words [overflow-wrap:anywhere]`; `mt-0.5` label→value spacing. Desktop
+  two-column layout (from 768px) unchanged.
+- Verified: tsc / lint / format / keel-verify clean; 382/382 unit; `company-logo.spec.ts`
+  (owner + member read-only views), `panel-nav.spec.ts`, `a11y.spec.ts` green; **no horizontal
+  scroll at 320/375/390/430/768/1280** with long name/email/address; screenshots reviewed.

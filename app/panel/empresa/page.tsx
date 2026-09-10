@@ -59,16 +59,22 @@ export default async function EmpresaPage() {
 
         <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
           <h2 className="text-lg font-bold">Datos de la empresa</h2>
-          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div>
+          {/* Two-up only from `md` (768px) — this theme's `sm` breakpoint is
+              360px, so `sm:grid-cols-2` crowds these on every phone. */}
+          <dl className="mt-3 grid gap-x-6 gap-y-4 md:grid-cols-2">
+            <div className="min-w-0">
               <dt className="text-xs font-medium text-[var(--color-text-muted)]">
                 Nombre o razón social
               </dt>
-              <dd className="text-sm">{user.company.name}</dd>
+              <dd className="mt-0.5 text-sm break-words [overflow-wrap:anywhere]">
+                {user.company.name}
+              </dd>
             </div>
-            <div>
+            <div className="min-w-0">
               <dt className="text-xs font-medium text-[var(--color-text-muted)]">NIF</dt>
-              <dd className="text-sm">{user.company.nif ?? "—"}</dd>
+              <dd className="mt-0.5 text-sm break-words [overflow-wrap:anywhere]">
+                {user.company.nif ?? "—"}
+              </dd>
             </div>
           </dl>
         </section>
