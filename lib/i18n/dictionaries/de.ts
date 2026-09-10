@@ -602,7 +602,11 @@ export const de = {
       sending: "Wird gesendet…",
       sent: "Ticket gesendet. Wir melden uns so bald wie möglich.",
       myHeading: "Meine Tickets",
-      none: "Sie haben noch kein Ticket eröffnet.",
+      none: "Sie haben keine offenen Tickets.",
+      noneHint:
+        "Sobald Sie ein Ticket eröffnen, können Sie hier seinen Status und die Antworten verfolgen.",
+      guidesPrompt: "Suchen Sie eine Anleitung? Sehen Sie sich unsere",
+      guidesLink: "Leitfäden",
       view: "Ansehen",
       replyLabel: "Ihre Antwort",
       replyPlaceholder: "Schreiben Sie Ihre Antwort…",

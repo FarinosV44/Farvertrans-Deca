@@ -6166,3 +6166,38 @@ working anchors + a callout + a `<figure>` + FAQ render, indexable, no horizonta
 
 **Pending (parts 2–4, same issue #111):** Help page visual polish, incident-system E2E
 verification + hardening, landing API/ERP "+ coste adicional" + "Solicitar integración" E2E.
+
+## D-196 — #111 Sprint B: Help page visual polish (2026-09-10)
+
+**Part 2 of #111 — strictly visual.** No route, API, schema, permission, form-field, email or
+business-rule change. Every `data-testid` unchanged; `panel-help.spec.ts` + `support-tickets.spec.ts`
+pass unmodified.
+
+- `app/panel/ayuda/page.tsx` rewritten (same structure, same sections, same testids):
+  - Support channels render as clear actions with icons: `WhatsApp · Soporte técnico`,
+    `Email · Deca@praetoriaabogados.es` (`break-all` so the address never overflows at 320px),
+    legal `Consulta con un abogado por WhatsApp` + `info@praetoriaabogados.es`.
+  - Section headings get a small leading icon (Lifebuoy for support, Scale for legal).
+  - "Mis incidencias" empty state: icon + `h.none` ("No tienes incidencias abiertas.") +
+    `h.noneHint` secondary line, in a subtle dashed card.
+  - A small **secondary** link near the intro: "¿Buscas instrucciones de uso? Consulta nuestras
+    **Guías**" → `/guias`. No card, no nav item (`AppNav` untouched).
+  - Consistent card padding / spacing / hover; legal section keeps its distinct `bg-surface`
+    and the PRAETORIA, S.L. attribution.
+- `components/panel/support-ticket-form.tsx`: field spacing, `focus-visible` outlines, textarea
+  `rows={6}`, button `px-5`. Same fields, same `POST /api/support`.
+- `components/panel/icons.tsx`: 3 new inline-SVG glyphs (`MailIcon`, `ChatIcon`, `ScaleIcon`),
+  same 24-grid stroke style as the rest.
+- New i18n keys in **all 8 locales** (`t.panel.help`): `none` reworded, `noneHint`,
+  `guidesPrompt`, `guidesLink`.
+- `scripts/guide-screenshots.mjs`: deterministic capture (full-page render clipped to the `<main>`
+  box + focus/skip-link reset) — the earlier element-screenshot leaked the sticky header and the
+  focus-only a11y skip link on `/panel/ayuda`. **That grey box was a capture artifact, not a
+  product bug** (the skip link is `sr-only` until focused, which is correct). All 9 `public/guia/`
+  screenshots re-captured; `ayuda.png` now reflects the polished page.
+
+**Verified:** `panel-help.spec.ts` (2), `support-tickets.spec.ts` (1, full admin↔user round-trip),
+`a11y.spec.ts`, `panel-nav.spec.ts` (4) all green. tsc / eslint / prettier / keel-verify clean;
+394 unit. The support-tickets run also shows the creation notification firing to
+`Deca@praetoriaabogados.es` and the admin-reply email to the user (both `mail_provider_error 401`
+locally — placeholder Resend key, expected; real evidence for Part 3).
