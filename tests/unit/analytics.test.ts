@@ -37,7 +37,7 @@ describe("eventInputSchema", () => {
       sessionId: "abcdefgh1234",
       path: "/",
       ref: { ref: "adrian" },
-      appVersion: "0.1.0",
+      appVersion: "0.2.0",
     });
     expect(r.success).toBe(true);
   });

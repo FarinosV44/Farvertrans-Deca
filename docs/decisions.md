@@ -5756,3 +5756,24 @@ stash` of just the two component files) before re-applying the fix. Added an equ
 exercised its step-up UI path before. Full gate: typecheck/lint/format clean; 377/377 unit
 (untouched); R-1…R-13 compliance 8/8; full e2e **290 passed, 1 skipped, 0 failures** — every
 previously-documented contention flake happened to sit quiet this run too.
+
+## D-185 — App version bumped 0.1.0 → 0.2.0 (2026-09-10)
+- Date / phase: 2026-09-10 / Phase 5 (maintenance)
+- Decision: On the user's explicit instruction, the application version was raised from `0.1.0` to
+  `0.2.0` across all three version touchpoints named in `docs/03-technical-plan.md` §"Version
+  touchpoints" plus the lockfile and the test fixtures that carry a literal app-version string:
+  `package.json`, `package-lock.json` (root + `packages[""]`), `lib/version.ts` (`APP_VERSION` —
+  the single runtime source, consumed by the footer, `/health`, PDF producer/creator metadata,
+  `#29` failure records, diagnostics and analytics events), `tests/unit/analytics.test.ts` and
+  `tests/e2e/admin.spec.ts` (fixture `appVersion` values).
+- No `CHANGELOG.md` touchpoint exists in this project (the file has never been created), so nothing
+  to sync there.
+- Deliberately NOT changed: literal `0.1.0` strings inside historical records —
+  `docs/PROGRESS.md` (a quoted past `/health` response; a D-183 progress note) and `docs/decisions.md`
+  D-183 — which are append-only accounts of what was true at the time, not version declarations. The
+  `@react-pdf/hyphenate@0.1.0` / `yocto-queue@0.1.0` entries in `package-lock.json` are third-party
+  dependency versions, unrelated.
+- Why: user instruction (release-prep step). No version tag / `main` merge performed — that remains
+  the user's call.
+- Verified: `node scripts/keel-verify.mjs` → "version in sync (0.2.0)"; `tsc --noEmit` clean;
+  prettier clean on touched files; 377/377 unit green (full suite).
