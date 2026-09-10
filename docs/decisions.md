@@ -5866,3 +5866,26 @@ previously-documented contention flake happened to sit quiet this run too.
   privileges. Backup: `coverage/backup/deca-prod-20260910T091012Z.*` (gitignored; SHA-256 manifest).
 - Pending: user re-runs Security Advisor + notes dashboard backup status; credential-rotation plan;
   phase-2 hardening. Test DeCA row can be deleted by the user if desired.
+
+### D-186 (cont.) — migration made portable for CI/plain-Postgres (2026-09-10)
+- The first version of `20260910093000_rls_lockdown_public_schema/migration.sql` used bare
+  `REVOKE ... FROM anon, authenticated` / `ALTER DEFAULT PRIVILEGES ... FROM anon, authenticated`.
+  Those roles exist only on a Supabase cluster, so `prisma migrate deploy` failed on CI's plain
+  `postgres:15-alpine` with `ERROR: role "anon" does not exist` (P3018) — this had turned CI red on
+  `main`/`develop` (the pre-existing red was a separate `format:check` issue; this is a new, real
+  break introduced by the migration).
+- Fix: the REVOKE + ALTER DEFAULT PRIVILEGES block is now wrapped in
+  `DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') AND EXISTS (... 'authenticated')
+  THEN ... END IF; END $$;`. RLS `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` stays unconditional
+  (portable, no-op if already on). Rollback file guarded the same way.
+- Semantically identical on Supabase (roles exist → guard passes → same statements). On plain
+  Postgres it enables RLS and skips the (nonexistent) grant revokes.
+- Verified: `prisma migrate deploy` applies all 39 migrations cleanly on a fresh `postgres:15-alpine`
+  (RLS 41/41), and `prisma migrate status` against **production** still reports "Database schema is
+  up to date!" (an already-applied migration is skipped regardless of checksum — `migrate
+  deploy`/`status` do not verify checksums of applied migrations; confirmed by test).
+- Production `_prisma_migrations.checksum` for this row still holds the pre-edit hash. Left as-is: it
+  is functionally irrelevant to `migrate deploy`/`status`; only `migrate dev` (never run against
+  production) would flag it. Can be re-synced later via the Supabase SQL editor if desired.
+- Pre-existing `format:check` red (`lib/team-invite-email.ts`, `tests/e2e/team.spec.ts`, unformatted
+  since #106 / `3be422e`, before this session) is untouched — flagged to the user separately.

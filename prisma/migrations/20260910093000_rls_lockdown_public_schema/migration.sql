@@ -16,6 +16,13 @@
 --   security with NO policies (RLS-on + zero-policy = deny-all for every role
 --   that does not bypass RLS). Prisma (`postgres`, BYPASSRLS) is unaffected.
 --
+-- PORTABILITY
+--   The `anon` / `authenticated` roles only exist on a Supabase cluster. The
+--   REVOKE / ALTER DEFAULT PRIVILEGES statements are guarded so this migration
+--   also applies cleanly on a plain PostgreSQL (CI, local `db:up`), where there
+--   is simply nothing to revoke. RLS is enabled unconditionally (harmless and
+--   desirable everywhere; a no-op if already enabled).
+--
 -- SAFETY
 --   Non-destructive. Only privilege / RLS-flag / default-privilege metadata
 --   changes. No DDL that creates, drops, renames or alters a table's columns.
@@ -27,20 +34,24 @@
 --   See migration.rollback.sql in this folder (not executed by Prisma).
 -- ===========================================================================
 
--- 1. Revoke every PostgREST-role privilege on everything currently in `public`.
-REVOKE ALL PRIVILEGES ON ALL TABLES    IN SCHEMA "public" FROM "anon", "authenticated";
-REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "public" FROM "anon", "authenticated";
-REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA "public" FROM "anon", "authenticated";
+-- 1 + 2. Revoke PostgREST-role privileges + fix the Supabase default that
+--        auto-grants every future `postgres`-created object. Guarded: only runs
+--        where the Supabase roles exist.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon')
+     AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
 
--- 2. Stop future objects created by `postgres` in `public` (i.e. every future
---    Prisma migration) from being auto-granted to those roles. This undoes the
---    Supabase default that caused the exposure in the first place.
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-  REVOKE ALL ON TABLES    FROM "anon", "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-  REVOKE ALL ON SEQUENCES FROM "anon", "authenticated";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-  REVOKE ALL ON FUNCTIONS FROM "anon", "authenticated";
+    EXECUTE 'REVOKE ALL PRIVILEGES ON ALL TABLES    IN SCHEMA "public" FROM "anon", "authenticated"';
+    EXECUTE 'REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA "public" FROM "anon", "authenticated"';
+    EXECUTE 'REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA "public" FROM "anon", "authenticated"';
+
+    EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON TABLES    FROM "anon", "authenticated"';
+    EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON SEQUENCES FROM "anon", "authenticated"';
+    EXECUTE 'ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" REVOKE ALL ON FUNCTIONS FROM "anon", "authenticated"';
+
+  END IF;
+END $$;
 
 -- 3. Enable row level security on every base table in `public`. No policies
 --    are created, so no non-BYPASSRLS role can read or write any row.
