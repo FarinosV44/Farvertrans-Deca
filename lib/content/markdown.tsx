@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { CtaButton } from "@/components/site/cta-button";
-import { slugifyHeading } from "./markdown-toc";
+import { slugifyHeading, CALLOUT_LABEL, calloutVariant, parseImageLine } from "./markdown-toc";
 
 export { slugifyHeading, extractHeadings } from "./markdown-toc";
 
@@ -10,9 +10,17 @@ export { slugifyHeading, extractHeadings } from "./markdown-toc";
  * to React elements only — never `dangerouslySetInnerHTML` (security.md T-5) —
  * and supports the subset the editor needs: headings (h2/h3), paragraphs,
  * bullet/number lists, bold/italic/code/links, blockquote callouts, tables,
- * horizontal rules, an FAQ block (`::: faq` … `:::`) and the `[[cta]]` token.
- * The table-of-contents helpers live in `./markdown-toc` (pure, testable).
+ * horizontal rules, an FAQ block (`::: faq` … `:::`), typed callouts
+ * (`::: tip|important|example` … `:::`), block images with an optional caption
+ * (`![alt](/local.png "pie")`, #111) and the `[[cta]]` token. The pure helpers
+ * live in `./markdown-toc` (testable without React).
  */
+
+const CALLOUT_BORDER: Record<keyof typeof CALLOUT_LABEL, string> = {
+  tip: "border-[var(--color-success)]",
+  important: "border-[var(--color-danger)]",
+  example: "border-[var(--color-primary)]",
+};
 
 /** Inline: **bold**, *italic*, `code`, [text](url). */
 function inline(text: string, keyBase: string): ReactNode[] {
@@ -87,6 +95,32 @@ export function Markdown({ source }: { source: string }) {
       continue;
     }
 
+    // block image with optional caption:  ![alt](/guia/x.png "pie")
+    const img = parseImageLine(t);
+    if (img) {
+      push(
+        <figure className="my-6">
+          {/* Guide screenshots live under /public/guia and are sized 2:1-ish;
+              the aspect box reserves layout before load (CLS, #96/D-174).
+              Not next/image: these are static local assets, not a remote host. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={img.src}
+            alt={img.alt}
+            loading="lazy"
+            className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)]"
+          />
+          {img.caption && (
+            <figcaption className="mt-2 text-xs text-[var(--color-text-muted)]">
+              {img.caption}
+            </figcaption>
+          )}
+        </figure>,
+      );
+      i++;
+      continue;
+    }
+
     // headings
     const h = /^(#{1,3})\s+(.*)$/.exec(t);
     if (h) {
@@ -106,6 +140,37 @@ export function Markdown({ source }: { source: string }) {
           </h3>,
         );
       i++;
+      continue;
+    }
+
+    // typed callout:  ::: tip | important | example   …   :::
+    const callout = calloutVariant(t);
+    if (callout) {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== ":::") {
+        buf.push(lines[i].trim());
+        i++;
+      }
+      i++; // skip closing :::
+      const paras = buf
+        .join("\n")
+        .split(/\n{2,}/)
+        .filter(Boolean);
+      push(
+        <div
+          className={`my-6 rounded-[var(--radius-md)] border-l-4 ${CALLOUT_BORDER[callout]} bg-[var(--color-surface)] p-4`}
+        >
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-text-muted)]">
+            {CALLOUT_LABEL[callout]}
+          </p>
+          {paras.map((p, n) => (
+            <p key={n} className={n === 0 ? "mt-1" : "mt-2"}>
+              {inline(p.replace(/\n/g, " "), `callout-${callout}-${n}`)}
+            </p>
+          ))}
+        </div>,
+      );
       continue;
     }
 
@@ -233,7 +298,9 @@ export function Markdown({ source }: { source: string }) {
     while (
       i < lines.length &&
       lines[i].trim() !== "" &&
-      !/^(#{1,3}\s|>|\||[-*]\s|\d+\.\s|:::|\[\[cta\]\]|-{3,}$|\*{3,}$)/.test(lines[i].trim())
+      !/^(#{1,3}\s|>|\||[-*]\s|\d+\.\s|:::|\[\[cta\]\]|!\[[^\]]*\]\(|-{3,}$|\*{3,}$)/.test(
+        lines[i].trim(),
+      )
     ) {
       para.push(lines[i].trim());
       i++;

@@ -62,7 +62,7 @@ export const en = {
     freeValueComingSoon: "Coming soon",
     integrationsCard: {
       heading: "API & ERP/TMS integrations",
-      body: "We're preparing integrations for companies that need to connect DeCA Profesional with their systems. They'll be part of the Business plans.",
+      body: "We're preparing integrations for companies that need to connect DeCA Profesional with their systems. They're an additional service, subject to technical assessment and a per-project quote; they are not included in the subscription price.",
       cta: "I'm interested in the integration",
     },
     plans: {
@@ -80,11 +80,12 @@ export const en = {
         "The limits and features shown correspond to the plans planned for 2027. Until then, launch-period accounts keep their current access.",
       recommendedLabel: "Recommended",
       comingSoonLabel: "Coming soon",
+      extraCostLabel: "+ additional cost",
       decaPerMonthLabel: "DeCA / month",
       usersLabel: "users",
       guestCta: "Start for free",
       apiDisclaimer:
-        "API and ERP/TMS integrations subject to technical availability and compatibility with the client's system.",
+        "API and ERP/TMS integrations subject to technical availability and compatibility with the client's system. They are not included in the subscription price: each integration is quoted according to its requirements and complexity.",
       tiers: [
         {
           name: "Starter",
@@ -129,9 +130,9 @@ export const en = {
           tagline: "For companies with higher volume and integration with their systems.",
           inherits: "Everything in Professional, plus:",
           features: [
-            { label: "API", soon: true },
-            { label: "ERP / TMS integrations", soon: true },
-            { label: "Technical integration onboarding", soon: true },
+            { label: "API", soon: true, extraCost: true },
+            { label: "ERP / TMS integrations", soon: true, extraCost: true },
+            { label: "Technical integration onboarding", soon: true, extraCost: true },
             { label: "Priority technical support", soon: false },
             { label: "Phone support", soon: false },
             { label: "Higher volume and multi-user capacity", soon: false },
@@ -584,7 +585,10 @@ export const en = {
       sending: "Sending…",
       sent: "Ticket sent. We'll get back to you as soon as possible.",
       myHeading: "My tickets",
-      none: "You haven't opened any tickets.",
+      none: "You have no open tickets.",
+      noneHint: "When you open a ticket, you'll be able to track its status and replies here.",
+      guidesPrompt: "Looking for usage instructions? See our",
+      guidesLink: "Guides",
       view: "View",
       replyLabel: "Your reply",
       replyPlaceholder: "Write your reply…",

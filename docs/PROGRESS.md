@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. Nothing awaits `main`.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **Ready for `main`: #111 Parts 1–4 (D-195…D-198) + D-194.** The `develop`→`main` merge and any tag are the user's call.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -45,8 +45,41 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`develop` == `main` == `<D-194 merge>` (2026-09-10). CI on `main` green through the D-193 merge
-  (`34489395873`); D-194 merge pending its own CI run.**
+- **#111 — support/docs experience, 4 parts (D-195…D-198). ALL 4 DONE on `develop`, NOT merged to
+  `main`. Ready for `main`: #111 (Parts 1–4). Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+  - **Part 4 / D-198 — landing API/ERP pricing clarity + "Solicitar integración" reaches a person.**
+    The 3 Business-tier `soon` features (API / ERP·TMS / onboarding) now show `+ coste adicional`
+    next to "Próximamente" (kept), no fixed price; `apiDisclaimer` + `integrationsCard.body`
+    reworded so nothing implies inclusion in the subscription — all 8 locales.
+    `createIntegrationRequest()` now sends a notification email to `Deca@praetoriaabogados.es`
+    (before: DB + admin panel only, nobody alerted) with 2-min dedup; form confirmation copy made
+    realistic. No schema change. e2e: admin-growth 4/4 (+ new dedup test), plans 10/10.
+  - **Part 3 / D-197 — incident system verified E2E + anti-duplicate.** Full flow driven and
+    green (create → persist → Mis incidencias → admin reply → user sees it + reply); notification
+    emails confirmed firing to `Deca@praetoriaabogados.es` and to the user (`mail_provider_error
+    401` locally = placeholder Resend key; real inbox delivery needs the user's Resend dashboard).
+    Hardening: `createSupportTicket()` de-dupes an identical ticket within 2 min (no duplicate row
+    ⇒ no duplicate email); notification body gains company/user id + ISO date. No schema change.
+    The UI promise "Recibirás la respuesta por correo y también aquí" is true — no wording change.
+  - **Part 2 / D-196 — Help page (`/panel/ayuda`) visual polish only.** Support channels as icon
+    actions (`WhatsApp · Soporte técnico`, `Email · Deca@praetoriaabogados.es`), polished ticket
+    form, better "Mis incidencias" empty state, small secondary Guías link (no card, no nav item),
+    3 new inline-SVG icons, 4 new `t.panel.help` keys ×8 locales. Zero behaviour change — every
+    `data-testid` kept, `panel-help.spec.ts` + `support-tickets.spec.ts` pass unmodified. The
+    Part 1 "grey box" note is resolved: it was the a11y skip link (`sr-only` until focused —
+    correct) leaking into an element screenshot; `scripts/guide-screenshots.mjs` capture is now
+    deterministic and all 9 screenshots were re-captured.
+  - **Part 1 / D-195 — "Guía de uso de DeCA Profesional" as a CMS `ContentItem` inside `/guias`.**
+    Additive Markdown renderer support: typed callouts `::: tip/important/example` + block images
+    `![alt](/local.png "pie")` (local paths only), pure helpers unit-tested (8), every existing
+    guide/blog renders byte-identically. Full 19-section guide (`prisma/content/guia-de-uso.ts`)
+    written against the real app; seed entry; `scripts/guide-screenshots.mjs` + 9 real screenshots
+    from synthetic demo data in `public/guia/`. `tests/e2e/guia-uso.spec.ts` (3). Gate: tsc/eslint/
+    prettier/keel-verify clean, 394 unit (8 new), e2e 9/9. **Production needs `npm run seed:content`
+    after deploy** to publish the guide (seed only creates; later edits via `/admin/guias`).
+- **`develop` == `main` == `<D-194 merge>` (2026-09-10) + #111 Parts 1–4 (D-195…D-198) commits on
+  `develop` only. CI on `main` green through the D-193 merge (`34489395873`); D-194 merge pending
+  its own CI run.**
 - **Latest: D-194 — admin step-up re-verification was an unbreakable loop (3rd report of #108).**
   `/admin/2fa/verify` skipped the code challenge on the 12h admin window (`isAdmin2faFresh()`) while
   step-up actions need the 10-min window (`requireStepUp()`) → an admin browsing >10 min could never

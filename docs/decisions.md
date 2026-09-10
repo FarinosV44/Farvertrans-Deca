@@ -6119,3 +6119,166 @@ code, and asserts the pending action auto-completes with `is_test = true` persis
 Second new test: a forced 500 shows the explicit "No se pudo completar la acción." alert, does not
 navigate/reload, and stashes nothing. The two existing D-184 tests updated for the `&stepup=1`
 href. Full file **10/10 green** (`--workers=2`). tsc / lint / prettier / keel-verify clean.
+
+## D-195 — #111 Sprint A: "Guía de uso de DeCA Profesional" inside Guías (2026-09-10)
+
+**Request (part 1 of 4):** a complete product usage guide, inside the existing public **Guías**
+section, looking exactly like the other guides — no new nav item, no hero card, no separate docs
+homepage.
+
+**Decisions (confirmed with the user via AskUserQuestion):**
+- The guide is a **CMS `ContentItem`** of type `guide` (`slug: guia-de-uso-deca-profesional`),
+  seeded via `prisma/content-seed.ts` and editable in `/admin/guias` like every other guide.
+  Renders through the existing `ArticleLayout` (breadcrumbs, auto "En esta página" TOC with
+  `#anchor` links, related content) — so it is visually identical to the others for free.
+- **Published and indexable** (`robotsIndex` default `true`), at `/guias/<slug>` like the rest.
+- **Screenshots:** a core set of **9 real screenshots** captured now from **synthetic demo data**
+  (`scripts/guide-screenshots.mjs` — registers a throwaway "Transportes Demo SL", creates 2 DeCAs
+  + saved records, screenshots each panel screen), stored in `public/guia/`. Replace the PNGs in
+  place to refresh; the guide text never changes. No real data, credentials or PII.
+
+**Shared Markdown renderer — additive only (`lib/content/markdown.tsx` + `markdown-toc.ts`):**
+- **Typed callouts** `::: tip | important | example … :::` → labelled boxes (Consejo / Importante /
+  Ejemplo), one border colour each. The bare `>` blockquote keeps its generic style.
+- **Block images with an optional caption** `![alt](/guia/x.png "pie")` → `<figure>` + lazy
+  `<img>` + `<figcaption>`. **Local paths only** — a remote or protocol-relative URL returns
+  `null` and falls through (same posture as the arbitrary-URL note on `heroImage`).
+- Pure helpers `calloutVariant()` / `parseImageLine()` + `CALLOUT_LABEL` in `markdown-toc.ts`,
+  unit-tested (`tests/unit/markdown-blocks.test.ts`, 8). Every existing guide/blog post renders
+  byte-identically (content-cms.spec.ts 6/6 unchanged).
+
+**Content:** `prisma/content/guia-de-uso.ts` — 19 `##` sections written against the real app
+(registration incl. the real Google 2-step `complete-company` flow and the optional
+"Oportunidades de carga" opt-in; the 4 company profiles; the 3-step wizard + review; PDF/QR;
+Mis DeCA / Historial; Plantillas vs Datos habituales; Equipo roles Administrador/Operador/Solo
+lectura; Mi empresa incl. locked razón social/NIF; Logo; Privacidad; Oportunidades de carga;
+Ayuda; Abrir una incidencia; Asistencia jurídica; Inspección; FAQ). Documents only functionality
+that exists today.
+
+**Seeding note:** `seedContent()` only *creates* (skips an existing slug). Production has no guide
+yet → `npm run seed:content` after deploy creates it. Later text fixes go through the `/admin/guias`
+CMS editor (same as the other guides), not a re-seed.
+
+**Verified:** `tests/e2e/guia-uso.spec.ts` (3) — listed in `/guias`, opens like the others, TOC +
+working anchors + a callout + a `<figure>` + FAQ render, indexable, no horizontal scroll at
+320/1440. Full gate: tsc / eslint / prettier / keel-verify clean; 394 unit (8 new); e2e 9/9
+(guia-uso 3 + content-cms 6). Committed to `develop`; **not merged to `main`** (user's call).
+
+**Pending (parts 2–4, same issue #111):** Help page visual polish, incident-system E2E
+verification + hardening, landing API/ERP "+ coste adicional" + "Solicitar integración" E2E.
+
+## D-196 — #111 Sprint B: Help page visual polish (2026-09-10)
+
+**Part 2 of #111 — strictly visual.** No route, API, schema, permission, form-field, email or
+business-rule change. Every `data-testid` unchanged; `panel-help.spec.ts` + `support-tickets.spec.ts`
+pass unmodified.
+
+- `app/panel/ayuda/page.tsx` rewritten (same structure, same sections, same testids):
+  - Support channels render as clear actions with icons: `WhatsApp · Soporte técnico`,
+    `Email · Deca@praetoriaabogados.es` (`break-all` so the address never overflows at 320px),
+    legal `Consulta con un abogado por WhatsApp` + `info@praetoriaabogados.es`.
+  - Section headings get a small leading icon (Lifebuoy for support, Scale for legal).
+  - "Mis incidencias" empty state: icon + `h.none` ("No tienes incidencias abiertas.") +
+    `h.noneHint` secondary line, in a subtle dashed card.
+  - A small **secondary** link near the intro: "¿Buscas instrucciones de uso? Consulta nuestras
+    **Guías**" → `/guias`. No card, no nav item (`AppNav` untouched).
+  - Consistent card padding / spacing / hover; legal section keeps its distinct `bg-surface`
+    and the PRAETORIA, S.L. attribution.
+- `components/panel/support-ticket-form.tsx`: field spacing, `focus-visible` outlines, textarea
+  `rows={6}`, button `px-5`. Same fields, same `POST /api/support`.
+- `components/panel/icons.tsx`: 3 new inline-SVG glyphs (`MailIcon`, `ChatIcon`, `ScaleIcon`),
+  same 24-grid stroke style as the rest.
+- New i18n keys in **all 8 locales** (`t.panel.help`): `none` reworded, `noneHint`,
+  `guidesPrompt`, `guidesLink`.
+- `scripts/guide-screenshots.mjs`: deterministic capture (full-page render clipped to the `<main>`
+  box + focus/skip-link reset) — the earlier element-screenshot leaked the sticky header and the
+  focus-only a11y skip link on `/panel/ayuda`. **That grey box was a capture artifact, not a
+  product bug** (the skip link is `sr-only` until focused, which is correct). All 9 `public/guia/`
+  screenshots re-captured; `ayuda.png` now reflects the polished page.
+
+**Verified:** `panel-help.spec.ts` (2), `support-tickets.spec.ts` (1, full admin↔user round-trip),
+`a11y.spec.ts`, `panel-nav.spec.ts` (4) all green. tsc / eslint / prettier / keel-verify clean;
+394 unit. The support-tickets run also shows the creation notification firing to
+`Deca@praetoriaabogados.es` and the admin-reply email to the user (both `mail_provider_error 401`
+locally — placeholder Resend key, expected; real evidence for Part 3).
+
+## D-197 — #111 Sprint C: incident system verified end-to-end + anti-duplicate (2026-09-10)
+
+**Part 3 of #111 — verify the incident/support system really works, then harden it.**
+
+**Verified end-to-end (assistant-driven, `tests/e2e/support-tickets.spec.ts`):**
+- `POST /api/support` (category + subject + body) → `201 {id, number}`; row in `support_ticket`
+  + first `support_ticket_message`; appears in "Mis incidencias".
+- Superadmin opens `/admin/soporte/[id]` (sees company + user + body), replies, moves the ticket
+  through its states.
+- The user sees the admin reply at `/panel/ayuda/[id]` and can reply back.
+- **Notification emails fire** — server logs show `mail_send_attempt` → `mail_provider_*` for the
+  creation notification (to `Deca@praetoriaabogados.es`, the `FVD_SUPPORT_NOTIFY_EMAIL ||
+  BRAND.supportEmail` target) AND for the admin-reply email (to the user's address). Locally both
+  end in `mail_provider_error 401` — the local `RESEND_API_KEY` is a placeholder; **actual inbox
+  delivery to `deca@praetoriaabogados.es` can only be confirmed from the Resend dashboard by the
+  user** (CREDENTIAL). The `providerId` from the first real production send is the value to check.
+- **The UI promise "Recibirás la respuesta por correo y también aquí" is TRUE** — no misleading
+  wording; nothing to change (no Option A/B needed).
+
+**Hardening (no schema change):**
+- `createSupportTicket()` now de-dupes: an identical ticket (same `userId`+`companyId`+`category`
+  +`subject`) created within **2 minutes** returns the existing `{id, number}` instead of a
+  second row — so a double-click / slow-response retry / refresh-resubmit can never create a
+  duplicate ticket **or a duplicate notification email** (the email is fired 1:1 with
+  `supportTicket.create`). A different subject the same second is NOT deduped.
+- The creation notification body now also carries the company id, user id and the ISO creation
+  timestamp (Part 3 "email content" list — most was already there).
+- Failure handling was already correct: the ticket is persisted BEFORE the fire-and-forget
+  `sendMail`, `sendMail` never throws and logs every outcome (`mail_provider_error` etc.), and the
+  form only ever claims the ticket was *created* (true), never that an email was delivered.
+
+**Email infrastructure (no secrets):** provider Resend (`lib/mailer.ts`); env `RESEND_API_KEY`,
+`FVD_MAIL_FROM` (Resend-verified sender, presented as `${BRAND.name} <FVD_MAIL_FROM>`),
+`FVD_SUPPORT_NOTIFY_EMAIL` (optional override; falls back to `BRAND.supportEmail` =
+`Deca@praetoriaabogados.es`). 8s timeout, best-effort, full logging (D-177/D-192).
+
+**Verified:** `support-tickets.spec.ts` 2/2 (round-trip + the new dedup test); tsc / eslint /
+prettier / keel-verify clean; 394 unit. Not merged to `main`.
+
+## D-198 — #111 Sprint D: API/ERP pricing clarity + "Solicitar integración" reaches a person (2026-09-10)
+
+**Part 4 of #111.** Make the landing say clearly that API/ERP is upcoming **and an additional,
+quoted service — not included in the subscription**, and prove integration requests reach a real
+destination.
+
+**Commercial clarity (all 8 locales):**
+- `components/site/plans-section.tsx` + `dict.landing.plans`: the 3 Business-tier `soon` features
+  (API / Integraciones ERP·TMS / Onboarding técnico) gain an `extraCost` flag → a small muted
+  `+ coste adicional` marker **next to the existing "Próximamente"** (kept). No fixed price.
+- `dict.landing.plans.apiDisclaimer` (the small text under the section) extended: "… No están
+  incluidas en el precio de la suscripción: se presupuestan según las necesidades y la complejidad
+  de cada integración." — the discreet explanation Part 4.3 asks for, not a card disclaimer.
+- `dict.landing.integrationsCard.body` (the landing CTA card): the "Formarán parte de las
+  soluciones Business" sentence — which read as *included in the Business plan* — replaced in all
+  8 locales with "Son un servicio adicional, sujeto a valoración técnica y presupuesto según el
+  proyecto; no están incluidas en el precio de la suscripción." The misleading code comment at
+  `app/page.tsx` fixed.
+- Swept `app/**`, `lib/i18n/**`, `lib/content/**`, `content/seo/**` for API / ERP / integrac* —
+  nothing else implies inclusion (`"Sin montar un proceso nuevo en tu ERP"` etc. say the opposite).
+
+**"Solicitar integración" now reaches a person (`lib/integrations/index.ts`):**
+- **Before:** `createIntegrationRequest()` persisted an `IntegrationRequest` row and it appeared in
+  `/admin/integraciones` — **but no email was ever sent; nobody was alerted.**
+- **Now:** after the insert, a best-effort `sendMail()` (same pattern + address as a support
+  ticket: `FVD_SUPPORT_NOTIFY_EMAIL || BRAND.supportEmail` = `Deca@praetoriaabogados.es`) with
+  company name+NIF+id, user email+id, contact, system/ERP name, need, volume, date, admin link.
+  The request still persists if the mail fails (insert is first, `sendMail` never throws, logs
+  every outcome).
+- **Dedup:** an identical request (same company+user+system+need) within 2 min returns the
+  existing row — no duplicate row, no duplicate email.
+- `components/app/integration-request-form.tsx` confirmation copy → "Solicitud recibida … nos
+  pondremos en contacto contigo. Las integraciones son un servicio adicional que se presupuesta
+  según el proyecto." No "automatic / included / fixed price / immediate" wording.
+
+**Verified:** `admin-growth.spec.ts` (4/4 — request reaches the superadmin, triage, + new "retry
+does not duplicate"), `plans.spec.ts` (10/10 — "Próximamente" AND "+ coste adicional" both shown
+for the 3 items, disclaimer present, no €80, no 320px overflow), `landing.spec.ts` (all).
+tsc / eslint / prettier / keel-verify clean; 394 unit. Inbox delivery to
+`deca@praetoriaabogados.es` still needs the user's Resend dashboard (CREDENTIAL), same as Part 3.
+Not merged to `main`.

@@ -68,6 +68,17 @@ test.describe("#109 — Planes 2027 section", () => {
     // exactly the 3 unbuilt integration items carry the badge, nowhere else
     await expect(page.locator("section:has(#planes)").getByText("Próximamente")).toHaveCount(3);
 
+    // #111 — those 3 items ALSO carry "+ coste adicional" (not included in the
+    // subscription price), and the small disclaimer spells it out. No fixed price.
+    await expect(business).toContainText(/\+ coste adicional/i);
+    await expect(page.locator("section:has(#planes)").getByText("+ coste adicional")).toHaveCount(
+      3,
+    );
+    await expect(page.locator("section:has(#planes)")).toContainText(
+      /no están incluidas en el precio de la suscripción/i,
+    );
+    await expect(page.locator("section:has(#planes)")).not.toContainText(/€80|80 ?€/);
+
     // Starter must NOT claim API / ERP
     await expect(page.getByTestId("plan-starter")).not.toContainText(/\bAPI\b/);
     await expect(page.getByTestId("plan-starter")).not.toContainText(/ERP/i);

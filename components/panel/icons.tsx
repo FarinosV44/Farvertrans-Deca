@@ -191,3 +191,30 @@ export function LifebuoyIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function MailIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 7 8 6 8-6" />
+    </svg>
+  );
+}
+
+export function ChatIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l.8-5.5A8 8 0 1 1 21 12Z" />
+      <path d="M8.5 12h.01M12 12h.01M15.5 12h.01" />
+    </svg>
+  );
+}
+
+export function ScaleIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 3v18M7 21h10M6 7h12M6 7 3.5 13a3 3 0 0 0 5 0L6 7Zm12 0-2.5 6a3 3 0 0 0 5 0L18 7Z" />
+      <path d="M12 3 6 7M12 3l6 4" />
+    </svg>
+  );
+}

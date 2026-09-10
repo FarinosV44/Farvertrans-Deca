@@ -71,7 +71,7 @@ export const fr = {
     freeValueComingSoon: "Bientôt disponible",
     integrationsCard: {
       heading: "API et intégrations ERP/TMS",
-      body: "Nous préparons des intégrations pour les entreprises qui doivent connecter DeCA Profesional à leurs systèmes. Elles feront partie des formules Business.",
+      body: "Nous préparons des intégrations pour les entreprises qui doivent connecter DeCA Profesional à leurs systèmes. C'est un service supplémentaire, soumis à une évaluation technique et à un devis selon le projet ; il n'est pas inclus dans le prix de l'abonnement.",
       cta: "L'intégration m'intéresse",
     },
     plans: {
@@ -89,11 +89,12 @@ export const fr = {
         "Les limites et fonctionnalités indiquées correspondent aux formules prévues pour 2027. D'ici là, les comptes de la période de lancement conservent leur accès actuel.",
       recommendedLabel: "Recommandé",
       comingSoonLabel: "Bientôt",
+      extraCostLabel: "+ coût supplémentaire",
       decaPerMonthLabel: "DeCA / mois",
       usersLabel: "utilisateurs",
       guestCta: "Commencer gratuitement",
       apiDisclaimer:
-        "API et intégrations ERP/TMS soumises à la disponibilité technique et à la compatibilité avec le système du client.",
+        "API et intégrations ERP/TMS soumises à la disponibilité technique et à la compatibilité avec le système du client. Elles ne sont pas incluses dans le prix de l'abonnement : chaque intégration est chiffrée selon ses besoins et sa complexité.",
       tiers: [
         {
           name: "Starter",
@@ -138,9 +139,9 @@ export const fr = {
           tagline: "Pour les entreprises à fort volume et intégrées à leurs systèmes.",
           inherits: "Tout ce qui est inclus dans Professional, plus :",
           features: [
-            { label: "API", soon: true },
-            { label: "Intégrations ERP / TMS", soon: true },
-            { label: "Accompagnement technique à l'intégration", soon: true },
+            { label: "API", soon: true, extraCost: true },
+            { label: "Intégrations ERP / TMS", soon: true, extraCost: true },
+            { label: "Accompagnement technique à l'intégration", soon: true, extraCost: true },
             { label: "Assistance technique prioritaire", soon: false },
             { label: "Assistance téléphonique", soon: false },
             { label: "Volume et capacité multi-utilisateurs supérieurs", soon: false },
@@ -602,7 +603,10 @@ export const fr = {
       sending: "Envoi…",
       sent: "Ticket envoyé. Nous vous répondrons dès que possible.",
       myHeading: "Mes tickets",
-      none: "Vous n'avez ouvert aucun ticket.",
+      none: "Vous n'avez aucun ticket ouvert.",
+      noneHint: "Lorsque vous ouvrez un ticket, vous pourrez suivre son état et les réponses ici.",
+      guidesPrompt: "Vous cherchez un mode d'emploi ? Consultez nos",
+      guidesLink: "Guides",
       view: "Voir",
       replyLabel: "Votre réponse",
       replyPlaceholder: "Écrivez votre réponse…",

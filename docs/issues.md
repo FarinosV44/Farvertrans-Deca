@@ -722,3 +722,43 @@ anonymize-in-place (no hard delete, D-067).
   en rojo con `git stash` contra el código previo, luego verde. **On `main`** de inmediato, antes y
   aparte del resto de #96 — incidente en vivo, no una entrega programada. Issue #104 abierto
   retroactivamente (ya corregido) por la política "Issue capture: on" de este proyecto.
+
+## I-111 (D-195…) — Soporte y documentación: guía de uso, pulido de Ayuda, verificación E2E de incidencias e integraciones
+- 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
+  4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
+- **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**
+  - Nuevo `ContentItem` `guia-de-uso-deca-profesional` (tipo `guide`, publicado, indexable),
+    renderizado por el `ArticleLayout` existente — mismo aspecto que las demás guías.
+  - Renderer Markdown compartido, solo añadidos: callouts tipados `::: tip/important/example` y
+    imágenes de bloque `![alt](/local.png "pie")` (solo rutas locales). Helpers puros con
+    tests (`tests/unit/markdown-blocks.test.ts`, 8). Sin regresión (content-cms.spec 6/6).
+  - Contenido: `prisma/content/guia-de-uso.ts`, 19 secciones redactadas contra la app real.
+  - 9 capturas reales con datos sintéticos (`scripts/guide-screenshots.mjs`) en `public/guia/`.
+  - `tests/e2e/guia-uso.spec.ts` (3). Gate verde: tsc/eslint/prettier/keel-verify; 394 unit; e2e 9/9.
+  - **Producción:** ejecutar `npm run seed:content` tras el despliegue para publicar la guía; las
+    correcciones posteriores se hacen en `/admin/guias` (el seed solo crea, no actualiza).
+- **Parte 2 — Pulido de Ayuda (D-196): HECHA en `develop`, sin fusionar a `main`.** Solo visual:
+  canales de soporte como acciones con icono, formulario pulido, mejor estado vacío de "Mis
+  incidencias", enlace secundario a Guías (sin tarjeta, sin ítem de menú), 3 iconos SVG nuevos,
+  4 claves i18n ×8 locales. Sin cambio de comportamiento — todos los `data-testid` intactos,
+  `panel-help.spec.ts` + `support-tickets.spec.ts` pasan sin modificar. Captura de pantallas hecha
+  determinista y las 9 recapturadas. Gate verde (394 unit, e2e 13/13).
+- **Parte 3 — Verificación E2E de incidencias (D-197): HECHA en `develop`, sin fusionar a `main`.**
+  Flujo completo verificado y verde; notificaciones confirmadas hacia `Deca@praetoriaabogados.es`
+  y hacia el usuario (`mail_provider_error 401` en local = clave Resend de marcador; la entrega
+  real al buzón necesita el panel de Resend del usuario). Anti-duplicado: `createSupportTicket()`
+  descarta una incidencia idéntica en 2 min (sin fila duplicada ⇒ sin email duplicado); el cuerpo
+  de la notificación añade id de empresa/usuario + fecha ISO. Sin cambio de esquema. El texto
+  "Recibirás la respuesta por correo y también aquí" es cierto — no se cambia.
+- **Parte 4 — Claridad API/ERP + "Solicitar integración" (D-198): HECHA en `develop`, sin fusionar
+  a `main`.** Las 3 funciones `soon` del plan Business muestran "+ coste adicional" junto a
+  "Próximamente" (intacto), sin precio fijo; `apiDisclaimer` + `integrationsCard.body` reescritos
+  para que nada implique inclusión en la suscripción — 8 locales. `createIntegrationRequest()`
+  ahora envía email de notificación a `Deca@praetoriaabogados.es` (antes: solo BD + panel admin,
+  nadie avisado) con anti-duplicado de 2 min; copia de confirmación realista. Sin cambio de
+  esquema. e2e: admin-growth 4/4 (+ test nuevo de duplicado), plans 10/10.
+- **Estado global de #111: las 4 partes HECHAS en `develop` (D-195…D-198), listas para `main`.**
+  El merge `develop`→`main` y cualquier despliegue son decisión del usuario.
+- **Sin cerrar** (política de 3 tiempos): al fusionar se comenta el avance; el usuario confirma
+  tras el despliegue (incluye ejecutar `npm run seed:content` para publicar la guía, y comprobar
+  en el panel de Resend que los correos a `deca@praetoriaabogados.es` se entregan).

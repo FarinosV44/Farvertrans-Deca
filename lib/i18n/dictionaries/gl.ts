@@ -71,7 +71,7 @@ export const gl = {
     freeValueComingSoon: "Proximamente",
     integrationsCard: {
       heading: "API e integracións ERP/TMS",
-      body: "Estamos preparando integracións para empresas que necesitan conectar DeCA Profesional cos seus sistemas. Formarán parte das solucións Business.",
+      body: "Estamos preparando integracións para empresas que necesitan conectar DeCA Profesional cos seus sistemas. Son un servizo adicional, suxeito a valoración técnica e orzamento segundo o proxecto; non están incluídas no prezo da subscrición.",
       cta: "Interésame a integración",
     },
     plans: {
@@ -89,11 +89,12 @@ export const gl = {
         "Os límites e funcionalidades indicados corresponden aos plans previstos para 2027. Ata entón, as contas do período de lanzamento manteñen o seu acceso actual.",
       recommendedLabel: "Recomendado",
       comingSoonLabel: "Proximamente",
+      extraCostLabel: "+ custo adicional",
       decaPerMonthLabel: "DeCA / mes",
       usersLabel: "usuarios",
       guestCta: "Comezar gratis",
       apiDisclaimer:
-        "API e integracións ERP/TMS suxeitas á dispoñibilidade técnica e compatibilidade co sistema do cliente.",
+        "API e integracións ERP/TMS suxeitas á dispoñibilidade técnica e compatibilidade co sistema do cliente. Non están incluídas no prezo da subscrición: presupóstanse segundo as necesidades e a complexidade de cada integración.",
       tiers: [
         {
           name: "Starter",
@@ -138,9 +139,9 @@ export const gl = {
           tagline: "Para empresas con maior volume e integración cos seus sistemas.",
           inherits: "Todo o incluído en Professional, máis:",
           features: [
-            { label: "API", soon: true },
-            { label: "Integracións ERP / TMS", soon: true },
-            { label: "Onboarding técnico de integración", soon: true },
+            { label: "API", soon: true, extraCost: true },
+            { label: "Integracións ERP / TMS", soon: true, extraCost: true },
+            { label: "Onboarding técnico de integración", soon: true, extraCost: true },
             { label: "Soporte técnico prioritario", soon: false },
             { label: "Soporte telefónico", soon: false },
             { label: "Maior volume e capacidade multiusuario", soon: false },
@@ -592,7 +593,10 @@ export const gl = {
       sending: "Enviando…",
       sent: "Incidencia enviada. Responderémosche o antes posible.",
       myHeading: "As miñas incidencias",
-      none: "Non abriches ningunha incidencia.",
+      none: "Non tes ningunha incidencia aberta.",
+      noneHint: "Cando abras unha incidencia, poderás consultar aquí o seu estado e as respostas.",
+      guidesPrompt: "Buscas instrucións de uso? Consulta as nosas",
+      guidesLink: "Guías",
       view: "Ver",
       replyLabel: "A túa resposta",
       replyPlaceholder: "Escribe a túa resposta…",

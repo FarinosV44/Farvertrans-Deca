@@ -5,6 +5,7 @@
  * `npm run seed:content` (deploy runbook) and from `prisma/seed.ts` for dev.
  */
 import { PrismaClient } from "./generated/client";
+import { GUIA_DE_USO_SLUG, GUIA_DE_USO_BODY } from "./content/guia-de-uso";
 
 const BOE = {
   label: "Resolución de 5 de junio de 2026 (BOE de 12 de junio de 2026)",
@@ -38,6 +39,27 @@ type Seed = {
 };
 
 export const CONTENT_SEED: Seed[] = [
+  {
+    // #111 — the complete product usage guide, inside the existing Guías section.
+    slug: GUIA_DE_USO_SLUG,
+    type: "guide",
+    title: "Guía de uso de DeCA Profesional",
+    excerpt:
+      "Aprende paso a paso a utilizar las principales funciones de la plataforma: crear un DeCA, el PDF y el QR, plantillas, datos habituales, equipo, privacidad, soporte e inspección.",
+    category: "Uso del producto",
+    authorName: "Equipo DeCA Profesional",
+    seoTitle: "Guía de uso de DeCA Profesional paso a paso",
+    metaDescription:
+      "Guía completa de DeCA Profesional: crear una cuenta, generar un DeCA en tres pasos, el PDF con QR, Mis DeCA e historial, plantillas, datos habituales, equipo y roles, privacidad, soporte e inspección.",
+    sources: [MIN],
+    relatedSlugs: [
+      "como-corregir-un-deca",
+      "errores-frecuentes-al-generar-un-deca",
+      "como-llevar-el-deca-en-el-movil",
+    ],
+    lastReviewedAt: REVIEWED,
+    body: GUIA_DE_USO_BODY,
+  },
   {
     slug: "como-corregir-un-deca",
     type: "guide",
