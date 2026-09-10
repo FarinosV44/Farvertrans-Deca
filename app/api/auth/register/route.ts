@@ -147,23 +147,13 @@ export async function POST(req: Request) {
     // attribution is best-effort — never block signup
   }
 
-  // #84 — the discreet registration opt-in sets the global commercial treatment
-  // to "all". Never required; a signup that joins a team (no own company) or
-  // leaves it unticked is untouched.
+  // #84 — the discreet registration opt-in. Never required; a signup that joins
+  // a team (no own company) or leaves it unticked is untouched. Same helper as
+  // the Google 2-step path (`/api/auth/complete-company`) so both persist an
+  // identical value (D-193).
   if (b.commercialOptIn && created.companyId && !created.joinedTeam) {
-    try {
-      const { setCommercialMode, setCommercialChannel } = await import("@/lib/consent");
-      await setCommercialMode(created.companyId, "all", created.userId);
-      // Default the channel to the company email so the opt-in is complete; the
-      // owner can change it on /panel/privacidad.
-      await setCommercialChannel(
-        created.companyId,
-        { channel: "email", contactEmail: b.companyEmail || b.email },
-        created.userId,
-      );
-    } catch {
-      // never block signup on the commercial-preference write
-    }
+    const { applySignupCommercialOptIn } = await import("@/lib/consent");
+    await applySignupCommercialOptIn(created.companyId, created.userId, b.companyEmail || b.email);
   }
 
   // Prospect onboarding link (GROWTH #28): link the company back to the prospect

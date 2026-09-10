@@ -208,3 +208,25 @@ export async function revokeCommercial(
 ): Promise<CommercialTreatmentState> {
   return setCommercialMode(companyId, "none", actorUserId);
 }
+
+/**
+ * Apply the optional "Oportunidades de carga" opt-in collected at sign-up (#84,
+ * D-193). ONE place — called by BOTH `/api/auth/register` (email/password) and
+ * `/api/auth/complete-company` (Google 2-step) so the persisted value is
+ * identical whichever way the company was founded. Sets the global mode to
+ * `all` and defaults the channel to the company email; the owner can change or
+ * revoke it later from `/panel/privacidad`. Never throws — a failed
+ * commercial-preference write must never block account creation.
+ */
+export async function applySignupCommercialOptIn(
+  companyId: string,
+  actorUserId: string,
+  contactEmail: string,
+): Promise<void> {
+  try {
+    await setCommercialMode(companyId, "all", actorUserId);
+    await setCommercialChannel(companyId, { channel: "email", contactEmail }, actorUserId);
+  } catch {
+    // never block signup on the commercial-preference write
+  }
+}

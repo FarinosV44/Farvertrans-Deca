@@ -104,6 +104,134 @@ async function register(page: Page, opts: { commercialOptIn?: boolean } = {}) {
   await page.request.get(`/verificar-email/${(await res.json()).verifyTestToken}`);
 }
 
+/**
+ * Put `page` in the exact state a fresh Google sign-up leaves a user in: a
+ * logged-in account with NO company, sitting on `/registro/completar-empresa`.
+ * We reach it without real Google OAuth by registering the user into a team,
+ * having the owner remove them, then logging back in (the one legitimate
+ * "no company" outcome) — the same code path the Google callback lands on.
+ */
+async function companylessOnboarding(
+  page: Page,
+  browser: import("@playwright/test").Browser,
+): Promise<string> {
+  const owner = await browser.newContext();
+  const op = await owner.newPage();
+  await register(op); // owner + their company
+  const target = `g${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
+  const inv = await op.request.post("/api/team/invites", {
+    data: { email: target, role: "member" },
+  });
+  const link = (await inv.json()).link as string;
+  const token = new URL(link).searchParams.get("invite")!;
+
+  await page.goto(`/registro?invite=${token}`);
+  await page.fill("#email", target);
+  await page.fill("#password", "Supersecret123!");
+  await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+    page.getByTestId("register-submit").click(),
+  ]);
+  await page.goto("/panel");
+
+  await op.goto("/panel/equipo");
+  op.once("dialog", (d) => d.accept());
+  await op.getByTestId(`remove-member-${target}`).click();
+  await expect(op.getByTestId("member-list")).not.toContainText(target);
+  await owner.close();
+
+  await page.goto("/entrar");
+  await page.fill("#email", target);
+  await page.fill("#password", "Supersecret123!");
+  await Promise.all([
+    page.waitForResponse((r) => r.url().includes("/api/auth/login") && r.status() === 200),
+    page.getByTestId("register-submit").click(),
+  ]);
+  await page.goto("/panel");
+  await expect(page).toHaveURL(/\/registro\/completar-empresa$/);
+  return target;
+}
+
+async function completeCompany(page: Page, opts: { commercialOptIn?: boolean } = {}) {
+  await page.fill("#companyName", "Empresa Google SL");
+  await page.fill("#companyNif", "B12345674");
+  await page.fill("#companyContactName", "Ana Ejemplo");
+  await page.fill("#companyPhone", "600111222");
+  await page.fill("#companyEmail", "empresa-google@example.com");
+  await page.fill("#companyAddress", "Calle Prueba 1");
+  await page.fill("#companyPostalCode", "46540");
+  await page.fill("#companyCity", "El Puig");
+  await page.getByTestId("profile-carrier_goods").click();
+  await page.getByTestId("accept-terms").check();
+  if (opts.commercialOptIn) await page.getByTestId("commercial-opt-in").check();
+  await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes("/api/auth/complete-company") && r.status() === 200,
+    ),
+    page.getByTestId("complete-company-submit").click(),
+  ]);
+  await expect(page).toHaveURL(/\/panel$/);
+}
+
+test.describe("#84 / D-193 — Google onboarding offers the same opt-in", () => {
+  test("the opt-in is present and unchecked by default on the Google company step", async ({
+    page,
+    browser,
+  }) => {
+    await companylessOnboarding(page, browser);
+    await expect(page.getByTestId("commercial-opt-in-box")).toBeVisible();
+    await expect(page.getByTestId("commercial-opt-in")).not.toBeChecked();
+    // same disclosure as the standard flow
+    await expect(page.getByText("Qué datos se comparten")).toBeVisible();
+  });
+
+  test("a Google user can finish onboarding WITHOUT the opt-in → mode 'none'", async ({
+    page,
+    browser,
+  }) => {
+    await companylessOnboarding(page, browser);
+    await completeCompany(page); // opt-in left unchecked
+    await page.goto("/panel/privacidad");
+    await expect(page.getByTestId("mode-none")).toBeChecked();
+  });
+
+  test("a Google user can explicitly enable the opt-in → mode 'all', same as standard signup", async ({
+    page,
+    browser,
+  }) => {
+    await companylessOnboarding(page, browser);
+    await completeCompany(page, { commercialOptIn: true });
+    await page.goto("/panel/privacidad");
+    await expect(page.getByTestId("mode-all")).toBeChecked();
+    await expect(page.getByTestId("commercial-preview")).toBeVisible();
+    await expect(page.getByTestId("commercial-revoke")).toBeVisible();
+  });
+
+  test("a company-less user completing onboarding as a TEAM JOIN is not shown the opt-in", async ({
+    page,
+    browser,
+  }) => {
+    // first: a logged-in, company-less session (the Google-callback state)
+    await companylessOnboarding(page, browser);
+    // now an invite from a different company — the Google callback would land
+    // them on completar-empresa?invite=<token>
+    const other = await browser.newContext();
+    const op = await other.newPage();
+    await register(op);
+    const inv = await op.request.post("/api/team/invites", {
+      data: { email: `join${Date.now()}@example.com`, role: "member" },
+    });
+    const token = new URL((await inv.json()).link as string).searchParams.get("invite")!;
+    await other.close();
+
+    await page.goto(`/registro/completar-empresa?invite=${token}`);
+    // joining a team: no company fields, no profile, and no opt-in — that
+    // decision belongs to the company owner, not a joining member.
+    await expect(page.getByTestId("complete-company-submit")).toBeVisible();
+    await expect(page.getByTestId("commercial-opt-in-box")).toHaveCount(0);
+  });
+});
+
 test.describe("#84 — commercial-treatment settings", () => {
   test("registration checkbox is unchecked by default and never blocks signup", async ({
     page,

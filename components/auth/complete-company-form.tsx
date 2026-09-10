@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Field } from "@/components/deca/field";
+import { CommercialOptIn } from "@/components/auth/commercial-opt-in";
 import { track } from "@/lib/analytics/client";
 import { lockAttribution } from "@/lib/attribution/client";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
@@ -61,6 +62,7 @@ export function CompleteCompanyForm({
     companyProfile: "" as "" | (typeof PROFILES)[number]["value"],
   });
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [commercialOptIn, setCommercialOptIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
@@ -89,6 +91,7 @@ export function CompleteCompanyForm({
           companyEmail: f.companyEmail,
           companyProfile: f.companyProfile || undefined,
           acceptTerms,
+          commercialOptIn,
           invite,
         }),
       });
@@ -245,6 +248,13 @@ export function CompleteCompanyForm({
               .
             </span>
           </label>
+        )}
+
+        {/* #84 / D-193 — same optional consent as the email/password flow, in
+            the same position (after legal acceptance, before submit). Only a
+            company-founding path shows it; a team join does not. */}
+        {!joiningTeam && (
+          <CommercialOptIn checked={commercialOptIn} onChange={setCommercialOptIn} />
         )}
 
         <button

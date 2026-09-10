@@ -11,7 +11,7 @@ import { safeInternalPath } from "@/lib/auth/safe-redirect";
 import { LEGAL_ENTITY } from "@/lib/legal-entity";
 import { useT } from "@/lib/i18n/client";
 import { checkPasswordStrength } from "@/lib/auth/password-policy";
-import { RouteIcon } from "@/components/panel/icons";
+import { CommercialOptIn } from "@/components/auth/commercial-opt-in";
 
 const PROFILE_VALUES = ["carrier_goods", "shipper", "operator", "carrier_passengers"] as const;
 const PROFILE_ICONS: Record<(typeof PROFILE_VALUES)[number], string> = {
@@ -351,48 +351,7 @@ export function RegisterForm({
         )}
 
         {mode === "register" && !joiningTeam && (
-          // #84, restyled as a compact opt-in feature rather than a legal
-          // clause (product-copy change only — see D-159/D-160): a very light
-          // box, never pre-ticked, the deeper explanation stays behind a
-          // disclosure that is closed by default. Legal storage/logic is
-          // unchanged. D-160: no visible "Opcional" badge — it IS optional
-          // (unchecked, never required) but the box does not say so; being
-          // the one checkbox on the page with no required-looking styling is
-          // what signals that on its own.
-          <div
-            data-testid="commercial-opt-in-box"
-            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
-          >
-            <div className="flex items-center gap-1.5">
-              <RouteIcon
-                width={16}
-                height={16}
-                className="shrink-0 text-[var(--color-text-muted)]"
-              />
-              <span className="text-sm font-semibold">{t.auth.commercialOptIn.title}</span>
-            </div>
-            <label className="mt-2 flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                data-testid="commercial-opt-in"
-                checked={commercialOptIn}
-                onChange={(e) => setCommercialOptIn(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0"
-              />
-              <span>{t.auth.commercialOptIn.label}</span>
-            </label>
-            <p className="mt-1 pl-6 text-xs text-[var(--color-text-muted)]">
-              {t.auth.commercialOptIn.hint}
-            </p>
-            <details className="mt-1.5 pl-6">
-              <summary className="cursor-pointer text-xs font-medium text-[var(--color-primary)] underline">
-                {t.auth.commercialOptIn.moreInfo}
-              </summary>
-              <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                {t.auth.commercialOptIn.moreInfoBody}
-              </p>
-            </details>
-          </div>
+          <CommercialOptIn checked={commercialOptIn} onChange={setCommercialOptIn} />
         )}
 
         <button
