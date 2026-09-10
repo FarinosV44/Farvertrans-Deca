@@ -45,22 +45,42 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`develop` == `main` == `49da18b` (2026-09-10). CI on `main` FULLY GREEN.**
-  UI polish added since `ab57620`: **D-189** (command palette compact/subtle + Plantillas
-  empty-state card with two CTAs) and **D-190** (footer hierarchy: brand column → product
-  positioning + trust line, "Planes 2027" + persona links in PRODUCTO, duplicate FAQ removed).
-  D-189 first shipped a 360px overflow on the Plantillas empty state (theme `sm` = 360px) — caught
-  by `panel-nav.spec.ts:51` in CI on `fcab06e`, fixed in `0162147` (buttons stack until `md`).
-  No migrations in D-189/D-190 (component/copy only). — Earlier this session on `main`: D-185 (version 0.2.0),
-  D-186 (RLS lockdown — migration `20260910093000`, **already applied + verified on production**:
-  39/39 migrations, RLS 41/41, anon/authenticated reach 0 tables), D-187 (#110 PDF QR overlap),
-  D-188 (#109 Planes 2027), and a `format:check` cleanup of 2 files unformatted since #106 (clears
-  the last CI-red step). Production `prisma migrate status` = "Database schema is up to date!" — no
-  migration pending. Full gate green: 382/382 unit; e2e ~296–298/298 per run (the 1–3 that vary are
-  the documented `internalPage`/react-pdf-CPU contention flakes — `content-cms:60`, `master-data:38`,
-  `driver-delivery:96`, `commercial-intelligence:83` — each passes in isolation; CI `retries: 1`
-  absorbs them); tsc / lint / format:check / keel-verify all clean.
-- **Latest: #109 (D-188) — informational "Planes 2027" section on the landing.** New
+- **`develop` == `main` == `<D-194 merge>` (2026-09-10). CI on `main` green through the D-193 merge
+  (`34489395873`); D-194 merge pending its own CI run.**
+- **Latest: D-194 — admin step-up re-verification was an unbreakable loop (3rd report of #108).**
+  `/admin/2fa/verify` skipped the code challenge on the 12h admin window (`isAdmin2faFresh()`) while
+  step-up actions need the 10-min window (`requireStepUp()`) → an admin browsing >10 min could never
+  refresh `tv`, so "Marcar como prueba" (and block/deactivate/reactivate) looped on 401 forever
+  ("se queda pillado"). Fix: new `isAdminStepUpFresh()`; `/admin/2fa/verify?stepup=1` uses it; both
+  admin action components add `&stepup=1` to the "Verificar" link and **auto-replay** the stashed
+  reversible action (`sessionStorage`, one-shot) on return (`anonymize` never replayed). No
+  "verify a company" feature exists — the report conflated the 2FA re-check link with the `is_test`
+  toggle. **No migration.** New e2e drives the REAL endpoint against a 20-min-aged `tv` cookie
+  (red→green) + a forced-500 "explicit error, no silent reload" test; `admin-account-lifecycle.spec.ts`
+  10/10. tsc / lint / prettier / keel-verify clean.
+- **Also this session, merged to `main`:** D-191 (Mi empresa `/panel/empresa` mobile two-column
+  overlap → `grid-cols-1 md:grid-cols-2` + `min-w-0` + `break-words`), D-192 (`lib/mailer.ts`
+  `AbortSignal.timeout(8000)` on the Resend fetch so a hung provider can't stall
+  `POST /api/auth/register`), D-193 (#84 — Google OAuth onboarding `CompleteCompanyForm` now offers
+  the same "Oportunidades de carga" opt-in via a shared `<CommercialOptIn>` component +
+  `applySignupCommercialOptIn()` helper; unchecked by default, never blocks, same
+  `commercial_consent` value; 4 regression tests). **None of D-191…D-194 add a migration** —
+  production `prisma migrate status` = "Database schema is up to date!" (39/39).
+- **Earlier this session on `main`:** D-185 (version 0.2.0), D-186 (RLS lockdown — migration
+  `20260910093000`, **already applied + verified on production**: 39/39 migrations, RLS 41/41,
+  anon/authenticated reach 0 tables), D-187 (#110 PDF QR overlap), D-188 (#109 Planes 2027), D-189
+  (command palette + Plantillas empty state; a 360px overflow regression was caught by
+  `panel-nav.spec.ts:51` and fixed in `0162147`), D-190 (footer hierarchy), and a `format:check`
+  cleanup of 2 files unformatted since #106. Full gate green: 386/386 unit; e2e ~296–298/298 per run
+  (the 1–3 that vary are the documented `internalPage`/react-pdf-CPU contention flakes —
+  `content-cms:60`, `master-data:38`, `driver-delivery:96`, `commercial-intelligence:83` — each
+  passes in isolation; CI `retries: 1` absorbs them); tsc / lint / format:check / keel-verify clean.
+- **Next action:** confirm the D-194 merge's CI run on `main` is green. Then the standing backlog is
+  user-side only: Hostinger redeploy for all front-end changes since the RLS-era build (D-190…D-194),
+  Resend delivery fix, Supabase Security Advisor re-scan, DB-password rotation + phase-2 hardening
+  (`docs/security/2026-09-10-credential-rotation-and-phase2-hardening.md`), and the decision on the
+  `PRUEBA DIAGNOSTICO REGISTRO SL` / `PRUEBA SEGURIDAD RLS SL` test companies on production.
+- **Earlier — #109 (D-188): informational "Planes 2027" section on the landing.** New
   `components/site/plans-section.tsx` at `#planes` (between `#incluido` and `#producto`); `PLANS`
   const in `lib/content/landing.ts`; `dict.landing.plans` + `nav.plans` in all 8 locales;
   `header-strings.ts` + sync test; discreet desktop "Planes" nav link. Informational only — no
