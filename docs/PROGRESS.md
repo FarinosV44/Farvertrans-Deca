@@ -45,7 +45,12 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **Latest: #108 — LIVE BUG fix, "Marcar como prueba" silently failed on a stale step-up (D-184),
+- **Latest: app version bumped `0.1.0` → `0.2.0` (D-185)** — user instruction, version-only change.
+  All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
+  plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
+  project. Historical `0.1.0` mentions in `docs/` (append-only records) left as-is. Gate:
+  keel-verify "version in sync (0.2.0)", tsc clean, 377/377 unit green. No tag / `main` merge (user's call).
+- **Previous: #108 — LIVE BUG fix, "Marcar como prueba" silently failed on a stale step-up (D-184),
   MERGED to `main`.** User report: the button visibly did nothing. Root cause: the endpoint
   (`set_test`) is step-up gated like block/deactivate/reactivate/edit, and `MarkTest` — unlike its
   sibling `AccountActions` — never handled a `step_up_required` 401 at all, so it failed with zero
