@@ -45,8 +45,23 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`develop` == `main` == `<D-194 merge>` (2026-09-10). CI on `main` green through the D-193 merge
-  (`34489395873`); D-194 merge pending its own CI run.**
+- **In progress: #111 — support/docs experience, 4 parts (D-195…). Part 1 (guide) DONE on
+  `develop`, NOT merged to `main`. Parts 2–4 pending: Help page visual polish; incident-system
+  E2E verification + hardening (`deca@praetoriaabogados.es`, reply workflow); landing API/ERP
+  "+ coste adicional" + "Solicitar integración" E2E. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+  - **Part 1 / D-195 — "Guía de uso de DeCA Profesional" as a CMS `ContentItem` inside `/guias`.**
+    Additive Markdown renderer support: typed callouts `::: tip/important/example` + block images
+    `![alt](/local.png "pie")` (local paths only), pure helpers unit-tested (8), every existing
+    guide/blog renders byte-identically. Full 19-section guide (`prisma/content/guia-de-uso.ts`)
+    written against the real app; seed entry; `scripts/guide-screenshots.mjs` + 9 real screenshots
+    from synthetic demo data in `public/guia/`. `tests/e2e/guia-uso.spec.ts` (3). Gate: tsc/eslint/
+    prettier/keel-verify clean, 394 unit (8 new), e2e 9/9. **Production needs `npm run seed:content`
+    after deploy** to publish the guide (seed only creates; later edits via `/admin/guias`).
+  - **Note found during Part 1:** on `/panel/ayuda` the sticky `SiteHeader` wordmark area can
+    capture as a grey box in a clipped element screenshot — a capture artifact, not confirmed as a
+    product bug; to be checked properly in Part 2 (Help page work).
+- **`develop` == `main` == `<D-194 merge>` (2026-09-10) + Part 1 commits on `develop` only. CI on
+  `main` green through the D-193 merge (`34489395873`); D-194 merge pending its own CI run.**
 - **Latest: D-194 — admin step-up re-verification was an unbreakable loop (3rd report of #108).**
   `/admin/2fa/verify` skipped the code challenge on the 12h admin window (`isAdmin2faFresh()`) while
   step-up actions need the 10-min window (`requireStepUp()`) → an admin browsing >10 min could never
