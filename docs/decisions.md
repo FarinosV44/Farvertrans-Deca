@@ -5889,3 +5889,27 @@ previously-documented contention flake happened to sit quiet this run too.
   production) would flag it. Can be re-synced later via the Supabase SQL editor if desired.
 - Pre-existing `format:check` red (`lib/team-invite-email.ts`, `tests/e2e/team.spec.ts`, unformatted
   since #106 / `3be422e`, before this session) is untouched — flagged to the user separately.
+
+### D-187 — #110: PDF verification URL overlapped the QR — layout fix (2026-09-10)
+- User report: the long public-verification URL in the PDF's "Verificación pública" band ran under
+  the QR code. Issue #110 opened (issue-capture policy).
+- Root cause: the band was a flex row with `justify-content: space-between` + a ~20pt padding
+  cushion, no hard constraint. The verification URL is a single space-less token; `@react-pdf` 4.x
+  has NO `word-break`/`overflow-wrap` and hyphenation is disabled project-wide (U+200B / U+00AD are
+  not honoured as break points either — verified). With `decaprofesional.es` it cleared the QR by
+  ~20pt; with the longer Hostinger fallback domain or a longer token it overflowed across the QR.
+- Fix (layout only — `lib/pdf/deca-document.tsx`, no content/QR/logic change):
+  - Strict two-column band: `verifyLeft` = `flex:1` + `minWidth:0` + `maxWidth:377` + `overflow:hidden`;
+    `qrColumn` = fixed `width:112` (96 QR + 8pt quiet zone each side) + `flexShrink/flexGrow:0`.
+  - Removed `justifyContent:"space-between"`.
+  - New `urlLines()` helper splits the displayed URL into ≤40-char lines rendered as stacked
+    `<Text>` nodes (the only wrap mechanism @react-pdf honours here — nested/stacked Text). The QR
+    still encodes the exact unmodified `publicUrl`.
+  - QR size unchanged (96pt); `qrCaption` width 96, stays centred.
+- Verified: new `tests/unit/deca-pdf-verify-block.test.ts` (5 tests) renders the real PDF, locates
+  the QR rect from the content-stream CTM, asserts no verification text reaches the QR — standard
+  token, long Hostinger domain, oversized token. Confirmed RED pre-fix (4/5 fail) → GREEN post-fix.
+  5 real PDFs rendered and inspected: all single-page, URL wraps to 2–3 lines, 156–192pt clear of
+  the QR. Gate: tsc clean; 382/382 unit (incl. 9 existing PDF snapshot); R-1…R-13 compliance 8/8
+  (R-5/R-6 QR-URL check unaffected); lint/keel-verify clean. Pre-existing `format:check` reds in
+  `lib/team-invite-email.ts` + `tests/e2e/team.spec.ts` untouched (unrelated, since #106).

@@ -197,23 +197,49 @@ const s = StyleSheet.create({
   // Verification band — the document's closing stamp; the largest, most
   // prominent element on the page. Anchored to the bottom via the spacer
   // above it, never position:absolute.
+  //
+  // STRICT TWO-COLUMN LAYOUT (2026-09-10): the left column holds the text, the
+  // right column is a FIXED-WIDTH box reserving the QR + caption. The QR box
+  // never grows or shrinks (`flexShrink/flexGrow: 0`, explicit `width`); the
+  // text column is `flex: 1` + `minWidth: 0` + `maxWidth`-capped so it takes
+  // exactly the space that is left and no more. @react-pdf 4.x has no
+  // `word-break` and hyphenation is disabled project-wide, so the long
+  // verification URL (one space-less token) is pre-split into fixed-length
+  // lines by `urlLines()` and rendered as stacked <Text> nodes — it wraps
+  // inside the left column and can never reach the QR. `overflow: hidden` is a
+  // last-resort clamp that the conservative line length keeps from ever firing.
   verifyBand: {
     backgroundColor: BG_SOFT,
     borderRadius: 3,
     padding: 15,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
   },
-  verifyLeft: { flex: 1, paddingRight: 20 },
+  // page content width 519.28 − band padding 30 − QR column 112 = 377.28
+  verifyLeft: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: 377,
+    paddingRight: 16,
+    overflow: "hidden",
+  },
   verifyLabel: { fontSize: 8, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 },
   verifyRef: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 5 },
-  verifyUrl: { fontSize: 9.5, fontFamily: "Inter", fontWeight: 700, color: ACCENT, marginTop: 4 },
+  verifyUrlBlock: { marginTop: 4 },
+  verifyUrl: {
+    fontSize: 9.5,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    color: ACCENT,
+    lineHeight: 1.3,
+  },
   verifyMeta: { fontSize: 7.5, color: MUTED, marginTop: 8, lineHeight: 1.4 },
   verifyDocVersion: { fontSize: 6.5, color: MUTED, marginTop: 2 },
-  qrBlock: { alignItems: "center" },
+  // Fixed reserved column: 96pt QR + an 8pt quiet zone on each side. Never
+  // grows, never shrinks — the text column stops where this one begins.
+  qrColumn: { width: 112, flexShrink: 0, flexGrow: 0, alignItems: "center" },
   qr: { width: 96, height: 96 },
-  qrCaption: { fontSize: 7, color: MUTED, marginTop: 6, textAlign: "center", maxWidth: 96 },
+  qrCaption: { fontSize: 7, color: MUTED, marginTop: 6, textAlign: "center", width: 96 },
 
   pageNumber: {
     position: "absolute",
@@ -223,6 +249,23 @@ const s = StyleSheet.create({
     color: MUTED,
   },
 });
+
+/**
+ * The verification URL is a single long token with no spaces. @react-pdf 4.x
+ * has no `word-break` / `overflow-wrap`, this project disables hyphenation
+ * project-wide (`lib/pdf/fonts.ts`), and U+200B / U+00AD are not honoured as
+ * break points either — so without help the URL is laid out as one atom that
+ * overflows its column and paints across the QR (bug 2026-09-10).
+ *
+ * Fix: pre-split the URL into fixed-length lines rendered as stacked <Text>
+ * nodes. 40 chars at 9.5pt Inter-Bold is ≈ 220pt — comfortably inside the
+ * ≈ 345pt of text width the left column has after its padding — so it always
+ * wraps well before the QR column and never hyphenates. The QR still encodes
+ * the exact, unmodified `publicUrl`; only the visible text is chunked.
+ */
+function urlLines(url: string, maxChars = 40): string[] {
+  return url.match(new RegExp(`.{1,${maxChars}}`, "g")) ?? [url];
+}
 
 function PartyColumn({
   role,
@@ -472,7 +515,13 @@ export function DecaDocument(p: DecaDocProps) {
           <View style={s.verifyLeft}>
             <Text style={s.verifyLabel}>Verificación pública</Text>
             <Text style={s.verifyRef}>{p.reference}</Text>
-            <Text style={s.verifyUrl}>{p.publicUrl}</Text>
+            <View style={s.verifyUrlBlock}>
+              {urlLines(p.publicUrl).map((line, i) => (
+                <Text key={i} style={s.verifyUrl}>
+                  {line}
+                </Text>
+              ))}
+            </View>
             <Text style={s.verifyMeta}>
               Generado el {fmt(p.createdAt)}
               {p.modifiedAt ? ` · Modificado el ${fmt(p.modifiedAt)}` : ""}
@@ -482,7 +531,7 @@ export function DecaDocument(p: DecaDocProps) {
             </Text>
             <Text style={s.verifyDocVersion}>Versión {p.versionNo} del documento</Text>
           </View>
-          <View style={s.qrBlock}>
+          <View style={s.qrColumn}>
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image style={s.qr} src={p.qrDataUri} />
             <Text style={s.qrCaption}>Escanea para verificar la versión vigente</Text>
