@@ -61,18 +61,22 @@ test.describe("#109 — Planes 2027 section", () => {
     const professional = page.getByTestId("plan-professional");
     const business = page.getByTestId("plan-business");
 
-    // Business owns API / ERP-TMS — and marks them coming soon
+    // Business owns API / ERP-TMS / technical onboarding — the only "Próximamente" items
     await expect(business).toContainText("API");
     await expect(business).toContainText(/ERP \/ TMS/i);
     await expect(business).toContainText(/próximamente/i);
+    // exactly the 3 unbuilt integration items carry the badge, nowhere else
+    await expect(page.locator("section:has(#planes)").getByText("Próximamente")).toHaveCount(3);
 
     // Starter must NOT claim API / ERP
     await expect(page.getByTestId("plan-starter")).not.toContainText(/\bAPI\b/);
     await expect(page.getByTestId("plan-starter")).not.toContainText(/ERP/i);
 
-    // real Professional features are present and NOT marked coming soon
+    // Professional is fully live now — real features present, no "Próximamente"
     await expect(professional).toContainText(/CSV/);
     await expect(professional).toContainText(/Búsqueda avanzada/i);
+    await expect(professional).toContainText(/2 años/i);
+    await expect(professional).not.toContainText(/próximamente/i);
   });
 
   test("no billing affordance anywhere on the landing", async ({ page }) => {

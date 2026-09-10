@@ -5946,3 +5946,15 @@ previously-documented contention flake happened to sit quiet this run too.
   precios / no form" green), `i18n-header.spec.ts`, `a11y.spec.ts` (badge contrast fixed — solid
   `--color-success` + white text), `persona.spec.ts` all green; no horizontal overflow at
   320/375/390/430/768/1024/1280/1440; lint + keel-verify clean.
+
+### D-188 (cont.) — #109: 4 plan features moved from "Próximamente" to live (2026-09-10)
+- User confirmed these are now available (service commitment, not necessarily a code feature):
+  Professional — "Conservación documental 2 años", "Soporte prioritario por email";
+  Business — "Soporte técnico prioritario", "Soporte telefónico". `soon: false` set for all four
+  across the 8 locale dictionaries.
+- The only remaining "Próximamente" items are the 3 Business integration items: API,
+  Integraciones ERP / TMS, Onboarding técnico de integración.
+- `tests/e2e/plans.spec.ts` tightened: Professional now asserts NO "Próximamente" and that
+  "2 años" shows as live; the section carries exactly 3 "Próximamente" badges.
+- Gate: tsc clean; 382/382 unit; plans + landing + a11y e2e green (27/27); lint / format:check /
+  keel-verify clean.
