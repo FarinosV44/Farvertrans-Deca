@@ -5828,3 +5828,22 @@ previously-documented contention flake happened to sit quiet this run too.
 - **NOT APPLIED.** Blocked on a verified restorable backup: no `pg_dump`/`psql` on the working
   machine, Supabase CLI `db dump` needs Docker, and the plan/backup status cannot be read from here.
   Awaiting the user's backup confirmation + final go-ahead (their order of operations, steps 5–6).
+
+### D-186 (cont.) — backup + restore verification + migration dry run PASSED (2026-09-10)
+- Option C executed: `supabase db dump` (Docker image `supabase/postgres:17.6.1.167`) produced
+  schema + data + roles dumps of `public` in `coverage/backup/` (gitignored; SHA-256 manifest
+  written). Data dump: 41 COPY blocks incl. `_prisma_migrations`.
+- Restored into a throwaway Postgres 17 container (`deca_restore_test`): schema + data restore clean
+  (`SET session_replication_role=replica` for the deca↔deca_version circular FK). `prisma migrate
+  status` against the restore = identical to production (38 applied, only
+  `20260910093000_rls_lockdown_public_schema` pending). Row counts and data integrity match the
+  production audit; 0 orphan FKs; `deca_version.data_json` present on all 19 rows.
+- **Dry run:** `prisma migrate deploy` applied the RLS migration to the restored copy →
+  "All migrations have been successfully applied." RLS 41/41; anon SELECT 0/41; authenticated
+  INSERT/SELECT 0/41; default privileges no longer grant anon/authenticated; **row counts unchanged**
+  (deca 18 / company 15 / user 14 / deca_version 19); `SET ROLE anon; SELECT FROM public.company`
+  → `ERROR: permission denied`; bypass role still reads `deca`. Scratch container removed.
+- **Nothing applied to production.** Awaiting the user's explicit "apply" to run
+  `npx prisma migrate deploy` against production `DIRECT_URL`.
+- Note for the user: the local dump is the pre-migration safety net; they should also copy it
+  off-machine and confirm Supabase dashboard backup/PITR status (could not be read from here).

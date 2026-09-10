@@ -66,10 +66,19 @@
     create/read/version/PDF/QR path is `prisma.*` (68 prisma importers vs 1 supabase, storage-only).
     Pre-deploy gate: prisma validate ✓, tsc ✓, 377/377 unit ✓, keel-verify ✓, `migrate status` clean
     (this migration is the only one pending). e2e/integration NOT run — need Docker Desktop (down).
-  - **BLOCKED on the user (step 1): a verified restorable backup.** No `pg_dump`/`psql` on this
-    machine; Supabase CLI `db dump` needs Docker (down); plan/dashboard-backup status not knowable
-    from here (likely Free tier → no self-serve backups). Migration NOT applied. Awaiting: backup
-    confirmation + final go-ahead.
+  - **Backup + restore verification DONE (Option C, 2026-09-10).** Supabase CLI (`supabase db dump`,
+    image `supabase/postgres:17.6.1.167`) → schema (55 KB, 41 tables) + data (670 KB, 41 COPY blocks
+    incl. `_prisma_migrations`) + roles, SHA-256 manifest, in `coverage/backup/` (gitignored). Restored
+    into a throwaway PG 17 container: `prisma migrate status` = identical to production (38 applied,
+    only the RLS migration pending); row counts + data integrity match; 0 orphan FKs.
+  - **Migration DRY RUN on the restored copy: PASS.** `prisma migrate deploy` applied it cleanly →
+    RLS 41/41, anon SELECT 0/41, authenticated 0/41, default privileges fixed, **row counts
+    unchanged**, `SET ROLE anon; SELECT FROM company` → `permission denied`, bypass role still reads.
+    Scratch container removed; nothing done to production.
+  - **READY FOR PRODUCTION DEPLOY — awaiting the user's explicit "apply".** Then post-deploy smoke
+    tests + anon/authenticated denial checks + Supabase Security Advisor re-scan. Still open for the
+    record: Supabase dashboard backup/PITR status (user to check); phase-2 hardening; credential
+    rotation plan (after deploy).
 - **Latest: app version bumped `0.1.0` → `0.2.0` (D-185)** — user instruction, version-only change.
   All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
   plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
