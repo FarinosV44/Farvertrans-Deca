@@ -45,6 +45,15 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **`develop` == `main` == `c45a435` (2026-09-10).** Merged this session: D-185 (version 0.2.0),
+  D-186 (RLS lockdown — migration `20260910093000`, **already applied + verified on production**:
+  39/39 migrations, RLS 41/41, anon/authenticated reach 0 tables), D-187 (#110 PDF QR overlap),
+  D-188 (#109 Planes 2027), and a `format:check` cleanup of 2 files unformatted since #106 (clears
+  the last CI-red step). Production `prisma migrate status` = "Database schema is up to date!" — no
+  migration pending. Full gate green: 382/382 unit; e2e ~296–298/298 per run (the 1–3 that vary are
+  the documented `internalPage`/react-pdf-CPU contention flakes — `content-cms:60`, `master-data:38`,
+  `driver-delivery:96`, `commercial-intelligence:83` — each passes in isolation; CI `retries: 1`
+  absorbs them); tsc / lint / format:check / keel-verify all clean.
 - **Latest: #109 (D-188) — informational "Planes 2027" section on the landing.** New
   `components/site/plans-section.tsx` at `#planes` (between `#incluido` and `#producto`); `PLANS`
   const in `lib/content/landing.ts`; `dict.landing.plans` + `nav.plans` in all 8 locales;
@@ -53,9 +62,9 @@
   ones. `integrationsCard` reworded per the issue. Deviation: "IVA no incluido" instead of the
   issue's "Precios sin IVA" (AC-26 forbids "precios" on the landing, D-105). `tests/e2e/plans.spec.ts`
   (9); 382/382 unit; landing/a11y/i18n-header/persona e2e green; no 320–1440 horizontal scroll.
-  On `develop` — NOT merged to `main`.
-- **Previous: #110 (D-187) — PDF verification URL overlapped the QR, layout fix.** On `develop`
-  (`e4abd0c`), not yet merged to `main`. Strict two-column band + `urlLines()` wrapping in
+  **Merged to `main`.**
+- **Previous: #110 (D-187) — PDF verification URL overlapped the QR, layout fix.** **Merged to
+  `main`.** Strict two-column band + `urlLines()` wrapping in
   `lib/pdf/deca-document.tsx` (layout only). New `tests/unit/deca-pdf-verify-block.test.ts` (5,
   red→green). 382/382 unit, R-1…R-13 8/8.
 - **ACTIVE SECURITY INCIDENT (D-186) — Supabase Security Advisor: `public` schema exposed to
