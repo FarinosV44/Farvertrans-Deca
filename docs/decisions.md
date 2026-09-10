@@ -6201,3 +6201,42 @@ pass unmodified.
 394 unit. The support-tickets run also shows the creation notification firing to
 `Deca@praetoriaabogados.es` and the admin-reply email to the user (both `mail_provider_error 401`
 locally — placeholder Resend key, expected; real evidence for Part 3).
+
+## D-197 — #111 Sprint C: incident system verified end-to-end + anti-duplicate (2026-09-10)
+
+**Part 3 of #111 — verify the incident/support system really works, then harden it.**
+
+**Verified end-to-end (assistant-driven, `tests/e2e/support-tickets.spec.ts`):**
+- `POST /api/support` (category + subject + body) → `201 {id, number}`; row in `support_ticket`
+  + first `support_ticket_message`; appears in "Mis incidencias".
+- Superadmin opens `/admin/soporte/[id]` (sees company + user + body), replies, moves the ticket
+  through its states.
+- The user sees the admin reply at `/panel/ayuda/[id]` and can reply back.
+- **Notification emails fire** — server logs show `mail_send_attempt` → `mail_provider_*` for the
+  creation notification (to `Deca@praetoriaabogados.es`, the `FVD_SUPPORT_NOTIFY_EMAIL ||
+  BRAND.supportEmail` target) AND for the admin-reply email (to the user's address). Locally both
+  end in `mail_provider_error 401` — the local `RESEND_API_KEY` is a placeholder; **actual inbox
+  delivery to `deca@praetoriaabogados.es` can only be confirmed from the Resend dashboard by the
+  user** (CREDENTIAL). The `providerId` from the first real production send is the value to check.
+- **The UI promise "Recibirás la respuesta por correo y también aquí" is TRUE** — no misleading
+  wording; nothing to change (no Option A/B needed).
+
+**Hardening (no schema change):**
+- `createSupportTicket()` now de-dupes: an identical ticket (same `userId`+`companyId`+`category`
+  +`subject`) created within **2 minutes** returns the existing `{id, number}` instead of a
+  second row — so a double-click / slow-response retry / refresh-resubmit can never create a
+  duplicate ticket **or a duplicate notification email** (the email is fired 1:1 with
+  `supportTicket.create`). A different subject the same second is NOT deduped.
+- The creation notification body now also carries the company id, user id and the ISO creation
+  timestamp (Part 3 "email content" list — most was already there).
+- Failure handling was already correct: the ticket is persisted BEFORE the fire-and-forget
+  `sendMail`, `sendMail` never throws and logs every outcome (`mail_provider_error` etc.), and the
+  form only ever claims the ticket was *created* (true), never that an email was delivered.
+
+**Email infrastructure (no secrets):** provider Resend (`lib/mailer.ts`); env `RESEND_API_KEY`,
+`FVD_MAIL_FROM` (Resend-verified sender, presented as `${BRAND.name} <FVD_MAIL_FROM>`),
+`FVD_SUPPORT_NOTIFY_EMAIL` (optional override; falls back to `BRAND.supportEmail` =
+`Deca@praetoriaabogados.es`). 8s timeout, best-effort, full logging (D-177/D-192).
+
+**Verified:** `support-tickets.spec.ts` 2/2 (round-trip + the new dedup test); tsc / eslint /
+prettier / keel-verify clean; 394 unit. Not merged to `main`.

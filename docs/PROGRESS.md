@@ -45,10 +45,17 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **In progress: #111 — support/docs experience, 4 parts (D-195…). Parts 1–2 DONE on `develop`,
-  NOT merged to `main`. Parts 3–4 pending: incident-system E2E verification + hardening
-  (`deca@praetoriaabogados.es`, reply workflow, anti-duplicate); landing API/ERP
-  "+ coste adicional" + "Solicitar integración" E2E. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+- **In progress: #111 — support/docs experience, 4 parts (D-195…). Parts 1–3 DONE on `develop`,
+  NOT merged to `main`. Part 4 pending: landing API/ERP "+ coste adicional" (all 8 locales,
+  "Próximamente" intact) + "Solicitar integración" E2E (today persists to DB + admin panel but
+  sends NO notification — add one to the support address). Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+  - **Part 3 / D-197 — incident system verified E2E + anti-duplicate.** Full flow driven and
+    green (create → persist → Mis incidencias → admin reply → user sees it + reply); notification
+    emails confirmed firing to `Deca@praetoriaabogados.es` and to the user (`mail_provider_error
+    401` locally = placeholder Resend key; real inbox delivery needs the user's Resend dashboard).
+    Hardening: `createSupportTicket()` de-dupes an identical ticket within 2 min (no duplicate row
+    ⇒ no duplicate email); notification body gains company/user id + ISO date. No schema change.
+    The UI promise "Recibirás la respuesta por correo y también aquí" is true — no wording change.
   - **Part 2 / D-196 — Help page (`/panel/ayuda`) visual polish only.** Support channels as icon
     actions (`WhatsApp · Soporte técnico`, `Email · Deca@praetoriaabogados.es`), polished ticket
     form, better "Mis incidencias" empty state, small secondary Guías link (no card, no nav item),
@@ -65,7 +72,7 @@
     from synthetic demo data in `public/guia/`. `tests/e2e/guia-uso.spec.ts` (3). Gate: tsc/eslint/
     prettier/keel-verify clean, 394 unit (8 new), e2e 9/9. **Production needs `npm run seed:content`
     after deploy** to publish the guide (seed only creates; later edits via `/admin/guias`).
-- **`develop` == `main` == `<D-194 merge>` (2026-09-10) + Parts 1–2 commits on `develop` only. CI
+- **`develop` == `main` == `<D-194 merge>` (2026-09-10) + Parts 1–3 commits on `develop` only. CI
   on `main` green through the D-193 merge (`34489395873`); D-194 merge pending its own CI run.**
 - **Latest: D-194 — admin step-up re-verification was an unbreakable loop (3rd report of #108).**
   `/admin/2fa/verify` skipped the code challenge on the 12h admin window (`isAdmin2faFresh()`) while

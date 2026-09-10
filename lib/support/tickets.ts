@@ -32,7 +32,29 @@ export type NewTicketInput = {
   body: string;
 };
 
+/**
+ * Treat an identical ticket from the same user in the last few minutes as the
+ * same request — a double-click, a slow response the user retried, or a
+ * refresh-and-resubmit must not create a second ticket AND a second
+ * notification email (#111). The window is deliberately short: a genuine
+ * follow-up ticket minutes later with the exact same subject is vanishingly
+ * rare, and the user can always reply on the existing one.
+ */
+const DEDUP_WINDOW_MS = 2 * 60_000;
+
 export async function createSupportTicket(input: NewTicketInput) {
+  const recent = await prisma.supportTicket.findFirst({
+    where: {
+      userId: input.userId,
+      companyId: input.companyId,
+      category: input.category,
+      subject: input.subject,
+      createdAt: { gte: new Date(Date.now() - DEDUP_WINDOW_MS) },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (recent) return recent;
+
   const ticket = await prisma.supportTicket.create({
     data: {
       userId: input.userId,
@@ -51,9 +73,10 @@ export async function createSupportTicket(input: NewTicketInput) {
   const adminLink = `${publicEnv.baseUrl.replace(/\/$/, "")}/admin/soporte/${ticket.id}`;
   const notifyText = [
     `Nueva incidencia técnica #${ticket.number}.`,
-    `Empresa: ${input.companyName ?? "—"}`,
-    `Usuario: ${input.userName ?? "—"} <${input.userEmail}>`,
+    `Empresa: ${input.companyName ?? "—"}${input.companyId ? ` (${input.companyId})` : ""}`,
+    `Usuario: ${input.userName ?? "—"} <${input.userEmail}> (${input.userId})`,
     `Categoría: ${SUPPORT_CATEGORY_LABEL[input.category]}`,
+    `Fecha: ${ticket.createdAt.toISOString()}`,
     ``,
     input.body,
     ``,
