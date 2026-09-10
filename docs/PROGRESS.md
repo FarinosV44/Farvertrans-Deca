@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `90cdb48` (#111 D-195…D-198 merged to `main` 2026-09-10 on user instruction). Nothing awaits `main`. No tag requested. **Production NOT yet redeployed** — Hostinger deploy is a manual step and the live build is still pre-#69.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `5f33937` (D-194, #111 D-195…D-198, D-199, D-200 all merged to `main` 2026-09-10 on user instruction). Nothing awaits `main`. No tag requested. **Production redeployed by the user this session** — #111 + D-194 are live. D-200 (badge) is on `main` but goes live on the next redeploy.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -45,11 +45,16 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **#111 — support/docs experience, 4 parts (D-195…D-198). MERGED to `main` `90cdb48` (user
-  instruction 2026-09-10) — `develop` == `main` == `90cdb48`, both pushed. CI on `main` for
-  `90cdb48`: run 34524373564. NO schema change, NO migration in the whole batch — `git diff
-  main..develop -- prisma/{migrations,schema.prisma}` was empty; production stays at 39/39
-  (last verified D-186). Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+- **`develop` == `main` == `5f33937` (2026-09-10), both pushed. Everything from this session is on
+  `main`: D-194, #111 D-195…D-198 (`90cdb48`, CI run 34524373564 green), D-199, D-200 (`5f33937`,
+  CI run 34528245494). NO schema change and NO migration in ANY of it — `git diff bcb3060..develop
+  -- prisma/{migrations,schema.prisma}` is empty; production verified directly at 39/39.
+  Production HAS been redeployed by the user — #111 + D-194 are LIVE; the guide is published in
+  prod (1 row, verified rendering). Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+  - **D-200 — Planes 2027 launch badge.** Dropped the "Ahora:" prefix (8 locales → "Gratis hasta
+    el 31/12/2026"); breakpoint-aware placement (< md 768: own line below H2, centred; ≥ md:
+    right of the heading row). New responsive `plans.spec.ts` test. No pricing/card/CTA change.
+  - **#111 — support/docs experience, 4 parts (D-195…D-198):**
   - **Part 4 / D-198 — landing API/ERP pricing clarity + "Solicitar integración" reaches a person.**
     The 3 Business-tier `soon` features (API / ERP·TMS / onboarding) now show `+ coste adicional`
     next to "Próximamente" (kept), no fixed price; `apiDisclaimer` + `integrationsCard.body`
@@ -80,8 +85,9 @@
     from synthetic demo data in `public/guia/`. `tests/e2e/guia-uso.spec.ts` (3). Gate: tsc/eslint/
     prettier/keel-verify clean, 394 unit (8 new), e2e 9/9. **Production needs `npm run seed:content`
     after deploy** to publish the guide (seed only creates; later edits via `/admin/guias`).
-- **`develop` == `main` == `90cdb48` (2026-09-10). Merges since D-193's green CI (`34489395873`):
-  D-194 (`bcb3060`, run 34496847612 green) and #111 D-195…D-198 (`90cdb48`, run 34524373564).**
+- **`develop` == `main` == `5f33937` (2026-09-10). Merges since D-193's green CI (`34489395873`):
+  D-194 (`bcb3060`, run 34496847612 green), #111 D-195…D-198 (`90cdb48`, run 34524373564 green),
+  D-199 (`8183b97`, run 34524564805 green), D-200 (`5f33937`, run 34528245494).**
 - **Latest: D-194 — admin step-up re-verification was an unbreakable loop (3rd report of #108).**
   `/admin/2fa/verify` skipped the code challenge on the 12h admin window (`isAdmin2faFresh()`) while
   step-up actions need the 10-min window (`requireStepUp()`) → an admin browsing >10 min could never

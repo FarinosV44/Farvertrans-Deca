@@ -6296,16 +6296,24 @@ all the migrations."
   the same commit. `git diff main..develop -- prisma/migrations/ prisma/schema.prisma` was empty
   → **the #111 batch introduced zero schema changes.**
 - **Migrations:** nothing to apply. The repo holds 39 migrations; local dev DB `prisma migrate
-  status` = "Database schema is up to date!" (39/39). Production was verified at 39/39 on
-  2026-09-10 ~09:28 UTC (D-186, the RLS lockdown `20260910093000` was the last one, already
-  deployed + verified), and no migration has been added since. This session has no production
-  `DATABASE_URL` (the local `.env` points at `localhost:5432`), so a production
-  `prisma migrate deploy`/`status` cannot be run from here — but there is no pending migration to
-  run, on production or anywhere.
-- **Not deployed.** Pushing to `main` does not deploy — Hostinger is a manual SSH/build step and
-  the live build is still pre-#69. The whole `main` backlog (#85 onward, incl. #111) goes live on
-  the next redeploy. After that: `npm run seed:content` publishes the guide, and the Resend
-  dashboard confirms email delivery to `deca@praetoriaabogados.es`.
+  status` = "Database schema is up to date!" (39/39). **Later in the session the user supplied the
+  production connection string** and `prisma migrate status` was run directly against production
+  (`aws-1-eu-west-1.pooler.supabase.com`) → **"Database schema is up to date!" (39/39)**,
+  confirming no gap. The RLS lockdown `20260910093000` (D-186) is the last one and no migration
+  has been added since.
+- **Production deploy + guide seed (same session, after the user redeployed Hostinger):**
+  `npm run seed:content` was run against production → created `guia-de-uso-deca-profesional`
+  (`published`, 1 row, NO duplicate). Briefly set to `draft` as a safety measure (pre-#69
+  renderer infinite-loops on `::: tip` fences) then reverted to `published` on the user's
+  instruction once the redeploy was confirmed. Verified live: 200 in ~0.9s, callouts + 9
+  screenshots render, 0 raw `:::` fences, all 19 internal links → 200. The user separately
+  published a `deca-conecta-ofertas-carga` blog article directly in prod admin (well-formed).
+- **D-158 escalation:** the production DB password was pasted into chat again this session (now
+  across multiple sessions). Rotation is overdue and now more urgent — Supabase → update the
+  Hostinger `DATABASE_URL`/`DIRECT_URL` → redeploy. Not in the repo (verified); the scratchpad
+  file used this session was deleted.
+- **D-200** (Planes 2027 badge) was later merged to `main` in the same session on the user's
+  instruction (`5f33937`, CI run 34528245494).
 
 ## D-200 — Planes 2027 launch badge: copy + responsive placement (2026-09-10)
 
@@ -6328,3 +6336,5 @@ all the migrations."
 **Verified:** new `plans.spec.ts` test drives 320/375/390/430 (below H2, above paragraph, centred,
 no overflow) and 1024/1280/1440 (right of H2, above paragraph, no overflow); text asserted exactly.
 10/10 plans + landing green. tsc / eslint / prettier / keel-verify clean; 394 unit.
+
+**Merged to `main`** on the user's instruction (`5f33937`, CI run 34528245494) — `develop` == `main`.
