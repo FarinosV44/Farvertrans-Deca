@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -16,13 +16,16 @@ import Link from "next/link";
  * handling exactly rather than inventing a second pattern for the same class
  * of endpoint.
  *
- * #108 follow-up (same report, live testing): the "Verificar" link carried no
- * `next`, so `/admin/2fa/verify` always sent the admin back to the generic
- * `/admin` dashboard after entering the code — not back to the company ficha
- * they were on. From there the action looked "stuck": nothing on screen said
- * to go back and click the button again. Now the link carries the CURRENT
- * path as `next`, so verifying returns the admin to exactly this ficha, where
- * step-up is now fresh and the retry just works.
+ * #108 follow-up (D-184): the "Verificar" link carries the current path as
+ * `next` so verifying returns the admin to this exact ficha.
+ *
+ * D-194: two remaining gaps in that flow —
+ *  1. the link now also carries `stepup=1`, so `/admin/2fa/verify` re-challenges
+ *     on the 10-minute step-up window instead of skipping on the 12h admin
+ *     window (which made re-verification impossible — an unbreakable loop);
+ *  2. the action the admin started is stashed and replayed automatically once
+ *     they return with a fresh check, so they don't have to find and click the
+ *     button again ("se queda pillado").
  */
 export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
   const router = useRouter();
@@ -31,7 +34,9 @@ export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [stepUp, setStepUp] = useState(false);
 
-  async function toggle() {
+  const pendingKey = `fvd:pending:set-test:${id}`;
+
+  async function run(target: boolean) {
     setBusy(true);
     setError(null);
     setStepUp(false);
@@ -39,7 +44,7 @@ export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
       const res = await fetch(`/api/admin/empresas/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "set_test", isTest: !isTest }),
+        body: JSON.stringify({ action: "set_test", isTest: target }),
       });
       if (res.ok) {
         router.refresh();
@@ -47,6 +52,11 @@ export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
       }
       const data = await res.json().catch(() => ({}));
       if (data?.error?.code === "step_up_required") {
+        try {
+          sessionStorage.setItem(pendingKey, JSON.stringify({ target }));
+        } catch {
+          // sessionStorage unavailable — the manual "Verificar" link still works.
+        }
         setStepUp(true);
         return;
       }
@@ -58,11 +68,31 @@ export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
     }
   }
 
+  // Coming back from a step-up re-verification: replay the action the admin
+  // started before being sent to /admin/2fa/verify.
+  useEffect(() => {
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem(pendingKey);
+      if (raw) sessionStorage.removeItem(pendingKey);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const { target } = JSON.parse(raw) as { target: boolean };
+      if (typeof target === "boolean") void run(target);
+    } catch {
+      // malformed — ignore, the button is still there
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div>
       <button
         type="button"
-        onClick={toggle}
+        onClick={() => run(!isTest)}
         disabled={busy}
         data-testid="mark-test-toggle"
         className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm font-medium"
@@ -73,7 +103,7 @@ export function MarkTest({ id, isTest }: { id: string; isTest: boolean }) {
         <p className="mt-2 text-sm text-[var(--color-danger)]">
           Verifica tu identidad de nuevo para esta acción.{" "}
           <Link
-            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}`}
+            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}&stepup=1`}
             className="underline"
           >
             Verificar

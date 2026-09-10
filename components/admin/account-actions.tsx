@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button, Pill, type PillTone } from "@/components/ui";
@@ -29,7 +29,15 @@ const STATUS_TONE: Record<Status, PillTone> = {
  * so completing the 2FA challenge returns the admin to this exact ficha
  * instead of dropping them on the generic `/admin` dashboard with no obvious
  * next step (reported live as the flow feeling "stuck" after entering the code).
+ *
+ * D-194: the link also carries `stepup=1` (so `/admin/2fa/verify` re-challenges
+ * on the 10-minute step-up window, not the 12h admin window — otherwise
+ * re-verification is impossible and the action loops on 401), and the reversible
+ * action the admin started is replayed automatically on return. `anonymize` is
+ * deliberately NOT replayed — an irreversible action always starts from a fresh
+ * deliberate click.
  */
+const REPLAYABLE = new Set(["block", "deactivate", "reactivate"]);
 export function AccountActions({
   kind,
   id,
@@ -51,6 +59,7 @@ export function AccountActions({
   const [confirmAnon, setConfirmAnon] = useState("");
 
   const isAnon = status === "anonymized";
+  const pendingKey = `fvd:pending:account:${kind}:${id}`;
 
   async function call(payload: Record<string, unknown>) {
     setBusy(true);
@@ -68,6 +77,13 @@ export function AccountActions({
         return;
       }
       if (data?.error?.code === "step_up_required") {
+        if (typeof payload.action === "string" && REPLAYABLE.has(payload.action)) {
+          try {
+            sessionStorage.setItem(pendingKey, JSON.stringify(payload));
+          } catch {
+            // sessionStorage unavailable — the manual "Verificar" link still works.
+          }
+        }
         setStepUp(true);
         return;
       }
@@ -78,6 +94,26 @@ export function AccountActions({
       setBusy(false);
     }
   }
+
+  // Coming back from a step-up re-verification: replay the reversible action the
+  // admin started before being sent to /admin/2fa/verify.
+  useEffect(() => {
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem(pendingKey);
+      if (raw) sessionStorage.removeItem(pendingKey);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const payload = JSON.parse(raw) as Record<string, unknown>;
+      if (typeof payload.action === "string" && REPLAYABLE.has(payload.action)) void call(payload);
+    } catch {
+      // malformed — ignore, the buttons are still there
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
@@ -91,7 +127,7 @@ export function AccountActions({
         <p className="mt-3 text-sm text-[var(--color-danger)]">
           Verifica tu identidad de nuevo para esta acción.{" "}
           <Link
-            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}`}
+            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}&stepup=1`}
             className="underline"
           >
             Verificar

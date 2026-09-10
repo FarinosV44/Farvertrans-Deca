@@ -1,6 +1,7 @@
 import { test, expect, request as pwRequest } from "@playwright/test";
 import { PrismaClient } from "@/prisma/generated/client";
-import { loginAdminApi, internalPage } from "./helpers/admin-auth";
+import { ADMIN, adminTotpCode, loginAdminApi, internalPage } from "./helpers/admin-auth";
+import { signSession, SESSION_COOKIE } from "@/lib/auth/session";
 
 /**
  * #62 — superadmin account lifecycle. Blocking a company kills its members'
@@ -283,7 +284,7 @@ test("D-184: 'Marcar como prueba' surfaces a step-up-required error and returns 
     const verificar = page.getByRole("link", { name: "Verificar" });
     await expect(verificar).toHaveAttribute(
       "href",
-      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}`,
+      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}&stepup=1`,
     );
 
     // Following it (this session's own step-up is already fresh from
@@ -325,10 +326,121 @@ test("D-184: account-lifecycle actions (Bloquear) also return the admin to this 
     const verificar = page.getByRole("link", { name: "Verificar" });
     await expect(verificar).toHaveAttribute(
       "href",
-      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}`,
+      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}&stepup=1`,
     );
     await verificar.click();
     await page.waitForURL(new RegExp(`/admin/empresas/${companyId}$`));
+  } finally {
+    await close();
+  }
+});
+
+/**
+ * User report (2026-09-10): after clicking "Verificar" the page reloads back
+ * to the same ficha unchanged, and clicking the action again does the same —
+ * "no hay forma de completar la verificación".
+ *
+ * Root cause (D-194): D-184 surfaced the `step_up_required` error with a
+ * "Verificar" link, but `/admin/2fa/verify` skips the code challenge whenever
+ * the last TOTP check is inside the 12h ADMIN window (`isAdmin2faFresh()`),
+ * while a step-up action needs a check inside the 10-minute window
+ * (`requireStepUp()`). An admin browsing for >10 min is "fresh" for the verify
+ * page but "stale" for the action → the challenge never renders, `tv` is never
+ * refreshed, and the action loops on 401 forever.
+ *
+ * This drives the REAL endpoint (no `page.route` mock) against a genuinely
+ * stale step-up, by re-signing this session's cookie with an aged `tv`.
+ */
+test("D-194: a stale step-up is actually refreshable — 'Verificar' re-challenges instead of looping, and the pending action completes", async ({
+  browser,
+}) => {
+  const { ctx, companyId } = await newCompanyWithDeca();
+  await ctx.dispose();
+
+  const { page, close } = await internalPage(browser);
+  try {
+    // Age this session's admin TOTP check to 20 minutes: still inside the 12h
+    // admin window (so /admin pages load), but stale for step-up (>10 min).
+    const admin = await prisma.user.findFirstOrThrow({
+      where: { email: ADMIN.email },
+      select: { id: true, sessionVersion: true },
+    });
+    const staleTv = Math.floor(Date.now() / 1000) - 20 * 60;
+    await page.context().addCookies([
+      {
+        name: SESSION_COOKIE,
+        value: signSession(admin.id, admin.sessionVersion, staleTv),
+        url: "http://localhost:3000",
+      },
+    ]);
+
+    await page.goto(`/admin/empresas/${companyId}`);
+    await page.getByTestId("mark-test-toggle").click();
+
+    // Real (un-mocked) step-up rejection.
+    const verificar = page.getByRole("link", { name: "Verificar" });
+    await expect(verificar).toBeVisible();
+    await verificar.click();
+
+    // BEFORE THE FIX: the verify page sees a 12h-fresh session and redirects
+    // straight back to the ficha — this input never appears and the admin is
+    // stuck. AFTER: the challenge is shown so `tv` can actually be refreshed.
+    await expect(page.getByTestId("totp-verify-input")).toBeVisible();
+
+    await page.getByTestId("totp-verify-input").fill(adminTotpCode());
+    await page.getByTestId("totp-verify-submit").click();
+
+    // Returned to the ficha, and the action the admin started before
+    // re-verifying is replayed automatically — no need to hunt for the button.
+    await page.waitForURL(new RegExp(`/admin/empresas/${companyId}$`));
+    await expect(page.getByTestId("mark-test-toggle")).toHaveText("Quitar marca de prueba");
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: companyId } })).isTest).toBe(
+      true,
+    );
+  } finally {
+    await close();
+  }
+});
+
+/**
+ * D-194: the user's report also asked that a FAILED mutation never just
+ * silently reload — it must show an explicit error. A non-step-up failure
+ * (here a forced 500) surfaces the generic message and the admin stays on the
+ * ficha; nothing is stashed for replay (only `step_up_required` is).
+ */
+test("D-194: a failed 'Marcar como prueba' shows an explicit error and does not silently reload", async ({
+  browser,
+}) => {
+  const { ctx, companyId } = await newCompanyWithDeca();
+  await ctx.dispose();
+
+  const { page, close } = await internalPage(browser);
+  try {
+    await page.route(`**/api/admin/empresas/${companyId}`, async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: { code: "internal" } }),
+      });
+    });
+
+    await page.goto(`/admin/empresas/${companyId}`);
+    const urlBefore = page.url();
+
+    await page.getByTestId("mark-test-toggle").click();
+
+    // Explicit error, in place — no navigation, no reload, the toggle still
+    // shows its original label (nothing changed under the admin).
+    await expect(page.getByText("No se pudo completar la acción.")).toBeVisible();
+    expect(page.url()).toBe(urlBefore);
+    await expect(page.getByTestId("mark-test-toggle")).toHaveText("Marcar como prueba");
+    // The failure left nothing behind: reloading does not replay the action.
+    await page.unroute(`**/api/admin/empresas/${companyId}`);
+    await page.reload();
+    await expect(page.getByTestId("mark-test-toggle")).toHaveText("Marcar como prueba");
+    expect((await prisma.company.findUniqueOrThrow({ where: { id: companyId } })).isTest).toBe(
+      false,
+    );
   } finally {
     await close();
   }

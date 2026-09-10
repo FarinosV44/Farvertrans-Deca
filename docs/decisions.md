@@ -6068,3 +6068,54 @@ previously-documented contention flake happened to sit quiet this run too.
   enable → `all`; team-join shows none. 38/38 green (+ account/membership/registro). tsc / lint /
   format / keel-verify clean; 386/386 unit.
 - **No schema change, no migration** — `commercial_consent` already exists.
+
+## D-194 — #108 (3rd report): admin step-up re-verification was an unbreakable redirect loop (2026-09-10)
+
+**User's report, precisely:** trying to action a company in Superadmin ("Marcar como prueba" / "the
+verification action"), "the page reloads, I am returned to the same page, the record still appears
+unverified", clicking again does the same — *"there is currently no practical way for the admin to
+complete the verification."* This is the same issue as #108 / D-184 / D-184-cont, third report.
+
+**Root cause (found by reading the flow end to end, not guessing):** D-184 made a `step_up_required`
+response surface a "Verificar" link to `/admin/2fa/verify?next=<ficha>`; D-184-cont made that link
+carry `next` so the challenge returns the admin to the ficha. But `/admin/2fa/verify` short-circuits
+("already verified, don't re-render the challenge — #86 p7") on `isAdmin2faFresh()`, the **12-hour
+admin window**. A step-up-gated action (`requireStepUp()` in `lib/admin/guard.ts`) needs a TOTP
+check inside the **10-minute** window. An admin who has been browsing Superadmin for >10 minutes
+(the normal case) is *fresh for the verify page but stale for the action*: clicking "Verificar"
+redirects straight back to the ficha **without ever showing the code input**, `tv` is never
+refreshed, the retried action answers `step_up_required` again → infinite loop. Exactly the live
+follow-up wording on D-184: *"pide el 2fa pero le doy y solo recarga a otra pagina … se queda
+pillado."* D-184-cont's own test even hard-coded this bug ("this session's own step-up is already
+fresh … the short-circuit fires immediately here") as if it were correct behaviour.
+
+**There is no separate "verify a company" feature.** The company-level admin actions are "Marcar
+como prueba" (`is_test` visibility/metrics toggle, #103) and block/deactivate/reactivate (#62). The
+"Verificar" text is the 2FA re-check link. The report conflated the two; nothing is missing from
+the data model.
+
+**Fix:**
+- `lib/admin/guard.ts` → new `isAdminStepUpFresh()`: the non-throwing mirror of `requireStepUp()`'s
+  freshness test (10-min window, never a trusted-device grant).
+- `app/admin/2fa/verify/page.tsx`: accepts `?stepup=1`; when present, the "skip the challenge"
+  check is `isAdminStepUpFresh()` instead of `isAdmin2faFresh()`, so a stale step-up actually
+  re-renders the code input and can be refreshed. A plain post-login visit (no `stepup`) is
+  unchanged — still the 12h test, still #86-p7-safe.
+- `components/admin/mark-test.tsx` + `components/admin/account-actions.tsx`: the "Verificar" link
+  now carries `&stepup=1`; and the action the admin started is stashed in `sessionStorage`
+  (`fvd:pending:*`, one-shot, removed on read) and **replayed automatically** on return from a
+  fresh check — no hunting for the button ("se queda pillado"). Only reversible actions are
+  replayed: `set_test` / `block` / `deactivate` / `reactivate`; `anonymize` is deliberately never
+  replayed (an irreversible action always starts from a fresh deliberate click).
+- No change to `requireStepUp()`, `setCompanyTest()`, the endpoint, or the `is_test` field/behaviour
+  — all already correct. No schema change, **no migration** (production `prisma migrate status` =
+  up to date, 39/39).
+
+**Verified, red-first:** new `tests/e2e/admin-account-lifecycle.spec.ts` test drives the REAL
+endpoint (no `page.route` mock) against a genuinely stale step-up — re-signs the session cookie
+with a `tv` aged 20 min (inside 12h, outside 10 min), clicks the action, follows "Verificar",
+asserts the **code input is shown** (pre-fix: it was skipped and the admin looped), enters the
+code, and asserts the pending action auto-completes with `is_test = true` persisted in the DB.
+Second new test: a forced 500 shows the explicit "No se pudo completar la acción." alert, does not
+navigate/reload, and stashes nothing. The two existing D-184 tests updated for the `&stepup=1`
+href. Full file **10/10 green** (`--workers=2`). tsc / lint / prettier / keel-verify clean.

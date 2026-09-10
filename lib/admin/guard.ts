@@ -107,6 +107,27 @@ export async function isAdmin2faFresh(): Promise<boolean> {
   return isTrustedDevice(await trustedDeviceCookie(), session.user.id);
 }
 
+/**
+ * True when THIS session's last admin TOTP check is fresh enough for a
+ * STEP-UP action — the 10-minute window, and (like `requireStepUp()`) never a
+ * trusted-device grant. The non-throwing mirror of `requireStepUp()`'s freshness
+ * test, used by `/admin/2fa/verify` to decide whether a `?stepup=1` visit may
+ * skip the challenge.
+ *
+ * `isAdmin2faFresh()` (the 12h window) is the WRONG test there: an admin whose
+ * TOTP check is 11 minutes old is "fresh" by that measure, so the verify page
+ * would bounce them straight back — yet every step-up-gated route still answers
+ * `step_up_required`, so the action can never complete. That was an unbreakable
+ * redirect loop (D-194).
+ */
+export async function isAdminStepUpFresh(): Promise<boolean> {
+  const session = await getCurrentSession();
+  if (!session || session.user.role !== "internal") return false;
+  if (!(await hasEnrolledStrongAuth(session.user.id, session.user.totpEnabledAt))) return false;
+  const tv = session.payload.tv;
+  return !!tv && Math.floor(Date.now() / 1000) - tv <= STEP_UP_MAX_AGE_S;
+}
+
 export class StepUpRequiredError extends Error {
   constructor() {
     super("Esta acción requiere verificar tu código de autenticación de nuevo.");
