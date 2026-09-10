@@ -9,14 +9,15 @@ type FooterLink = { label: string; href: string };
 const PRODUCT: FooterLink[] = [
   { label: "Crear DeCA", href: "/crear" },
   { label: "Cómo funciona", href: "/#pasos" },
-  { label: "Guías", href: "/guias" },
-  { label: "Preguntas frecuentes", href: "/#faq" },
+  { label: "Planes 2027", href: "/#planes" },
+  { label: "Empresas de transporte", href: "/deca-empresas-transporte" },
+  { label: "Agencias / operadores", href: "/deca-agencias-transporte" },
 ];
 
 const RESOURCES: FooterLink[] = [
   { label: "Blog", href: "/blog" },
+  { label: "Guías", href: "/guias" },
   { label: "Normativa", href: "/soy-obligado" },
-  { label: "Documento Electrónico de Control", href: "/que-es-el-deca" },
   { label: "Preguntas frecuentes", href: "/#faq" },
 ];
 
@@ -56,11 +57,14 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-[var(--color-border)] bg-[var(--color-surface)]">
       <div className="mx-auto max-w-[1120px] px-4 py-12 md:px-6">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-          <div>
+          <div className="max-w-xs">
             <p className="text-lg font-bold text-[var(--color-text)]">{BRAND.name}</p>
-            <p className="mt-2 max-w-xs text-sm text-[var(--color-text-muted)]">
-              Generador gratuito del Documento Electrónico de Control para transportistas,
-              cargadores y operadores de transporte.
+            <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+              Plataforma para generar, custodiar y verificar el Documento Electrónico de Control en
+              el transporte por carretera.
+            </p>
+            <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+              PDF nativo + QR · Custodia digital · Histórico
             </p>
           </div>
           <FooterColumn title="Producto" links={PRODUCT} />
