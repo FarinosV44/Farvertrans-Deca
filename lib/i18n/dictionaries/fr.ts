@@ -903,7 +903,7 @@ export const fr = {
       commercialShareOff: "Non",
     },
     commercialShare: {
-      legend: "Traitement commercial (facultatif)",
+      legend: "DECA Conecta (facultatif)",
       hint: "Si vous le souhaitez, autorisez l'envoi des informations minimales de disponibilité de ce transport pour recevoir des propositions personnalisées de fret. Le refus n'affecte pas l'usage gratuit de DeCA Profesional.",
       enable: "Je souhaite recevoir des propositions personnalisées à la fin de ce transport",
       destination: "Destination ou zone de disponibilité",

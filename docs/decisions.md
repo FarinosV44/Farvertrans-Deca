@@ -6390,3 +6390,35 @@ OK.
 **Still to do in follow-up (this D-entry covers the UI + i18n + tests only):** the guide section
 + new guide screenshots (D-201b), the published SEO article's screenshots + internal-link block
 (prod CMS, `/admin/blog`), the Guides-section DECA Conecta card, and the featured/OG image.
+
+## D-201b — DECA Conecta: guide section + wizard label + screenshots (2026-09-10)
+
+Follow-up to D-201, completing the guide + per-DeCA surface.
+
+- **`prisma/content/guia-de-uso.ts`:** the "## Oportunidades de carga" section is replaced by
+  "## DECA Conecta: recibe oportunidades de carga compatibles con tus rutas" with the user's
+  exact copy — intro (cargas de retorno / reducir kilómetros en vacío / no GPS), "Activar DECA
+  Conecta al crear la cuenta" (unchecked by default; legal acceptance ≠ activation), "Configurar
+  DECA Conecta desde Privacidad" (the 3 real options verbatim), "Qué datos utiliza DECA Conecta"
+  (destination + date + authorised company/contact; the full "no comparte" list incl. GPS), "Qué
+  ocurre cuando aparece una oportunidad" (not obliged to accept; free to negotiate) + the closing
+  "DECA Conecta facilita el contacto, pero no garantiza…". The Privacidad section intro and the
+  two FAQ entries updated. Internal link to the article with the anchor "Cómo reducir kilómetros
+  en vacío con DECA Conecta" → `/blog/deca-conecta-ofertas-carga`.
+- **Wizard per-DeCA control** (`t.crear.commercialShare.legend`, 8 locales): "Tratamiento
+  comercial (opcional)" → "DECA Conecta (opcional)". No behaviour change.
+- **Screenshots** (`scripts/guide-screenshots.mjs` extended): `deca-conecta-registro.png` (the
+  registration card), `deca-conecta-por-deca.png` (the per-DeCA control, unchecked by default),
+  and `privacidad.png` re-captured to show the new DECA Conecta privacy card. Synthetic demo
+  company, no personal/production data. ALT texts + captions per the task.
+
+**Verified:** `guia-uso.spec.ts` 3/3, `content-cms.spec.ts` 6/6, `commercial-consent.spec.ts`
+23/23. tsc / eslint / prettier / keel-verify clean; 394 unit; production build OK.
+
+**Production:** the guide's prod CMS row is updated with the new body via a targeted
+`contentItem.update` (below); the 2 NEW guide screenshots (`deca-conecta-registro.png`,
+`deca-conecta-por-deca.png`) are static assets that go live on the **next Hostinger redeploy** —
+until then they 404 and render as their ALT text (the new renderer degrades gracefully; no hang).
+
+**Still open (task sections 12–14):** the published article's own screenshots + internal-link
+block (`/admin/blog`), the Guides-section DECA Conecta card, the featured/OG image.

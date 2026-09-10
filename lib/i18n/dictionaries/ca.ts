@@ -886,7 +886,7 @@ export const ca = {
       commercialShareOff: "No",
     },
     commercialShare: {
-      legend: "Tractament comercial (opcional)",
+      legend: "DECA Conecta (opcional)",
       hint: "Si vols, autoritza l'enviament de les dades mínimes de disponibilitat d'aquest port per rebre propostes personalitzades de càrrega. No autoritzar-ho no afecta l'ús gratuït de DeCA Profesional.",
       enable: "Vull rebre ofertes personalitzades en finalitzar aquest port",
       destination: "Destinació o zona de disponibilitat",

@@ -886,7 +886,7 @@ export const it = {
       commercialShareOff: "No",
     },
     commercialShare: {
-      legend: "Trattamento commerciale (facoltativo)",
+      legend: "DECA Conecta (facoltativo)",
       hint: "Se vuoi, autorizza l'invio dei dati minimi di disponibilità di questo trasporto per ricevere proposte personalizzate di carico. Non autorizzarlo non incide sull'uso gratuito di DeCA Profesional.",
       enable: "Voglio ricevere proposte personalizzate al termine di questo trasporto",
       destination: "Destinazione o zona di disponibilità",

@@ -871,7 +871,7 @@ export const en = {
       commercialShareOff: "No",
     },
     commercialShare: {
-      legend: "Commercial processing (optional)",
+      legend: "DECA Conecta (optional)",
       hint: "If you wish, authorise sending the minimal availability details of this job to receive personalised freight offers. Not authorising it does not affect your free use of DeCA Profesional.",
       enable: "I want to receive personalised offers when this job ends",
       destination: "Destination or availability area",

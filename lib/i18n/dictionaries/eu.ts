@@ -908,7 +908,7 @@ export const eu = {
       commercialShareOff: "Ez",
     },
     commercialShare: {
-      legend: "Merkataritza-tratamendua (aukerakoa)",
+      legend: "DECA Conecta (aukerakoa)",
       hint: "Nahi izanez gero, baimendu garraio honen eskuragarritasun-datu minimoak bidaltzea, karga-proposamen pertsonalizatuak jasotzeko. Ez baimentzeak ez dio eragiten DeCA Profesional doan erabiltzeari.",
       enable: "Garraio hau amaitzean proposamen pertsonalizatuak jaso nahi ditut",
       destination: "Helmuga edo eskuragarritasun-eremua",
