@@ -66,6 +66,13 @@ export async function SiteHeader({
               {es.howItWorks}
             </Link>
             <Link
+              href="/#planes"
+              data-i18n-key="plans"
+              className="no-underline hover:text-[var(--color-primary)]"
+            >
+              {es.plans}
+            </Link>
+            <Link
               href="/soy-obligado"
               data-i18n-key="regulation"
               className="no-underline hover:text-[var(--color-primary)]"

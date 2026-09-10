@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { MobileCta } from "@/components/site/mobile-cta";
 import { CtaButton } from "@/components/site/cta-button";
+import { PlansSection } from "@/components/site/plans-section";
 import { TrackView } from "@/components/analytics/track-view";
 import { TrackedLink } from "@/components/analytics/tracked-link";
 import { DecaPreview } from "@/components/site/deca-preview";
@@ -272,6 +273,11 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
+
+        {/* Planes 2027 (#109) — informational only, inside the landing.
+            Sits between "Todo incluido durante el lanzamiento" and the product
+            proof: now free → 2027 pricing → back to the product story. */}
+        <PlansSection copy={dict.landing.plans} authed={authed} wrapClass={wrap} />
 
         {/* Product proof — DESIGN #55 §15: benefits list now uses the same
             success-check visual language as the free-value/normativa sections
