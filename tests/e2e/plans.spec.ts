@@ -147,12 +147,18 @@ test.describe("#109 — Planes 2027 section", () => {
           belowH2: b.top >= h.bottom - 3,
           rightOfH2: b.left > h.right,
           abovePara: b.bottom <= p.top + 3,
-          centeredX: Math.abs((b.left + b.right) / 2 - window.innerWidth / 2) <= 2,
+          // Left edge shared with the H2 and the paragraph (informational chip,
+          // not a centred CTA).
+          leftAligned: Math.abs(b.left - h.left) <= 1 && Math.abs(b.left - p.left) <= 1,
+          oneLine: b.height <= 26,
+          gapH2ToBadge: Math.round(b.top - h.bottom),
+          gapBadgeToPara: Math.round(p.top - b.bottom),
           overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         };
       });
 
-    // Mobile (<768): below the H2, above the paragraph, horizontally centred.
+    // Mobile (<768): its own line directly below the H2, LEFT-aligned to the
+    // same edge as the H2/paragraph, one line, tight vertical rhythm.
     for (const width of [320, 375, 390, 430]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/#planes");
@@ -161,7 +167,12 @@ test.describe("#109 — Planes 2027 section", () => {
       expect(g.belowH2, `below H2 @ ${width}`).toBe(true);
       expect(g.rightOfH2, `not beside H2 @ ${width}`).toBe(false);
       expect(g.abovePara, `above paragraph @ ${width}`).toBe(true);
-      expect(g.centeredX, `centred @ ${width}`).toBe(true);
+      expect(g.leftAligned, `left-aligned @ ${width}`).toBe(true);
+      expect(g.oneLine, `single line @ ${width}`).toBe(true);
+      expect(g.gapH2ToBadge, `H2->badge gap @ ${width}`).toBeGreaterThanOrEqual(8);
+      expect(g.gapH2ToBadge, `H2->badge gap @ ${width}`).toBeLessThanOrEqual(20);
+      expect(g.gapBadgeToPara, `badge->para gap @ ${width}`).toBeGreaterThanOrEqual(14);
+      expect(g.gapBadgeToPara, `badge->para gap @ ${width}`).toBeLessThanOrEqual(28);
       expect(g.overflow, `no overflow @ ${width}`).toBeLessThanOrEqual(0);
     }
 
