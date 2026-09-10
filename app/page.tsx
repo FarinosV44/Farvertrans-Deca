@@ -256,7 +256,10 @@ export default async function HomePage() {
             ))}
           </ul>
 
-          {/* API / ERP integrations — an active demand signal, not "Próximamente" (#74) */}
+          {/* API / ERP integrations — a demand-signal CTA (#74). An additional,
+              quoted-per-project service, never included in the subscription
+              (#111); the "Próximamente + coste adicional" wording lives in the
+              Planes 2027 section and `dict.landing.plans.apiDisclaimer`. */}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
             <div>
               <p className="text-sm font-bold">{dict.landing.integrationsCard.heading}</p>

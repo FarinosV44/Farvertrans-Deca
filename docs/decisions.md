@@ -6240,3 +6240,45 @@ locally — placeholder Resend key, expected; real evidence for Part 3).
 
 **Verified:** `support-tickets.spec.ts` 2/2 (round-trip + the new dedup test); tsc / eslint /
 prettier / keel-verify clean; 394 unit. Not merged to `main`.
+
+## D-198 — #111 Sprint D: API/ERP pricing clarity + "Solicitar integración" reaches a person (2026-09-10)
+
+**Part 4 of #111.** Make the landing say clearly that API/ERP is upcoming **and an additional,
+quoted service — not included in the subscription**, and prove integration requests reach a real
+destination.
+
+**Commercial clarity (all 8 locales):**
+- `components/site/plans-section.tsx` + `dict.landing.plans`: the 3 Business-tier `soon` features
+  (API / Integraciones ERP·TMS / Onboarding técnico) gain an `extraCost` flag → a small muted
+  `+ coste adicional` marker **next to the existing "Próximamente"** (kept). No fixed price.
+- `dict.landing.plans.apiDisclaimer` (the small text under the section) extended: "… No están
+  incluidas en el precio de la suscripción: se presupuestan según las necesidades y la complejidad
+  de cada integración." — the discreet explanation Part 4.3 asks for, not a card disclaimer.
+- `dict.landing.integrationsCard.body` (the landing CTA card): the "Formarán parte de las
+  soluciones Business" sentence — which read as *included in the Business plan* — replaced in all
+  8 locales with "Son un servicio adicional, sujeto a valoración técnica y presupuesto según el
+  proyecto; no están incluidas en el precio de la suscripción." The misleading code comment at
+  `app/page.tsx` fixed.
+- Swept `app/**`, `lib/i18n/**`, `lib/content/**`, `content/seo/**` for API / ERP / integrac* —
+  nothing else implies inclusion (`"Sin montar un proceso nuevo en tu ERP"` etc. say the opposite).
+
+**"Solicitar integración" now reaches a person (`lib/integrations/index.ts`):**
+- **Before:** `createIntegrationRequest()` persisted an `IntegrationRequest` row and it appeared in
+  `/admin/integraciones` — **but no email was ever sent; nobody was alerted.**
+- **Now:** after the insert, a best-effort `sendMail()` (same pattern + address as a support
+  ticket: `FVD_SUPPORT_NOTIFY_EMAIL || BRAND.supportEmail` = `Deca@praetoriaabogados.es`) with
+  company name+NIF+id, user email+id, contact, system/ERP name, need, volume, date, admin link.
+  The request still persists if the mail fails (insert is first, `sendMail` never throws, logs
+  every outcome).
+- **Dedup:** an identical request (same company+user+system+need) within 2 min returns the
+  existing row — no duplicate row, no duplicate email.
+- `components/app/integration-request-form.tsx` confirmation copy → "Solicitud recibida … nos
+  pondremos en contacto contigo. Las integraciones son un servicio adicional que se presupuesta
+  según el proyecto." No "automatic / included / fixed price / immediate" wording.
+
+**Verified:** `admin-growth.spec.ts` (4/4 — request reaches the superadmin, triage, + new "retry
+does not duplicate"), `plans.spec.ts` (10/10 — "Próximamente" AND "+ coste adicional" both shown
+for the 3 items, disclaimer present, no €80, no 320px overflow), `landing.spec.ts` (all).
+tsc / eslint / prettier / keel-verify clean; 394 unit. Inbox delivery to
+`deca@praetoriaabogados.es` still needs the user's Resend dashboard (CREDENTIAL), same as Part 3.
+Not merged to `main`.

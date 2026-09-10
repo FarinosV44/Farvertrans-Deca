@@ -750,8 +750,15 @@ anonymize-in-place (no hard delete, D-067).
   descarta una incidencia idéntica en 2 min (sin fila duplicada ⇒ sin email duplicado); el cuerpo
   de la notificación añade id de empresa/usuario + fecha ISO. Sin cambio de esquema. El texto
   "Recibirás la respuesta por correo y también aquí" es cierto — no se cambia.
-- **Parte 4 — PENDIENTE:** claridad comercial API/ERP en la landing ("+ coste adicional",
-  "Próximamente" intacto, 8 locales) + verificación E2E de "Solicitar integración" (hoy persiste
-  en BD + panel admin pero **no envía ninguna notificación** — se añadirá al correo de soporte).
-- **Sin cerrar** (política de 3 tiempos): al fusionar cada parte se comenta el avance; el usuario
-  confirma tras el despliegue.
+- **Parte 4 — Claridad API/ERP + "Solicitar integración" (D-198): HECHA en `develop`, sin fusionar
+  a `main`.** Las 3 funciones `soon` del plan Business muestran "+ coste adicional" junto a
+  "Próximamente" (intacto), sin precio fijo; `apiDisclaimer` + `integrationsCard.body` reescritos
+  para que nada implique inclusión en la suscripción — 8 locales. `createIntegrationRequest()`
+  ahora envía email de notificación a `Deca@praetoriaabogados.es` (antes: solo BD + panel admin,
+  nadie avisado) con anti-duplicado de 2 min; copia de confirmación realista. Sin cambio de
+  esquema. e2e: admin-growth 4/4 (+ test nuevo de duplicado), plans 10/10.
+- **Estado global de #111: las 4 partes HECHAS en `develop` (D-195…D-198), listas para `main`.**
+  El merge `develop`→`main` y cualquier despliegue son decisión del usuario.
+- **Sin cerrar** (política de 3 tiempos): al fusionar se comenta el avance; el usuario confirma
+  tras el despliegue (incluye ejecutar `npm run seed:content` para publicar la guía, y comprobar
+  en el panel de Resend que los correos a `deca@praetoriaabogados.es` se entregan).

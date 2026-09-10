@@ -104,6 +104,11 @@ export function PlansSection({
                       <span className="ml-1.5 rounded-full border border-dashed border-[var(--color-border)] px-1.5 py-0.5 text-[11px]">
                         {copy.comingSoonLabel}
                       </span>
+                      {"extraCost" in f && f.extraCost && (
+                        <span className="ml-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">
+                          {copy.extraCostLabel}
+                        </span>
+                      )}
                     </span>
                   </li>
                 ) : (

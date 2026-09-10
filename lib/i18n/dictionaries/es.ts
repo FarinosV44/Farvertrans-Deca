@@ -62,7 +62,7 @@ export const es = {
     freeValueComingSoon: "Próximamente",
     integrationsCard: {
       heading: "API e integraciones ERP/TMS",
-      body: "Estamos preparando integraciones para empresas que necesitan conectar DeCA Profesional con sus sistemas. Formarán parte de las soluciones Business.",
+      body: "Estamos preparando integraciones para empresas que necesitan conectar DeCA Profesional con sus sistemas. Son un servicio adicional, sujeto a valoración técnica y presupuesto según el proyecto; no están incluidas en el precio de la suscripción.",
       cta: "Me interesa la integración",
     },
     plans: {
@@ -80,11 +80,12 @@ export const es = {
         "Los límites y funcionalidades indicados corresponden a los planes previstos para 2027. Hasta entonces, las cuentas del periodo de lanzamiento mantienen su acceso actual.",
       recommendedLabel: "Recomendado",
       comingSoonLabel: "Próximamente",
+      extraCostLabel: "+ coste adicional",
       decaPerMonthLabel: "DeCA / mes",
       usersLabel: "usuarios",
       guestCta: "Empezar gratis",
       apiDisclaimer:
-        "API e integraciones ERP/TMS sujetas a disponibilidad técnica y compatibilidad con el sistema del cliente.",
+        "API e integraciones ERP/TMS sujetas a disponibilidad técnica y compatibilidad con el sistema del cliente. No están incluidas en el precio de la suscripción: se presupuestan según las necesidades y la complejidad de cada integración.",
       tiers: [
         {
           name: "Starter",
@@ -129,9 +130,9 @@ export const es = {
           tagline: "Para empresas con mayor volumen e integración con sus sistemas.",
           inherits: "Todo lo incluido en Professional, más:",
           features: [
-            { label: "API", soon: true },
-            { label: "Integraciones ERP / TMS", soon: true },
-            { label: "Onboarding técnico de integración", soon: true },
+            { label: "API", soon: true, extraCost: true },
+            { label: "Integraciones ERP / TMS", soon: true, extraCost: true },
+            { label: "Onboarding técnico de integración", soon: true, extraCost: true },
             { label: "Soporte técnico prioritario", soon: false },
             { label: "Soporte telefónico", soon: false },
             { label: "Mayor volumen y capacidad multiusuario", soon: false },
