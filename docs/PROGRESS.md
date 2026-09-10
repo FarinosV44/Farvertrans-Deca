@@ -49,7 +49,8 @@
   All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
   plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
   project. Historical `0.1.0` mentions in `docs/` (append-only records) left as-is. Gate:
-  keel-verify "version in sync (0.2.0)", tsc clean, 377/377 unit green. No tag / `main` merge (user's call).
+  keel-verify "version in sync (0.2.0)", tsc clean, 377/377 unit green. **Merged to `main`**
+  (`db9af1c`) on the user's explicit instruction; `develop` == `main`. No version tag (not requested).
 - **Previous: #108 — LIVE BUG fix, "Marcar como prueba" silently failed on a stale step-up (D-184),
   MERGED to `main`.** User report: the button visibly did nothing. Root cause: the endpoint
   (`set_test`) is step-up gated like block/deactivate/reactivate/edit, and `MarkTest` — unlike its
