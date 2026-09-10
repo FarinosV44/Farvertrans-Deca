@@ -737,10 +737,16 @@ anonymize-in-place (no hard delete, D-067).
   - `tests/e2e/guia-uso.spec.ts` (3). Gate verde: tsc/eslint/prettier/keel-verify; 394 unit; e2e 9/9.
   - **Producción:** ejecutar `npm run seed:content` tras el despliegue para publicar la guía; las
     correcciones posteriores se hacen en `/admin/guias` (el seed solo crea, no actualiza).
-- **Partes 2–4 — PENDIENTES:** pulido visual de `/panel/ayuda`; verificación E2E del sistema de
-  incidencias (persistencia + notificación a `deca@praetoriaabogados.es` + hilo de respuesta) y
-  anti-duplicado; claridad comercial API/ERP en la landing ("+ coste adicional", "Próximamente"
-  intacto) + verificación E2E de "Solicitar integración" (hoy persiste en BD + panel admin pero
-  **no envía ninguna notificación** — se añadirá).
+- **Parte 2 — Pulido de Ayuda (D-196): HECHA en `develop`, sin fusionar a `main`.** Solo visual:
+  canales de soporte como acciones con icono, formulario pulido, mejor estado vacío de "Mis
+  incidencias", enlace secundario a Guías (sin tarjeta, sin ítem de menú), 3 iconos SVG nuevos,
+  4 claves i18n ×8 locales. Sin cambio de comportamiento — todos los `data-testid` intactos,
+  `panel-help.spec.ts` + `support-tickets.spec.ts` pasan sin modificar. Captura de pantallas hecha
+  determinista y las 9 recapturadas. Gate verde (394 unit, e2e 13/13).
+- **Partes 3–4 — PENDIENTES:** verificación E2E del sistema de incidencias (persistencia +
+  notificación a `deca@praetoriaabogados.es` + hilo de respuesta) y anti-duplicado; claridad
+  comercial API/ERP en la landing ("+ coste adicional", "Próximamente" intacto) + verificación
+  E2E de "Solicitar integración" (hoy persiste en BD + panel admin pero **no envía ninguna
+  notificación** — se añadirá).
 - **Sin cerrar** (política de 3 tiempos): al fusionar cada parte se comenta el avance; el usuario
   confirma tras el despliegue.

@@ -605,7 +605,11 @@ export const eu = {
       sending: "Bidaltzen…",
       sent: "Gorabehera bidalita. Ahalik eta lasterren erantzungo dizugu.",
       myHeading: "Nire gorabeherak",
-      none: "Ez duzu gorabeherarik ireki.",
+      none: "Ez duzu gorabehera irekirik.",
+      noneHint:
+        "Gorabehera bat irekitzean, haren egoera eta erantzunak hemen ikusi ahal izango dituzu.",
+      guidesPrompt: "Erabilera-argibideak bilatzen? Ikusi gure",
+      guidesLink: "Gidak",
       view: "Ikusi",
       replyLabel: "Zure erantzuna",
       replyPlaceholder: "Idatzi zure erantzuna…",

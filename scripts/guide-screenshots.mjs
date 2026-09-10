@@ -152,15 +152,37 @@ async function main() {
         .waitFor({ state: "visible", timeout: 15000 })
         .catch(() => {});
     await page.evaluate(() => document.fonts.ready).catch(() => {});
-    // Drop focus so the sr-only "skip to content" link is not captured visible.
-    await page.evaluate(() =>
-      document.activeElement instanceof HTMLElement ? document.activeElement.blur() : null,
-    );
-    await page.mouse.move(2, 2);
+    // Drop focus + move the pointer away from the top-left corner so the
+    // accessibility "skip to content" link (correct: visible only on focus) is
+    // not captured on screen.
+    await page.keyboard.press("Escape").catch(() => {});
+    await page.evaluate(() => {
+      const el = document.activeElement;
+      if (el instanceof HTMLElement) el.blur();
+      document.querySelectorAll(".skip-link").forEach((s) => s instanceof HTMLElement && s.blur());
+      window.scrollTo(0, 0);
+    });
+    await page.mouse.move(VIEWPORT.width / 2, VIEWPORT.height / 2);
     await page.waitForTimeout(700);
-    const main = page.locator("main#contenido");
-    const target = (await main.count()) ? main : page;
-    await target.screenshot({ path: `${OUT}${name}.png` });
+    // Clip to the <main> content box against a full-page render — deterministic,
+    // and never captures the sticky header or the focus-only skip link.
+    const box = await page
+      .locator("main#contenido")
+      .first()
+      .evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return {
+          x: Math.max(0, Math.floor(r.x)),
+          y: Math.max(0, Math.floor(r.y + window.scrollY)),
+          width: Math.ceil(r.width),
+          height: Math.ceil(r.height),
+        };
+      })
+      .catch(() => null);
+    await page.screenshot({
+      path: `${OUT}${name}.png`,
+      ...(box && box.height > 40 ? { fullPage: true, clip: box } : {}),
+    });
     console.log(`  ✓ ${name}.png`);
   };
 
@@ -178,6 +200,10 @@ async function main() {
   const anonPage = await anon.newPage();
   await anonPage.goto("/crear", { waitUntil: "networkidle" });
   await anonPage.evaluate(() => document.fonts.ready).catch(() => {});
+  await anonPage.evaluate(() =>
+    document.activeElement instanceof HTMLElement ? document.activeElement.blur() : null,
+  );
+  await anonPage.mouse.move(VIEWPORT.width / 2, VIEWPORT.height / 2);
   await anonPage.waitForTimeout(700);
   {
     const m = anonPage.locator("main#contenido");

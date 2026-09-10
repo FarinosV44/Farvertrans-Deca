@@ -45,10 +45,18 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **In progress: #111 — support/docs experience, 4 parts (D-195…). Part 1 (guide) DONE on
-  `develop`, NOT merged to `main`. Parts 2–4 pending: Help page visual polish; incident-system
-  E2E verification + hardening (`deca@praetoriaabogados.es`, reply workflow); landing API/ERP
+- **In progress: #111 — support/docs experience, 4 parts (D-195…). Parts 1–2 DONE on `develop`,
+  NOT merged to `main`. Parts 3–4 pending: incident-system E2E verification + hardening
+  (`deca@praetoriaabogados.es`, reply workflow, anti-duplicate); landing API/ERP
   "+ coste adicional" + "Solicitar integración" E2E. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+  - **Part 2 / D-196 — Help page (`/panel/ayuda`) visual polish only.** Support channels as icon
+    actions (`WhatsApp · Soporte técnico`, `Email · Deca@praetoriaabogados.es`), polished ticket
+    form, better "Mis incidencias" empty state, small secondary Guías link (no card, no nav item),
+    3 new inline-SVG icons, 4 new `t.panel.help` keys ×8 locales. Zero behaviour change — every
+    `data-testid` kept, `panel-help.spec.ts` + `support-tickets.spec.ts` pass unmodified. The
+    Part 1 "grey box" note is resolved: it was the a11y skip link (`sr-only` until focused —
+    correct) leaking into an element screenshot; `scripts/guide-screenshots.mjs` capture is now
+    deterministic and all 9 screenshots were re-captured.
   - **Part 1 / D-195 — "Guía de uso de DeCA Profesional" as a CMS `ContentItem` inside `/guias`.**
     Additive Markdown renderer support: typed callouts `::: tip/important/example` + block images
     `![alt](/local.png "pie")` (local paths only), pure helpers unit-tested (8), every existing
@@ -57,11 +65,8 @@
     from synthetic demo data in `public/guia/`. `tests/e2e/guia-uso.spec.ts` (3). Gate: tsc/eslint/
     prettier/keel-verify clean, 394 unit (8 new), e2e 9/9. **Production needs `npm run seed:content`
     after deploy** to publish the guide (seed only creates; later edits via `/admin/guias`).
-  - **Note found during Part 1:** on `/panel/ayuda` the sticky `SiteHeader` wordmark area can
-    capture as a grey box in a clipped element screenshot — a capture artifact, not confirmed as a
-    product bug; to be checked properly in Part 2 (Help page work).
-- **`develop` == `main` == `<D-194 merge>` (2026-09-10) + Part 1 commits on `develop` only. CI on
-  `main` green through the D-193 merge (`34489395873`); D-194 merge pending its own CI run.**
+- **`develop` == `main` == `<D-194 merge>` (2026-09-10) + Parts 1–2 commits on `develop` only. CI
+  on `main` green through the D-193 merge (`34489395873`); D-194 merge pending its own CI run.**
 - **Latest: D-194 — admin step-up re-verification was an unbreakable loop (3rd report of #108).**
   `/admin/2fa/verify` skipped the code challenge on the 12h admin window (`isAdmin2faFresh()`) while
   step-up actions need the 10-min window (`requireStepUp()`) → an admin browsing >10 min could never

@@ -44,14 +44,20 @@ export function SupportTicketForm() {
 
   if (done) {
     return (
-      <p data-testid="support-ticket-sent" className="text-sm text-[var(--color-success)]">
+      <p
+        data-testid="support-ticket-sent"
+        className="mt-3 flex items-start gap-2 rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-bg)] p-3.5 text-sm"
+      >
         {s.sent}
       </p>
     );
   }
 
+  const field =
+    "mt-1.5 block w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm focus-visible:border-[var(--color-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-primary)]";
+
   return (
-    <form onSubmit={submit} className="mt-3 space-y-3" noValidate>
+    <form onSubmit={submit} className="mt-4 space-y-4" noValidate>
       {error && (
         <p role="alert" className="text-sm text-[var(--color-danger)]">
           {error}
@@ -63,7 +69,7 @@ export function SupportTicketForm() {
           data-testid="ticket-category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+          className={`${field} min-h-11`}
         >
           {SUPPORT_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -79,7 +85,7 @@ export function SupportTicketForm() {
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           maxLength={160}
-          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+          className={`${field} min-h-11`}
         />
       </label>
       <label className="block text-sm">
@@ -88,16 +94,16 @@ export function SupportTicketForm() {
           data-testid="ticket-body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          rows={5}
+          rows={6}
           maxLength={5000}
-          className="mt-1 block w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 py-2 text-sm"
+          className={`${field} py-2.5 leading-relaxed`}
         />
       </label>
       <button
         type="submit"
         data-testid="ticket-submit"
         disabled={busy}
-        className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
+        className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 text-sm font-medium text-[var(--color-primary-contrast)] transition-opacity hover:opacity-95 disabled:opacity-55"
       >
         {busy ? s.sending : s.send}
       </button>
