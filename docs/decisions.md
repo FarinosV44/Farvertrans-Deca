@@ -5777,3 +5777,31 @@ previously-documented contention flake happened to sit quiet this run too.
   the user's call.
 - Verified: `node scripts/keel-verify.mjs` → "version in sync (0.2.0)"; `tsc --noEmit` clean;
   prettier clean on touched files; 377/377 unit green (full suite).
+
+## D-186 — Security incident: Supabase `public` schema exposed via PostgREST (2026-09-10)
+- Date / phase: 2026-09-10 / Phase 5 (maintenance — security incident)
+- Trigger: Supabase Security Advisor reporting ~37 `rls_disabled_in_public` + `sensitive_columns_exposed` errors on `public` tables.
+- Read-only production audit completed this session (catalog queries only; no row data dumped).
+  Full report and remediation plan: `docs/security/2026-09-10-supabase-rls-exposure-audit.md`
+  (gitignored — the repo is public and the report is a detailed exposure map; it must not be
+  published until the fix is live).
+- Findings (summary): every one of the 41 `public` tables grants `anon`/`authenticated` ALL
+  privileges (Supabase default for `postgres`-owned tables); RLS disabled on 34, enabled with no
+  policy on 7. `ALTER DEFAULT PRIVILEGES` will re-expose every future migration's tables.
+- Not currently a confirmed breach: the app is Prisma-only as the `postgres` role (which has
+  `BYPASSRLS`), the Supabase JS client is used only for Storage, the `anon`/`service_role` keys are
+  not in the repo or the built client bundle, `pg_stat_statements` shows no `anon` access to any app
+  table, and the DB password is not in git history. Aggravating factor: the GitHub repo is public,
+  so the schema and project ref are public and the `anon` key is publishable by design.
+- Remediation approach (agreed direction, NOT yet applied): non-destructive migration — revoke
+  `anon`/`authenticated` privileges on all `public` tables + sequences + functions, revoke the
+  matching default privileges for role `postgres`, and `ENABLE ROW LEVEL SECURITY` on all 41 tables
+  with **no policies** (deny-all for non-BYPASSRLS roles). No data touched, no `DROP`/`DELETE`/
+  `TRUNCATE`. Rollback SQL included in the report.
+- Preconditions before applying (user instruction): a verified full `pg_dump` backup that restores
+  into a scratch DB, plus confirmation of Supabase's own backup/PITR. Then explicit user approval.
+- Follow-ups recorded in the report: delete the dead `lib/supabase/client.ts` + unused anon SSR
+  client; CI regression guard for RLS/grants + no-supabase-in-bundle; make the repo private or scrub
+  the project ref from `docs/decisions.md`; encrypt `user.totp_secret` at rest; consider hashing
+  `claim_token.token`; rotate the DB password (already overdue per D-158) and, after lockdown, the
+  Supabase keys.

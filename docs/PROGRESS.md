@@ -45,6 +45,16 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **ACTIVE SECURITY INCIDENT (D-186) — Supabase Security Advisor: `public` schema exposed to
+  PostgREST (`rls_disabled_in_public` + `sensitive_columns_exposed`, ~37 findings).** Read-only
+  audit of production **COMPLETE**. Findings: all 41 `public` tables grant `anon`/`authenticated`
+  ALL privileges; RLS off on 34 (on/no-policy on 7); Supabase default privileges will re-expose
+  future tables. Mitigating: app uses Prisma-only (`postgres`/BYPASSRLS), Supabase JS is Storage-only,
+  anon/service keys not in repo or client bundle, no exploitation evidence in `pg_stat_statements`,
+  DB password not in git history. Aggravating: **the GitHub repo is PUBLIC**. Full report +
+  non-destructive migration plan (revoke grants + enable RLS, no policies) in
+  `docs/security/2026-09-10-supabase-rls-exposure-audit.md` (**gitignored — not for the public repo
+  until remediated**). **Migration NOT applied — awaiting user approval + verified backup.**
 - **Latest: app version bumped `0.1.0` → `0.2.0` (D-185)** — user instruction, version-only change.
   All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
   plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
