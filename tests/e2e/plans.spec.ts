@@ -128,6 +128,54 @@ test.describe("#109 — Planes 2027 section", () => {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 
+  test("the launch badge reads 'Gratis hasta el 31/12/2026' and is placed per breakpoint", async ({
+    page,
+  }) => {
+    const geom = () =>
+      page.evaluate(() => {
+        const h2 = document.querySelector("#planes")!;
+        const badge = document.querySelector("[data-testid='plans-launch-badge']")!;
+        const sec = h2.closest("section")!;
+        const para = [...sec.querySelectorAll("p")].find((el) =>
+          el.textContent!.includes("gratuito hasta"),
+        )!;
+        const h = h2.getBoundingClientRect();
+        const b = badge.getBoundingClientRect();
+        const p = para.getBoundingClientRect();
+        return {
+          text: badge.textContent!.trim(),
+          belowH2: b.top >= h.bottom - 3,
+          rightOfH2: b.left > h.right,
+          abovePara: b.bottom <= p.top + 3,
+          centeredX: Math.abs((b.left + b.right) / 2 - window.innerWidth / 2) <= 2,
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+
+    // Mobile (<768): below the H2, above the paragraph, horizontally centred.
+    for (const width of [320, 375, 390, 430]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/#planes");
+      const g = await geom();
+      expect(g.text, `text @ ${width}`).toBe("Gratis hasta el 31/12/2026");
+      expect(g.belowH2, `below H2 @ ${width}`).toBe(true);
+      expect(g.rightOfH2, `not beside H2 @ ${width}`).toBe(false);
+      expect(g.abovePara, `above paragraph @ ${width}`).toBe(true);
+      expect(g.centeredX, `centred @ ${width}`).toBe(true);
+      expect(g.overflow, `no overflow @ ${width}`).toBeLessThanOrEqual(0);
+    }
+
+    // Desktop (>=768): badge sits to the right of the heading row.
+    for (const width of [1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/#planes");
+      const g = await geom();
+      expect(g.rightOfH2, `right of H2 @ ${width}`).toBe(true);
+      expect(g.abovePara, `above paragraph @ ${width}`).toBe(true);
+      expect(g.overflow, `no overflow @ ${width}`).toBeLessThanOrEqual(0);
+    }
+  });
+
   test("the existing free-launch section is still present and unchanged in intent", async ({
     page,
   }) => {

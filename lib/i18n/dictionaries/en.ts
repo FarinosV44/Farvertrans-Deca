@@ -70,7 +70,7 @@ export const en = {
       heading: "A plan for every volume of work.",
       subhead:
         "DeCA Profesional is free until 31 December 2026. From January you'll be able to choose the plan that best fits your company.",
-      launchBadge: "Now: free until 31/12/2026",
+      launchBadge: "Free until 31/12/2026",
       reassurance:
         "You don't have to choose a plan now. During the launch period you can keep using DeCA Profesional for free.",
       authedNote: "Your account stays free during the launch period.",

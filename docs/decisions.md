@@ -6306,3 +6306,25 @@ all the migrations."
   the live build is still pre-#69. The whole `main` backlog (#85 onward, incl. #111) goes live on
   the next redeploy. After that: `npm run seed:content` publishes the guide, and the Resend
   dashboard confirms email delivery to `deca@praetoriaabogados.es`.
+
+## D-200 — Planes 2027 launch badge: copy + responsive placement (2026-09-10)
+
+**User request:** cleaner, better-integrated promotional badge in the "PLANES 2027" section.
+
+- **Copy** (all 8 locales, `dict.landing.plans.launchBadge` — the plans-section one, NOT
+  `hero.launchBadge`): dropped the "Ahora:/Now:/Jetzt:/…" prefix. Now `"Gratis hasta el
+  31/12/2026"` (es), `"Free until 31/12/2026"` (en), `"Gratuit jusqu'au 31/12/2026"` (fr, capitalised),
+  `"Kostenlos bis 31.12.2026"` (de), etc.
+- **Placement** (`components/site/plans-section.tsx`, project breakpoints sm 360 / md 768 / lg 1280):
+  - **< md (768px)** — the badge drops onto its own line **below the H2** and **above the
+    descriptive paragraph**, **horizontally centred** (`mt-4 flex justify-center`). Single line at
+    every tested width (320/375/390/430); no overflow, no 3-line wrap.
+  - **≥ md** — the layout row becomes `md:flex md:items-end md:justify-between`, so the badge sits
+    at the **right of the heading row**, baseline-aligned with the H2 (unchanged area).
+  - Pill unchanged: `bg-[var(--color-success)]`, `rounded-full`, `px-3 py-1 text-xs font-bold
+    text-white`; added `justify-center text-center leading-tight` so the text is centred in the pill.
+- **No change** to pricing, plan names, card content, CTAs, or any other section behaviour.
+
+**Verified:** new `plans.spec.ts` test drives 320/375/390/430 (below H2, above paragraph, centred,
+no overflow) and 1024/1280/1440 (right of H2, above paragraph, no overflow); text asserted exactly.
+10/10 plans + landing green. tsc / eslint / prettier / keel-verify clean; 394 unit.
