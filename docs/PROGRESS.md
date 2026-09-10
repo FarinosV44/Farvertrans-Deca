@@ -45,7 +45,10 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`develop` == `main` == `c45a435` (2026-09-10).** Merged this session: D-185 (version 0.2.0),
+- **`develop` == `main` == `ab57620` (2026-09-10). CI on `main` FULLY GREEN** — every step
+  (migrate deploy · seed · typecheck · lint · format:check · 382 unit · keel-verify · full e2e ·
+  R-1…R-13 compliance · CJS-server guard · secret scan). First all-green `main` CI since the
+  `format:check` regression in #106 (`3be422e`), now cleared. Merged this session: D-185 (version 0.2.0),
   D-186 (RLS lockdown — migration `20260910093000`, **already applied + verified on production**:
   39/39 migrations, RLS 41/41, anon/authenticated reach 0 tables), D-187 (#110 PDF QR overlap),
   D-188 (#109 Planes 2027), and a `format:check` cleanup of 2 files unformatted since #106 (clears
