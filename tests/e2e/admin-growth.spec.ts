@@ -1,5 +1,9 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, request as pwRequest, type Page } from "@playwright/test";
+import { PrismaClient } from "@/prisma/generated/client";
 import { internalPage } from "./helpers/admin-auth";
+
+const prisma = new PrismaClient();
+test.afterAll(() => prisma.$disconnect());
 
 /**
  * #72 / #74 / #80 — the admin Resumen is a lean operating console (funnel +
@@ -73,6 +77,53 @@ test("a company requests an integration and it reaches the superadmin", async ({
   } finally {
     await close();
   }
+});
+
+/**
+ * #111 part 4 — "Solicitar integración" must reach a real destination: it
+ * persists AND (now) sends a notification email to the support address. A
+ * double-submit / retry must not create a second row or a second email.
+ */
+test("a retried integration request does not create a duplicate", async () => {
+  const ctx = await pwRequest.newContext({ baseURL: "http://localhost:3000" });
+  const addr = `agdup${rnd()}@example.com`;
+  const company = `Integración Dup SL ${rnd()}`;
+  const reg = await ctx.post("/api/auth/register", {
+    data: {
+      email: addr,
+      password: "Supersecret123!",
+      companyName: company,
+      companyNif: "B12345674",
+      companyContactName: "Ana Ejemplo",
+      companyPhone: "600111222",
+      companyEmail: "empresa@example.com",
+      companyAddress: "Calle Prueba 1",
+      companyPostalCode: "46540",
+      companyCity: "El Puig",
+      acceptTerms: true,
+    },
+  });
+  expect(reg.status()).toBe(201);
+  await ctx.get(`/verificar-email/${(await reg.json()).verifyTestToken}`);
+
+  const system = `TMS Único ${rnd()}`;
+  const payload = { system, need: "crear_deca", contactName: "Ana", contactEmail: addr };
+
+  expect((await ctx.post("/api/integraciones", { data: payload })).status()).toBe(200);
+  expect((await ctx.post("/api/integraciones", { data: payload })).status()).toBe(200);
+
+  const rows = await prisma.integrationRequest.findMany({ where: { system } });
+  expect(rows).toHaveLength(1);
+
+  // A different system the same second is a genuine new request.
+  expect(
+    (
+      await ctx.post("/api/integraciones", { data: { ...payload, system: `${system} B` } })
+    ).status(),
+  ).toBe(200);
+  expect(await prisma.integrationRequest.count({ where: { system: `${system} B` } })).toBe(1);
+
+  await ctx.dispose();
 });
 
 test("the admin Resumen shows the activation funnel and an 'empresas a contactar' section", async ({

@@ -78,7 +78,7 @@ export const eu = {
     freeValueComingSoon: "Laster",
     integrationsCard: {
       heading: "APIa eta ERP/TMS integrazioak",
-      body: "DeCA Profesional beren sistemekin konektatu behar duten enpresentzako integrazioak prestatzen ari gara. Business planen parte izango dira.",
+      body: "DeCA Profesional beren sistemekin konektatu behar duten enpresentzako integrazioak prestatzen ari gara. Zerbitzu gehigarria dira, balorazio teknikoaren eta proiektuaren araberako aurrekontuaren mende; ez daude harpidetzaren prezioan sartuta.",
       cta: "Integrazioa interesatzen zait",
     },
     plans: {
@@ -96,11 +96,12 @@ export const eu = {
         "Adierazitako mugak eta funtzionalitateak 2027rako aurreikusitako planei dagozkie. Ordura arte, abian jartzeko aldiko kontuek egungo sarbidea mantentzen dute.",
       recommendedLabel: "Gomendatua",
       comingSoonLabel: "Laster",
+      extraCostLabel: "+ kostu gehigarria",
       decaPerMonthLabel: "DeCA / hil",
       usersLabel: "erabiltzaile",
       guestCta: "Hasi doan",
       apiDisclaimer:
-        "APIa eta ERP/TMS integrazioak eskuragarritasun teknikoaren eta bezeroaren sistemarekiko bateragarritasunaren mende daude.",
+        "APIa eta ERP/TMS integrazioak eskuragarritasun teknikoaren eta bezeroaren sistemarekiko bateragarritasunaren mende daude. Ez daude harpidetzaren prezioan sartuta: integrazio bakoitza bere beharren eta konplexutasunaren arabera aurrekontatzen da.",
       tiers: [
         {
           name: "Starter",
@@ -146,9 +147,9 @@ export const eu = {
           tagline: "Bolumen handiagoa duten eta beren sistemekin integratuta dauden enpresentzat.",
           inherits: "Professional-ek dakarren guztia, gehiago:",
           features: [
-            { label: "APIa", soon: true },
-            { label: "ERP / TMS integrazioak", soon: true },
-            { label: "Integrazioaren onboarding teknikoa", soon: true },
+            { label: "APIa", soon: true, extraCost: true },
+            { label: "ERP / TMS integrazioak", soon: true, extraCost: true },
+            { label: "Integrazioaren onboarding teknikoa", soon: true, extraCost: true },
             { label: "Lehentasunezko laguntza teknikoa", soon: false },
             { label: "Telefono bidezko laguntza", soon: false },
             { label: "Bolumen eta erabiltzaile anitzeko ahalmen handiagoa", soon: false },

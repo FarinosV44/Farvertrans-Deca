@@ -57,8 +57,9 @@ export function IntegrationRequestForm({
         data-testid="integration-done"
         className="rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-bg)] p-4 text-sm"
       >
-        Solicitud registrada para <strong>{companyName}</strong>. Estamos abriendo integraciones de
-        forma progresiva; te contactaremos.
+        Solicitud recibida para <strong>{companyName}</strong>. Revisaremos tus necesidades de
+        integración y nos pondremos en contacto contigo. Las integraciones son un servicio adicional
+        que se presupuesta según el proyecto.
       </p>
     );
   }

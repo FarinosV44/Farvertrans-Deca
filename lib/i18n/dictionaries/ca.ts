@@ -71,7 +71,7 @@ export const ca = {
     freeValueComingSoon: "Properament",
     integrationsCard: {
       heading: "API i integracions ERP/TMS",
-      body: "Estem preparant integracions per a empreses que necessiten connectar DeCA Profesional amb els seus sistemes. Formaran part de les solucions Business.",
+      body: "Estem preparant integracions per a empreses que necessiten connectar DeCA Profesional amb els seus sistemes. Són un servei addicional, subjecte a valoració tècnica i pressupost segons el projecte; no estan incloses en el preu de la subscripció.",
       cta: "M'interessa la integració",
     },
     plans: {
@@ -89,11 +89,12 @@ export const ca = {
         "Els límits i funcionalitats indicats corresponen als plans previstos per al 2027. Fins llavors, els comptes del període de llançament mantenen el seu accés actual.",
       recommendedLabel: "Recomanat",
       comingSoonLabel: "Pròximament",
+      extraCostLabel: "+ cost addicional",
       decaPerMonthLabel: "DeCA / mes",
       usersLabel: "usuaris",
       guestCta: "Comença gratis",
       apiDisclaimer:
-        "API i integracions ERP/TMS subjectes a disponibilitat tècnica i compatibilitat amb el sistema del client.",
+        "API i integracions ERP/TMS subjectes a disponibilitat tècnica i compatibilitat amb el sistema del client. No estan incloses en el preu de la subscripció: es pressuposten segons les necessitats i la complexitat de cada integració.",
       tiers: [
         {
           name: "Starter",
@@ -138,9 +139,9 @@ export const ca = {
           tagline: "Per a empreses amb més volum i integració amb els seus sistemes.",
           inherits: "Tot el que inclou Professional, més:",
           features: [
-            { label: "API", soon: true },
-            { label: "Integracions ERP / TMS", soon: true },
-            { label: "Onboarding tècnic d'integració", soon: true },
+            { label: "API", soon: true, extraCost: true },
+            { label: "Integracions ERP / TMS", soon: true, extraCost: true },
+            { label: "Onboarding tècnic d'integració", soon: true, extraCost: true },
             { label: "Suport tècnic prioritari", soon: false },
             { label: "Suport telefònic", soon: false },
             { label: "Més volum i capacitat multiusuari", soon: false },
