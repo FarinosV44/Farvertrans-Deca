@@ -6422,3 +6422,24 @@ until then they 404 and render as their ALT text (the new renderer degrades grac
 
 **Still open (task sections 12–14):** the published article's own screenshots + internal-link
 block (`/admin/blog`), the Guides-section DECA Conecta card, the featured/OG image.
+
+## D-201c — DECA Conecta: production guide row updated; what remains (2026-09-10)
+
+- **Production CMS:** the guide row `guia-de-uso-deca-profesional` was updated **in place** (targeted
+  `contentItem.update`, id unchanged, still `published`, TOTAL still 10 — no duplicate, no reseed).
+  Its body now documents DECA Conecta. Verified live: `/guias/guia-de-uso-deca-profesional` → 200
+  in ~1s, DECA Conecta section renders, 0 raw `:::` fences.
+- **Timing gap (flagged):** D-201/D-201b are on `develop`, NOT `main` → the DECA Conecta
+  registration card and `/panel/privacidad` are NOT deployed yet, so the LIVE guide text now
+  slightly leads the LIVE UI. The 3 guide screenshots (`deca-conecta-registro.png`,
+  `deca-conecta-por-deca.png` new; `privacidad.png` changed) are static assets → they 404 / show
+  the old image until the next Hostinger redeploy (the new renderer degrades to ALT text, no
+  hang). **Recommendation: merge `develop`→`main` and redeploy so the whole DECA Conecta change
+  lands consistently in one go.**
+- **Still open (task sections 12–14, all article/asset work, not repo code):**
+  - The published article `/blog/deca-conecta-ofertas-carga` (prod CMS, edited via `/admin/blog`):
+    add the 3 screenshots and 2 internal links (`/deca-gratis`, the guide) — it already links to
+    `/que-es-el-deca`, `/como-hacer-un-deca`, `/quien-esta-obligado-deca` and has the correct
+    SEO title/H1/meta/canonical.
+  - A discreet DECA Conecta card in the Guides section (section 13.3).
+  - The featured/OG image for the article (section 14) — asset creation.
