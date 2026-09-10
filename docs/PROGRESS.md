@@ -45,6 +45,11 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **Latest: #110 (D-187) — PDF verification URL overlapped the QR, layout fix.** On `develop`
+  (`e4abd0c`), not yet merged to `main`. Strict two-column band + `urlLines()` wrapping in
+  `lib/pdf/deca-document.tsx` (layout only). New `tests/unit/deca-pdf-verify-block.test.ts` (5,
+  red→green). 382/382 unit, R-1…R-13 8/8. **In progress: issue #109** (informational 2027-plans
+  section on the landing).
 - **ACTIVE SECURITY INCIDENT (D-186) — Supabase Security Advisor: `public` schema exposed to
   PostgREST (`rls_disabled_in_public` + `sensitive_columns_exposed`, ~37 findings).** Read-only
   audit of production **COMPLETE**. Findings: all 41 `public` tables grant `anon`/`authenticated`
