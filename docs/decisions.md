@@ -5805,3 +5805,26 @@ previously-documented contention flake happened to sit quiet this run too.
   the project ref from `docs/decisions.md`; encrypt `user.totp_secret` at rest; consider hashing
   `claim_token.token`; rotate the DB password (already overdue per D-158) and, after lockdown, the
   Supabase keys.
+
+### D-186 (cont.) — remediation approach approved; migration prepared, not applied (2026-09-10)
+- User approved the **conservative scope**: (1) REVOKE ALL on `public` tables/sequences/functions
+  from `anon`+`authenticated`; (2) `ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE` for those roles; (3) ENABLE ROW LEVEL SECURITY on all 41 `public` tables with **no
+  policies**. Explicitly **deferred** to a phase-2 hardening pass: revoking `service_role`;
+  `REVOKE USAGE ON SCHEMA public`.
+- Hard constraints (user): no data modification/deletion; never `prisma migrate reset` / `DROP` /
+  `TRUNCATE` / `DELETE` / destructive recreation; tracked Prisma migration only; verified backup
+  before apply.
+- Prepared: `prisma/migrations/20260910093000_rls_lockdown_public_schema/migration.sql`
+  (+ `migration.rollback.sql`, not run by Prisma). Only privilege/RLS-flag/default-privilege
+  changes — no DML, no schema-shape changes.
+- Verified before deploy: Prisma role is `postgres` with `rolbypassrls=true` on BOTH the runtime
+  pooler (:6543) and the migration pooler (:5432); all 41 `public` tables + 1 sequence owned by
+  `postgres`; no functions/views in `public`; every DeCA flow (create/version/read/claim/PDF/QR) is
+  Prisma-only; the sole Supabase-JS use is Storage via `service_role`. Gate: `prisma validate` ok,
+  `tsc --noEmit` clean, 377/377 unit, keel-verify ok, `prisma migrate status` clean (only this
+  migration pending). e2e/integration deferred (need local Docker Postgres, Docker Desktop down) —
+  migration touches no application code.
+- **NOT APPLIED.** Blocked on a verified restorable backup: no `pg_dump`/`psql` on the working
+  machine, Supabase CLI `db dump` needs Docker, and the plan/backup status cannot be read from here.
+  Awaiting the user's backup confirmation + final go-ahead (their order of operations, steps 5–6).

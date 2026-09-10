@@ -54,7 +54,22 @@
   DB password not in git history. Aggravating: **the GitHub repo is PUBLIC**. Full report +
   non-destructive migration plan (revoke grants + enable RLS, no policies) in
   `docs/security/2026-09-10-supabase-rls-exposure-audit.md` (**gitignored — not for the public repo
-  until remediated**). **Migration NOT applied — awaiting user approval + verified backup.**
+  until remediated**).
+  - **Conservative scope approved by user** (revoke anon/authenticated grants + fix ALTER DEFAULT
+    PRIVILEGES + ENABLE RLS on all 41 tables, NO policies; service_role + schema USAGE deferred to a
+    phase-2 hardening pass).
+  - **Tracked migration prepared:** `prisma/migrations/20260910093000_rls_lockdown_public_schema/`
+    (`migration.sql` + `migration.rollback.sql`). Only privilege/RLS metadata; no DML, no
+    DROP/TRUNCATE/DELETE.
+  - **Verified:** Prisma connects as `postgres` / `rolbypassrls=true` on BOTH poolers (:5432 & :6543);
+    all 41 tables + 1 sequence owned by `postgres`; 0 functions/views in `public`; every DeCA
+    create/read/version/PDF/QR path is `prisma.*` (68 prisma importers vs 1 supabase, storage-only).
+    Pre-deploy gate: prisma validate ✓, tsc ✓, 377/377 unit ✓, keel-verify ✓, `migrate status` clean
+    (this migration is the only one pending). e2e/integration NOT run — need Docker Desktop (down).
+  - **BLOCKED on the user (step 1): a verified restorable backup.** No `pg_dump`/`psql` on this
+    machine; Supabase CLI `db dump` needs Docker (down); plan/dashboard-backup status not knowable
+    from here (likely Free tier → no self-serve backups). Migration NOT applied. Awaiting: backup
+    confirmation + final go-ahead.
 - **Latest: app version bumped `0.1.0` → `0.2.0` (D-185)** — user instruction, version-only change.
   All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
   plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
