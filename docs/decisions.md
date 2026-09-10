@@ -6338,3 +6338,108 @@ no overflow) and 1024/1280/1440 (right of H2, above paragraph, no overflow); tex
 10/10 plans + landing green. tsc / eslint / prettier / keel-verify clean; 394 unit.
 
 **Merged to `main`** on the user's instruction (`5f33937`, CI run 34528245494) — `develop` == `main`.
+
+## D-201 — "DECA Conecta" — rename of the optional commercial-opportunity feature (2026-09-10)
+
+**User request:** the optional commercial-opportunity feature ("Oportunidades de carga" /
+"Tratamiento comercial") becomes the branded product **DECA Conecta** — "Tu destino puede
+conectarte con tu próxima carga." A UX/copy/branding/consistency task: **all consent logic,
+stored values, audit records and backend behaviour preserved.** No migration.
+
+**Backend / data: UNCHANGED.** The three stored modes (`none` / `per_deca` / `all`), the
+per-DeCA override, the channel logic, `commercial_consent`, the consent-event log, the
+`applySignupCommercialOptIn()` path and every API contract are untouched. `Company.isTest`-style
+"display-name change needs no migration" — confirmed, no schema change.
+
+**Registration card** (`components/auth/commercial-opt-in.tsx`, `t.auth.commercialOptIn.*`):
+- Header **DECA Conecta** + **OPCIONAL** badge + `RouteIcon`, tagline "Tu destino puede
+  conectarte con tu próxima carga."
+- Checkbox label "Avísame si aparece una oportunidad de carga compatible con mis rutas" —
+  **unchecked by default**; accepting Terms/Privacy never activates it.
+- Supporting text (destination + date use, no full DeCA, no GPS, revocable).
+- Expandable "Cómo funciona DECA Conecta y qué datos se utilizan" → ¿Cómo funciona? / Datos para
+  encontrar oportunidades / Datos para contactar / No compartimos (incl. GPS) / Tú mantienes el
+  control. Collapsed by default.
+- Discreet secondary link "Descubre cómo funciona DECA Conecta" → `/blog/deca-conecta-ofertas-carga`
+  (the real published route — under `/blog/`, not a bare slug).
+
+**Privacy page** (`app/panel/privacidad/page.tsx` + `components/app/commercial-treatment-settings.tsx`,
+`t.panel.privacy.*`): H1 stays "Privacidad"; new DECA Conecta intro; card header **DECA Conecta**
++ **OPCIONAL**; tagline + supporting copy; question "¿Cuándo quieres activar DECA Conecta?"; the
+3 radios keep their stored values with relabelled descriptions; the generic "Más información" is
+replaced by "Qué datos se utilizan y quién puede recibirlos" with the same info block plus
+**Destinatarios / Finalidad / Revocación**; article link added. "Tratamiento comercial" is no
+longer the visible title but remains the legal term in the disclosure context.
+
+**8 locales** updated key-for-key (es/en/ca/gl/eu/fr/de/it) — `satisfies Messages` enforced by
+`tsc`. Product name "DECA Conecta" identical in every language; "OPCIONAL" localised.
+
+**Terminology sweep:** admin nav + `/admin/tratamiento-comercial` header + the superadmin company
+ficha field + the RSC-authz test heading → "DECA Conecta" (route path kept — internal, not SEO).
+Legal pages (`/privacidad`, `/terminos` — fixed Spanish JSX, per D-072) keep "tratamiento
+comercial" in the `<h2>` but now lead with "DECA Conecta". Code comments updated. **"Kilómetro
+Cero" does not exist anywhere in the codebase** — no redirect needed.
+
+**Verified:** `commercial-consent.spec.ts` **23/23** — the 5 new DECA Conecta tests (card
+content + OPCIONAL + article link + no old name; Terms-alone-doesn't-activate; privacy card + 3
+modes + disclosure; both cards no-overflow on a phone + no raw i18n keys; article link resolves)
+plus all 18 pre-existing behaviour-preservation tests. `admin-rsc-authz.spec.ts` 19/19,
+`account.spec.ts` green. tsc / eslint / prettier / keel-verify clean; 394 unit; production build
+OK.
+
+**Still to do in follow-up (this D-entry covers the UI + i18n + tests only):** the guide section
++ new guide screenshots (D-201b), the published SEO article's screenshots + internal-link block
+(prod CMS, `/admin/blog`), the Guides-section DECA Conecta card, and the featured/OG image.
+
+## D-201b — DECA Conecta: guide section + wizard label + screenshots (2026-09-10)
+
+Follow-up to D-201, completing the guide + per-DeCA surface.
+
+- **`prisma/content/guia-de-uso.ts`:** the "## Oportunidades de carga" section is replaced by
+  "## DECA Conecta: recibe oportunidades de carga compatibles con tus rutas" with the user's
+  exact copy — intro (cargas de retorno / reducir kilómetros en vacío / no GPS), "Activar DECA
+  Conecta al crear la cuenta" (unchecked by default; legal acceptance ≠ activation), "Configurar
+  DECA Conecta desde Privacidad" (the 3 real options verbatim), "Qué datos utiliza DECA Conecta"
+  (destination + date + authorised company/contact; the full "no comparte" list incl. GPS), "Qué
+  ocurre cuando aparece una oportunidad" (not obliged to accept; free to negotiate) + the closing
+  "DECA Conecta facilita el contacto, pero no garantiza…". The Privacidad section intro and the
+  two FAQ entries updated. Internal link to the article with the anchor "Cómo reducir kilómetros
+  en vacío con DECA Conecta" → `/blog/deca-conecta-ofertas-carga`.
+- **Wizard per-DeCA control** (`t.crear.commercialShare.legend`, 8 locales): "Tratamiento
+  comercial (opcional)" → "DECA Conecta (opcional)". No behaviour change.
+- **Screenshots** (`scripts/guide-screenshots.mjs` extended): `deca-conecta-registro.png` (the
+  registration card), `deca-conecta-por-deca.png` (the per-DeCA control, unchecked by default),
+  and `privacidad.png` re-captured to show the new DECA Conecta privacy card. Synthetic demo
+  company, no personal/production data. ALT texts + captions per the task.
+
+**Verified:** `guia-uso.spec.ts` 3/3, `content-cms.spec.ts` 6/6, `commercial-consent.spec.ts`
+23/23. tsc / eslint / prettier / keel-verify clean; 394 unit; production build OK.
+
+**Production:** the guide's prod CMS row is updated with the new body via a targeted
+`contentItem.update` (below); the 2 NEW guide screenshots (`deca-conecta-registro.png`,
+`deca-conecta-por-deca.png`) are static assets that go live on the **next Hostinger redeploy** —
+until then they 404 and render as their ALT text (the new renderer degrades gracefully; no hang).
+
+**Still open (task sections 12–14):** the published article's own screenshots + internal-link
+block (`/admin/blog`), the Guides-section DECA Conecta card, the featured/OG image.
+
+## D-201c — DECA Conecta: production guide row updated; what remains (2026-09-10)
+
+- **Production CMS:** the guide row `guia-de-uso-deca-profesional` was updated **in place** (targeted
+  `contentItem.update`, id unchanged, still `published`, TOTAL still 10 — no duplicate, no reseed).
+  Its body now documents DECA Conecta. Verified live: `/guias/guia-de-uso-deca-profesional` → 200
+  in ~1s, DECA Conecta section renders, 0 raw `:::` fences.
+- **Timing gap (flagged):** D-201/D-201b are on `develop`, NOT `main` → the DECA Conecta
+  registration card and `/panel/privacidad` are NOT deployed yet, so the LIVE guide text now
+  slightly leads the LIVE UI. The 3 guide screenshots (`deca-conecta-registro.png`,
+  `deca-conecta-por-deca.png` new; `privacidad.png` changed) are static assets → they 404 / show
+  the old image until the next Hostinger redeploy (the new renderer degrades to ALT text, no
+  hang). **Recommendation: merge `develop`→`main` and redeploy so the whole DECA Conecta change
+  lands consistently in one go.**
+- **Still open (task sections 12–14, all article/asset work, not repo code):**
+  - The published article `/blog/deca-conecta-ofertas-carga` (prod CMS, edited via `/admin/blog`):
+    add the 3 screenshots and 2 internal links (`/deca-gratis`, the guide) — it already links to
+    `/que-es-el-deca`, `/como-hacer-un-deca`, `/quien-esta-obligado-deca` and has the correct
+    SEO title/H1/meta/canonical.
+  - A discreet DECA Conecta card in the Guides section (section 13.3).
+  - The featured/OG image for the article (section 14) — asset creation.

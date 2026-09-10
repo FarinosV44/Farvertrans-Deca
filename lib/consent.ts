@@ -210,8 +210,8 @@ export async function revokeCommercial(
 }
 
 /**
- * Apply the optional "Oportunidades de carga" opt-in collected at sign-up (#84,
- * D-193). ONE place — called by BOTH `/api/auth/register` (email/password) and
+ * Apply the optional DECA Conecta opt-in collected at sign-up (#84, D-193).
+ * ONE place — called by BOTH `/api/auth/register` (email/password) and
  * `/api/auth/complete-company` (Google 2-step) so the persisted value is
  * identical whichever way the company was founded. Sets the global mode to
  * `all` and defaults the channel to the company email; the owner can change or

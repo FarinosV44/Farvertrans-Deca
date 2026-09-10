@@ -44,14 +44,14 @@ Puedes generar tu **primer** DeCA sin cuenta: se te pedirá solo el nombre y el 
 2. Indica tu **correo** y una **contraseña**.
 3. Completa la **ficha de empresa**: razón social, **NIF/CIF**, dirección, código postal, localidad y una persona de contacto con teléfono y correo.
 4. Marca la aceptación de la **Política de Privacidad** y las **Condiciones**. Es obligatorio.
-5. De forma **opcional**, puedes activar la casilla de **Oportunidades de carga** (ver la sección correspondiente).
+5. De forma **opcional**, puedes activar **DECA Conecta** marcando «Avísame si aparece una oportunidad de carga compatible con mis rutas» (ver la sección **DECA Conecta**).
 6. Crea la cuenta. Te enviamos un correo para **verificar tu dirección**; hasta que lo hagas verás un aviso en el panel, pero ya puedes trabajar.
 
 ### Con Google
 
 1. Pulsa **Continuar con Google** y elige tu cuenta.
 2. Como Google ya confirma tu correo, no hay que verificarlo aparte.
-3. A continuación aparece **«Ya casi está»**: completa la **ficha de empresa** (los mismos datos que arriba), acepta la Política de Privacidad y las Condiciones y, si quieres, activa **Oportunidades de carga**.
+3. A continuación aparece **«Ya casi está»**: completa la **ficha de empresa** (los mismos datos que arriba), acepta la Política de Privacidad y las Condiciones y, si quieres, activa **DECA Conecta**.
 4. Pulsa continuar y entras directamente en tu panel.
 
 ### Verificación de empresa
@@ -223,28 +223,68 @@ Solo el **administrador** de la empresa edita esta información.
 
 ## Privacidad
 
-En **Privacidad y comunicaciones** decides una sola cosa: si DeCA Profesional puede comunicar **unos pocos datos de disponibilidad de tus portes** a cargadores interesados en enviarte propuestas de carga.
+En **Privacidad** decides una sola cosa: si activas **DECA Conecta**, es decir, si DeCA Profesional puede comunicar **unos pocos datos de disponibilidad de tus portes** a cargadores interesados en enviarte propuestas de carga.
 
 - Es **voluntario** y se puede cambiar cuando quieras.
-- No autorizarlo **no afecta en nada** al uso gratuito de la plataforma.
+- No activarlo **no afecta en nada** a la creación, gestión o conservación de tus DeCA ni al uso gratuito de la plataforma.
 - Opciones: **no compartir en ningún porte** (por defecto), **preguntarme en cada DeCA**, o **compartir en todos los portes salvo que lo desactive** en uno concreto.
 
-La aceptación de la **Política de Privacidad** y de las **Condiciones** (obligatoria al registrarse) es distinta de esta preferencia comercial, que siempre es opcional.
+La aceptación de la **Política de Privacidad** y de las **Condiciones** (obligatoria al registrarse) es distinta de DECA Conecta, que siempre es opcional y que aceptar la parte legal nunca activa.
 
-![Privacidad y comunicaciones](/guia/privacidad.png "Preferencia de tratamiento comercial")
+![Opciones de privacidad de DECA Conecta](/guia/privacidad.png "Puedes decidir si no compartes, si eliges en cada DeCA o si lo activas habitualmente.")
 
-## Oportunidades de carga
+## DECA Conecta: recibe oportunidades de carga compatibles con tus rutas
 
-Es una función **opcional y separada** de la generación de DeCA. Si la activas, se prepara una pequeña ficha de **disponibilidad** para que cargadores interesados puedan hacerte propuestas de carga.
+DECA Conecta es una función **opcional** de DeCA Profesional que utiliza, con tu autorización, el **destino y la fecha** de tus portes para que puedas recibir propuestas comerciales personalizadas de cargadores interesados. El objetivo es ayudarte a encontrar **cargas de retorno** y **reducir kilómetros en vacío** sin publicar tu DeCA ni compartir la ubicación GPS del vehículo.
 
-- Se activa/desactiva desde **Privacidad** (o con la casilla opcional al registrarte).
-- Según la opción elegida, se aplica a **todos** los portes, **a ninguno**, o **te pregunta en cada DeCA**.
-- Puedes desactivarla en un porte concreto antes de emitirlo, y cambiar la preferencia general en cualquier momento.
-- **No** es necesaria para crear, descargar ni conservar DeCA.
+### Activar DECA Conecta al crear la cuenta
+
+![Activar DECA Conecta al crear una cuenta en DeCA Profesional](/guia/deca-conecta-registro.png "Activación voluntaria durante el registro.")
+
+Al registrarte puedes marcar, de forma voluntaria, la casilla **«Avísame si aparece una oportunidad de carga compatible con mis rutas»**.
+
+- La casilla está **desmarcada por defecto**.
+- Aceptar la **Política de Privacidad** y las **Condiciones** **no activa** DECA Conecta.
+- Puedes crear y gestionar tus DeCA con normalidad sin activarla.
+- La preferencia se puede cambiar más tarde desde **Privacidad**.
+
+### Configurar DECA Conecta desde Privacidad
+
+En **Privacidad** eliges una de estas tres opciones, tal como aparecen en la interfaz:
+
+1. **No compartir en ningún porte** — ningún dato comercial sale de tus DeCA. Es la opción predeterminada.
+2. **Preguntarme en cada DeCA** — lo decides porte a porte al crear cada DeCA. El control aparece desactivado por defecto.
+3. **Compartir en todos los portes, salvo que lo desactive** — se prepara la disponibilidad para cada nuevo DeCA, pero puede desactivarse en cualquier porte concreto antes de emitirlo.
+
+![Activar oportunidades de carga para un DeCA concreto](/guia/deca-conecta-por-deca.png "La disponibilidad de cada porte puede permanecer desactivada.")
+
+### Qué datos utiliza DECA Conecta
+
+Para buscar oportunidades utiliza:
+
+- El **lugar de destino** del camión.
+- La **fecha** del transporte o de disponibilidad prevista.
+- La **empresa o el nombre** y el **correo electrónico o el teléfono** que hayas autorizado para recibir la propuesta.
+
+No comparte:
+
+- El DeCA completo.
+- El origen del porte actual.
+- La mercancía ni su peso.
+- La identidad del cliente del transporte.
+- El precio ni las condiciones del servicio.
+- Los documentos asociados.
+- La ubicación GPS ni el seguimiento del vehículo en tiempo real.
+
+### Qué ocurre cuando aparece una oportunidad
+
+Puedes recibir una propuesta comercial personalizada de un cargador interesado. Recibirla **no te obliga a aceptarla**: eres libre de rechazarla o de negociar la ruta, el precio, los horarios, la mercancía, los requisitos del vehículo y el resto de condiciones contractuales.
 
 ::: important
-Oportunidades de carga es independiente del DeCA. Puedes usar toda la plataforma sin activarla.
+DECA Conecta facilita el contacto, pero no garantiza que exista una carga compatible ni sustituye la contratación del nuevo transporte.
 :::
+
+Más detalle sobre el modelo de privacidad y el ahorro de kilómetros en vacío: [Cómo reducir kilómetros en vacío con DECA Conecta](/blog/deca-conecta-ofertas-carga).
 
 ## Ayuda y soporte
 
@@ -308,10 +348,10 @@ Q: ¿Cómo contacto con soporte?
 A: Desde Ayuda: WhatsApp, correo (deca@praetoriaabogados.es) o el formulario de incidencia.
 Q: ¿Cómo abro una incidencia?
 A: En Ayuda, «Abrir una incidencia técnica»: categoría, asunto y descripción. La verás en Mis incidencias y recibirás la respuesta por correo y allí.
-Q: ¿Qué datos se comparten en Oportunidades de carga?
-A: Unos pocos datos de disponibilidad de tus portes, solo si activas la función; nunca el contenido de tus DeCA.
-Q: ¿Puedo desactivar Oportunidades de carga?
-A: Sí, en cualquier momento desde Privacidad, y también en un porte concreto antes de emitirlo.
+Q: ¿Qué datos se comparten en DECA Conecta?
+A: Solo el destino y la fecha del porte, y la empresa o el nombre y el correo o teléfono que autorices; nunca el DeCA completo, el origen, la mercancía, el precio ni la ubicación GPS. Solo si activas la función.
+Q: ¿Puedo desactivar DECA Conecta?
+A: Sí, en cualquier momento desde Privacidad, y también en un porte concreto antes de emitirlo. Desactivarlo no afecta a tus DeCA ni al uso gratuito de la plataforma.
 Q: ¿Qué hago durante una inspección?
 A: Localiza el DeCA en Mis DeCA, abre el PDF o muestra el QR; se abre sin registro. Si hubo corrección, enseña la versión vigente.
 :::

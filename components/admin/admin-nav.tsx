@@ -32,7 +32,7 @@ export const ADMIN_GROUPS: { label: string; items: { href: string; label: string
       { href: "/admin/alertas-comerciales", label: "Alertas comerciales" },
       { href: "/admin/comercial", label: "Panel comercial" },
       { href: "/admin/inteligencia-rutas", label: "Rutas" },
-      { href: "/admin/tratamiento-comercial", label: "Tratamiento comercial" },
+      { href: "/admin/tratamiento-comercial", label: "DECA Conecta" },
       { href: "/admin/contenido", label: "Contenido" },
     ],
   },

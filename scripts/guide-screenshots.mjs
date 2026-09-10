@@ -192,8 +192,70 @@ async function main() {
   await shot("datos-habituales", "/panel/datos", "text=Datos habituales");
   await shot("equipo", "/panel/equipo", "text=Equipo");
   await shot("mi-empresa", "/panel/empresa", "text=Mi empresa");
-  await shot("privacidad", "/panel/privacidad", "text=Privacidad");
+  await shot("privacidad", "/panel/privacidad", "[data-testid='deca-conecta-disclosure']");
   await shot("ayuda", "/panel/ayuda", "[data-testid='ticket-submit']");
+
+  // #111 / D-201 — the DECA Conecta card on the registration form (element clip).
+  {
+    const reg = await browser.newContext({ viewport: VIEWPORT, baseURL: BASE, locale: "es-ES" });
+    const rp = await reg.newPage();
+    await rp.goto("/registro", { waitUntil: "networkidle" });
+    await rp.evaluate(() => document.fonts.ready).catch(() => {});
+    const box = rp.locator("[data-testid='commercial-opt-in-box']");
+    await box.scrollIntoViewIfNeeded();
+    await rp.waitForTimeout(400);
+    await box.screenshot({ path: `${OUT}deca-conecta-registro.png` });
+    console.log("  ✓ deca-conecta-registro.png");
+    await reg.close();
+  }
+
+  // #111 / D-201 — the per-DeCA DECA Conecta control, shown disabled by default
+  // (set the company to "preguntarme en cada DeCA" first, then reach wizard step 3).
+  {
+    await page.goto("/panel/privacidad", { waitUntil: "networkidle" });
+    await page
+      .getByTestId("mode-per_deca")
+      .check()
+      .catch(() => {});
+    await page.waitForTimeout(600);
+    await page.goto("/crear", { waitUntil: "networkidle" });
+    const fill = async (id, v) => page.fill(`#${id}`, v).catch(() => {});
+    await fill("shipperName", "Cargas del Levante SL");
+    await fill("shipperNif", "B96789011");
+    await fill("shipperAddress", "Av. del Puerto 120, Valencia");
+    await fill("carrierName", "Transportes Demo SL");
+    await fill("carrierNif", "B12345674");
+    await fill("carrierAddress", "Polígono La Demo 4, El Puig");
+    await page
+      .getByTestId("wizard-next")
+      .click()
+      .catch(() => {});
+    await fill("loadLocationName", "Nave central");
+    await fill("loadLocationAddress", "Calle Uno 1");
+    await fill("loadLocationPostalCode", "46023");
+    await fill("loadLocationCity", "Valencia");
+    await fill("loadLocationCountry", "España");
+    await fill("loadDate", "2026-10-06");
+    await fill("unloadLocationName", "Plataforma norte");
+    await fill("unloadLocationAddress", "Calle Dos 2");
+    await fill("unloadLocationPostalCode", "28053");
+    await fill("unloadLocationCity", "Madrid");
+    await fill("unloadLocationCountry", "España");
+    await fill("unloadDate", "2026-10-06");
+    await page
+      .getByTestId("wizard-next")
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(600);
+    const share = page.locator("[data-testid='commercial-share']");
+    if (await share.count()) {
+      await share.scrollIntoViewIfNeeded();
+      await share.screenshot({ path: `${OUT}deca-conecta-por-deca.png` });
+      console.log("  ✓ deca-conecta-por-deca.png");
+    } else {
+      console.warn("  ! commercial-share control not found — deca-conecta-por-deca.png skipped");
+    }
+  }
 
   // Step 1 of the creation wizard, from a fresh anonymous context.
   const anon = await browser.newContext({ viewport: VIEWPORT, baseURL: BASE, locale: "es-ES" });

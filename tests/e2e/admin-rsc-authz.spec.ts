@@ -45,7 +45,7 @@ const PROTECTED: { path: string; heading: string }[] = [
   { path: "/admin/seguridad", heading: "Claves de acceso, verificación en dos pasos" },
   { path: "/admin/sistema", heading: "Sistema" },
   { path: "/admin/soporte", heading: "Soporte / Incidencias" },
-  { path: "/admin/tratamiento-comercial", heading: "Tratamiento comercial" },
+  { path: "/admin/tratamiento-comercial", heading: "DECA Conecta" },
   { path: "/admin/usuarios", heading: "Usuarios" },
 ];
 

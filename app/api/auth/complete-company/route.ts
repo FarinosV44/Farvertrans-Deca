@@ -15,10 +15,10 @@ const schema = z.object({
   companyEmail: z.string().trim().max(160).optional().default(""),
   companyProfile: z.enum(["carrier_goods", "shipper", "operator", "carrier_passengers"]).optional(),
   acceptTerms: z.boolean(),
-  /** #84 / D-193 — the optional "Oportunidades de carga" consent, identical to
-   *  the email/password path. Never required; `true` sets the company's
-   *  commercial treatment to `all`. Google auth is NOT consent — the box is
-   *  unticked by default and only this flag opts in. */
+  /** #84 / D-193 — the optional DECA Conecta consent, identical to the
+   *  email/password path. Never required; `true` sets the company's commercial
+   *  treatment to `all`. Google auth is NOT consent — the box is unticked by
+   *  default and only this flag opts in. */
   commercialOptIn: z.boolean().optional().default(false),
   invite: z.string().trim().max(200).optional(),
 });

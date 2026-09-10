@@ -389,12 +389,38 @@ export const ca = {
       termsAndConditions: "Termes i Condicions",
     },
     commercialOptIn: {
-      title: "Oportunitats de càrrega",
-      label: "Avisa'm si apareix un port compatible amb les meves rutes",
-      hint: "Ho pots desactivar quan vulguis.",
-      moreInfo: "Quines dades es comparteixen",
-      moreInfoBody:
-        "Només es compartiran les dades mínimes necessàries per proposar-te oportunitats: destinació del vehicle, data prevista i les dades de contacte que hagis autoritzat.",
+      brand: "DECA Conecta",
+      badge: "OPCIONAL",
+      tagline: "El teu destí pot connectar-te amb la teva propera càrrega.",
+      label: "Avisa'm si apareix una oportunitat de càrrega compatible amb les meves rutes",
+      hint: "En activar-ho, autoritzes l'ús del destí i la data dels teus ports per rebre propostes comercials personalitzades. No compartim el teu DeCA complet ni fem seguiment GPS. Pots canviar aquesta decisió quan vulguis.",
+      moreInfo: "Com funciona DECA Conecta i quines dades s'utilitzen",
+      articleLink: "Descobreix com funciona DECA Conecta",
+      info: {
+        howTitle: "Com funciona?",
+        howBody:
+          "Quan generes un DeCA, la plataforma coneix el destí i la data prevista del port. Si ho autoritzes, DECA Conecta pot utilitzar aquestes dades per identificar oportunitats de càrrega compatibles i permetre que carregadors interessats t'enviïn una proposta comercial personalitzada.",
+        matchTitle: "Dades utilitzades per trobar oportunitats",
+        matchItems: ["Lloc de destí del camió.", "Data del port o de disponibilitat prevista."],
+        contactTitle: "Dades utilitzades per contactar amb tu",
+        contactItems: [
+          "Empresa o nom autoritzat.",
+          "Correu electrònic o telèfon que hagis autoritzat.",
+        ],
+        neverTitle: "No compartim",
+        neverItems: [
+          "El DeCA complet.",
+          "L'origen del port.",
+          "La mercaderia ni el seu pes.",
+          "La identitat del client del transport.",
+          "El preu ni les condicions del servei.",
+          "Documents associats.",
+          "La ubicació GPS ni seguiment en temps real.",
+        ],
+        controlTitle: "Tu mantens el control",
+        controlBody:
+          "Rebre una proposta no obliga a acceptar-la. Pots desactivar DECA Conecta o canviar les teves preferències quan vulguis sense perdre l'accés al generador de DeCA.",
+      },
     },
     submit: {
       register: "Crear compte gratis",
@@ -525,22 +551,56 @@ export const ca = {
       },
     },
     privacy: {
-      title: "Privadesa i comunicacions",
+      title: "Privadesa",
       intro:
-        "Aquí decideixes si DeCA Profesional pot comunicar unes poques dades de disponibilitat dels teus ports a carregadors interessats a oferir-te propostes comercials personalitzades i preferents de càrrega. És voluntari i ho pots canviar quan vulguis.",
+        "DECA Conecta et permet rebre oportunitats de càrrega basades en el destí i la data dels teus ports. És un servei opcional: no activar-lo no afecta la creació, la gestió o la conservació dels teus DeCA ni l'ús gratuït de la plataforma.",
       freeUseNote:
-        "No autoritzar aquesta comunicació no afecta en res l'ús gratuït de DeCA Profesional.",
-      sectionTitle: "Tractament comercial",
-      modeLegend: "Quan vols compartir la disponibilitat dels teus ports?",
+        "Rebutjar o retirar el consentiment no afecta en res l'ús gratuït de DeCA Profesional.",
+      badge: "OPCIONAL",
+      tagline: "El teu destí pot connectar-te amb la teva propera càrrega.",
+      supporting:
+        "Tu decideixes si DeCA Profesional pot comunicar determinades dades de disponibilitat a carregadors interessats a enviar-te propostes comercials personalitzades i preferents de càrrega. Pots canviar aquesta decisió quan vulguis.",
+      articleLink: "Descobreix com funciona DECA Conecta",
+      sectionTitle: "DECA Conecta",
+      modeLegend: "Quan vols activar DECA Conecta?",
       modes: {
         none: "No compartir en cap port",
-        noneHint: "Cap dada comercial surt dels teus DeCA. És l'opció per defecte.",
+        noneHint: "Cap dada comercial surt dels teus DeCA. És l'opció predeterminada.",
         perDeca: "Pregunta-m'ho a cada DeCA",
         perDecaHint:
-          "Ho decideixes port a port en crear cada DeCA. El control estarà desactivat per defecte.",
+          "Ho decideixes port a port en crear cada DeCA. L'opció apareixerà desactivada per defecte.",
         all: "Compartir en tots els ports, tret que ho desactivi",
         allHint:
-          "Es prepara la fitxa de disponibilitat per a cada DeCA nou. Ho pots desactivar en un port concret abans d'emetre'l.",
+          "Es prepararà la disponibilitat per a cada DeCA nou. Podràs desactivar-la en qualsevol port concret abans d'emetre'l.",
+      },
+      disclosureTitle: "Quines dades s'utilitzen i qui pot rebre-les",
+      disclosure: {
+        howTitle: "Com funciona?",
+        howBody:
+          "Quan generes un DeCA, la plataforma coneix el destí i la data prevista del port. Si ho autoritzes, DECA Conecta pot utilitzar aquestes dades per identificar oportunitats de càrrega compatibles i permetre que carregadors interessats t'enviïn una proposta comercial personalitzada.",
+        matchTitle: "Dades utilitzades per trobar oportunitats",
+        matchItems: ["Lloc de destí del camió.", "Data del port o de disponibilitat prevista."],
+        contactTitle: "Dades utilitzades per contactar amb tu",
+        contactItems: [
+          "Empresa o nom autoritzat.",
+          "Correu electrònic o telèfon que hagis autoritzat.",
+        ],
+        neverTitle: "No compartim",
+        neverItems: [
+          "El DeCA complet.",
+          "L'origen del port.",
+          "La mercaderia ni el seu pes.",
+          "La identitat del client del transport.",
+          "El preu ni les condicions del servei.",
+          "Documents associats.",
+          "La ubicació GPS ni seguiment en temps real.",
+        ],
+        recipients:
+          "Destinataris: carregadors interessats a oferir una proposta comercial personalitzada i preferent de càrrega.",
+        purpose:
+          "Finalitat: identificar oportunitats de càrrega compatibles amb el destí i la data previstos i permetre que el transportista rebi la corresponent proposta comercial.",
+        revocation:
+          "Revocació: l'usuari pot canviar la preferència per a usos futurs en qualsevol moment. Revocar el consentiment no elimina ni invalida els DeCA ja generats.",
       },
       channelLegend: "Canal de contacte autoritzat",
       channels: { email: "Correu electrònic", phone: "WhatsApp", both: "Correu i WhatsApp" },
@@ -556,9 +616,6 @@ export const ca = {
       },
       previewNever:
         "Mai no es comparteix l'origen, el carregador, l'adreça de càrrega, la mercaderia, el preu, les matrícules, el conductor ni el document, l'URL o el QR del DeCA.",
-      moreInfo: "Més informació",
-      moreInfoBody:
-        "El receptor només rep una fitxa de disponibilitat amb els camps anteriors; no accedeix al teu compte ni al DeCA. Pots retirar l'autorització en qualsevol moment: la retirada és immediata per a les comunicacions futures i no afecta les ja fetes lícitament ni cap DeCA.",
       acceptedAt: (s) => `Autorització registrada el ${s}`,
       notAuthorized: "Sense autorització activa",
       revoke: "Retirar l'autorització",
@@ -829,7 +886,7 @@ export const ca = {
       commercialShareOff: "No",
     },
     commercialShare: {
-      legend: "Tractament comercial (opcional)",
+      legend: "DECA Conecta (opcional)",
       hint: "Si vols, autoritza l'enviament de les dades mínimes de disponibilitat d'aquest port per rebre propostes personalitzades de càrrega. No autoritzar-ho no afecta l'ús gratuït de DeCA Profesional.",
       enable: "Vull rebre ofertes personalitzades en finalitzar aquest port",
       destination: "Destinació o zona de disponibilitat",

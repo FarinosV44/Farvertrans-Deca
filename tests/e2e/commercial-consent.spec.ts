@@ -181,8 +181,10 @@ test.describe("#84 / D-193 — Google onboarding offers the same opt-in", () => 
     await companylessOnboarding(page, browser);
     await expect(page.getByTestId("commercial-opt-in-box")).toBeVisible();
     await expect(page.getByTestId("commercial-opt-in")).not.toBeChecked();
-    // same disclosure as the standard flow
-    await expect(page.getByText("Qué datos se comparten")).toBeVisible();
+    // same DECA Conecta disclosure as the standard flow
+    await expect(
+      page.getByText("Cómo funciona DECA Conecta y qué datos se utilizan"),
+    ).toBeVisible();
   });
 
   test("a Google user can finish onboarding WITHOUT the opt-in → mode 'none'", async ({
@@ -229,6 +231,117 @@ test.describe("#84 / D-193 — Google onboarding offers the same opt-in", () => 
     // decision belongs to the company owner, not a joining member.
     await expect(page.getByTestId("complete-company-submit")).toBeVisible();
     await expect(page.getByTestId("commercial-opt-in-box")).toHaveCount(0);
+  });
+});
+
+test.describe("#84 → DECA Conecta rename — the two consent surfaces", () => {
+  test("registration card: DECA Conecta + OPCIONAL badge, unchecked, article link, no old name", async ({
+    page,
+  }) => {
+    await page.goto("/registro");
+    const box = page.getByTestId("commercial-opt-in-box");
+    await expect(box).toContainText("DECA Conecta");
+    await expect(box).toContainText("OPCIONAL");
+    await expect(box).toContainText("Tu destino puede conectarte con tu próxima carga.");
+    await expect(box).not.toContainText("Oportunidades de carga");
+    await expect(box).not.toContainText("Kilómetro Cero");
+    await expect(page.getByTestId("commercial-opt-in")).not.toBeChecked();
+    // discreet secondary link to the published article (real route, under /blog)
+    await expect(page.getByTestId("commercial-opt-in-article")).toHaveAttribute(
+      "href",
+      "/blog/deca-conecta-ofertas-carga",
+    );
+    // expanded info renders the "No compartimos" list incl. GPS
+    await box.locator("summary").first().click();
+    await expect(box).toContainText("La ubicación GPS ni seguimiento en tiempo real.");
+  });
+
+  test("accepting Terms + Privacy alone does NOT activate DECA Conecta", async ({ page }) => {
+    await page.goto("/registro");
+    await page.fill("#email", email());
+    await page.fill("#password", "Supersecret123!");
+    await page.fill("#companyName", "Solo Legal SL");
+    await page.fill("#companyNif", "B12345674");
+    await page.fill("#companyContactName", "Ana Ejemplo");
+    await page.fill("#companyPhone", "600111222");
+    await page.fill("#companyEmail", "empresa@example.com");
+    await page.fill("#companyAddress", "Calle Prueba 1");
+    await page.fill("#companyPostalCode", "46540");
+    await page.fill("#companyCity", "El Puig");
+    await page.getByTestId("accept-terms").check(); // ONLY the required legal box
+    await expect(page.getByTestId("commercial-opt-in")).not.toBeChecked();
+    const [res] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/auth/register") && r.status() === 201),
+      page.getByTestId("register-submit").click(),
+    ]);
+    await page.request.get(`/verificar-email/${(await res.json()).verifyTestToken}`);
+    await page.goto("/panel/privacidad");
+    await expect(page.getByTestId("mode-none")).toBeChecked();
+  });
+
+  test("privacy page: 'Privacidad' title, DECA Conecta card, 3 stored modes, article link, no old title", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/panel/privacidad");
+    await expect(page.getByRole("heading", { level: 1, name: "Privacidad" })).toBeVisible();
+    const section = page.locator("section[aria-labelledby='deca-conecta']");
+    await expect(section.getByRole("heading", { name: "DECA Conecta" })).toBeVisible();
+    await expect(section).toContainText("OPCIONAL");
+    await expect(section).toContainText("¿Cuándo quieres activar DECA Conecta?");
+    // the visible feature title is no longer "Tratamiento comercial"
+    await expect(section.getByRole("heading", { name: "Tratamiento comercial" })).toHaveCount(0);
+    // the 3 stored preference values are unchanged, "none" is the default
+    await expect(page.getByTestId("mode-none")).toBeChecked();
+    await expect(page.getByTestId("mode-per_deca")).toBeVisible();
+    await expect(page.getByTestId("mode-all")).toBeVisible();
+    // disclosure carries the recipients/purpose/revocation and the exclusion list
+    await page.getByTestId("deca-conecta-disclosure").locator("summary").click();
+    await expect(page.getByTestId("deca-conecta-disclosure")).toContainText("Destinatarios:");
+    await expect(page.getByTestId("deca-conecta-disclosure")).toContainText("Finalidad:");
+    await expect(page.getByTestId("deca-conecta-disclosure")).toContainText("Revocación:");
+    await expect(page.getByTestId("deca-conecta-disclosure")).toContainText(
+      "La ubicación GPS ni seguimiento en tiempo real.",
+    );
+    await expect(page.getByTestId("deca-conecta-article")).toHaveAttribute(
+      "href",
+      "/blog/deca-conecta-ofertas-carga",
+    );
+  });
+
+  test("both cards render without overflow on a phone and no raw i18n keys leak", async ({
+    page,
+  }) => {
+    const noOverflow = () =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+    const noRawKeys = async (loc: import("@playwright/test").Locator) => {
+      const txt = (await loc.textContent()) ?? "";
+      // a missing key would render as e.g. "commercialOptIn.info.howBody" or "[object Object]"
+      expect(txt).not.toMatch(/commercialOptIn\.|privacy\.disclosure|\[object Object\]/);
+    };
+
+    await page.setViewportSize({ width: 375, height: 1400 });
+    await page.goto("/registro");
+    const box = page.getByTestId("commercial-opt-in-box");
+    await box.scrollIntoViewIfNeeded();
+    await box.locator("summary").first().click();
+    await noRawKeys(box);
+    expect(await noOverflow()).toBeLessThanOrEqual(0);
+
+    await register(page);
+    await page.goto("/panel/privacidad");
+    const section = page.locator("section[aria-labelledby='deca-conecta']");
+    await page.getByTestId("deca-conecta-disclosure").locator("summary").click();
+    await noRawKeys(section);
+    expect(await noOverflow()).toBeLessThanOrEqual(0);
+  });
+
+  test("the DECA Conecta article link resolves (real published route)", async ({ page }) => {
+    const res = await page.request.get("/blog/deca-conecta-ofertas-carga");
+    // 200 when the CMS row exists (production / seeded), 404 otherwise — never a 500
+    expect([200, 404]).toContain(res.status());
   });
 });
 

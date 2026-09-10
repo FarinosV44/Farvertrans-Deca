@@ -28,8 +28,8 @@ export default async function AdminTratamientoComercial() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Tratamiento comercial"
-        lead="Preferencia de compartición por empresa, fichas de disponibilidad preparadas y registro de consentimiento (#84). Solo lectura — nada se comunica a terceros todavía."
+        title="DECA Conecta"
+        lead="Preferencia de DECA Conecta por empresa (tratamiento comercial), fichas de disponibilidad preparadas y registro de consentimiento (#84). Solo lectura — nada se comunica a terceros todavía."
       />
 
       <KpiGrid>

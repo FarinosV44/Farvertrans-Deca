@@ -398,12 +398,41 @@ export const eu = {
       termsAndConditions: "Baldintzak eta Erabilera Baldintzak",
     },
     commercialOptIn: {
-      title: "Karga-aukerak",
-      label: "Jakinarazi nire ibilbideekin bat datorren garraiorik agertzen bada",
-      hint: "Noiznahi desaktiba dezakezu.",
-      moreInfo: "Zer datu partekatzen diren",
-      moreInfoBody:
-        "Aukerak proposatzeko behar diren gutxieneko datuak bakarrik partekatuko dira: ibilgailuaren helmuga, aurreikusitako data eta baimendu dituzun kontaktu-datuak.",
+      brand: "DECA Conecta",
+      badge: "AUKERAKOA",
+      tagline: "Zure helmugak zure hurrengo kargarekin lot zaitzake.",
+      label: "Jakinarazi nire ibilbideekin bat datorren karga-aukera bat agertzen bada",
+      hint: "Aktibatzean, zure garraioen helmuga eta data erabiltzeko baimena ematen duzu, proposamen komertzial pertsonalizatuak jasotzeko. Ez dugu zure DeCA osoa partekatzen, ezta GPS bidezko jarraipenik egiten ere. Erabaki hau noiznahi alda dezakezu.",
+      moreInfo: "Nola funtzionatzen du DECA Conecta-k eta zer datu erabiltzen ditu",
+      articleLink: "Ezagutu nola funtzionatzen duen DECA Conecta-k",
+      info: {
+        howTitle: "Nola funtzionatzen du?",
+        howBody:
+          "DeCA bat sortzen duzunean, plataformak garraioaren helmuga eta aurreikusitako data ezagutzen ditu. Baimentzen baduzu, DECA Conecta-k datu horiek erabil ditzake bateragarriak diren karga-aukerak identifikatzeko eta interesa duten kargatzaileek proposamen komertzial pertsonalizatu bat bidal diezazuten.",
+        matchTitle: "Aukerak aurkitzeko erabiltzen diren datuak",
+        matchItems: [
+          "Kamioiaren helmuga.",
+          "Garraioaren edo aurreikusitako eskuragarritasunaren data.",
+        ],
+        contactTitle: "Zurekin harremanetan jartzeko erabiltzen diren datuak",
+        contactItems: [
+          "Baimendutako enpresa edo izena.",
+          "Baimendu duzun posta elektronikoa edo telefonoa.",
+        ],
+        neverTitle: "Ez dugu partekatzen",
+        neverItems: [
+          "DeCA osoa.",
+          "Garraioaren jatorria.",
+          "Salgaia, ezta haren pisua ere.",
+          "Garraioaren bezeroaren identitatea.",
+          "Prezioa, ezta zerbitzuaren baldintzak ere.",
+          "Lotutako dokumentuak.",
+          "GPS kokapena, ezta denbora errealeko jarraipena ere.",
+        ],
+        controlTitle: "Zuk duzu kontrola",
+        controlBody:
+          "Proposamen bat jasotzeak ez zaitu behartzen onartzera. DECA Conecta desaktiba dezakezu edo zure hobespenak noiznahi alda ditzakezu, DeCA sortzailerako sarbidea galdu gabe.",
+      },
     },
     submit: {
       register: "Sortu kontu doakoa",
@@ -536,22 +565,59 @@ export const eu = {
       },
     },
     privacy: {
-      title: "Pribatutasuna eta komunikazioak",
+      title: "Pribatutasuna",
       intro:
-        "Hemen erabakitzen duzu DeCA Profesional-ek zure garraioen eskuragarritasun-datu batzuk komunika ditzakeen karga-eskaintza pertsonalizatu eta lehenetsiak egiteko interesa duten kargatzaileei. Aukerakoa da eta noiznahi alda dezakezu.",
+        "DECA Conecta-k zure garraioen helmugan eta datan oinarritutako karga-aukerak jasotzeko aukera ematen dizu. Aukerako zerbitzua da: ez aktibatzeak ez die eragiten zure DeCA-ak sortzeari, kudeatzeari edo gordetzeari, ezta plataformaren doako erabilerari ere.",
       freeUseNote:
-        "Komunikazio hau ez baimentzeak ez du inola ere eragiten DeCA Profesional doan erabiltzean.",
-      sectionTitle: "Merkataritza-tratamendua",
-      modeLegend: "Noiz partekatu nahi duzu zure garraioen eskuragarritasuna?",
+        "Baimena ukatzeak edo kentzeak ez du inola ere eragiten DeCA Profesional doan erabiltzean.",
+      badge: "AUKERAKOA",
+      tagline: "Zure helmugak zure hurrengo kargarekin lot zaitzake.",
+      supporting:
+        "Zuk erabakitzen duzu DeCA Profesional-ek eskuragarritasun-datu jakin batzuk komunika diezazkiekeen proposamen komertzial pertsonalizatu eta lehenetsiak bidali nahi dizkizuten kargatzaileei. Erabaki hau noiznahi alda dezakezu.",
+      articleLink: "Ezagutu nola funtzionatzen duen DECA Conecta-k",
+      sectionTitle: "DECA Conecta",
+      modeLegend: "Noiz aktibatu nahi duzu DECA Conecta?",
       modes: {
         none: "Ez partekatu garraio bakar batean ere",
         noneHint: "Merkataritza-daturik ez da zure DeCetatik ateratzen. Aukera lehenetsia da.",
         perDeca: "Galdetu niri DeCA bakoitzean",
         perDecaHint:
-          "Garraioz garraio erabakitzen duzu DeCA bakoitza sortzean. Kontrola desaktibatuta egongo da lehenetsita.",
+          "Garraioz garraio erabakitzen duzu DeCA bakoitza sortzean. Aukera desaktibatuta agertuko da lehenetsita.",
         all: "Partekatu garraio guztietan, desaktibatzen ez badut",
         allHint:
-          "Eskuragarritasun-fitxa DeCA berri bakoitzerako prestatzen da. Garraio jakin batean desaktiba dezakezu jaulki aurretik.",
+          "Eskuragarritasuna DeCA berri bakoitzerako prestatuko da. Garraio jakin batean desaktiba dezakezu jaulki aurretik.",
+      },
+      disclosureTitle: "Zer datu erabiltzen diren eta nork jaso ditzakeen",
+      disclosure: {
+        howTitle: "Nola funtzionatzen du?",
+        howBody:
+          "DeCA bat sortzen duzunean, plataformak garraioaren helmuga eta aurreikusitako data ezagutzen ditu. Baimentzen baduzu, DECA Conecta-k datu horiek erabil ditzake bateragarriak diren karga-aukerak identifikatzeko eta interesa duten kargatzaileek proposamen komertzial pertsonalizatu bat bidal diezazuten.",
+        matchTitle: "Aukerak aurkitzeko erabiltzen diren datuak",
+        matchItems: [
+          "Kamioiaren helmuga.",
+          "Garraioaren edo aurreikusitako eskuragarritasunaren data.",
+        ],
+        contactTitle: "Zurekin harremanetan jartzeko erabiltzen diren datuak",
+        contactItems: [
+          "Baimendutako enpresa edo izena.",
+          "Baimendu duzun posta elektronikoa edo telefonoa.",
+        ],
+        neverTitle: "Ez dugu partekatzen",
+        neverItems: [
+          "DeCA osoa.",
+          "Garraioaren jatorria.",
+          "Salgaia, ezta haren pisua ere.",
+          "Garraioaren bezeroaren identitatea.",
+          "Prezioa, ezta zerbitzuaren baldintzak ere.",
+          "Lotutako dokumentuak.",
+          "GPS kokapena, ezta denbora errealeko jarraipena ere.",
+        ],
+        recipients:
+          "Hartzaileak: karga-proposamen komertzial pertsonalizatu eta lehenetsi bat eskaintzeko interesa duten kargatzaileak.",
+        purpose:
+          "Xedea: aurreikusitako helmuga eta datarekin bateragarriak diren karga-aukerak identifikatzea eta garraiolariak dagokion proposamen komertziala jaso ahal izatea.",
+        revocation:
+          "Errebokazioa: erabiltzaileak etorkizuneko erabileretarako hobespena noiznahi alda dezake. Baimena errebokatzeak ez ditu ezabatzen edo baliogabetzen jada sortutako DeCA-ak.",
       },
       channelLegend: "Baimendutako harremanetarako kanala",
       channels: { email: "Posta elektronikoa", phone: "WhatsApp", both: "Posta eta WhatsApp" },
@@ -567,9 +633,6 @@ export const eu = {
       },
       previewNever:
         "Ez dira inoiz partekatzen jatorria, kargatzailea, kargatzeko helbidea, salgaia, prezioa, matrikulak, gidaria, ezta DeCA dokumentua, URLa edo QRa ere.",
-      moreInfo: "Informazio gehiago",
-      moreInfoBody:
-        "Hartzaileak goiko eremuak dituen eskuragarritasun-fitxa bat baino ez du jasotzen; ez du zure kontura ez DeCAra sartzen. Baimena noiznahi ken dezakezu: kentzea berehalakoa da etorkizuneko komunikazioetarako, eta ez die eragiten legez egindakoei ez DeCA bati ere.",
       acceptedAt: (s) => `Baimena erregistratu zen: ${s}`,
       notAuthorized: "Baimen aktiborik ez",
       revoke: "Baimena kendu",
@@ -845,7 +908,7 @@ export const eu = {
       commercialShareOff: "Ez",
     },
     commercialShare: {
-      legend: "Merkataritza-tratamendua (aukerakoa)",
+      legend: "DECA Conecta (aukerakoa)",
       hint: "Nahi izanez gero, baimendu garraio honen eskuragarritasun-datu minimoak bidaltzea, karga-proposamen pertsonalizatuak jasotzeko. Ez baimentzeak ez dio eragiten DeCA Profesional doan erabiltzeari.",
       enable: "Garraio hau amaitzean proposamen pertsonalizatuak jaso nahi ditut",
       destination: "Helmuga edo eskuragarritasun-eremua",

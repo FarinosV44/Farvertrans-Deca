@@ -379,12 +379,35 @@ export const en = {
       termsAndConditions: "Terms and Conditions",
     },
     commercialOptIn: {
-      title: "Load opportunities",
-      label: "Notify me if a job compatible with my routes comes up",
-      hint: "You can turn this off anytime.",
-      moreInfo: "What data is shared",
-      moreInfoBody:
-        "Only the minimum data needed to propose opportunities will be shared: your vehicle's destination, the expected date, and the contact details you've authorised.",
+      brand: "DECA Conecta",
+      badge: "OPTIONAL",
+      tagline: "Your destination can connect you to your next load.",
+      label: "Notify me if a compatible load opportunity comes up on my routes",
+      hint: "When you turn it on, you authorise the use of your jobs' destination and date to receive personalised commercial offers. We don't share your full DeCA or do GPS tracking. You can change this decision whenever you like.",
+      moreInfo: "How DECA Conecta works and what data it uses",
+      articleLink: "Discover how DECA Conecta works",
+      info: {
+        howTitle: "How does it work?",
+        howBody:
+          "When you generate a DeCA, the platform knows the destination and expected date of the job. If you authorise it, DECA Conecta can use that data to identify compatible load opportunities and let interested shippers send you a personalised commercial offer.",
+        matchTitle: "Data used to find opportunities",
+        matchItems: ["The truck's destination.", "The job date or expected availability date."],
+        contactTitle: "Data used to contact you",
+        contactItems: ["Authorised company or name.", "Email or phone you have authorised."],
+        neverTitle: "We don't share",
+        neverItems: [
+          "The full DeCA.",
+          "The job's origin.",
+          "The goods or their weight.",
+          "The identity of the transport client.",
+          "The price or the terms of the service.",
+          "Associated documents.",
+          "GPS location or real-time tracking.",
+        ],
+        controlTitle: "You stay in control",
+        controlBody:
+          "Receiving an offer doesn't oblige you to accept it. You can turn off DECA Conecta or change your preferences whenever you like without losing access to the DeCA generator.",
+      },
     },
     submit: {
       register: "Create free account",
@@ -515,22 +538,53 @@ export const en = {
       },
     },
     privacy: {
-      title: "Privacy and communications",
+      title: "Privacy",
       intro:
-        "Here you decide whether DeCA Profesional may pass a few availability details from your jobs to shippers interested in sending you personalised, preferential freight offers. It is optional and you can change it whenever you like.",
+        "DECA Conecta lets you receive load opportunities based on the destination and date of your jobs. It is an optional service: not activating it does not affect creating, managing or keeping your DeCAs, or the free use of the platform.",
       freeUseNote:
-        "Not authorising this communication does not affect your free use of DeCA Profesional in any way.",
-      sectionTitle: "Commercial processing",
-      modeLegend: "When do you want to share the availability of your jobs?",
+        "Refusing or withdrawing consent does not affect the free use of DeCA Profesional in any way.",
+      badge: "OPTIONAL",
+      tagline: "Your destination can connect you to your next load.",
+      supporting:
+        "You decide whether DeCA Profesional may pass certain availability details to shippers interested in sending you personalised, preferential freight offers. You can change this decision whenever you like.",
+      articleLink: "Discover how DECA Conecta works",
+      sectionTitle: "DECA Conecta",
+      modeLegend: "When do you want to activate DECA Conecta?",
       modes: {
         none: "Do not share on any job",
-        noneHint: "No commercial data leaves your DeCAs. This is the default.",
+        noneHint: "No commercial data leaves your DeCAs. This is the default option.",
         perDeca: "Ask me on each DeCA",
         perDecaHint:
-          "You decide job by job when creating each DeCA. The control is off by default.",
+          "You decide job by job when creating each DeCA. The option will be off by default.",
         all: "Share on every job unless I disable it",
         allHint:
-          "An availability record is prepared for each new DeCA. You can disable it on a specific job before issuing it.",
+          "Availability will be prepared for each new DeCA. You can disable it on any specific job before issuing it.",
+      },
+      disclosureTitle: "What data is used and who can receive it",
+      disclosure: {
+        howTitle: "How does it work?",
+        howBody:
+          "When you generate a DeCA, the platform knows the destination and expected date of the job. If you authorise it, DECA Conecta can use that data to identify compatible load opportunities and let interested shippers send you a personalised commercial offer.",
+        matchTitle: "Data used to find opportunities",
+        matchItems: ["The truck's destination.", "The job date or expected availability date."],
+        contactTitle: "Data used to contact you",
+        contactItems: ["Authorised company or name.", "Email or phone you have authorised."],
+        neverTitle: "We don't share",
+        neverItems: [
+          "The full DeCA.",
+          "The job's origin.",
+          "The goods or their weight.",
+          "The identity of the transport client.",
+          "The price or the terms of the service.",
+          "Associated documents.",
+          "GPS location or real-time tracking.",
+        ],
+        recipients:
+          "Recipients: shippers interested in offering a personalised, preferential freight offer.",
+        purpose:
+          "Purpose: to identify load opportunities compatible with the expected destination and date and let the carrier receive the corresponding commercial offer.",
+        revocation:
+          "Withdrawal: the user can change the preference for future uses at any time. Withdrawing consent does not delete or invalidate DeCAs already generated.",
       },
       channelLegend: "Authorised contact channel",
       channels: { email: "Email", phone: "WhatsApp", both: "Email and WhatsApp" },
@@ -546,9 +600,6 @@ export const en = {
       },
       previewNever:
         "The origin, the shipper, the loading address, the goods, the price, the plates, the driver and the DeCA document, URL or QR are never shared.",
-      moreInfo: "More information",
-      moreInfoBody:
-        "The recipient only receives an availability record with the fields above; they do not access your account or the DeCA. You can withdraw the authorisation at any time: withdrawal is immediate for future communications and does not affect ones already made lawfully or any DeCA.",
       acceptedAt: (s) => `Authorisation recorded on ${s}`,
       notAuthorized: "No active authorisation",
       revoke: "Withdraw authorisation",
@@ -820,7 +871,7 @@ export const en = {
       commercialShareOff: "No",
     },
     commercialShare: {
-      legend: "Commercial processing (optional)",
+      legend: "DECA Conecta (optional)",
       hint: "If you wish, authorise sending the minimal availability details of this job to receive personalised freight offers. Not authorising it does not affect your free use of DeCA Profesional.",
       enable: "I want to receive personalised offers when this job ends",
       destination: "Destination or availability area",

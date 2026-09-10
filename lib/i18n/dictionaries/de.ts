@@ -391,12 +391,42 @@ export const de = {
       termsAndConditions: "Allgemeinen Geschäftsbedingungen",
     },
     commercialOptIn: {
-      title: "Frachtmöglichkeiten",
-      label: "Benachrichtigen Sie mich, wenn ein zu meinen Routen passender Transport erscheint",
-      hint: "Sie können dies jederzeit deaktivieren.",
-      moreInfo: "Welche Daten werden geteilt",
-      moreInfoBody:
-        "Es werden nur die Mindestdaten geteilt, die nötig sind, um Ihnen Möglichkeiten vorzuschlagen: Zielort des Fahrzeugs, voraussichtliches Datum und die von Ihnen freigegebenen Kontaktdaten.",
+      brand: "DECA Conecta",
+      badge: "OPTIONAL",
+      tagline: "Ihr Zielort kann Sie mit Ihrer nächsten Ladung verbinden.",
+      label:
+        "Benachrichtigen Sie mich, wenn eine zu meinen Routen passende Frachtmöglichkeit erscheint",
+      hint: "Mit der Aktivierung erlauben Sie die Nutzung von Zielort und Datum Ihrer Transporte, um personalisierte kommerzielle Angebote zu erhalten. Wir teilen weder Ihr vollständiges DeCA noch führen wir GPS-Ortung durch. Sie können diese Entscheidung jederzeit ändern.",
+      moreInfo: "Wie DECA Conecta funktioniert und welche Daten verwendet werden",
+      articleLink: "Erfahren Sie, wie DECA Conecta funktioniert",
+      info: {
+        howTitle: "Wie funktioniert es?",
+        howBody:
+          "Wenn Sie ein DeCA erstellen, kennt die Plattform den Zielort und das voraussichtliche Datum des Transports. Wenn Sie es erlauben, kann DECA Conecta diese Daten nutzen, um passende Frachtmöglichkeiten zu erkennen und interessierten Verladern zu ermöglichen, Ihnen ein personalisiertes kommerzielles Angebot zu senden.",
+        matchTitle: "Für die Suche nach Möglichkeiten verwendete Daten",
+        matchItems: [
+          "Der Zielort des Lkw.",
+          "Das Datum des Transports bzw. der voraussichtlichen Verfügbarkeit.",
+        ],
+        contactTitle: "Für die Kontaktaufnahme verwendete Daten",
+        contactItems: [
+          "Freigegebenes Unternehmen bzw. freigegebener Name.",
+          "Von Ihnen freigegebene E-Mail-Adresse oder Telefonnummer.",
+        ],
+        neverTitle: "Wir teilen nicht",
+        neverItems: [
+          "Das vollständige DeCA.",
+          "Die Herkunft des Transports.",
+          "Die Ware oder ihr Gewicht.",
+          "Die Identität des Transportkunden.",
+          "Den Preis oder die Bedingungen der Dienstleistung.",
+          "Zugehörige Dokumente.",
+          "Den GPS-Standort oder die Echtzeitverfolgung.",
+        ],
+        controlTitle: "Sie behalten die Kontrolle",
+        controlBody:
+          "Ein Angebot zu erhalten verpflichtet Sie nicht, es anzunehmen. Sie können DECA Conecta deaktivieren oder Ihre Einstellungen jederzeit ändern, ohne den Zugang zum DeCA-Generator zu verlieren.",
+      },
     },
     submit: {
       register: "Kostenloses Konto erstellen",
@@ -532,22 +562,59 @@ export const de = {
       },
     },
     privacy: {
-      title: "Datenschutz und Kommunikation",
+      title: "Datenschutz",
       intro:
-        "Hier entscheiden Sie, ob DeCA Profesional einige Verfügbarkeitsdaten Ihrer Transporte an Verlader weitergeben darf, die Ihnen personalisierte und bevorzugte Frachtangebote machen möchten. Das ist freiwillig und jederzeit änderbar.",
+        "Mit DECA Conecta können Sie Frachtmöglichkeiten auf Basis von Zielort und Datum Ihrer Transporte erhalten. Es ist ein optionaler Dienst: Ihn nicht zu aktivieren, hat keine Auswirkung auf das Erstellen, Verwalten oder Aufbewahren Ihrer DeCAs oder auf die kostenlose Nutzung der Plattform.",
       freeUseNote:
-        "Wenn Sie diese Kommunikation nicht erlauben, hat das keinerlei Auswirkung auf die kostenlose Nutzung von DeCA Profesional.",
-      sectionTitle: "Kommerzielle Verarbeitung",
-      modeLegend: "Wann möchten Sie die Verfügbarkeit Ihrer Transporte teilen?",
+        "Die Einwilligung abzulehnen oder zu widerrufen, hat keinerlei Auswirkung auf die kostenlose Nutzung von DeCA Profesional.",
+      badge: "OPTIONAL",
+      tagline: "Ihr Zielort kann Sie mit Ihrer nächsten Ladung verbinden.",
+      supporting:
+        "Sie entscheiden, ob DeCA Profesional bestimmte Verfügbarkeitsdaten an Verlader weitergeben darf, die Ihnen personalisierte und bevorzugte Frachtangebote machen möchten. Sie können diese Entscheidung jederzeit ändern.",
+      articleLink: "Erfahren Sie, wie DECA Conecta funktioniert",
+      sectionTitle: "DECA Conecta",
+      modeLegend: "Wann möchten Sie DECA Conecta aktivieren?",
       modes: {
         none: "Bei keinem Transport teilen",
         noneHint: "Es verlassen keine kommerziellen Daten Ihre DeCAs. Das ist die Standardoption.",
         perDeca: "Bei jedem DeCA nachfragen",
         perDecaHint:
-          "Sie entscheiden pro Transport beim Erstellen jedes DeCA. Die Option ist standardmäßig deaktiviert.",
+          "Sie entscheiden pro Transport beim Erstellen jedes DeCA. Die Option erscheint standardmäßig deaktiviert.",
         all: "Bei allen Transporten teilen, sofern nicht deaktiviert",
         allHint:
-          "Für jedes neue DeCA wird ein Verfügbarkeitsdatensatz vorbereitet. Sie können ihn für einen bestimmten Transport vor der Ausstellung deaktivieren.",
+          "Für jedes neue DeCA wird die Verfügbarkeit vorbereitet. Sie können sie für jeden bestimmten Transport vor der Ausstellung deaktivieren.",
+      },
+      disclosureTitle: "Welche Daten verwendet werden und wer sie erhalten kann",
+      disclosure: {
+        howTitle: "Wie funktioniert es?",
+        howBody:
+          "Wenn Sie ein DeCA erstellen, kennt die Plattform den Zielort und das voraussichtliche Datum des Transports. Wenn Sie es erlauben, kann DECA Conecta diese Daten nutzen, um passende Frachtmöglichkeiten zu erkennen und interessierten Verladern zu ermöglichen, Ihnen ein personalisiertes kommerzielles Angebot zu senden.",
+        matchTitle: "Für die Suche nach Möglichkeiten verwendete Daten",
+        matchItems: [
+          "Der Zielort des Lkw.",
+          "Das Datum des Transports bzw. der voraussichtlichen Verfügbarkeit.",
+        ],
+        contactTitle: "Für die Kontaktaufnahme verwendete Daten",
+        contactItems: [
+          "Freigegebenes Unternehmen bzw. freigegebener Name.",
+          "Von Ihnen freigegebene E-Mail-Adresse oder Telefonnummer.",
+        ],
+        neverTitle: "Wir teilen nicht",
+        neverItems: [
+          "Das vollständige DeCA.",
+          "Die Herkunft des Transports.",
+          "Die Ware oder ihr Gewicht.",
+          "Die Identität des Transportkunden.",
+          "Den Preis oder die Bedingungen der Dienstleistung.",
+          "Zugehörige Dokumente.",
+          "Den GPS-Standort oder die Echtzeitverfolgung.",
+        ],
+        recipients:
+          "Empfänger: Verlader, die ein personalisiertes und bevorzugtes kommerzielles Frachtangebot machen möchten.",
+        purpose:
+          "Zweck: Frachtmöglichkeiten zu erkennen, die zu Zielort und voraussichtlichem Datum passen, und dem Frachtführer zu ermöglichen, das entsprechende kommerzielle Angebot zu erhalten.",
+        revocation:
+          "Widerruf: Der Nutzer kann die Präferenz für künftige Nutzungen jederzeit ändern. Der Widerruf der Einwilligung löscht oder entwertet bereits erstellte DeCAs nicht.",
       },
       channelLegend: "Zugelassener Kontaktkanal",
       channels: { email: "E-Mail", phone: "WhatsApp", both: "E-Mail und WhatsApp" },
@@ -563,9 +630,6 @@ export const de = {
       },
       previewNever:
         "Herkunft, Verlader, Ladeadresse, Ware, Preis, Kennzeichen, Fahrer sowie das DeCA-Dokument, die URL oder der QR-Code werden nie geteilt.",
-      moreInfo: "Mehr Informationen",
-      moreInfoBody:
-        "Der Empfänger erhält nur einen Verfügbarkeitsdatensatz mit den obigen Feldern; er hat keinen Zugriff auf Ihr Konto oder das DeCA. Sie können die Einwilligung jederzeit widerrufen: Der Widerruf gilt sofort für künftige Mitteilungen und berührt weder bereits rechtmäßig erfolgte Mitteilungen noch ein DeCA.",
       acceptedAt: (s) => `Einwilligung erfasst am ${s}`,
       notAuthorized: "Keine aktive Einwilligung",
       revoke: "Einwilligung widerrufen",
@@ -841,7 +905,7 @@ export const de = {
       commercialShareOff: "Nein",
     },
     commercialShare: {
-      legend: "Kommerzielle Verarbeitung (optional)",
+      legend: "DECA Conecta (optional)",
       hint: "Erlauben Sie bei Bedarf das Senden der minimalen Verfügbarkeitsdaten dieses Transports, um personalisierte Frachtangebote zu erhalten. Eine Ablehnung wirkt sich nicht auf die kostenlose Nutzung von DeCA Profesional aus.",
       enable: "Ich möchte am Ende dieses Transports personalisierte Angebote erhalten",
       destination: "Zielort oder Verfügbarkeitsgebiet",
