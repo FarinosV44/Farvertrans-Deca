@@ -32,18 +32,27 @@ export function PlansSection({
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">
         {copy.eyebrow}
       </p>
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      {/* Heading + launch badge. ≥md (768px): badge sits at the right of the
+          heading row, baseline-aligned. <md: badge drops onto its own line
+          below the H2, centred — never squeezed beside the heading, never
+          three-line wrapping (#PLANES-2027 badge refinement; project
+          breakpoints: sm 360 / md 768 / lg 1280). */}
+      <div className="mt-3 md:flex md:items-end md:justify-between md:gap-4">
         <h2 id="planes" className="text-2xl font-bold md:text-3xl">
           {copy.heading}
         </h2>
-        <span
-          className="inline-flex w-fit items-center rounded-full bg-[var(--color-success)] px-3 py-1 text-xs font-bold text-white"
-          data-testid="plans-launch-badge"
-        >
-          {copy.launchBadge}
-        </span>
+        <div className="mt-4 flex justify-center md:mt-0 md:block md:shrink-0">
+          <span
+            className="inline-flex items-center justify-center rounded-full bg-[var(--color-success)] px-3 py-1 text-center text-xs font-bold leading-tight text-white"
+            data-testid="plans-launch-badge"
+          >
+            {copy.launchBadge}
+          </span>
+        </div>
       </div>
-      <p className="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">{copy.subhead}</p>
+      <p className="mt-4 max-w-2xl text-sm text-[var(--color-text-muted)] md:mt-3">
+        {copy.subhead}
+      </p>
 
       <ul className="mt-8 grid gap-4 lg:grid-cols-3">
         {tiers.map((tier) => (

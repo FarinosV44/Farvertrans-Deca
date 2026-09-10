@@ -79,7 +79,7 @@ export const fr = {
       heading: "Une formule pour chaque volume de travail.",
       subhead:
         "DeCA Profesional est gratuit jusqu'au 31 décembre 2026. À partir de janvier, vous pourrez choisir la formule la mieux adaptée à votre entreprise.",
-      launchBadge: "Maintenant : gratuit jusqu'au 31/12/2026",
+      launchBadge: "Gratuit jusqu'au 31/12/2026",
       reassurance:
         "Vous n'avez pas à choisir de formule maintenant. Pendant le lancement, vous pouvez continuer à utiliser DeCA Profesional gratuitement.",
       authedNote: "Votre compte reste gratuit pendant le lancement.",

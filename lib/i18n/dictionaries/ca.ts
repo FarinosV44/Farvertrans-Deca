@@ -79,7 +79,7 @@ export const ca = {
       heading: "Un pla per a cada volum de feina.",
       subhead:
         "DeCA Profesional és gratuït fins al 31 de desembre de 2026. A partir de gener podràs triar el pla que millor s'adapti a la teva empresa.",
-      launchBadge: "Ara: gratis fins al 31/12/2026",
+      launchBadge: "Gratis fins al 31/12/2026",
       reassurance:
         "No has de triar cap pla ara. Durant el llançament pots continuar utilitzant DeCA Profesional gratuïtament.",
       authedNote: "El teu compte continua sent gratuït durant el llançament.",

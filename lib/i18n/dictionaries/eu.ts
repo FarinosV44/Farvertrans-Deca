@@ -86,7 +86,7 @@ export const eu = {
       heading: "Lan-bolumen bakoitzerako plan bat.",
       subhead:
         "DeCA Profesional doakoa da 2026ko abenduaren 31ra arte. Urtarriletik aurrera zure enpresara ondoen egokitzen den plana aukeratu ahal izango duzu.",
-      launchBadge: "Orain: doan 2026/12/31ra arte",
+      launchBadge: "Doan 2026/12/31ra arte",
       reassurance:
         "Ez duzu planik aukeratu behar orain. Abian jartzeko aldian DeCA Profesional doan erabiltzen jarrai dezakezu.",
       authedNote: "Zure kontua doakoa izaten jarraitzen du abian jartzeko aldian.",
