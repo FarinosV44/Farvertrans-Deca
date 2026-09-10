@@ -63,8 +63,13 @@ export function CompanyProfileForm({
   }
 
   if (!canChange) {
+    // One column on phones. NOTE: this theme's `sm` breakpoint is 360px, so
+    // `sm:grid-cols-2` would still be two columns on every phone and long
+    // values (e.g. the contact email) overlap the next field — the fields
+    // go two-up only from `md` (768px). `min-w-0` + `break-words` on each
+    // Field keeps a long value inside its own cell.
     return (
-      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+      <dl className="mt-4 grid gap-x-6 gap-y-4 md:grid-cols-2">
         <Field label="Email de contacto" value={initial.email} />
         <Field label="Teléfono" value={initial.phone} />
         <Field label="Dirección" value={initial.address} />
@@ -82,8 +87,8 @@ export function CompanyProfileForm({
           {error}
         </p>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block min-w-0 text-sm">
           <span className="font-medium">Email de contacto</span>
           <input
             type="email"
@@ -93,7 +98,7 @@ export function CompanyProfileForm({
             className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
           />
         </label>
-        <label className="block text-sm">
+        <label className="block min-w-0 text-sm">
           <span className="font-medium">Teléfono</span>
           <input
             type="tel"
@@ -103,7 +108,7 @@ export function CompanyProfileForm({
             className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
           />
         </label>
-        <label className="block text-sm sm:col-span-2">
+        <label className="block min-w-0 text-sm md:col-span-2">
           <span className="font-medium">Dirección</span>
           <input
             type="text"
@@ -113,7 +118,7 @@ export function CompanyProfileForm({
             className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
           />
         </label>
-        <label className="block text-sm">
+        <label className="block min-w-0 text-sm">
           <span className="font-medium">Código postal</span>
           <input
             type="text"
@@ -124,7 +129,7 @@ export function CompanyProfileForm({
             className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
           />
         </label>
-        <label className="block text-sm">
+        <label className="block min-w-0 text-sm">
           <span className="font-medium">Población</span>
           <input
             type="text"
@@ -134,7 +139,7 @@ export function CompanyProfileForm({
             className="mt-1 min-h-11 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] px-3"
           />
         </label>
-        <label className="block text-sm sm:col-span-2">
+        <label className="block min-w-0 text-sm md:col-span-2">
           <span className="font-medium">Persona de contacto</span>
           <input
             type="text"
@@ -161,9 +166,9 @@ export function CompanyProfileForm({
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
-    <div>
+    <div className="min-w-0">
       <dt className="text-xs font-medium text-[var(--color-text-muted)]">{label}</dt>
-      <dd className="text-sm">{value ?? "—"}</dd>
+      <dd className="mt-0.5 text-sm break-words [overflow-wrap:anywhere]">{value ?? "—"}</dd>
     </div>
   );
 }

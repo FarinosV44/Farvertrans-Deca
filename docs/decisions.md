@@ -6009,3 +6009,38 @@ previously-documented contention flake happened to sit quiet this run too.
   at 360px") failed in CI on `fcab06e`.
 - Fix: `sm:` → `md:` (768px) for the row switch and `w-auto`, dropped `whitespace-nowrap`. Below
   768px the buttons stack full-width. panel-nav 6/6 green, no overflow at 360.
+
+### D-191 — Mi empresa page: mobile two-column overlap in the contact/company cards (2026-09-10)
+- Reported: on `/panel/empresa` (`Datos de contacto` and `Datos de la empresa`), the two-column
+  grid crowded on phones and a long value (contact email) overlapped the adjacent field.
+- Cause: the grids used `sm:grid-cols-2`, and this theme sets `--breakpoint-sm: 360px`, so it was
+  two columns on every phone; the value `<dd>` had no wrapping rule.
+- Fix (`components/app/company-profile-form.tsx` + `app/panel/empresa/page.tsx`):
+  `sm:grid-cols-2` → `md:grid-cols-2` (and `sm:col-span-2` → `md:col-span-2`); grid cells/labels
+  `min-w-0`; values `break-words [overflow-wrap:anywhere]`; `mt-0.5` label→value spacing. Desktop
+  two-column layout (from 768px) unchanged.
+- Verified: tsc / lint / format / keel-verify clean; 382/382 unit; `company-logo.spec.ts`
+  (owner + member read-only views), `panel-nav.spec.ts`, `a11y.spec.ts` green; **no horizontal
+  scroll at 320/375/390/430/768/1280** with long name/email/address; screenshots reviewed.
+
+### D-192 — sendMail: hard 8s timeout so a slow provider can't hang registration (2026-09-10)
+- User reported (production): after signing up, the email-verification screen never appears and
+  the "Oportunidades de carga" opt-in "no sale" — i.e. the registration flow stalls. The user has
+  reported Resend delivery problems repeatedly this session.
+- Diagnosis: current-code registration is verified working end to end
+  (`commercial-consent.spec.ts` asserts the opt-in renders on `/registro`; `account.spec.ts` +
+  the `registerCompany` helpers assert the redirect to `/verificar-email`; 42/42 green). The
+  failure is environment-side. The strongest candidate: `sendMail()` does `await fetch(resend…)`
+  **inside the request path** with NO timeout — Node's fetch has none — so a slow/unreachable
+  Resend hangs the whole `POST /api/auth/register` until the browser gives up, and the client
+  never reaches `router.push("/verificar-email")`.
+- Fix (`lib/mailer.ts`, signature unchanged): `signal: AbortSignal.timeout(8000)` on the Resend
+  fetch. A timeout is caught by the existing `catch` → `{ sent: false, reason: "error" }` →
+  registration completes and the user lands on `/verificar-email?sent=0` (the honest "we couldn't
+  send it, here's what to do" state) instead of a stalled request.
+- New `tests/unit/mailer.test.ts` (4): abort → fails fast as `{sent:false,reason:"error"}` and the
+  signal is attached; provider error / success / unconfigured still behave.
+- **Still to confirm with the user / Hostinger logs** whether the hang is the actual production
+  cause (look for a `mail_send_attempt` with no `mail_provider_accepted`/`_error` after it), and
+  the exact Google-flow landing URL. Google users are email-verified by Google so they correctly
+  skip `/verificar-email` — that part is expected.

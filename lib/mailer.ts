@@ -48,6 +48,12 @@ export async function sendMail(opts: {
   );
 
   try {
+    // Hard timeout: this runs inside the request path (registration, password
+    // reset, team invites…). Node's fetch has NO default timeout, so a slow or
+    // unreachable provider would hang the whole request until the browser gives
+    // up — which looks to the user like "registration is broken / the verify
+    // screen never appears". A timeout makes those flows fall back to the
+    // honest `sent: false` state instead of stalling.
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
@@ -59,6 +65,7 @@ export async function sendMail(opts: {
         ...(opts.html ? { html: opts.html } : {}),
         ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
       }),
+      signal: AbortSignal.timeout(8000),
     });
     const body = await res.text().catch(() => "");
     if (!res.ok) {
