@@ -6001,3 +6001,11 @@ previously-documented contention flake happened to sit quiet this run too.
   `nav-links.spec.ts` (every footer link resolves 200), `landing.spec.ts`, `a11y.spec.ts`,
   `seo-regression.spec.ts` all green (45/45); no horizontal overflow at 320/375/768/1280;
   screenshots reviewed.
+
+### D-189 (fix) — Plantillas empty-state buttons overflowed at 360px (2026-09-10)
+- The D-189 empty-state action buttons used `sm:flex-row` + `sm:w-auto` + `whitespace-nowrap`.
+  This project defines `--breakpoint-sm: 360px`, so at exactly 360px the two buttons went
+  side-by-side and did not fit the card — `tests/e2e/panel-nav.spec.ts:51` ("no horizontal scroll
+  at 360px") failed in CI on `fcab06e`.
+- Fix: `sm:` → `md:` (768px) for the row switch and `w-auto`, dropped `whitespace-nowrap`. Below
+  768px the buttons stack full-width. panel-nav 6/6 green, no overflow at 360.
