@@ -382,7 +382,7 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await ownerCtx.close();
   });
 
-  test("D-176: clicking \"Reenviar\" on a pending invite shows the NEW working link", async ({
+  test('D-176: clicking "Reenviar" on a pending invite shows the NEW working link', async ({
     browser,
   }) => {
     const ownerCtx = await browser.newContext();

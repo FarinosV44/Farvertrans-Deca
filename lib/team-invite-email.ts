@@ -19,11 +19,11 @@ const ROLE_LABEL: Record<InviteRole, string> = {
  * images, explicit UTF-8. No unsubscribe language — a one-time
  * transactional notice a person received by being invited, not a newsletter.
  */
-export function buildInviteEmail(opts: {
-  companyName: string;
-  role: InviteRole;
-  link: string;
-}): { subject: string; text: string; html: string } {
+export function buildInviteEmail(opts: { companyName: string; role: InviteRole; link: string }): {
+  subject: string;
+  text: string;
+  html: string;
+} {
   const company = opts.companyName.trim() || "Una empresa";
   const roleLabel = ROLE_LABEL[opts.role];
   const subject = `Te han invitado a unirte a ${company} en ${BRAND.name}`;
