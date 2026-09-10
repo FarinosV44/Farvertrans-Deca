@@ -45,10 +45,13 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`develop` == `main` == `ab57620` (2026-09-10). CI on `main` FULLY GREEN** — every step
-  (migrate deploy · seed · typecheck · lint · format:check · 382 unit · keel-verify · full e2e ·
-  R-1…R-13 compliance · CJS-server guard · secret scan). First all-green `main` CI since the
-  `format:check` regression in #106 (`3be422e`), now cleared. Merged this session: D-185 (version 0.2.0),
+- **`develop` == `main` == `49da18b` (2026-09-10). CI on `main` FULLY GREEN.**
+  UI polish added since `ab57620`: **D-189** (command palette compact/subtle + Plantillas
+  empty-state card with two CTAs) and **D-190** (footer hierarchy: brand column → product
+  positioning + trust line, "Planes 2027" + persona links in PRODUCTO, duplicate FAQ removed).
+  D-189 first shipped a 360px overflow on the Plantillas empty state (theme `sm` = 360px) — caught
+  by `panel-nav.spec.ts:51` in CI on `fcab06e`, fixed in `0162147` (buttons stack until `md`).
+  No migrations in D-189/D-190 (component/copy only). — Earlier this session on `main`: D-185 (version 0.2.0),
   D-186 (RLS lockdown — migration `20260910093000`, **already applied + verified on production**:
   39/39 migrations, RLS 41/41, anon/authenticated reach 0 tables), D-187 (#110 PDF QR overlap),
   D-188 (#109 Planes 2027), and a `format:check` cleanup of 2 files unformatted since #106 (clears
