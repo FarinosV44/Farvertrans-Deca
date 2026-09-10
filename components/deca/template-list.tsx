@@ -24,10 +24,30 @@ export function TemplateList({ templates }: { templates: Row[] }) {
 
   if (templates.length === 0) {
     return (
-      <p className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]">
-        Aún no tienes plantillas. Genera un DeCA y pulsa «Guardar como plantilla» desde su detalle,
-        o créala desde un documento del <Link href="/panel/historico">historial</Link>.
-      </p>
+      <div className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <p className="text-base font-bold">Crea tu primera plantilla</p>
+        <p className="mt-2 max-w-prose text-sm text-[var(--color-text-muted)]">
+          Guarda rutas y datos que repites para generar nuevos DeCA más rápido. Las plantillas
+          rellenan tus datos habituales y siempre generan un documento nuevo e independiente.
+        </p>
+        <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
+          Ideal para rutas frecuentes, clientes habituales y operaciones repetitivas.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Link
+            href="/crear"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium whitespace-nowrap text-[var(--color-primary-contrast)] no-underline hover:bg-[var(--color-primary-hover)] sm:w-auto"
+          >
+            Generar un DeCA
+          </Link>
+          <Link
+            href="/panel/historico"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 text-sm font-medium whitespace-nowrap text-[var(--color-primary)] no-underline hover:bg-[var(--color-primary-bg)] sm:w-auto"
+          >
+            Crear desde un DeCA
+          </Link>
+        </div>
+      </div>
     );
   }
 

@@ -5958,3 +5958,25 @@ previously-documented contention flake happened to sit quiet this run too.
   "2 años" shows as live; the section carries exactly 3 "Próximamente" badges.
 - Gate: tsc clean; 382/382 unit; plans + landing + a11y e2e green (27/27); lint / format:check /
   keel-verify clean.
+
+### D-189 — UX polish: command palette + Plantillas empty state (2026-09-10)
+- User-requested visual refinements. No functional/behavioural change.
+- **Command palette** (`components/panel/command-palette.tsx`): `max-w-lg` → `max-w-[560px]`;
+  `rounded-[var(--radius-lg)]` → `--radius-md` (app card radius); `shadow-xl` →
+  `shadow-[0_8px_24px_rgba(15,23,32,0.12)]` (the app's elevated-panel shadow); backdrop
+  `black/40` → `black/30`; input row `px-4 py-3 gap-2` → `px-3.5 py-2.5 gap-3`; icon 18→16;
+  input `min-h-8` → `min-h-7` + explicit `placeholder:text-muted`; Esc `<kbd>` de-emphasised
+  (no border, `bg-surface`, `text-[11px]`); results `max-h-80` → `max-h-72`, `px-4` → `px-3.5`;
+  empty-state `py-6` → `py-5`. Placeholder shortened to
+  "Buscar DeCA, transportista, matrícula o ruta…". All handlers / refs / effects / shortcuts /
+  a11y untouched.
+- **Plantillas empty state** (`components/deca/template-list.tsx`, `templates.length === 0`
+  branch only): plain `<p>` → a card (same `border`/`surface`/`--radius-md`/`p-6`) with a bold
+  title "Crea tu primera plantilla", an explanatory body, a supporting line, and two actions —
+  primary "Generar un DeCA" → `/crear`, outline "Crear desde un DeCA" → `/panel/historico` —
+  reusing the app's primary/outline button patterns. Populated-state list, page structure and
+  nav unchanged. No new template functionality.
+- Verified: tsc / lint / format:check / keel-verify clean; 382/382 unit; e2e —
+  `workspace.spec.ts` (PRODUCT #56 Ctrl+K palette), `creator-v2.spec.ts`, `panel-nav.spec.ts`,
+  `a11y.spec.ts` all green (39/39 across the targeted runs); no horizontal overflow at
+  320/375/430/768; screenshots reviewed at desktop + mobile.

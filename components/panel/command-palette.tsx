@@ -104,17 +104,20 @@ export function CommandPalette() {
           role="dialog"
           aria-modal="true"
           aria-label="Buscador"
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-[12vh]"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 px-4 pt-[12vh]"
           onClick={close}
         >
           <div
-            className="w-full max-w-lg overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-bg)] shadow-xl"
+            // Sized and styled to read as part of the workspace, not a generic
+            // external command palette: app radius/border/surface, the same
+            // elevated-panel shadow used by cards, a compact ~600px cap.
+            className="w-full max-w-[560px] overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] shadow-[0_8px_24px_rgba(15,23,32,0.12)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
+            <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-3.5 py-2.5">
               <SearchIcon
-                width={18}
-                height={18}
+                width={16}
+                height={16}
                 className="shrink-0 text-[var(--color-text-muted)]"
               />
               <input
@@ -123,25 +126,25 @@ export function CommandPalette() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={onInputKeyDown}
-                placeholder="Buscar por referencia, transportista, matrícula, ruta…"
+                placeholder="Buscar DeCA, transportista, matrícula o ruta…"
                 data-testid="command-palette-input"
                 aria-label="Buscar DeCA"
-                className="min-h-8 w-full border-0 bg-transparent text-sm outline-none"
+                className="min-h-7 w-full border-0 bg-transparent text-sm outline-none placeholder:text-[var(--color-text-muted)]"
               />
-              <kbd className="shrink-0 rounded-[4px] border border-[var(--color-border)] px-1.5 py-0.5 text-xs text-[var(--color-text-muted)]">
+              <kbd className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--color-surface)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--color-text-muted)]">
                 Esc
               </kbd>
             </div>
 
             {hits.length > 0 && (
-              <ul data-testid="command-palette-results" className="max-h-80 overflow-y-auto py-1">
+              <ul data-testid="command-palette-results" className="max-h-72 overflow-y-auto py-1">
                 {hits.map((h, i) => (
                   <li key={h.href}>
                     <button
                       type="button"
                       onClick={() => go(h)}
                       onMouseEnter={() => setActive(i)}
-                      className={`flex w-full flex-col items-start gap-0.5 px-4 py-2 text-left text-sm ${
+                      className={`flex w-full flex-col items-start gap-0.5 px-3.5 py-2 text-left text-sm ${
                         i === active ? "bg-[var(--color-surface)]" : ""
                       }`}
                     >
@@ -154,7 +157,7 @@ export function CommandPalette() {
             )}
 
             {q.trim().length >= 2 && hits.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
+              <p className="px-3.5 py-5 text-center text-sm text-[var(--color-text-muted)]">
                 Sin resultados para «{q.trim()}».
               </p>
             )}
