@@ -1,10 +1,14 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, request as pwRequest, type Page } from "@playwright/test";
+import { PrismaClient } from "@/prisma/generated/client";
 import { internalPage } from "./helpers/admin-auth";
 
 /**
  * #86 part 5 — a message from "Asistencia técnica" becomes a tracked ticket
  * that the superadmin sees, answers and can move through the five states.
  */
+
+const prisma = new PrismaClient();
+test.afterAll(() => prisma.$disconnect());
 
 function email() {
   return `sup${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
@@ -91,4 +95,68 @@ test("a technical ticket reaches the superadmin, is answered and moved through s
 
   await userCtx.close();
   await close();
+});
+
+/**
+ * #111 part 3 — a double-submit / retry / refresh-and-resubmit must not create
+ * a second ticket, and therefore must not send a second notification email.
+ * The notification is fired 1:1 with a real `supportTicket.create`, so asserting
+ * exactly one row + one message proves exactly one email was attempted.
+ */
+test("submitting the same incident twice in quick succession creates only one ticket", async () => {
+  const ctx = await pwRequest.newContext({ baseURL: "http://localhost:3000" });
+  const addr = email();
+  const reg = await ctx.post("/api/auth/register", {
+    data: {
+      email: addr,
+      password: "Supersecret123!",
+      companyName: "Dedup Soporte SL",
+      companyNif: "B12345674",
+      companyContactName: "Ana Ejemplo",
+      companyPhone: "600111222",
+      companyEmail: "empresa@example.com",
+      companyAddress: "Calle Prueba 1",
+      companyPostalCode: "46540",
+      companyCity: "El Puig",
+      acceptTerms: true,
+    },
+  });
+  expect(reg.status()).toBe(201);
+  await ctx.get(`/verificar-email/${(await reg.json()).verifyTestToken}`);
+
+  const payload = {
+    category: "generacion",
+    subject: `No genera el PDF dedup ${Date.now()}`,
+    body: "Al pulsar GENERAR DECA no ocurre nada y aparece un error.",
+  };
+
+  const first = await ctx.post("/api/support", { data: payload });
+  expect(first.status()).toBe(201);
+  const a = await first.json();
+
+  // The retry: identical payload, immediately.
+  const second = await ctx.post("/api/support", { data: payload });
+  expect(second.status()).toBe(201);
+  const b = await second.json();
+
+  // Same ticket handed back both times.
+  expect(b.id).toBe(a.id);
+  expect(b.number).toBe(a.number);
+
+  // Exactly one row and one message in the database.
+  const rows = await prisma.supportTicket.findMany({
+    where: { subject: payload.subject },
+    include: { _count: { select: { messages: true } } },
+  });
+  expect(rows).toHaveLength(1);
+  expect(rows[0]._count.messages).toBe(1);
+
+  // A genuinely different subject the same second is NOT deduped.
+  const other = await ctx.post("/api/support", {
+    data: { ...payload, subject: `${payload.subject} (otra cosa)` },
+  });
+  expect(other.status()).toBe(201);
+  expect((await other.json()).id).not.toBe(a.id);
+
+  await ctx.dispose();
 });

@@ -743,10 +743,15 @@ anonymize-in-place (no hard delete, D-067).
   4 claves i18n ×8 locales. Sin cambio de comportamiento — todos los `data-testid` intactos,
   `panel-help.spec.ts` + `support-tickets.spec.ts` pasan sin modificar. Captura de pantallas hecha
   determinista y las 9 recapturadas. Gate verde (394 unit, e2e 13/13).
-- **Partes 3–4 — PENDIENTES:** verificación E2E del sistema de incidencias (persistencia +
-  notificación a `deca@praetoriaabogados.es` + hilo de respuesta) y anti-duplicado; claridad
-  comercial API/ERP en la landing ("+ coste adicional", "Próximamente" intacto) + verificación
-  E2E de "Solicitar integración" (hoy persiste en BD + panel admin pero **no envía ninguna
-  notificación** — se añadirá).
+- **Parte 3 — Verificación E2E de incidencias (D-197): HECHA en `develop`, sin fusionar a `main`.**
+  Flujo completo verificado y verde; notificaciones confirmadas hacia `Deca@praetoriaabogados.es`
+  y hacia el usuario (`mail_provider_error 401` en local = clave Resend de marcador; la entrega
+  real al buzón necesita el panel de Resend del usuario). Anti-duplicado: `createSupportTicket()`
+  descarta una incidencia idéntica en 2 min (sin fila duplicada ⇒ sin email duplicado); el cuerpo
+  de la notificación añade id de empresa/usuario + fecha ISO. Sin cambio de esquema. El texto
+  "Recibirás la respuesta por correo y también aquí" es cierto — no se cambia.
+- **Parte 4 — PENDIENTE:** claridad comercial API/ERP en la landing ("+ coste adicional",
+  "Próximamente" intacto, 8 locales) + verificación E2E de "Solicitar integración" (hoy persiste
+  en BD + panel admin pero **no envía ninguna notificación** — se añadirá al correo de soporte).
 - **Sin cerrar** (política de 3 tiempos): al fusionar cada parte se comenta el avance; el usuario
   confirma tras el despliegue.
