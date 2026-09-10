@@ -5980,3 +5980,32 @@ previously-documented contention flake happened to sit quiet this run too.
   `workspace.spec.ts` (PRODUCT #56 Ctrl+K palette), `creator-v2.spec.ts`, `panel-nav.spec.ts`,
   `a11y.spec.ts` all green (39/39 across the targeted runs); no horizontal overflow at
   320/375/430/768; screenshots reviewed at desktop + mobile.
+
+### D-190 — Site footer: hierarchy + brand column refinement (2026-09-10)
+- User-requested. `components/site/site-footer.tsx` only. Visual system, grid ratio
+  (`lg:grid-cols-[1.4fr_1fr_1fr_1fr]`), responsive breakpoints and the bottom legal strip
+  unchanged.
+- **Brand column**: generic "Generador gratuito…" description → product positioning
+  "Plataforma para generar, custodiar y verificar el Documento Electrónico de Control en el
+  transporte por carretera." + a discreet trust line "PDF nativo + QR · Custodia digital ·
+  Histórico" (`text-xs` muted, existing token). `max-w-xs` moved from the `<p>` to the wrapping
+  `<div>` so the block stays a tight brand column, not a nav column.
+- **PRODUCTO**: Crear DeCA · Cómo funciona · **Planes 2027 → `/#planes`** · **Empresas de
+  transporte → `/deca-empresas-transporte`** · **Agencias / operadores →
+  `/deca-agencias-transporte`** (both persona SEO pages already exist and return 200). Removed
+  "Guías" (→ Recursos) and the duplicate "Preguntas frecuentes".
+- **RECURSOS**: Blog · Guías · Normativa · Preguntas frecuentes. Removed "Documento Electrónico
+  de Control" (`/que-es-el-deca`) per the requested list, and the duplicate FAQ.
+- **LEGAL**: unchanged (already matched the requested list).
+- Verified: tsc / lint / format:check / keel-verify clean; 382/382 unit; e2e —
+  `nav-links.spec.ts` (every footer link resolves 200), `landing.spec.ts`, `a11y.spec.ts`,
+  `seo-regression.spec.ts` all green (45/45); no horizontal overflow at 320/375/768/1280;
+  screenshots reviewed.
+
+### D-189 (fix) — Plantillas empty-state buttons overflowed at 360px (2026-09-10)
+- The D-189 empty-state action buttons used `sm:flex-row` + `sm:w-auto` + `whitespace-nowrap`.
+  This project defines `--breakpoint-sm: 360px`, so at exactly 360px the two buttons went
+  side-by-side and did not fit the card — `tests/e2e/panel-nav.spec.ts:51` ("no horizontal scroll
+  at 360px") failed in CI on `fcab06e`.
+- Fix: `sm:` → `md:` (768px) for the row switch and `w-auto`, dropped `whitespace-nowrap`. Below
+  768px the buttons stack full-width. panel-nav 6/6 green, no overflow at 360.

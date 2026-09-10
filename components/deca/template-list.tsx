@@ -33,16 +33,16 @@ export function TemplateList({ templates }: { templates: Row[] }) {
         <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
           Ideal para rutas frecuentes, clientes habituales y operaciones repetitivas.
         </p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <div className="mt-4 flex flex-col gap-2 md:flex-row">
           <Link
             href="/crear"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium whitespace-nowrap text-[var(--color-primary-contrast)] no-underline hover:bg-[var(--color-primary-hover)] sm:w-auto"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)] no-underline hover:bg-[var(--color-primary-hover)] md:w-auto"
           >
             Generar un DeCA
           </Link>
           <Link
             href="/panel/historico"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 text-sm font-medium whitespace-nowrap text-[var(--color-primary)] no-underline hover:bg-[var(--color-primary-bg)] sm:w-auto"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary)] no-underline hover:bg-[var(--color-primary-bg)] md:w-auto"
           >
             Crear desde un DeCA
           </Link>
