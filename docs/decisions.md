@@ -6282,3 +6282,27 @@ for the 3 items, disclaimer present, no €80, no 320px overflow), `landing.spec
 tsc / eslint / prettier / keel-verify clean; 394 unit. Inbox delivery to
 `deca@praetoriaabogados.es` still needs the user's Resend dashboard (CREDENTIAL), same as Part 3.
 Not merged to `main`.
+
+## D-199 — #111 merged to `main`; no migration to apply (2026-09-10)
+
+**User instruction, current conversation:** "push to main and verify there is no gap and apply
+all the migrations."
+
+- **Merge:** `develop` → `main` performed (`90cdb48`, "Merge branch 'develop': #111 support/docs
+  experience (D-195…D-198)"), pushed; `develop` fast-forwarded to `90cdb48` and pushed. `develop`
+  == `main` == `90cdb48`. CI run 34524373564 on `main`.
+- **No gap:** before the merge, `git log origin/main..origin/develop` = the 8 #111 commits only,
+  `git log origin/develop..origin/main` = empty. After the merge + ff, the two branches point at
+  the same commit. `git diff main..develop -- prisma/migrations/ prisma/schema.prisma` was empty
+  → **the #111 batch introduced zero schema changes.**
+- **Migrations:** nothing to apply. The repo holds 39 migrations; local dev DB `prisma migrate
+  status` = "Database schema is up to date!" (39/39). Production was verified at 39/39 on
+  2026-09-10 ~09:28 UTC (D-186, the RLS lockdown `20260910093000` was the last one, already
+  deployed + verified), and no migration has been added since. This session has no production
+  `DATABASE_URL` (the local `.env` points at `localhost:5432`), so a production
+  `prisma migrate deploy`/`status` cannot be run from here — but there is no pending migration to
+  run, on production or anywhere.
+- **Not deployed.** Pushing to `main` does not deploy — Hostinger is a manual SSH/build step and
+  the live build is still pre-#69. The whole `main` backlog (#85 onward, incl. #111) goes live on
+  the next redeploy. After that: `npm run seed:content` publishes the guide, and the Resend
+  dashboard confirms email delivery to `deca@praetoriaabogados.es`.
