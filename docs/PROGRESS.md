@@ -45,11 +45,56 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **ACTIVE SECURITY INCIDENT (D-186) — Supabase Security Advisor: `public` schema exposed to
+  PostgREST (`rls_disabled_in_public` + `sensitive_columns_exposed`, ~37 findings).** Read-only
+  audit of production **COMPLETE**. Findings: all 41 `public` tables grant `anon`/`authenticated`
+  ALL privileges; RLS off on 34 (on/no-policy on 7); Supabase default privileges will re-expose
+  future tables. Mitigating: app uses Prisma-only (`postgres`/BYPASSRLS), Supabase JS is Storage-only,
+  anon/service keys not in repo or client bundle, no exploitation evidence in `pg_stat_statements`,
+  DB password not in git history. Aggravating: **the GitHub repo is PUBLIC**. Full report +
+  non-destructive migration plan (revoke grants + enable RLS, no policies) in
+  `docs/security/2026-09-10-supabase-rls-exposure-audit.md` (**gitignored — not for the public repo
+  until remediated**).
+  - **Conservative scope approved by user** (revoke anon/authenticated grants + fix ALTER DEFAULT
+    PRIVILEGES + ENABLE RLS on all 41 tables, NO policies; service_role + schema USAGE deferred to a
+    phase-2 hardening pass).
+  - **Tracked migration prepared:** `prisma/migrations/20260910093000_rls_lockdown_public_schema/`
+    (`migration.sql` + `migration.rollback.sql`). Only privilege/RLS metadata; no DML, no
+    DROP/TRUNCATE/DELETE.
+  - **Verified:** Prisma connects as `postgres` / `rolbypassrls=true` on BOTH poolers (:5432 & :6543);
+    all 41 tables + 1 sequence owned by `postgres`; 0 functions/views in `public`; every DeCA
+    create/read/version/PDF/QR path is `prisma.*` (68 prisma importers vs 1 supabase, storage-only).
+    Pre-deploy gate: prisma validate ✓, tsc ✓, 377/377 unit ✓, keel-verify ✓, `migrate status` clean
+    (this migration is the only one pending). e2e/integration NOT run — need Docker Desktop (down).
+  - **Backup + restore verification DONE (Option C, 2026-09-10).** Supabase CLI (`supabase db dump`,
+    image `supabase/postgres:17.6.1.167`) → schema (55 KB, 41 tables) + data (670 KB, 41 COPY blocks
+    incl. `_prisma_migrations`) + roles, SHA-256 manifest, in `coverage/backup/` (gitignored). Restored
+    into a throwaway PG 17 container: `prisma migrate status` = identical to production (38 applied,
+    only the RLS migration pending); row counts + data integrity match; 0 orphan FKs.
+  - **Migration DRY RUN on the restored copy: PASS.** `prisma migrate deploy` applied it cleanly →
+    RLS 41/41, anon SELECT 0/41, authenticated 0/41, default privileges fixed, **row counts
+    unchanged**, `SET ROLE anon; SELECT FROM company` → `permission denied`, bypass role still reads.
+    Scratch container removed; nothing done to production.
+  - **DEPLOYED TO PRODUCTION 2026-09-10 ~09:28 UTC** (`prisma migrate deploy`, migration `00565e2`).
+    Post-deploy verification ALL PASS: `rls_disabled_in_public` 34→**0**, anon-reachable tables
+    41→**0**, authenticated 41→**0**, row counts unchanged; 24/24 `SET ROLE anon/authenticated`
+    SELECT+INSERT attempts → `permission denied (42501)`; future-table auto-grant fixed (scratch-
+    tested). Live app: `/health` ok db:up; homepage/`/crear`/`/entrar` 200; `/panel` 307;
+    `/admin` 404; RSC `/admin/empresas` 5 KB (no leak); **`POST /api/deca` 201** (created test DeCA
+    `cmtvbsgbq000d430dd887hhtf`, Prisma multi-table txn + PDF + Storage); **`GET /d/<token>` 200**
+    PDF, SHA-256 == API `pdfSha256`; `deca_access_log` write ok.
+  - **Deliberately still open (phase-2 hardening):** `anon`/`authenticated` keep schema `USAGE`;
+    `service_role` keeps table privileges. Neither internet-reachable without the service key.
+  - **User TODO:** re-run Supabase Security Advisor to confirm cleared; note dashboard backup/PITR
+    status; copy `coverage/backup/deca-prod-20260910T091012Z.*` off-machine.
+  - **NEXT (this incident):** credential-rotation plan (DB password overdue per D-158; Supabase
+    anon/service keys) + phase-2 hardening — both to be delivered as `docs/security/` docs.
 - **Latest: app version bumped `0.1.0` → `0.2.0` (D-185)** — user instruction, version-only change.
   All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
   plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
   project. Historical `0.1.0` mentions in `docs/` (append-only records) left as-is. Gate:
-  keel-verify "version in sync (0.2.0)", tsc clean, 377/377 unit green. No tag / `main` merge (user's call).
+  keel-verify "version in sync (0.2.0)", tsc clean, 377/377 unit green. **Merged to `main`**
+  (`db9af1c`) on the user's explicit instruction; `develop` == `main`. No version tag (not requested).
 - **Previous: #108 — LIVE BUG fix, "Marcar como prueba" silently failed on a stale step-up (D-184),
   MERGED to `main`.** User report: the button visibly did nothing. Root cause: the endpoint
   (`set_test`) is step-up gated like block/deactivate/reactivate/edit, and `MarkTest` — unlike its

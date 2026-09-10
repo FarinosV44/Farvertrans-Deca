@@ -5777,3 +5777,92 @@ previously-documented contention flake happened to sit quiet this run too.
   the user's call.
 - Verified: `node scripts/keel-verify.mjs` → "version in sync (0.2.0)"; `tsc --noEmit` clean;
   prettier clean on touched files; 377/377 unit green (full suite).
+
+## D-186 — Security incident: Supabase `public` schema exposed via PostgREST (2026-09-10)
+- Date / phase: 2026-09-10 / Phase 5 (maintenance — security incident)
+- Trigger: Supabase Security Advisor reporting ~37 `rls_disabled_in_public` + `sensitive_columns_exposed` errors on `public` tables.
+- Read-only production audit completed this session (catalog queries only; no row data dumped).
+  Full report and remediation plan: `docs/security/2026-09-10-supabase-rls-exposure-audit.md`
+  (gitignored — the repo is public and the report is a detailed exposure map; it must not be
+  published until the fix is live).
+- Findings (summary): every one of the 41 `public` tables grants `anon`/`authenticated` ALL
+  privileges (Supabase default for `postgres`-owned tables); RLS disabled on 34, enabled with no
+  policy on 7. `ALTER DEFAULT PRIVILEGES` will re-expose every future migration's tables.
+- Not currently a confirmed breach: the app is Prisma-only as the `postgres` role (which has
+  `BYPASSRLS`), the Supabase JS client is used only for Storage, the `anon`/`service_role` keys are
+  not in the repo or the built client bundle, `pg_stat_statements` shows no `anon` access to any app
+  table, and the DB password is not in git history. Aggravating factor: the GitHub repo is public,
+  so the schema and project ref are public and the `anon` key is publishable by design.
+- Remediation approach (agreed direction, NOT yet applied): non-destructive migration — revoke
+  `anon`/`authenticated` privileges on all `public` tables + sequences + functions, revoke the
+  matching default privileges for role `postgres`, and `ENABLE ROW LEVEL SECURITY` on all 41 tables
+  with **no policies** (deny-all for non-BYPASSRLS roles). No data touched, no `DROP`/`DELETE`/
+  `TRUNCATE`. Rollback SQL included in the report.
+- Preconditions before applying (user instruction): a verified full `pg_dump` backup that restores
+  into a scratch DB, plus confirmation of Supabase's own backup/PITR. Then explicit user approval.
+- Follow-ups recorded in the report: delete the dead `lib/supabase/client.ts` + unused anon SSR
+  client; CI regression guard for RLS/grants + no-supabase-in-bundle; make the repo private or scrub
+  the project ref from `docs/decisions.md`; encrypt `user.totp_secret` at rest; consider hashing
+  `claim_token.token`; rotate the DB password (already overdue per D-158) and, after lockdown, the
+  Supabase keys.
+
+### D-186 (cont.) — remediation approach approved; migration prepared, not applied (2026-09-10)
+- User approved the **conservative scope**: (1) REVOKE ALL on `public` tables/sequences/functions
+  from `anon`+`authenticated`; (2) `ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE` for those roles; (3) ENABLE ROW LEVEL SECURITY on all 41 `public` tables with **no
+  policies**. Explicitly **deferred** to a phase-2 hardening pass: revoking `service_role`;
+  `REVOKE USAGE ON SCHEMA public`.
+- Hard constraints (user): no data modification/deletion; never `prisma migrate reset` / `DROP` /
+  `TRUNCATE` / `DELETE` / destructive recreation; tracked Prisma migration only; verified backup
+  before apply.
+- Prepared: `prisma/migrations/20260910093000_rls_lockdown_public_schema/migration.sql`
+  (+ `migration.rollback.sql`, not run by Prisma). Only privilege/RLS-flag/default-privilege
+  changes — no DML, no schema-shape changes.
+- Verified before deploy: Prisma role is `postgres` with `rolbypassrls=true` on BOTH the runtime
+  pooler (:6543) and the migration pooler (:5432); all 41 `public` tables + 1 sequence owned by
+  `postgres`; no functions/views in `public`; every DeCA flow (create/version/read/claim/PDF/QR) is
+  Prisma-only; the sole Supabase-JS use is Storage via `service_role`. Gate: `prisma validate` ok,
+  `tsc --noEmit` clean, 377/377 unit, keel-verify ok, `prisma migrate status` clean (only this
+  migration pending). e2e/integration deferred (need local Docker Postgres, Docker Desktop down) —
+  migration touches no application code.
+- **NOT APPLIED.** Blocked on a verified restorable backup: no `pg_dump`/`psql` on the working
+  machine, Supabase CLI `db dump` needs Docker, and the plan/backup status cannot be read from here.
+  Awaiting the user's backup confirmation + final go-ahead (their order of operations, steps 5–6).
+
+### D-186 (cont.) — backup + restore verification + migration dry run PASSED (2026-09-10)
+- Option C executed: `supabase db dump` (Docker image `supabase/postgres:17.6.1.167`) produced
+  schema + data + roles dumps of `public` in `coverage/backup/` (gitignored; SHA-256 manifest
+  written). Data dump: 41 COPY blocks incl. `_prisma_migrations`.
+- Restored into a throwaway Postgres 17 container (`deca_restore_test`): schema + data restore clean
+  (`SET session_replication_role=replica` for the deca↔deca_version circular FK). `prisma migrate
+  status` against the restore = identical to production (38 applied, only
+  `20260910093000_rls_lockdown_public_schema` pending). Row counts and data integrity match the
+  production audit; 0 orphan FKs; `deca_version.data_json` present on all 19 rows.
+- **Dry run:** `prisma migrate deploy` applied the RLS migration to the restored copy →
+  "All migrations have been successfully applied." RLS 41/41; anon SELECT 0/41; authenticated
+  INSERT/SELECT 0/41; default privileges no longer grant anon/authenticated; **row counts unchanged**
+  (deca 18 / company 15 / user 14 / deca_version 19); `SET ROLE anon; SELECT FROM public.company`
+  → `ERROR: permission denied`; bypass role still reads `deca`. Scratch container removed.
+- **Nothing applied to production.** Awaiting the user's explicit "apply" to run
+  `npx prisma migrate deploy` against production `DIRECT_URL`.
+- Note for the user: the local dump is the pre-migration safety net; they should also copy it
+  off-machine and confirm Supabase dashboard backup/PITR status (could not be read from here).
+
+### D-186 (cont.) — RLS lockdown DEPLOYED to production, verified (2026-09-10 ~09:28 UTC)
+- `npx prisma migrate deploy` against production `DIRECT_URL` applied
+  `20260910093000_rls_lockdown_public_schema`. Clean.
+- Post-deploy (production): `rls_disabled_in_public` 34→0; tables reachable by `anon` 41→0; by
+  `authenticated` 41→0; policies 0 (deny-all); `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` no
+  longer grants anon/authenticated (scratch-tested: a new `postgres`-created table now gets no
+  anon/authenticated grant). Row counts unchanged.
+- Denial proof: 24/24 `SET ROLE anon|authenticated` + SELECT|INSERT on company/user/deca_version/
+  claim_token/_prisma_migrations/support_ticket_message → `ERROR 42501 permission denied`.
+- App proof (https://decaprofesional.es): `/health` ok, db:up; homepage/`/crear`/`/entrar`/`/guias`
+  200; `/panel` 307; `/admin*` 404; RSC `/admin/empresas` 200 but 5 KB (no data — #94 holds);
+  `POST /api/deca` 201 (test DeCA `cmtvbsgbq000d430dd887hhtf`; deca 18→19, deca_version 19→20,
+  claim_token 6→7; PDF rendered + stored via service_role); `GET /d/<token>` 200 application/pdf
+  26444 B, SHA-256 == API `pdfSha256`; `deca_access_log` +1 row.
+- Deliberately NOT changed (phase-2): `anon`/`authenticated` schema `USAGE`; `service_role` table
+  privileges. Backup: `coverage/backup/deca-prod-20260910T091012Z.*` (gitignored; SHA-256 manifest).
+- Pending: user re-runs Security Advisor + notes dashboard backup status; credential-rotation plan;
+  phase-2 hardening. Test DeCA row can be deleted by the user if desired.

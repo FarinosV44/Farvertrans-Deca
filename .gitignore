@@ -1,3 +1,7 @@
+# Security incident working notes — NOT for the public repo until remediated
+# (repo is currently public; a detailed exposure map must not be published).
+docs/security/
+
 # Keel machine-local / session state
 .keel-update-check
 .claude/settings.local.json
