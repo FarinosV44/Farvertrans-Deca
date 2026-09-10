@@ -6044,3 +6044,27 @@ previously-documented contention flake happened to sit quiet this run too.
   cause (look for a `mail_send_attempt` with no `mail_provider_accepted`/`_error` after it), and
   the exact Google-flow landing URL. Google users are email-verified by Google so they correctly
   skip `/verificar-email` — that part is expected.
+
+### D-193 — Google onboarding was missing the "Oportunidades de carga" opt-in (2026-09-10)
+- Reported bug: email/password signup shows the optional commercial consent (#84); the Google
+  2-step company-completion screen ("Ya casi está") did not — Google users were never offered the
+  same choice.
+- Fix, no duplication:
+  - `components/auth/commercial-opt-in.tsx` (new) — ONE `<CommercialOptIn checked onChange>` box
+    (icon + checkbox + hint + "Qué datos se comparten" disclosure), `useT()`-driven, same
+    `data-testid`s. Used by BOTH `register-form.tsx` (replaces its inline block) and
+    `complete-company-form.tsx` (added, after legal acceptance, before submit — the issue's UX
+    order: company info → main use → legal → opt-in → submit).
+  - `lib/consent.ts` → `applySignupCommercialOptIn(companyId, userId, contactEmail)` (new) — the
+    single place that persists the opt-in (`mode="all"` + email channel); never throws. Both
+    `POST /api/auth/register` and `POST /api/auth/complete-company` call it; the latter gained a
+    `commercialOptIn` schema field and applies it only when `!joinedTeam`.
+- Guarantees (all covered by tests): unchecked by default; never blocks account creation; Google
+  auth is NOT consent (only the checkbox opts in); persists the SAME `commercial_consent.mode` as
+  email signup; later toggle at `/panel/privacidad` unchanged; a team join (either flow) still
+  shows no opt-in (that's the owner's decision).
+- `tests/e2e/commercial-consent.spec.ts` — 4 new tests, Google state reached via the proven
+  company-less-user path (no real OAuth): present+unchecked by default; finish without → `none`;
+  enable → `all`; team-join shows none. 38/38 green (+ account/membership/registro). tsc / lint /
+  format / keel-verify clean; 386/386 unit.
+- **No schema change, no migration** — `commercial_consent` already exists.
