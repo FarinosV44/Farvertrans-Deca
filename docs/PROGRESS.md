@@ -45,12 +45,20 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`develop` == `main` == `5f33937` (2026-09-10), both pushed. Everything from this session is on
-  `main`: D-194, #111 D-195…D-198 (`90cdb48`, CI run 34524373564 green), D-199, D-200 (`5f33937`,
-  CI run 34528245494). NO schema change and NO migration in ANY of it — `git diff bcb3060..develop
-  -- prisma/{migrations,schema.prisma}` is empty; production verified directly at 39/39.
-  Production HAS been redeployed by the user — #111 + D-194 are LIVE; the guide is published in
-  prod (1 row, verified rendering). Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+- **`main` == `5f33937` (CI green); `develop` is AHEAD by D-200-followup (`65d445e`, badge mobile
+  chip) + D-201 (`<pending>`, DECA Conecta rename). D-194, #111 D-195…D-198, D-199, D-200 all on
+  `main` (CI green). NO schema change / NO migration in ANY of this session's work — production
+  verified directly at 39/39. Production redeployed by the user — #111 + D-194 LIVE; guide
+  published in prod (1 row, verified). Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+  - **D-201 — "DECA Conecta" rename** of the optional commercial-opportunity feature. Registration
+    card + `/panel/privacidad` restructured (OPCIONAL badge, tagline "Tu destino puede conectarte
+    con tu próxima carga.", expanded info, Destinatarios/Finalidad/Revocación); all 8 locales;
+    terminology sweep (admin nav/pages, legal-page `<h2>` leads with the brand, code comments).
+    **Zero backend/DB change** — the 3 stored modes (`none`/`per_deca`/`all`), per-DeCA override,
+    audit records and API contracts are untouched; no migration. `commercial-consent.spec.ts`
+    23/23 (5 new + 18 behaviour-preservation). **Follow-up still open:** guide DECA Conecta
+    section + guide screenshots; the published article's screenshots + internal-link block (prod
+    CMS via `/admin/blog`); the Guides-section DECA Conecta card; the featured/OG image.
   - **D-200 — Planes 2027 launch badge.** Dropped the "Ahora:" prefix (8 locales → "Gratis hasta
     el 31/12/2026"); breakpoint-aware placement (< md 768: own line below H2, centred; ≥ md:
     right of the heading row). New responsive `plans.spec.ts` test. No pricing/card/CTA change.

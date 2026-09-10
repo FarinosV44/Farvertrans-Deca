@@ -8,7 +8,7 @@ import { getCommercialTreatment } from "@/lib/consent";
 import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Privacidad y comunicaciones", robots: { index: false } };
+export const metadata = { title: "Privacidad", robots: { index: false } };
 
 export default async function PrivacidadPage() {
   const user = await getCurrentUser();

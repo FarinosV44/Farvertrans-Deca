@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useT } from "@/lib/i18n/client";
+import { RouteIcon } from "@/components/panel/icons";
 import { sharedFieldKeys } from "@/lib/commercial/types";
 import type {
   CommercialConsentMode,
@@ -10,10 +12,14 @@ import type {
 } from "@/lib/commercial/types";
 
 /**
- * The "Tratamiento comercial" control (#84). Opt-in, three modes, revocable,
- * with an exact preview of what would be shared. Owner-only editable; members
- * see the current state read-only. No pre-checked options, no alarm colours —
- * the "no autorizado" state is normal and neutral.
+ * The **DECA Conecta** control (#84 → DECA Conecta rename). Opt-in, three modes
+ * (`none` / `per_deca` / `all` — stored values and behaviour UNCHANGED by the
+ * rename), revocable, with an exact preview of what would be shared. Owner-only
+ * editable; members see the current state read-only. No pre-checked options, no
+ * alarm colours — "No compartir en ningún porte" is the neutral default.
+ * "Tratamiento comercial" is still the correct legal term for this processing
+ * and remains in the privacy policy and consent logs; it is no longer the
+ * visible feature title.
  */
 export function CommercialTreatmentSettings({
   treatment,
@@ -82,13 +88,23 @@ export function CommercialTreatmentSettings({
 
   return (
     <section
-      aria-labelledby="tratamiento-comercial"
+      aria-labelledby="deca-conecta"
       className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5"
     >
-      <h2 id="tratamiento-comercial" className="text-lg font-bold">
-        {p.sectionTitle}
-      </h2>
-      <p className="mt-1 text-sm text-[var(--color-text-muted)]">{p.freeUseNote}</p>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="flex items-center gap-1.5">
+          <RouteIcon width={18} height={18} className="shrink-0 text-[var(--color-primary)]" />
+          <h2 id="deca-conecta" className="text-lg font-bold">
+            {p.sectionTitle}
+          </h2>
+        </span>
+        <span className="rounded-full border border-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">
+          {p.badge}
+        </span>
+      </div>
+      <p className="mt-1 text-sm font-medium text-[var(--color-text-muted)]">{p.tagline}</p>
+      <p className="mt-2 text-sm text-[var(--color-text-muted)]">{p.supporting}</p>
+      <p className="mt-2 text-xs text-[var(--color-text-muted)]">{p.freeUseNote}</p>
 
       {error && (
         <p role="alert" className="mt-3 text-sm text-[var(--color-danger)]">
@@ -213,12 +229,64 @@ export function CommercialTreatmentSettings({
         </div>
       )}
 
-      <details className="mt-4">
+      <details className="mt-4" data-testid="deca-conecta-disclosure">
         <summary className="cursor-pointer text-sm font-medium text-[var(--color-primary)]">
-          {p.moreInfo}
+          {p.disclosureTitle}
         </summary>
-        <p className="mt-2 text-sm text-[var(--color-text-muted)]">{p.moreInfoBody}</p>
+        <div className="mt-2 space-y-3 text-sm text-[var(--color-text-muted)]">
+          <div>
+            <p className="font-semibold text-[var(--color-text)]">{p.disclosure.howTitle}</p>
+            <p className="mt-0.5">{p.disclosure.howBody}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--color-text)]">{p.disclosure.matchTitle}</p>
+            <ul className="mt-0.5 list-disc pl-5">
+              {p.disclosure.matchItems.map((it) => (
+                <li key={it}>{it}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--color-text)]">{p.disclosure.contactTitle}</p>
+            <ul className="mt-0.5 list-disc pl-5">
+              {p.disclosure.contactItems.map((it) => (
+                <li key={it}>{it}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-[var(--color-text)]">{p.disclosure.neverTitle}</p>
+            <ul className="mt-0.5 list-disc pl-5">
+              {p.disclosure.neverItems.map((it) => (
+                <li key={it}>{it}</li>
+              ))}
+            </ul>
+          </div>
+          {[p.disclosure.recipients, p.disclosure.purpose, p.disclosure.revocation].map((line) => {
+            const i = line.indexOf(": ");
+            return i > 0 ? (
+              <p key={line}>
+                <span className="font-semibold text-[var(--color-text)]">
+                  {line.slice(0, i + 1)}
+                </span>{" "}
+                {line.slice(i + 2)}
+              </p>
+            ) : (
+              <p key={line}>{line}</p>
+            );
+          })}
+        </div>
       </details>
+
+      <p className="mt-3">
+        <Link
+          href="/blog/deca-conecta-ofertas-carga"
+          data-testid="deca-conecta-article"
+          className="text-sm text-[var(--color-primary)] underline"
+        >
+          {p.articleLink}
+        </Link>
+      </p>
 
       {!canChange && <p className="mt-3 text-xs text-[var(--color-text-muted)]">{p.ownerOnly}</p>}
     </section>

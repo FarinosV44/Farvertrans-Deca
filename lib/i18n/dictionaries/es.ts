@@ -388,12 +388,41 @@ export const es = {
      * explanation lives behind `moreInfo`/`moreInfoBody`, never open by default.
      */
     commercialOptIn: {
-      title: "Oportunidades de carga",
-      label: "Avísame si aparece un porte compatible con mis rutas",
-      hint: "Puedes desactivarlo cuando quieras.",
-      moreInfo: "Qué datos se comparten",
-      moreInfoBody:
-        "Solo se compartirán los datos mínimos necesarios para proponerte oportunidades: destino del vehículo, fecha prevista y los datos de contacto que hayas autorizado.",
+      brand: "DECA Conecta",
+      badge: "OPCIONAL",
+      tagline: "Tu destino puede conectarte con tu próxima carga.",
+      label: "Avísame si aparece una oportunidad de carga compatible con mis rutas",
+      hint: "Al activarlo, autorizas el uso del destino y la fecha de tus portes para recibir propuestas comerciales personalizadas. No compartimos tu DeCA completo ni realizamos seguimiento GPS. Puedes cambiar esta decisión cuando quieras.",
+      moreInfo: "Cómo funciona DECA Conecta y qué datos se utilizan",
+      articleLink: "Descubre cómo funciona DECA Conecta",
+      info: {
+        howTitle: "¿Cómo funciona?",
+        howBody:
+          "Cuando generas un DeCA, la plataforma conoce el destino y la fecha prevista del porte. Si lo autorizas, DECA Conecta puede utilizar esos datos para identificar oportunidades de carga compatibles y permitir que cargadores interesados te envíen una propuesta comercial personalizada.",
+        matchTitle: "Datos utilizados para encontrar oportunidades",
+        matchItems: [
+          "Lugar de destino del camión.",
+          "Fecha del porte o de disponibilidad prevista.",
+        ],
+        contactTitle: "Datos utilizados para contactar contigo",
+        contactItems: [
+          "Empresa o nombre autorizado.",
+          "Correo electrónico o teléfono que hayas autorizado.",
+        ],
+        neverTitle: "No compartimos",
+        neverItems: [
+          "El DeCA completo.",
+          "El origen del porte.",
+          "La mercancía ni su peso.",
+          "La identidad del cliente del transporte.",
+          "El precio ni las condiciones del servicio.",
+          "Documentos asociados.",
+          "La ubicación GPS ni seguimiento en tiempo real.",
+        ],
+        controlTitle: "Tú mantienes el control",
+        controlBody:
+          "Recibir una propuesta no obliga a aceptarla. Puedes desactivar DECA Conecta o cambiar tus preferencias cuando quieras sin perder el acceso al generador de DeCA.",
+      },
     },
     submit: {
       register: "Crear cuenta gratis",
@@ -524,22 +553,59 @@ export const es = {
       },
     },
     privacy: {
-      title: "Privacidad y comunicaciones",
+      title: "Privacidad",
       intro:
-        "Aquí decides si DeCA Profesional puede comunicar unos pocos datos de disponibilidad de tus portes a cargadores interesados en ofrecerte propuestas comerciales personalizadas y preferentes de carga. Es voluntario y puedes cambiarlo cuando quieras.",
+        "DECA Conecta te permite recibir oportunidades de carga basadas en el destino y la fecha de tus portes. Es un servicio opcional: no activarlo no afecta a la creación, gestión o conservación de tus DeCA ni al uso gratuito de la plataforma.",
       freeUseNote:
-        "No autorizar esta comunicación no afecta en nada al uso gratuito de DeCA Profesional.",
-      sectionTitle: "Tratamiento comercial",
-      modeLegend: "¿Cuándo quieres compartir la disponibilidad de tus portes?",
+        "Rechazar o retirar el consentimiento no afecta en nada al uso gratuito de DeCA Profesional.",
+      badge: "OPCIONAL",
+      tagline: "Tu destino puede conectarte con tu próxima carga.",
+      supporting:
+        "Tú decides si DeCA Profesional puede comunicar determinados datos de disponibilidad a cargadores interesados en enviarte propuestas comerciales personalizadas y preferentes de carga. Puedes cambiar esta decisión cuando quieras.",
+      articleLink: "Descubre cómo funciona DECA Conecta",
+      sectionTitle: "DECA Conecta",
+      modeLegend: "¿Cuándo quieres activar DECA Conecta?",
       modes: {
         none: "No compartir en ningún porte",
-        noneHint: "Ningún dato comercial sale de tus DeCA. Es la opción por defecto.",
+        noneHint: "Ningún dato comercial sale de tus DeCA. Es la opción predeterminada.",
         perDeca: "Preguntarme en cada DeCA",
         perDecaHint:
-          "Lo decides porte a porte al crear cada DeCA. El control estará desactivado por defecto.",
+          "Lo decides porte a porte al crear cada DeCA. La opción aparecerá desactivada por defecto.",
         all: "Compartir en todos los portes, salvo que lo desactive",
         allHint:
-          "Se prepara la ficha de disponibilidad para cada nuevo DeCA. Puedes desactivarlo en un porte concreto antes de emitirlo.",
+          "Se preparará la disponibilidad para cada nuevo DeCA. Podrás desactivarla en cualquier porte concreto antes de emitirlo.",
+      },
+      disclosureTitle: "Qué datos se utilizan y quién puede recibirlos",
+      disclosure: {
+        howTitle: "¿Cómo funciona?",
+        howBody:
+          "Cuando generas un DeCA, la plataforma conoce el destino y la fecha prevista del porte. Si lo autorizas, DECA Conecta puede utilizar esos datos para identificar oportunidades de carga compatibles y permitir que cargadores interesados te envíen una propuesta comercial personalizada.",
+        matchTitle: "Datos utilizados para encontrar oportunidades",
+        matchItems: [
+          "Lugar de destino del camión.",
+          "Fecha del porte o de disponibilidad prevista.",
+        ],
+        contactTitle: "Datos utilizados para contactar contigo",
+        contactItems: [
+          "Empresa o nombre autorizado.",
+          "Correo electrónico o teléfono que hayas autorizado.",
+        ],
+        neverTitle: "No compartimos",
+        neverItems: [
+          "El DeCA completo.",
+          "El origen del porte.",
+          "La mercancía ni su peso.",
+          "La identidad del cliente del transporte.",
+          "El precio ni las condiciones del servicio.",
+          "Documentos asociados.",
+          "La ubicación GPS ni seguimiento en tiempo real.",
+        ],
+        recipients:
+          "Destinatarios: cargadores interesados en ofrecer una propuesta comercial personalizada y preferente de carga.",
+        purpose:
+          "Finalidad: identificar oportunidades de carga compatibles con el destino y la fecha previstos y permitir que el transportista reciba la correspondiente propuesta comercial.",
+        revocation:
+          "Revocación: el usuario puede cambiar la preferencia para futuros usos en cualquier momento. Revocar el consentimiento no elimina ni invalida los DeCA ya generados.",
       },
       channelLegend: "Canal de contacto autorizado",
       channels: { email: "Correo electrónico", phone: "WhatsApp", both: "Correo y WhatsApp" },
@@ -555,9 +621,6 @@ export const es = {
       },
       previewNever:
         "Nunca se comparte el origen, el cargador, la dirección de carga, la mercancía, el precio, las matrículas, el conductor ni el documento, la URL o el QR del DeCA.",
-      moreInfo: "Más información",
-      moreInfoBody:
-        "El receptor solo recibe una ficha de disponibilidad con los campos anteriores; no accede a tu cuenta ni al DeCA. Puedes retirar la autorización en cualquier momento: la retirada es inmediata para las comunicaciones futuras y no afecta a las ya realizadas lícitamente ni a ningún DeCA.",
       acceptedAt: (s: string) => `Autorización registrada el ${s}`,
       notAuthorized: "Sin autorización activa",
       revoke: "Retirar autorización",

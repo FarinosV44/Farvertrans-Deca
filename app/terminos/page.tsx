@@ -106,7 +106,9 @@ export default function TerminosPage() {
       </p>
 
       {/* LEGAL REVIEW PENDING — issue #84 — do not merge to main before sign-off */}
-      <h2>Tratamiento comercial: propuestas personalizadas de carga (opcional)</h2>
+      <h2>
+        DECA Conecta: tratamiento comercial para propuestas personalizadas de carga (opcional)
+      </h2>
       <p>
         {BRAND.name} ofrece, con carácter <strong>voluntario y accesorio</strong>, la posibilidad de
         que el transportista autorice la comunicación de unos datos mínimos de disponibilidad de sus

@@ -288,7 +288,7 @@ export default async function AdminEmpresaDetail({
               value: c.terms ? `v${c.terms.version} · ${fmt(c.terms.acceptedAt)}` : "—",
             },
             {
-              label: "Tratamiento comercial",
+              label: "DECA Conecta",
               value: c.commercialConsent
                 ? c.commercialConsent.mode === "none"
                   ? "No autorizado"

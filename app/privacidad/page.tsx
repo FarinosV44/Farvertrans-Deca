@@ -63,7 +63,9 @@ export default function PrivacidadPage() {
       </p>
 
       {/* LEGAL REVIEW PENDING — issue #84 — do not merge to main before sign-off */}
-      <h2>Tratamiento comercial: propuestas personalizadas de carga (opcional)</h2>
+      <h2>
+        DECA Conecta: tratamiento comercial para propuestas personalizadas de carga (opcional)
+      </h2>
       <p>
         Si lo autorizas expresamente, {BRAND.name} podrá comunicar unos pocos datos de
         disponibilidad de tus portes a{" "}
