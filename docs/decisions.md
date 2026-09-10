@@ -6443,3 +6443,19 @@ block (`/admin/blog`), the Guides-section DECA Conecta card, the featured/OG ima
     SEO title/H1/meta/canonical.
   - A discreet DECA Conecta card in the Guides section (section 13.3).
   - The featured/OG image for the article (section 14) — asset creation.
+
+## D-201d — DECA Conecta + badge chip merged to `main` (2026-09-10)
+
+User instruction ("all in main with no gaps and no new migrations right?"): `develop` → `main`
+merged (`cc82787`, "Merge branch 'develop': DECA Conecta rename + Planes 2027 badge chip"),
+pushed; `develop` fast-forwarded and pushed. `develop` == `main` == `cc82787`.
+
+- **No gap:** before the merge `git log origin/develop..origin/main` was empty; after merge + ff
+  the branches are identical (`git rev-list --left-right --count` = `0 0`).
+- **No migrations, anywhere:** `git diff bcb3060..HEAD -- prisma/migrations/ prisma/schema.prisma`
+  is empty across the ENTIRE session (bcb3060 = pre-session `main`). Production verified directly
+  at 39/39. Nothing to apply.
+- CI: run 34534080435 on `main`.
+- **Not deployed** — Hostinger is manual. The DECA Conecta UI, the D-200 badge chip and the 3
+  new guide screenshots go live on the user's next redeploy. The prod guide CMS text is already
+  updated (D-201c).

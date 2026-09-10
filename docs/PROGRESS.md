@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `5f33937` (D-194, #111 D-195…D-198, D-199, D-200 all merged to `main` 2026-09-10 on user instruction). Nothing awaits `main`. No tag requested. **Production redeployed by the user this session** — #111 + D-194 are live. D-200 (badge) is on `main` but goes live on the next redeploy.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `cc82787` (D-194, #111, D-199, D-200, D-201/b/c all merged to `main` 2026-09-10 on user instruction). Nothing awaits `main`. No tag requested. **Production redeployed once this session** (#111 + D-194 live); a further redeploy lands D-200 + DECA Conecta.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -45,14 +45,15 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **`main` == `5f33937` (CI green); `develop` == `e2ae839`, AHEAD of `main` by: `65d445e`
-  (D-200 badge mobile chip), `ad01c2f` (D-201 DECA Conecta rename), `e2ae839` (D-201b guide +
-  wizard label + screenshots). D-194, #111 D-195…D-198, D-199, D-200 all on `main` (CI green).
-  NO schema change / NO migration in ANY of this session's work — production verified at 39/39.
-  Production redeployed by the user earlier — #111 + D-194 LIVE. **The prod guide CMS row was
-  updated in place to document DECA Conecta (D-201c) — but D-201's UI is NOT on `main`, so
-  merge `develop`→`main` + redeploy to land the whole DECA Conecta change consistently (and the
-  3 new guide screenshots).** Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.**
+- **`develop` == `main` == `cc82787` (2026-09-10), both pushed. EVERYTHING from this session is on
+  `main`:** D-194, #111 (D-195…D-198), D-199, D-200, the D-200 badge-mobile-chip follow-up, and
+  **D-201 / D-201b / D-201c (DECA Conecta)**. CI: run 34534080435 (DECA Conecta merge).
+  **NO schema change and NO migration in ANY of this session's work** — `git diff bcb3060..HEAD
+  -- prisma/{migrations,schema.prisma}` is empty; production verified DIRECTLY at 39/39.
+  Production was redeployed by the user earlier (#111 + D-194 LIVE); the DECA Conecta UI + the
+  D-200 chip + the 3 new guide screenshots go live on the **next** Hostinger redeploy. The prod
+  guide CMS row is already updated in place to document DECA Conecta (D-201c).
+  Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
   - **D-201 / D-201b / D-201c — "DECA Conecta" rename** of the optional commercial-opportunity
     feature (task with 15 sections). **DONE:** registration card + `/panel/privacidad` +
     per-DeCA wizard label restructured (OPCIONAL badge, tagline "Tu destino puede conectarte con
