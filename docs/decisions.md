@@ -5847,3 +5847,22 @@ previously-documented contention flake happened to sit quiet this run too.
   `npx prisma migrate deploy` against production `DIRECT_URL`.
 - Note for the user: the local dump is the pre-migration safety net; they should also copy it
   off-machine and confirm Supabase dashboard backup/PITR status (could not be read from here).
+
+### D-186 (cont.) — RLS lockdown DEPLOYED to production, verified (2026-09-10 ~09:28 UTC)
+- `npx prisma migrate deploy` against production `DIRECT_URL` applied
+  `20260910093000_rls_lockdown_public_schema`. Clean.
+- Post-deploy (production): `rls_disabled_in_public` 34→0; tables reachable by `anon` 41→0; by
+  `authenticated` 41→0; policies 0 (deny-all); `ALTER DEFAULT PRIVILEGES FOR ROLE postgres` no
+  longer grants anon/authenticated (scratch-tested: a new `postgres`-created table now gets no
+  anon/authenticated grant). Row counts unchanged.
+- Denial proof: 24/24 `SET ROLE anon|authenticated` + SELECT|INSERT on company/user/deca_version/
+  claim_token/_prisma_migrations/support_ticket_message → `ERROR 42501 permission denied`.
+- App proof (https://decaprofesional.es): `/health` ok, db:up; homepage/`/crear`/`/entrar`/`/guias`
+  200; `/panel` 307; `/admin*` 404; RSC `/admin/empresas` 200 but 5 KB (no data — #94 holds);
+  `POST /api/deca` 201 (test DeCA `cmtvbsgbq000d430dd887hhtf`; deca 18→19, deca_version 19→20,
+  claim_token 6→7; PDF rendered + stored via service_role); `GET /d/<token>` 200 application/pdf
+  26444 B, SHA-256 == API `pdfSha256`; `deca_access_log` +1 row.
+- Deliberately NOT changed (phase-2): `anon`/`authenticated` schema `USAGE`; `service_role` table
+  privileges. Backup: `coverage/backup/deca-prod-20260910T091012Z.*` (gitignored; SHA-256 manifest).
+- Pending: user re-runs Security Advisor + notes dashboard backup status; credential-rotation plan;
+  phase-2 hardening. Test DeCA row can be deleted by the user if desired.

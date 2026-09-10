@@ -75,10 +75,20 @@
     RLS 41/41, anon SELECT 0/41, authenticated 0/41, default privileges fixed, **row counts
     unchanged**, `SET ROLE anon; SELECT FROM company` → `permission denied`, bypass role still reads.
     Scratch container removed; nothing done to production.
-  - **READY FOR PRODUCTION DEPLOY — awaiting the user's explicit "apply".** Then post-deploy smoke
-    tests + anon/authenticated denial checks + Supabase Security Advisor re-scan. Still open for the
-    record: Supabase dashboard backup/PITR status (user to check); phase-2 hardening; credential
-    rotation plan (after deploy).
+  - **DEPLOYED TO PRODUCTION 2026-09-10 ~09:28 UTC** (`prisma migrate deploy`, migration `00565e2`).
+    Post-deploy verification ALL PASS: `rls_disabled_in_public` 34→**0**, anon-reachable tables
+    41→**0**, authenticated 41→**0**, row counts unchanged; 24/24 `SET ROLE anon/authenticated`
+    SELECT+INSERT attempts → `permission denied (42501)`; future-table auto-grant fixed (scratch-
+    tested). Live app: `/health` ok db:up; homepage/`/crear`/`/entrar` 200; `/panel` 307;
+    `/admin` 404; RSC `/admin/empresas` 5 KB (no leak); **`POST /api/deca` 201** (created test DeCA
+    `cmtvbsgbq000d430dd887hhtf`, Prisma multi-table txn + PDF + Storage); **`GET /d/<token>` 200**
+    PDF, SHA-256 == API `pdfSha256`; `deca_access_log` write ok.
+  - **Deliberately still open (phase-2 hardening):** `anon`/`authenticated` keep schema `USAGE`;
+    `service_role` keeps table privileges. Neither internet-reachable without the service key.
+  - **User TODO:** re-run Supabase Security Advisor to confirm cleared; note dashboard backup/PITR
+    status; copy `coverage/backup/deca-prod-20260910T091012Z.*` off-machine.
+  - **NEXT (this incident):** credential-rotation plan (DB password overdue per D-158; Supabase
+    anon/service keys) + phase-2 hardening — both to be delivered as `docs/security/` docs.
 - **Latest: app version bumped `0.1.0` → `0.2.0` (D-185)** — user instruction, version-only change.
   All touchpoints synced: `package.json`, `package-lock.json`, `lib/version.ts` (`APP_VERSION`),
   plus the two test fixtures carrying a literal `appVersion` string. No `CHANGELOG.md` in this
