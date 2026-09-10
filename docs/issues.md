@@ -722,3 +722,25 @@ anonymize-in-place (no hard delete, D-067).
   en rojo con `git stash` contra el código previo, luego verde. **On `main`** de inmediato, antes y
   aparte del resto de #96 — incidente en vivo, no una entrega programada. Issue #104 abierto
   retroactivamente (ya corregido) por la política "Issue capture: on" de este proyecto.
+
+## I-111 (D-195…) — Soporte y documentación: guía de uso, pulido de Ayuda, verificación E2E de incidencias e integraciones
+- 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
+  4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
+- **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**
+  - Nuevo `ContentItem` `guia-de-uso-deca-profesional` (tipo `guide`, publicado, indexable),
+    renderizado por el `ArticleLayout` existente — mismo aspecto que las demás guías.
+  - Renderer Markdown compartido, solo añadidos: callouts tipados `::: tip/important/example` y
+    imágenes de bloque `![alt](/local.png "pie")` (solo rutas locales). Helpers puros con
+    tests (`tests/unit/markdown-blocks.test.ts`, 8). Sin regresión (content-cms.spec 6/6).
+  - Contenido: `prisma/content/guia-de-uso.ts`, 19 secciones redactadas contra la app real.
+  - 9 capturas reales con datos sintéticos (`scripts/guide-screenshots.mjs`) en `public/guia/`.
+  - `tests/e2e/guia-uso.spec.ts` (3). Gate verde: tsc/eslint/prettier/keel-verify; 394 unit; e2e 9/9.
+  - **Producción:** ejecutar `npm run seed:content` tras el despliegue para publicar la guía; las
+    correcciones posteriores se hacen en `/admin/guias` (el seed solo crea, no actualiza).
+- **Partes 2–4 — PENDIENTES:** pulido visual de `/panel/ayuda`; verificación E2E del sistema de
+  incidencias (persistencia + notificación a `deca@praetoriaabogados.es` + hilo de respuesta) y
+  anti-duplicado; claridad comercial API/ERP en la landing ("+ coste adicional", "Próximamente"
+  intacto) + verificación E2E de "Solicitar integración" (hoy persiste en BD + panel admin pero
+  **no envía ninguna notificación** — se añadirá).
+- **Sin cerrar** (política de 3 tiempos): al fusionar cada parte se comenta el avance; el usuario
+  confirma tras el despliegue.

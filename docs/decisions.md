@@ -6119,3 +6119,50 @@ code, and asserts the pending action auto-completes with `is_test = true` persis
 Second new test: a forced 500 shows the explicit "No se pudo completar la acción." alert, does not
 navigate/reload, and stashes nothing. The two existing D-184 tests updated for the `&stepup=1`
 href. Full file **10/10 green** (`--workers=2`). tsc / lint / prettier / keel-verify clean.
+
+## D-195 — #111 Sprint A: "Guía de uso de DeCA Profesional" inside Guías (2026-09-10)
+
+**Request (part 1 of 4):** a complete product usage guide, inside the existing public **Guías**
+section, looking exactly like the other guides — no new nav item, no hero card, no separate docs
+homepage.
+
+**Decisions (confirmed with the user via AskUserQuestion):**
+- The guide is a **CMS `ContentItem`** of type `guide` (`slug: guia-de-uso-deca-profesional`),
+  seeded via `prisma/content-seed.ts` and editable in `/admin/guias` like every other guide.
+  Renders through the existing `ArticleLayout` (breadcrumbs, auto "En esta página" TOC with
+  `#anchor` links, related content) — so it is visually identical to the others for free.
+- **Published and indexable** (`robotsIndex` default `true`), at `/guias/<slug>` like the rest.
+- **Screenshots:** a core set of **9 real screenshots** captured now from **synthetic demo data**
+  (`scripts/guide-screenshots.mjs` — registers a throwaway "Transportes Demo SL", creates 2 DeCAs
+  + saved records, screenshots each panel screen), stored in `public/guia/`. Replace the PNGs in
+  place to refresh; the guide text never changes. No real data, credentials or PII.
+
+**Shared Markdown renderer — additive only (`lib/content/markdown.tsx` + `markdown-toc.ts`):**
+- **Typed callouts** `::: tip | important | example … :::` → labelled boxes (Consejo / Importante /
+  Ejemplo), one border colour each. The bare `>` blockquote keeps its generic style.
+- **Block images with an optional caption** `![alt](/guia/x.png "pie")` → `<figure>` + lazy
+  `<img>` + `<figcaption>`. **Local paths only** — a remote or protocol-relative URL returns
+  `null` and falls through (same posture as the arbitrary-URL note on `heroImage`).
+- Pure helpers `calloutVariant()` / `parseImageLine()` + `CALLOUT_LABEL` in `markdown-toc.ts`,
+  unit-tested (`tests/unit/markdown-blocks.test.ts`, 8). Every existing guide/blog post renders
+  byte-identically (content-cms.spec.ts 6/6 unchanged).
+
+**Content:** `prisma/content/guia-de-uso.ts` — 19 `##` sections written against the real app
+(registration incl. the real Google 2-step `complete-company` flow and the optional
+"Oportunidades de carga" opt-in; the 4 company profiles; the 3-step wizard + review; PDF/QR;
+Mis DeCA / Historial; Plantillas vs Datos habituales; Equipo roles Administrador/Operador/Solo
+lectura; Mi empresa incl. locked razón social/NIF; Logo; Privacidad; Oportunidades de carga;
+Ayuda; Abrir una incidencia; Asistencia jurídica; Inspección; FAQ). Documents only functionality
+that exists today.
+
+**Seeding note:** `seedContent()` only *creates* (skips an existing slug). Production has no guide
+yet → `npm run seed:content` after deploy creates it. Later text fixes go through the `/admin/guias`
+CMS editor (same as the other guides), not a re-seed.
+
+**Verified:** `tests/e2e/guia-uso.spec.ts` (3) — listed in `/guias`, opens like the others, TOC +
+working anchors + a callout + a `<figure>` + FAQ render, indexable, no horizontal scroll at
+320/1440. Full gate: tsc / eslint / prettier / keel-verify clean; 394 unit (8 new); e2e 9/9
+(guia-uso 3 + content-cms 6). Committed to `develop`; **not merged to `main`** (user's call).
+
+**Pending (parts 2–4, same issue #111):** Help page visual polish, incident-system E2E
+verification + hardening, landing API/ERP "+ coste adicional" + "Solicitar integración" E2E.
