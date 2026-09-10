@@ -32,14 +32,9 @@ export function CommercialOptIn({
       data-testid="commercial-opt-in-box"
       className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5"
     >
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="flex items-center gap-1.5">
-          <RouteIcon width={16} height={16} className="shrink-0 text-[var(--color-primary)]" />
-          <span className="text-sm font-semibold">{c.brand}</span>
-        </span>
-        <span className="rounded-full border border-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">
-          {c.badge}
-        </span>
+      <div className="flex items-center gap-1.5">
+        <RouteIcon width={16} height={16} className="shrink-0 text-[var(--color-primary)]" />
+        <span className="text-sm font-semibold">{c.brand}</span>
       </div>
       <p className="mt-1 text-xs font-medium text-[var(--color-text-muted)]">{c.tagline}</p>
 

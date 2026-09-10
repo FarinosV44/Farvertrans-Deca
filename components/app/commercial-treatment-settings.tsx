@@ -91,16 +91,11 @@ export function CommercialTreatmentSettings({
       aria-labelledby="deca-conecta"
       className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5"
     >
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="flex items-center gap-1.5">
-          <RouteIcon width={18} height={18} className="shrink-0 text-[var(--color-primary)]" />
-          <h2 id="deca-conecta" className="text-lg font-bold">
-            {p.sectionTitle}
-          </h2>
-        </span>
-        <span className="rounded-full border border-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]">
-          {p.badge}
-        </span>
+      <div className="flex items-center gap-1.5">
+        <RouteIcon width={18} height={18} className="shrink-0 text-[var(--color-primary)]" />
+        <h2 id="deca-conecta" className="text-lg font-bold">
+          {p.sectionTitle}
+        </h2>
       </div>
       <p className="mt-1 text-sm font-medium text-[var(--color-text-muted)]">{p.tagline}</p>
       <p className="mt-2 text-sm text-[var(--color-text-muted)]">{p.supporting}</p>

@@ -399,7 +399,6 @@ export const eu = {
     },
     commercialOptIn: {
       brand: "DECA Conecta",
-      badge: "AUKERAKOA",
       tagline: "Zure helmugak zure hurrengo kargarekin lot zaitzake.",
       label: "Jakinarazi nire ibilbideekin bat datorren karga-aukera bat agertzen bada",
       hint: "Aktibatzean, zure garraioen helmuga eta data erabiltzeko baimena ematen duzu, proposamen komertzial pertsonalizatuak jasotzeko. Ez dugu zure DeCA osoa partekatzen, ezta GPS bidezko jarraipenik egiten ere. Erabaki hau noiznahi alda dezakezu.",
@@ -570,7 +569,6 @@ export const eu = {
         "DECA Conecta-k zure garraioen helmugan eta datan oinarritutako karga-aukerak jasotzeko aukera ematen dizu. Aukerako zerbitzua da: ez aktibatzeak ez die eragiten zure DeCA-ak sortzeari, kudeatzeari edo gordetzeari, ezta plataformaren doako erabilerari ere.",
       freeUseNote:
         "Baimena ukatzeak edo kentzeak ez du inola ere eragiten DeCA Profesional doan erabiltzean.",
-      badge: "AUKERAKOA",
       tagline: "Zure helmugak zure hurrengo kargarekin lot zaitzake.",
       supporting:
         "Zuk erabakitzen duzu DeCA Profesional-ek eskuragarritasun-datu jakin batzuk komunika diezazkiekeen proposamen komertzial pertsonalizatu eta lehenetsiak bidali nahi dizkizuten kargatzaileei. Erabaki hau noiznahi alda dezakezu.",

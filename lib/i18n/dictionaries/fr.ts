@@ -391,7 +391,6 @@ export const fr = {
     },
     commercialOptIn: {
       brand: "DECA Conecta",
-      badge: "OPTIONNEL",
       tagline: "Votre destination peut vous connecter à votre prochain chargement.",
       label: "Prévenez-moi si une opportunité de fret compatible avec mes trajets apparaît",
       hint: "En l'activant, vous autorisez l'utilisation de la destination et de la date de vos transports pour recevoir des propositions commerciales personnalisées. Nous ne partageons pas votre DeCA complet et ne faisons pas de suivi GPS. Vous pouvez changer cette décision quand vous le souhaitez.",
@@ -563,7 +562,6 @@ export const fr = {
         "DECA Conecta vous permet de recevoir des opportunités de fret basées sur la destination et la date de vos transports. C'est un service facultatif : ne pas l'activer n'affecte ni la création, la gestion ou la conservation de vos DeCA, ni l'usage gratuit de la plateforme.",
       freeUseNote:
         "Refuser ou retirer le consentement n'affecte en rien l'usage gratuit de DeCA Profesional.",
-      badge: "OPTIONNEL",
       tagline: "Votre destination peut vous connecter à votre prochain chargement.",
       supporting:
         "Vous décidez si DeCA Profesional peut communiquer certaines informations de disponibilité à des chargeurs intéressés pour vous adresser des propositions commerciales personnalisées et préférentielles de fret. Vous pouvez changer cette décision quand vous le souhaitez.",

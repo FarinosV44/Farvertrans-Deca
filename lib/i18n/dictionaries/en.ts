@@ -380,7 +380,6 @@ export const en = {
     },
     commercialOptIn: {
       brand: "DECA Conecta",
-      badge: "OPTIONAL",
       tagline: "Your destination can connect you to your next load.",
       label: "Notify me if a compatible load opportunity comes up on my routes",
       hint: "When you turn it on, you authorise the use of your jobs' destination and date to receive personalised commercial offers. We don't share your full DeCA or do GPS tracking. You can change this decision whenever you like.",
@@ -543,7 +542,6 @@ export const en = {
         "DECA Conecta lets you receive load opportunities based on the destination and date of your jobs. It is an optional service: not activating it does not affect creating, managing or keeping your DeCAs, or the free use of the platform.",
       freeUseNote:
         "Refusing or withdrawing consent does not affect the free use of DeCA Profesional in any way.",
-      badge: "OPTIONAL",
       tagline: "Your destination can connect you to your next load.",
       supporting:
         "You decide whether DeCA Profesional may pass certain availability details to shippers interested in sending you personalised, preferential freight offers. You can change this decision whenever you like.",

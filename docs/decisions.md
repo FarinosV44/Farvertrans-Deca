@@ -6459,3 +6459,12 @@ pushed; `develop` fast-forwarded and pushed. `develop` == `main` == `cc82787`.
 - **Not deployed** — Hostinger is manual. The DECA Conecta UI, the D-200 badge chip and the 3
   new guide screenshots go live on the user's next redeploy. The prod guide CMS text is already
   updated (D-201c).
+
+## D-201e — DECA Conecta: remove the "OPCIONAL" badge (2026-09-10)
+
+User instruction, superseding task §1/§3 ("Add the OPCIONAL badge"): the visible OPCIONAL pill
+is removed from both DECA Conecta cards (`commercial-opt-in.tsx`, `commercial-treatment-settings.tsx`).
+The `badge` i18n key dropped from all 8 locales; the two `toContainText("OPCIONAL")` assertions
+removed from `commercial-consent.spec.ts`. The feature is still described as optional in the prose,
+the intro, the legal copy and the per-DeCA wizard legend ("DECA Conecta (opcional)") — only the
+pill is gone. `deca-conecta-registro.png` + `privacidad.png` re-captured. 23/23 consent tests green.

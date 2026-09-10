@@ -392,7 +392,6 @@ export const de = {
     },
     commercialOptIn: {
       brand: "DECA Conecta",
-      badge: "OPTIONAL",
       tagline: "Ihr Zielort kann Sie mit Ihrer nächsten Ladung verbinden.",
       label:
         "Benachrichtigen Sie mich, wenn eine zu meinen Routen passende Frachtmöglichkeit erscheint",
@@ -567,7 +566,6 @@ export const de = {
         "Mit DECA Conecta können Sie Frachtmöglichkeiten auf Basis von Zielort und Datum Ihrer Transporte erhalten. Es ist ein optionaler Dienst: Ihn nicht zu aktivieren, hat keine Auswirkung auf das Erstellen, Verwalten oder Aufbewahren Ihrer DeCAs oder auf die kostenlose Nutzung der Plattform.",
       freeUseNote:
         "Die Einwilligung abzulehnen oder zu widerrufen, hat keinerlei Auswirkung auf die kostenlose Nutzung von DeCA Profesional.",
-      badge: "OPTIONAL",
       tagline: "Ihr Zielort kann Sie mit Ihrer nächsten Ladung verbinden.",
       supporting:
         "Sie entscheiden, ob DeCA Profesional bestimmte Verfügbarkeitsdaten an Verlader weitergeben darf, die Ihnen personalisierte und bevorzugte Frachtangebote machen möchten. Sie können diese Entscheidung jederzeit ändern.",

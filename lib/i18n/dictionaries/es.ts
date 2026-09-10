@@ -389,7 +389,6 @@ export const es = {
      */
     commercialOptIn: {
       brand: "DECA Conecta",
-      badge: "OPCIONAL",
       tagline: "Tu destino puede conectarte con tu próxima carga.",
       label: "Avísame si aparece una oportunidad de carga compatible con mis rutas",
       hint: "Al activarlo, autorizas el uso del destino y la fecha de tus portes para recibir propuestas comerciales personalizadas. No compartimos tu DeCA completo ni realizamos seguimiento GPS. Puedes cambiar esta decisión cuando quieras.",
@@ -558,7 +557,6 @@ export const es = {
         "DECA Conecta te permite recibir oportunidades de carga basadas en el destino y la fecha de tus portes. Es un servicio opcional: no activarlo no afecta a la creación, gestión o conservación de tus DeCA ni al uso gratuito de la plataforma.",
       freeUseNote:
         "Rechazar o retirar el consentimiento no afecta en nada al uso gratuito de DeCA Profesional.",
-      badge: "OPCIONAL",
       tagline: "Tu destino puede conectarte con tu próxima carga.",
       supporting:
         "Tú decides si DeCA Profesional puede comunicar determinados datos de disponibilidad a cargadores interesados en enviarte propuestas comerciales personalizadas y preferentes de carga. Puedes cambiar esta decisión cuando quieras.",

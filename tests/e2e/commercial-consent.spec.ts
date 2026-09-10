@@ -241,7 +241,6 @@ test.describe("#84 → DECA Conecta rename — the two consent surfaces", () => 
     await page.goto("/registro");
     const box = page.getByTestId("commercial-opt-in-box");
     await expect(box).toContainText("DECA Conecta");
-    await expect(box).toContainText("OPCIONAL");
     await expect(box).toContainText("Tu destino puede conectarte con tu próxima carga.");
     await expect(box).not.toContainText("Oportunidades de carga");
     await expect(box).not.toContainText("Kilómetro Cero");
@@ -287,7 +286,6 @@ test.describe("#84 → DECA Conecta rename — the two consent surfaces", () => 
     await expect(page.getByRole("heading", { level: 1, name: "Privacidad" })).toBeVisible();
     const section = page.locator("section[aria-labelledby='deca-conecta']");
     await expect(section.getByRole("heading", { name: "DECA Conecta" })).toBeVisible();
-    await expect(section).toContainText("OPCIONAL");
     await expect(section).toContainText("¿Cuándo quieres activar DECA Conecta?");
     // the visible feature title is no longer "Tratamiento comercial"
     await expect(section.getByRole("heading", { name: "Tratamiento comercial" })).toHaveCount(0);
