@@ -6774,3 +6774,77 @@ across both runs (`content-cms.spec.ts`, unrelated to #112) confirmed as a pre-e
 flake — 6/6 green in isolation at `--workers=1`, matching this project's own already-documented flake
 pattern for other files. This slice is fully gated — `docs/05-test-points.md`'s full-regression row is
 PASS, not VERIFY.
+
+## D-206 — I-112 Sprint 2: review display, correction diff, list-view badges, correcting a multi-shipment DeCA (2026-09-11)
+
+Continuation of D-205 (#112), same session. Closes every item the Sprint 1 scope deliberately deferred:
+
+1. **Review-summary shows extra shipments before generating.** `ReviewSummary` (`components/deca/
+   wizard.tsx`) gains one read-only "Envío N" block per extra shipment (route/goods/weight/recipient),
+   "Editar" pointing back to step 2. Before this, a multi-shipment DeCA generated data the review never
+   showed at all — a real, disclosed gap now closed.
+2. **`diffVersions` is shipment-aware (`lib/deca/detail.ts`).** Shipment 1 stays covered by the
+   existing flat-field diff (the top-level mirror) — the ONE addition there is `recipient`, which was
+   never mirrored (no pre-#112 field existed to mirror it onto) and so was invisible to every diff
+   before this. Every shipment beyond the first is now diffed independently: added → "Envío N: Añadido:
+   <route>"; removed → "Envío N: Eliminado: <route>"; a changed field → "Envío N — <campo>", never
+   conflated with shipment 1's own fields (own test proves this explicitly). Satisfies the Resolución's
+   own "modificación trazable" requirement (apdo. Quinto) for multi-shipment corrections specifically.
+3. **"+N envíos" indicator on every list-view summary surface**, exactly the design agreed in D-205's
+   plan session (first shipment + badge): Historial (table + mobile cards), Inicio's recent-activity
+   list, the Ctrl+K command palette, the CSV export (a real `envios_totales` column — never embedded
+   into `lugar_carga`/`lugar_descarga`, so a script already parsing that CSV never breaks), and the
+   admin cross-tenant table. `HistoryRow.shipmentCount` / `DecaAdminRow.shipmentCount` (always 1 for
+   every pre-#112 document) drive it; a shared `t.common.shipmentsBadge(extra)` i18n function (8
+   locales) is used everywhere a locale dictionary is actually threaded through — `lib/data/search.ts`
+   has no dictionary available (pre-existing, this file already hardcodes Spanish elsewhere — "sin
+   transportista" — so the badge follows that same established convention rather than introducing an
+   inconsistent i18n dependency).
+4. **Correcting an already-multi-shipment DeCA no longer silently drops its extra envíos** — the
+   Sprint 1 gap that motivated hiding the toggle during correction entirely. `WizardInitial` gains
+   `extraShipments?: ExtraShipment[]`; `app/panel/deca/[id]/corregir/page.tsx` builds it from the
+   stored DeCA's `shipments.slice(1)`, resolving each shipment's override fields against the DeCA-level
+   defaults (`s.loadDate ?? d.loadDate ?? ""`, etc. — the same fallback `resolveShipment()` does, so the
+   form never shows a blank field the document itself doesn't have blank) — this is RAW stored data
+   (`getDecaDetail`'s original casing, not `toDisplayDeca`'s uppercase view), correct for an edit form.
+   The wizard now initializes `multiShipment`/`extraShipments` state from `initial.extraShipments` and
+   the `!isCorrection` gate on the toggle fieldset is removed — it was there ONLY because pre-loading
+   didn't exist yet, never because correction shouldn't support this.
+
+**A real, adjacent bug found and fixed while implementing #1 (review display), not originally scoped:**
+`toDisplayDeca()` (`lib/deca/display.ts`, #86 p3's UPPERCASE-everywhere guarantee, applied to the PDF
+via `lib/pdf/render.ts` and to every cockpit/history/admin read) never recursed into `shipments[]` —
+shipment 1 (mirrored to the top level) got uppercased correctly, but every shipment beyond it rendered
+in WHATEVER CASE THE OPERATOR TYPED, in the PDF itself, breaking the "every visible textual field
+renders uppercase" guarantee for exactly the shipments this whole feature exists to add. Sprint 1's own
+PDF test (`deca-pdf-snapshot.test.ts`) never caught this because it uppercased the EXTRACTED text
+before comparing to the (also uppercased) expected value — a presence check, not a casing check, a
+pattern this whole test file already uses elsewhere. Fixed: `toDisplayDeca` now recurses into
+`shipments[]`, uppercasing `loadLocation`/`unloadLocation`/`goods`/`recipient`/`notes` per shipment,
+identically to the top-level treatment. Test-first (red confirmed): new `deca-display.test.ts` case
+constructs a payload with a lower-case shipment 2 and asserts the OUTPUT is uppercase — failed before
+the fix (`'almacén norte' to be 'ALMACÉN NORTE'`), passed after. The PDF snapshot test's own #112 case
+was ALSO tightened: it now asserts against the raw (non-uppercased) extracted text specifically for
+shipment 2's fields (`expect(flat).toContain("AZULEJOS"); expect(flat).not.toContain("Azulejos")`),
+closing the exact gap that let the original bug through undetected.
+
+**Verified for real:** `tests/e2e/deca-multi-shipment.spec.ts` extended with 2 new tests — the
+Historial "+1 envío" badge check appended to the main 2-shipment creation test (real browser, real
+table), and a full correction round-trip: create a 2-shipment DeCA, open `/panel/deca/[id]/corregir`,
+assert the toggle is already checked and shipment 2's fields are already filled with NO manual
+re-entry, edit shipment 2's weight, save with a correction reason, and assert the resulting "qué ha
+cambiado" view names "Envío 2" and the new weight specifically. The main creation test's review-summary
+assertion was also strengthened to check for "Envío 2" and its actual field values, not just shipment
+1's goods (which would have passed even with item #1 entirely unbuilt).
+
+**Gate, confirmed complete:** 420/420 unit (+7 new: the display fix, 5 new shipment-diff cases, +1
+tightened PDF assertion pair), tsc/eslint/prettier/keel-verify clean, full Playwright suite 321/324 +
+1 skipped — the 2 failures (`admin-2fa.spec.ts` recovery-code-replay, `content-cms.spec.ts` preview)
+are both unrelated to #112 (neither file touches anything this slice changed) and confirmed 19/19 green
+together in isolation at `--workers=1`, matching this project's own contention-flake pattern.
+
+**Still not built — genuinely out of scope, not discovered late:** a shipment's own override fields
+(date/plates/notes) are not distinguished from inherited defaults anywhere in the UI (the review shows
+the resolved value either way, matching what the PDF shows — this was never promised as a Sprint 1 or 2
+deliverable); no bulk "copy shipment 1 to a new shipment" shortcut in the wizard beyond the existing
+pre-fill-on-add behavior.

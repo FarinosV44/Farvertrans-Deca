@@ -34,6 +34,11 @@ const COLUMNS: { header: string; get: (r: HistoryRow) => string }[] = [
   { header: "matricula_tractora", get: (r) => r.tractorPlate },
   { header: "matricula_remolque", get: (r) => r.trailerPlate },
   { header: "mercancia", get: (r) => r.goods },
+  // #112: a real column, not embedded into lugar_carga/lugar_descarga —
+  // those two columns keep describing shipment 1 only, exactly as before
+  // #112, so a script already parsing this CSV never breaks. This column
+  // is simply 1 for every pre-#112 document.
+  { header: "envios_totales", get: (r) => String(r.shipmentCount) },
   { header: "version_actual", get: (r) => String(r.versionNo) },
   { header: "estado", get: (r) => docWorkflowStatus(r) },
   {

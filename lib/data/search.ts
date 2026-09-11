@@ -24,7 +24,10 @@ export async function searchCompanyDecas(
 
   const rows = await listHistory(companyId, { q });
   return rows.slice(0, 8).map((r) => ({
-    label: `${r.loadLocation} → ${r.unloadLocation}`,
+    // #112: matches the "sin transportista" fallback just below — this file
+    // doesn't thread a locale dictionary through (unlike the full pages), so
+    // the badge follows the same plain-Spanish convention already here.
+    label: `${r.loadLocation} → ${r.unloadLocation}${r.shipmentCount > 1 ? ` (+${r.shipmentCount - 1} envío${r.shipmentCount > 2 ? "s" : ""})` : ""}`,
     sub: `${r.reference} · ${r.carrier || "sin transportista"}${r.tractorPlate ? ` · ${r.tractorPlate}` : ""}`,
     href: `/panel/deca/${r.id}`,
   }));

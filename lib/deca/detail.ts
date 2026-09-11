@@ -140,9 +140,44 @@ const FIELDS: { key: string; label: string; get: (d: DecaPayloadData) => string 
   { key: "tractorPlate", label: "Matrícula tractora", get: (d) => d.tractorPlate ?? "" },
   { key: "trailerPlate", label: "Matrícula remolque", get: (d) => d.trailerPlate ?? "" },
   { key: "reference", label: "Referencia", get: (d) => d.reference ?? "" },
+  // #112: shipment 1's own fields are already covered above via the flat
+  // top-level mirror (`legacyMirrorFields`) — `recipient` is the one
+  // exception, since it's genuinely new and was never mirrored (no pre-#112
+  // equivalent existed to mirror it onto).
+  {
+    key: "shipments.0.recipient",
+    label: "Destinatario (envío 1)",
+    get: (d) => (d.shipments?.[0] as { recipient?: string } | undefined)?.recipient ?? "",
+  },
 ];
 
-/** The changed fields between two version payloads (#36 §6). */
+type ShipmentLike = {
+  loadLocation?: { name?: string; city?: string };
+  unloadLocation?: { name?: string; city?: string };
+  goods?: string;
+  weight?: string;
+  recipient?: string;
+};
+
+const SHIPMENT_FIELDS: { key: "goods" | "weight" | "recipient"; label: string }[] = [
+  { key: "goods", label: "Mercancía" },
+  { key: "weight", label: "Peso o medida" },
+  { key: "recipient", label: "Destinatario" },
+];
+
+function routeSummary(s: ShipmentLike): string {
+  const load = s.loadLocation?.name ?? s.loadLocation?.city ?? "";
+  const unload = s.unloadLocation?.name ?? s.unloadLocation?.city ?? "";
+  return load || unload ? `${load} → ${unload}` : "—";
+}
+
+/**
+ * The changed fields between two version payloads (#36 §6). #112 extends
+ * this to every shipment BEYOND the first (shipment 1 is already covered by
+ * `FIELDS` above via the flat top-level mirror) — an added or removed
+ * shipment is its own change row; a shipment present in both versions is
+ * diffed field-by-field, same as the flat fields.
+ */
 export function diffVersions(
   from: DecaPayloadData,
   to: DecaPayloadData,
@@ -153,6 +188,45 @@ export function diffVersions(
     const b = f.get(to);
     if (a !== b) out.push({ label: f.label, from: a || "—", to: b || "—" });
   }
+
+  const fromExtra = ((from.shipments as ShipmentLike[] | undefined) ?? []).slice(1);
+  const toExtra = ((to.shipments as ShipmentLike[] | undefined) ?? []).slice(1);
+  const maxLen = Math.max(fromExtra.length, toExtra.length);
+  for (let i = 0; i < maxLen; i++) {
+    const envio = i + 2; // shipment 1 is "envío 1"; this loop starts at index 1 = "envío 2"
+    const a = fromExtra[i];
+    const b = toExtra[i];
+    if (!a && b) {
+      out.push({
+        label: `Envío ${envio}`,
+        from: "— (no existía)",
+        to: `Añadido: ${routeSummary(b)}`,
+      });
+      continue;
+    }
+    if (a && !b) {
+      out.push({ label: `Envío ${envio}`, from: `Eliminado: ${routeSummary(a)}`, to: "—" });
+      continue;
+    }
+    if (!a || !b) continue;
+    for (const f of SHIPMENT_FIELDS) {
+      const av = a[f.key] ?? "";
+      const bv = b[f.key] ?? "";
+      if (av !== bv) {
+        out.push({
+          label: `Envío ${envio} — ${f.label}`,
+          from: av || "—",
+          to: bv || "—",
+        });
+      }
+    }
+    const aRoute = routeSummary(a);
+    const bRoute = routeSummary(b);
+    if (aRoute !== bRoute) {
+      out.push({ label: `Envío ${envio} — Ruta`, from: aRoute, to: bRoute });
+    }
+  }
+
   return out;
 }
 

@@ -312,5 +312,13 @@ describe("#66 — generated DeCA structural snapshot", () => {
     // DeCA-level default date.
     expect(flat).toContain("2026-10-06");
     expect(flat).toContain("2026-10-07");
+    // #86 p3 / FIX applies to EVERY shipment, not just the first (mirrored)
+    // one — checked against the RAW (non-uppercased) extracted text, unlike
+    // the presence checks above, so this actually proves the transform ran
+    // rather than merely that the value is present in some casing.
+    expect(flat).toContain("AZULEJOS");
+    expect(flat).not.toContain("Azulejos");
+    expect(flat).toContain("ALMACÉN CASTELLÓN");
+    expect(flat).not.toContain("Almacén Castellón");
   });
 });

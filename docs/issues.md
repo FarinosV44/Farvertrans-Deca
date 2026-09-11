@@ -766,10 +766,20 @@ anonymize-in-place (no hard delete, D-067).
   con #112 — confirmado 6/6 en verde en aislamiento). Ver `docs/lessons-learned.md` para el desvío de
   infraestructura (OOM, reinicio de Docker Desktop, servidor huérfano por `reuseExistingServer`) que
   retrasó confirmar el segundo fallo.
-- **Sprint 2 (aún NO empezado, alcance ya delimitado en D-205):** que la revisión previa a generar
-  muestre los envíos adicionales; que `diffVersions` (la vista "qué ha cambiado" de una corrección)
-  sea consciente de los envíos; la insignia "+N envíos" en los ~15 listados/buscador/plantillas/panel
-  admin; poder corregir un DeCA que ya tiene varios envíos desde el wizard.
+- **Sprint 2 (D-206) — HECHO, misma sesión inmediatamente después de D-205.** La revisión previa a
+  generar ya muestra un bloque por cada envío adicional (antes era invisible del todo). `diffVersions`
+  es consciente de los envíos: uno añadido/eliminado/editado más allá del primero es su propia fila
+  "Envío N"; el envío 1 gana también una fila de `recipient` (el único campo que nunca se reflejó
+  arriba). Insignia "+N envíos" en Historial (tabla + móvil), Inicio, buscador Ctrl+K, exportación CSV
+  (columna real `envios_totales`) y el panel admin. Corregir un DeCA que ya tiene varios envíos ya no
+  los pierde en silencio — se precargan en el formulario. **Fallo real adyacente encontrado y
+  corregido:** `toDisplayDeca()` no recorría `shipments[]` — el envío 1 salía en MAYÚSCULAS en el PDF
+  (según #86p3) pero cualquier envío posterior salía tal cual lo escribió el operador. Corregido con
+  test primero. Nuevos e2e: la insignia de Historial, y un ciclo completo de corrección (precarga →
+  editar → guardar con motivo → el diff nombra "Envío 2" y el valor nuevo). Gate confirmado completo:
+  420/420 unitarios, tsc/eslint/prettier/keel-verify limpios, suite e2e completa 321/324 + 1 omitido
+  (los 2 fallos, `admin-2fa.spec.ts` y `content-cms.spec.ts`, no relacionados con #112, confirmados
+  19/19 en verde juntos en aislamiento).
 - **Cola después de #112:** #113 (rediseño de Datos habituales), #114 (rediseño de Historial), #115
   (subir versión 0.2.0→0.3.0 + cierre de documentación) — ninguno investigado todavía.
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,

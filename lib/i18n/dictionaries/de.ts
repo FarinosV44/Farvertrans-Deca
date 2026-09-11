@@ -18,6 +18,7 @@ export const de = {
     loginCta: "Anmelden",
     panelCta: "Zu meinem Bereich",
     skipToContent: "Zum Inhalt springen",
+    shipmentsBadge: (extra: number) => (extra === 1 ? "+1 Sendung" : `+${extra} Sendungen`),
   },
   nav: {
     howItWorks: "So funktioniert's",

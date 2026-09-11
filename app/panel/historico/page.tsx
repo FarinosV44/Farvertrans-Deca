@@ -217,6 +217,11 @@ export default async function HistoricoPage({
                   </td>
                   <td className="pr-3">
                     {r.loadLocation} → {r.unloadLocation}
+                    {r.shipmentCount > 1 && (
+                      <span className="ml-1.5 text-xs text-[var(--color-text-muted)]">
+                        {t.common.shipmentsBadge(r.shipmentCount - 1)}
+                      </span>
+                    )}
                   </td>
                   <td className="pr-3">{r.shipper}</td>
                   <td className="pr-3">{r.carrier}</td>
@@ -264,6 +269,11 @@ export default async function HistoricoPage({
               <li key={r.id} className="py-3 text-sm">
                 <p className="font-medium">
                   {r.loadLocation} → {r.unloadLocation}
+                  {r.shipmentCount > 1 && (
+                    <span className="ml-1.5 text-xs font-normal text-[var(--color-text-muted)]">
+                      {t.common.shipmentsBadge(r.shipmentCount - 1)}
+                    </span>
+                  )}
                 </p>
                 <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[var(--color-text-muted)]">
                   <span>{r.loadDate || r.createdAt.toISOString().slice(0, 10)}</span>

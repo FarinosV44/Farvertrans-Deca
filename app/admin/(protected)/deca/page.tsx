@@ -117,7 +117,14 @@ export default async function AdminDeca({ searchParams }: { searchParams: Promis
                 <Cell mono>{r.serviceDate || "—"}</Cell>
                 <Cell>{r.scope}</Cell>
                 <Cell>{r.companyName ?? "—"}</Cell>
-                <Cell>{r.route}</Cell>
+                <Cell>
+                  {r.route}
+                  {r.shipmentCount > 1 && (
+                    <span className="ml-1.5 text-xs text-[var(--color-text-muted)]">
+                      +{r.shipmentCount - 1} envío{r.shipmentCount > 2 ? "s" : ""}
+                    </span>
+                  )}
+                </Cell>
                 <Cell>
                   {r.versionNo}
                   {r.corrected && (

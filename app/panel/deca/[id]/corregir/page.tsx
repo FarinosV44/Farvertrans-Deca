@@ -47,6 +47,47 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
     tractorPlate: d.tractorPlate ?? "",
     trailerPlate: d.trailerPlate ?? "",
     reference: "",
+    // #112: shipments beyond the first must be pre-loaded — never silently
+    // dropped just because the correction form was opened. Each shipment's
+    // own override (if any) wins; otherwise it shows the DeCA-level default
+    // actually in effect (same resolution `resolveShipment()` does), so the
+    // form never shows a blank field the document itself doesn't have blank.
+    extraShipments: (Array.isArray(d.shipments) ? d.shipments.slice(1) : []).map((raw) => {
+      const s = raw as {
+        loadLocation?: Record<string, string>;
+        unloadLocation?: Record<string, string>;
+        goods?: string;
+        weight?: string;
+        recipient?: string;
+        loadDate?: string;
+        unloadDate?: string;
+        tractorPlate?: string;
+        trailerPlate?: string;
+        notes?: string;
+      };
+      return {
+        loadLocationName: s.loadLocation?.name ?? "",
+        loadLocationAddress: s.loadLocation?.address ?? "",
+        loadLocationPostalCode: s.loadLocation?.postalCode ?? "",
+        loadLocationCity: s.loadLocation?.city ?? "",
+        loadLocationProvince: s.loadLocation?.province ?? "",
+        loadLocationCountry: s.loadLocation?.country ?? "España",
+        unloadLocationName: s.unloadLocation?.name ?? "",
+        unloadLocationAddress: s.unloadLocation?.address ?? "",
+        unloadLocationPostalCode: s.unloadLocation?.postalCode ?? "",
+        unloadLocationCity: s.unloadLocation?.city ?? "",
+        unloadLocationProvince: s.unloadLocation?.province ?? "",
+        unloadLocationCountry: s.unloadLocation?.country ?? "España",
+        goods: s.goods ?? "",
+        weight: s.weight ?? "",
+        recipient: s.recipient ?? "",
+        loadDate: s.loadDate ?? d.loadDate ?? "",
+        unloadDate: s.unloadDate ?? d.unloadDate ?? "",
+        tractorPlate: s.tractorPlate ?? d.tractorPlate ?? "",
+        trailerPlate: s.trailerPlate ?? d.trailerPlate ?? "",
+        notes: s.notes ?? "",
+      };
+    }),
   };
 
   return (

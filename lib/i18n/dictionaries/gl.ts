@@ -18,6 +18,7 @@ export const gl = {
     loginCta: "Entrar",
     panelCta: "Ir ao meu panel",
     skipToContent: "Saltar ao contido",
+    shipmentsBadge: (extra: number) => (extra === 1 ? "+1 envío" : `+${extra} envíos`),
   },
   nav: {
     howItWorks: "Como funciona",

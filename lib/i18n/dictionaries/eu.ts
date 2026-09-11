@@ -25,6 +25,7 @@ export const eu = {
     loginCta: "Sartu",
     panelCta: "Joan nire panelera",
     skipToContent: "Salto edukira",
+    shipmentsBadge: (extra: number) => (extra === 1 ? "+1 bidalketa" : `+${extra} bidalketa`),
   },
   nav: {
     howItWorks: "Nola funtzionatzen duen",

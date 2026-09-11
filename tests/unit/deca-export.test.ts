@@ -21,6 +21,7 @@ const row = (over: Partial<HistoryRow> = {}): HistoryRow => ({
   versionNo: 1,
   token: "tok_abc",
   status: "activo",
+  shipmentCount: 1,
   ...over,
 });
 
@@ -40,8 +41,9 @@ describe("historyToCsv (PRODUCT #34 §3)", () => {
   it("has a header row with the documented columns and a BOM", () => {
     const csv = historyToCsv([]);
     expect(csv.startsWith("﻿")).toBe(true);
+    // #112: envios_totales is a new column, added after mercancia.
     expect(csv).toContain(
-      "referencia,creado,fecha_carga,fecha_descarga,cargador,transportista,lugar_carga,lugar_descarga,matricula_tractora,matricula_remolque,mercancia,version_actual,estado,url_publica",
+      "referencia,creado,fecha_carga,fecha_descarga,cargador,transportista,lugar_carga,lugar_descarga,matricula_tractora,matricula_remolque,mercancia,envios_totales,version_actual,estado,url_publica",
     );
   });
 

@@ -50,4 +50,74 @@ describe("diffVersions — 'Qué ha cambiado' (PRODUCT #36 §6)", () => {
       { label: "Transportista efectivo — nombre", from: "Trans SL", to: "Otro Transportista SL" },
     ]);
   });
+
+  // #112 — a correction that adds/removes/edits a shipment beyond the first
+  // must be traceable in the diff, per the Resolución's own "modificación
+  // trazable" requirement (apdo. Quinto), same as every other field.
+  describe("#112 — shipment-aware diff", () => {
+    const shipment2 = {
+      loadLocation: { name: "Almacén Castellón", city: "Castellón" },
+      unloadLocation: { name: "Plataforma Norte", city: "Madrid" },
+      goods: "Azulejos",
+      weight: "8000 kg",
+    };
+
+    it("reports an added shipment 2, and returns nothing for two identical multi-shipment payloads", () => {
+      const from = { ...base, shipments: [base] };
+      const to = { ...base, shipments: [base, shipment2] };
+      const changed = diffVersions(from, to);
+      expect(changed).toEqual([
+        {
+          label: "Envío 2",
+          from: "— (no existía)",
+          to: "Añadido: Almacén Castellón → Plataforma Norte",
+        },
+      ]);
+      expect(diffVersions(to, { ...to })).toEqual([]);
+    });
+
+    it("reports a removed shipment 2", () => {
+      const from = { ...base, shipments: [base, shipment2] };
+      const to = { ...base, shipments: [base] };
+      const changed = diffVersions(from, to);
+      expect(changed).toEqual([
+        { label: "Envío 2", from: "Eliminado: Almacén Castellón → Plataforma Norte", to: "—" },
+      ]);
+    });
+
+    it("diffs a changed field WITHIN shipment 2, never confusing it with shipment 1's own fields", () => {
+      const from = { ...base, shipments: [base, shipment2] };
+      const to = { ...base, shipments: [base, { ...shipment2, weight: "9000 kg" }] };
+      const changed = diffVersions(from, to);
+      expect(changed).toEqual([
+        { label: "Envío 2 — Peso o medida", from: "8000 kg", to: "9000 kg" },
+      ]);
+    });
+
+    it("diffs shipment 1's recipient (the one field not covered by the flat mirror)", () => {
+      const from = { ...base, shipments: [{ ...base, recipient: "" }] };
+      const to = { ...base, shipments: [{ ...base, recipient: "Logística Madrid SL" }] };
+      expect(diffVersions(from, to)).toEqual([
+        { label: "Destinatario (envío 1)", from: "—", to: "Logística Madrid SL" },
+      ]);
+    });
+
+    it("diffs a route change within shipment 2 as its own row", () => {
+      const from = { ...base, shipments: [base, shipment2] };
+      const to = {
+        ...base,
+        shipments: [
+          base,
+          { ...shipment2, unloadLocation: { name: "Plataforma Este", city: "Madrid" } },
+        ],
+      };
+      expect(diffVersions(from, to)).toEqual([
+        {
+          label: "Envío 2 — Ruta",
+          from: "Almacén Castellón → Plataforma Norte",
+          to: "Almacén Castellón → Plataforma Este",
+        },
+      ]);
+    });
+  });
 });

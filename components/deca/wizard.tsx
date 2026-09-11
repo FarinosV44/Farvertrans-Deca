@@ -96,7 +96,7 @@ const EMPTY: FormState = {
  * "inherited" one resolve identically server-side, so there is no need to
  * track which fields were actually touched.
  */
-type ExtraShipment = {
+export type ExtraShipment = {
   loadLocationName: string;
   loadLocationAddress: string;
   loadLocationPostalCode: string;
@@ -260,7 +260,10 @@ export type WizardCompany = {
 };
 
 /** Pre-fill for the duplicate flow (a source DeCA's payload, date left blank). */
-export type WizardInitial = Partial<FormState>;
+/** #112: shipments BEYOND the first, for pre-filling a correction of an
+ *  already-multi-shipment DeCA (shipment 1 stays `FormState`'s own fields,
+ *  same as always). */
+export type WizardInitial = Partial<FormState> & { extraShipments?: ExtraShipment[] };
 
 /** Always the flat, single-shipment shape — used by `validateStep()`, which
  *  validates the current step's OWN fields regardless of any extra
@@ -334,7 +337,18 @@ function toPayload(f: FormState, extraShipments: ExtraShipment[] = []) {
  * The blocks mirror the PDF sections, and each carries an `Editar` action that
  * jumps back to the step that owns it (UX #31).
  */
-function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: number) => void }) {
+function ReviewSummary({
+  form,
+  onEdit,
+  extraShipments = [],
+}: {
+  form: FormState;
+  onEdit: (step: number) => void;
+  /** #112 — shipments beyond the first, shown as their own read-only blocks
+   *  so nothing is generated "invisibly" — before this, only shipment 1
+   *  appeared in the review even when the toggle was on. */
+  extraShipments?: ExtraShipment[];
+}) {
   const t = useT();
   const r = t.crear.review;
   // #86 p3 / FIX: the review mirrors the generated document, so every textual
@@ -420,6 +434,23 @@ function ReviewSummary({ form, onEdit }: { form: FormState; onEdit: (step: numbe
           : []),
       ],
     },
+    // #112: one read-only block per extra shipment, so a multi-shipment
+    // DeCA never generates something the review never showed. "Editar"
+    // points back to step 2, where every shipment block lives.
+    ...extraShipments.map((s, i) => ({
+      title: t.crear.shipments.heading(i + 2),
+      step: 2,
+      key: `shipment-${i}`,
+      rows: [
+        [r.locationName + " (carga)", s.loadLocationName],
+        [r.locationName + " (descarga)", s.unloadLocationName],
+        [r.goods, s.goods],
+        [r.weight, s.weight],
+        ...(s.recipient
+          ? ([[t.crear.shipments.recipient, s.recipient]] as [string, string][])
+          : []),
+      ] as [string, string][],
+    })),
   ];
   return (
     <section
@@ -686,10 +717,15 @@ export function CrearWizard({
   const [leadEmail, setLeadEmail] = useState("");
   // #112 — multiple shipments ("envíos"). Off by default: the common,
   // single-origin/destination flow is completely unaffected until this is
-  // turned on. `extraShipmentErrors[i]` mirrors `errors`'s shape but scoped
-  // to shipment `i` (1-based, since shipment 0 is `form` itself).
-  const [multiShipment, setMultiShipment] = useState(false);
-  const [extraShipments, setExtraShipments] = useState<ExtraShipment[]>([]);
+  // turned on. Pre-filled ON when correcting an already-multi-shipment DeCA
+  // (`initial.extraShipments`, set by the corrección page) so its envíos
+  // are never silently dropped. `extraShipmentErrors[i]` mirrors `errors`'s
+  // shape but scoped to shipment `i` (1-based, since shipment 0 is `form`
+  // itself).
+  const [multiShipment, setMultiShipment] = useState(!!initial?.extraShipments?.length);
+  const [extraShipments, setExtraShipments] = useState<ExtraShipment[]>(
+    initial?.extraShipments ?? [],
+  );
   const [extraShipmentErrors, setExtraShipmentErrors] = useState<Record<number, string>>({});
   const idempotencyKey = useMemo(
     () => (typeof crypto !== "undefined" ? crypto.randomUUID() : String(Date.now())),
@@ -1783,11 +1819,12 @@ export function CrearWizard({
           </fieldset>
         )}
 
-        {/* #112 — multiple shipments ("envíos"). Hidden while correcting an
-            existing DeCA (Sprint 1 scope): an already-multi-shipment DeCA's
-            extra envíos are not pre-loaded into the form, so exposing this
-            here could silently drop them on save — deferred to Sprint 2. */}
-        {step === 2 && !isCorrection && (
+        {/* #112 — multiple shipments ("envíos"). Available during a
+            correction too (Sprint 2): the corrección page pre-loads any
+            existing extra envíos into `initial.extraShipments`, so nothing
+            is silently dropped when correcting an already-multi-shipment
+            DeCA. */}
+        {step === 2 && (
           <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
             <legend className="px-1 text-sm font-bold">{t.crear.shipments.toggle}</legend>
             <p className="text-xs text-[var(--color-text-muted)]">{t.crear.shipments.toggleHint}</p>
@@ -2099,6 +2136,7 @@ export function CrearWizard({
             />
             <ReviewSummary
               form={form}
+              extraShipments={multiShipment ? extraShipments : []}
               onEdit={(s) => {
                 setErrors({});
                 setStep(s);

@@ -14,6 +14,7 @@ export const en = {
     loginCta: "Log in",
     panelCta: "Go to my dashboard",
     skipToContent: "Skip to content",
+    shipmentsBadge: (extra: number) => (extra === 1 ? "+1 shipment" : `+${extra} shipments`),
   },
   nav: {
     howItWorks: "How it works",

@@ -36,6 +36,8 @@ export type DecaAdminRow = {
   corrected: boolean;
   status: "activo" | "no disponible";
   pdfStored: boolean;
+  /** #112 — total shipments; `route` above always describes shipment 1. */
+  shipmentCount: number;
 };
 
 export async function listDecaAdmin(
@@ -103,6 +105,7 @@ export async function listDecaAdmin(
       corrected,
       status,
       pdfStored: !!d.currentVersion.pdfPath,
+      shipmentCount: Array.isArray(data.shipments) ? Math.max(1, data.shipments.length) : 1,
     });
   }
   return rows;

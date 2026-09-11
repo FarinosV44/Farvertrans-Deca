@@ -18,6 +18,7 @@ export const ca = {
     loginCta: "Entra",
     panelCta: "Anar al meu panell",
     skipToContent: "Salta al contingut",
+    shipmentsBadge: (extra: number) => (extra === 1 ? "+1 enviament" : `+${extra} enviaments`),
   },
   nav: {
     howItWorks: "Com funciona",

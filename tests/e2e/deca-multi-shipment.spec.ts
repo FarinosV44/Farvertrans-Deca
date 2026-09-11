@@ -153,9 +153,13 @@ test.describe("#112 — multiple shipments per DeCA", () => {
     await page.fill("#extraUnloadDate0", DECA.unloadDate);
     await page.fill("#extraTractorPlate0", DECA.tractorPlate);
 
-    // Review shows both shipments before generating.
+    // Review shows BOTH shipments before generating (Sprint 2, D-205) — not
+    // just shipment 1, which was the whole point of the review step.
     const review = page.getByTestId("review-summary");
     await expect(review).toContainText(DECA.goods.toUpperCase());
+    await expect(review).toContainText("Envío 2");
+    await expect(review).toContainText(SHIPMENT_2.loadName.toUpperCase());
+    await expect(review).toContainText(SHIPMENT_2.goods.toUpperCase());
 
     const [genRes] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/deca") && r.request().method() === "POST"),
@@ -191,6 +195,15 @@ test.describe("#112 — multiple shipments per DeCA", () => {
     // Shipper/carrier appear once each — DeCA-level, never duplicated.
     expect(upper.match(new RegExp(DECA.shipperName.toUpperCase(), "g"))?.length).toBe(1);
     expect(upper.match(new RegExp(DECA.carrierName.toUpperCase(), "g"))?.length).toBe(1);
+
+    // Sprint 2 (D-205): Historial shows a "+1 envío" indicator next to the
+    // shipment-1 route summary — never a second row, never the full breakdown.
+    // #86 p3: the table renders every visible field uppercase.
+    await page.goto("/panel/historico");
+    const historyRow = page.locator("tbody tr", {
+      hasText: new RegExp(DECA.loadLocationName, "i"),
+    });
+    await expect(historyRow).toContainText("+1 envío");
   });
 
   test("removing every extra shipment turns the toggle back off", async ({ page }) => {
@@ -209,5 +222,63 @@ test.describe("#112 — multiple shipments per DeCA", () => {
     await page.getByTestId("extra-shipment-remove-1").click();
     await expect(page.getByTestId("multi-shipment-toggle")).not.toBeChecked();
     await expect(page.getByTestId("extra-shipment-1")).toHaveCount(0);
+  });
+
+  test("Sprint 2: correcting an already-multi-shipment DeCA pre-loads its extra envíos — never silently drops them", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillStep2(page);
+    await page.getByTestId("wizard-next").click();
+    await page.fill("#goods", DECA.goods);
+    await page.fill("#weight", DECA.weight);
+    await page.fill("#tractorPlate", DECA.tractorPlate);
+
+    await page.getByTestId("multi-shipment-toggle").check();
+    await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
+    await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
+    await page.fill("#extraLoadPostalCode0", SHIPMENT_2.loadPostalCode);
+    await page.fill("#extraLoadCity0", SHIPMENT_2.loadCity);
+    await page.fill("#extraLoadCountry0", "España");
+    await page.fill("#extraUnloadName0", DECA.unloadLocationName);
+    await page.fill("#extraUnloadAddress0", DECA.unloadLocationAddress);
+    await page.fill("#extraUnloadPostalCode0", DECA.unloadLocationPostalCode);
+    await page.fill("#extraUnloadCity0", DECA.unloadLocationCity);
+    await page.fill("#extraUnloadCountry0", "España");
+    await page.fill("#extraGoods0", SHIPMENT_2.goods);
+    await page.fill("#extraWeight0", SHIPMENT_2.weight);
+    await page.fill("#extraLoadDate0", DECA.loadDate);
+    await page.fill("#extraUnloadDate0", DECA.unloadDate);
+    await page.fill("#extraTractorPlate0", DECA.tractorPlate);
+
+    await page.getByTestId("wizard-generate").click();
+    await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
+    const decaId = page.url().split("/crear/")[1].split("?")[0];
+
+    // Open the correction form for this DeCA and walk to step 2 (same
+    // step-based flow as creation) — the toggle must already be ON there
+    // and shipment 2's fields already filled, with NO manual re-entry.
+    await page.goto(`/panel/deca/${decaId}/corregir`);
+    await page.getByTestId("wizard-next").click();
+    await page.getByTestId("wizard-next").click();
+    await expect(page.getByTestId("multi-shipment-toggle")).toBeChecked();
+    await expect(page.locator("#extraLoadName0")).toHaveValue(SHIPMENT_2.loadName);
+    await expect(page.locator("#extraGoods0")).toHaveValue(SHIPMENT_2.goods);
+    await expect(page.locator("#extraWeight0")).toHaveValue(SHIPMENT_2.weight);
+
+    // Edit shipment 2's weight and save the correction.
+    await page.fill("#extraWeight0", "9000 kg");
+    await page.getByTestId("correction-reason").fill("Ajuste de peso en envío 2");
+    await page.getByTestId("wizard-generate").click();
+    await expect(page).toHaveURL(new RegExp(`/panel/deca/${decaId}$`), { timeout: 15_000 });
+
+    // The corrected version's own PDF reflects the new weight, and the
+    // "qué ha cambiado" diff names shipment 2 specifically — never conflated
+    // with shipment 1's own weight (still 12000 kg, unchanged).
+    await expect(page.getByTestId("change-list")).toContainText("Envío 2");
+    await expect(page.getByTestId("change-list")).toContainText("9000 kg");
   });
 });

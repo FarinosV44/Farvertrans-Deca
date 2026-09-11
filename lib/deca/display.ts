@@ -64,6 +64,31 @@ function upperLocation<T extends LocationLike>(l: T): T {
   } as T;
 }
 
+/** Uppercase one shipment's own visible textual fields (#112). Shared by the
+ *  top-level mirror (shipment 1, via the fields below) and every entry in
+ *  `shipments[]`. */
+function upperShipment<
+  T extends {
+    loadLocation?: LocationLike;
+    unloadLocation?: LocationLike;
+    goods?: unknown;
+    recipient?: unknown;
+    notes?: unknown;
+  },
+>(s: T): T {
+  const out = { ...s };
+  if (out.loadLocation && typeof out.loadLocation === "object") {
+    out.loadLocation = upperLocation(out.loadLocation);
+  }
+  if (out.unloadLocation && typeof out.unloadLocation === "object") {
+    out.unloadLocation = upperLocation(out.unloadLocation);
+  }
+  if ("goods" in out) out.goods = up(out.goods) as T["goods"];
+  if ("recipient" in out) out.recipient = up(out.recipient) as T["recipient"];
+  if ("notes" in out) out.notes = up(out.notes) as T["notes"];
+  return out;
+}
+
 /**
  * Return a copy of a DeCA payload (or the looser stored shape) with every
  * visible textual field uppercased. Tolerant of missing keys — safe on a
@@ -74,6 +99,8 @@ export function toDisplayDeca<T extends Record<string, unknown>>(data: T): T {
   const out: Record<string, unknown> = { ...data };
   if ("shipper" in out) out.shipper = upperParty(out.shipper as PartyLike);
   if ("carrier" in out) out.carrier = upperParty(out.carrier as PartyLike);
+  // The top-level fields are shipment 1's mirror (#112, `legacyMirrorFields`)
+  // — same treatment as before #112 ever existed.
   if ("loadLocation" in out && typeof out.loadLocation === "object") {
     out.loadLocation = upperLocation(out.loadLocation as LocationLike);
   }
@@ -83,5 +110,12 @@ export function toDisplayDeca<T extends Record<string, unknown>>(data: T): T {
   if ("goods" in out) out.goods = up(out.goods);
   if ("reference" in out) out.reference = up(out.reference);
   if ("notes" in out) out.notes = up(out.notes);
+  // #112: every shipment beyond the first lives ONLY in `shipments[]` — it
+  // never appears in the flat mirror above, so it needs its own pass or it
+  // would render inconsistently cased next to shipment 1 and every other
+  // DeCA field.
+  if (Array.isArray(out.shipments)) {
+    out.shipments = (out.shipments as Record<string, unknown>[]).map(upperShipment);
+  }
   return out as T;
 }

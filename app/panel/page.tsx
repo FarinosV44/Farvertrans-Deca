@@ -162,8 +162,15 @@ export default async function AppHome() {
                           <DocumentIcon />
                         </IconBadge>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">
-                            {r.loadLocation} → {r.unloadLocation}
+                          <p className="flex flex-wrap items-baseline gap-x-1.5 font-medium">
+                            <span className="truncate">
+                              {r.loadLocation} → {r.unloadLocation}
+                            </span>
+                            {r.shipmentCount > 1 && (
+                              <span className="shrink-0 text-xs font-normal text-[var(--color-text-muted)]">
+                                {t.common.shipmentsBadge(r.shipmentCount - 1)}
+                              </span>
+                            )}
                           </p>
                           <p className="truncate text-xs text-[var(--color-text-muted)]">
                             {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.carrier} ·{" "}

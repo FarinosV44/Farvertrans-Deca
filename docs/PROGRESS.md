@@ -88,11 +88,34 @@
   complete: 413/413 unit (14 new), tsc/eslint/prettier/keel-verify clean, full Playwright suite run
   TWICE after all fixes (321–323 passed each time, 1 skipped) — the only failure across both runs
   (`content-cms.spec.ts`, unrelated to #112) confirmed a pre-existing contention flake, 6/6 green in
-  isolation.** **Deliberately NOT built this sprint (Sprint 2, tracked in D-205):**
-  review-summary display for extra shipments before generating; `diffVersions` shipment-awareness for
-  corrections; the "+N envíos" badge on the ~15 list-view summary surfaces; correcting an
-  already-multi-shipment DeCA through the wizard. **Queued after Sprint 2:** #113 (Datos habituales
-  redesign), #114 (Historial redesign), #115 (v0.2.0→v0.3.0 + docs close-out) — none investigated yet.
+  isolation.**
+- **D-206 — I-112 Sprint 2, same session, immediately after D-205: closes every Sprint-1-deferred
+  item.** Review-summary now shows one read-only block per extra shipment before generating (was
+  entirely invisible before — a real gap). `diffVersions` (`lib/deca/detail.ts`) is shipment-aware: an
+  added/removed/edited shipment beyond the first is its own "Envío N" diff row, satisfying the
+  Resolución's traceability requirement (apdo. Quinto) for multi-shipment corrections specifically;
+  shipment 1 also gains a `recipient` diff row (the one field never mirrored to the top level, so
+  invisible to the diff until now). "+N envíos" badge shipped on every list-view surface: Historial
+  (table + mobile), Inicio's recent list, Ctrl+K search, CSV export (`envios_totales`, a real column —
+  `lugar_carga`/`lugar_descarga` never touched, so an existing CSV consumer never breaks), and the admin
+  cross-tenant table — `HistoryRow.shipmentCount` / `DecaAdminRow.shipmentCount` drive it, a shared
+  `t.common.shipmentsBadge()` i18n function (8 locales) where a dictionary is available. Correcting an
+  already-multi-shipment DeCA no longer silently drops its extra envíos — `WizardInitial.extraShipments`
+  pre-loads them (resolved against DeCA-level defaults, same as `resolveShipment()`) and the `!
+  isCorrection` gate on the toggle is removed. **Real adjacent bug found + fixed (not originally
+  scoped):** `toDisplayDeca()` never recursed into `shipments[]` — the #86p3 "every visible field
+  renders UPPERCASE" guarantee held for shipment 1 (mirrored) but NOT for any shipment beyond it, in the
+  actual generated PDF. Sprint 1's own PDF test never caught it (it uppercased the extracted text before
+  comparing — a presence check, not a casing check). Fixed test-first; the PDF snapshot test was also
+  tightened to assert against non-uppercased extracted text specifically, closing the detection gap.
+  New e2e: the Historial badge check appended to the main creation test; a full correction round-trip
+  (pre-loaded toggle+fields → edit → save with a reason → the diff names "Envío 2" + the new value); the
+  review-summary assertion strengthened to actually check for "Envío 2" content. **Gate, confirmed
+  complete: 420/420 unit (+7 new), tsc/eslint/prettier/keel-verify clean, full Playwright suite
+  321/324 + 1 skipped — the 2 failures (`admin-2fa.spec.ts`, `content-cms.spec.ts`) both unrelated to
+  #112, confirmed 19/19 green together in isolation.** **Queued after Sprint 2:** #113 (Datos
+  habituales redesign), #114 (Historial redesign), #115 (v0.2.0→v0.3.0 + docs close-out) — none
+  investigated yet.
 - **D-202 — LIVE INCIDENT hotfix, this session (2026-09-11): a foreign (Portuguese) company could not
   self-register** — #59's "own company" NIF/postal-code validators were Spain-only hard gates,
   unlike R-2's deliberate "foreign counterparty" leniency elsewhere. Fixed: `isValidOwnNif()` now

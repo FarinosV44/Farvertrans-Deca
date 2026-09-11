@@ -80,4 +80,41 @@ describe("toDisplayDeca (#86 p3 / 2026-09-08 FIX)", () => {
     toDisplayDeca(orig);
     expect(orig.shipper.name).toBe("Transportes Martínez sl");
   });
+
+  // #112: shipment 2+ lives ONLY inside `shipments[]` (shipment 1 is mirrored
+  // at the top level and already covered by the tests above) — it must get
+  // the exact same uppercase treatment, or the PDF/detail/history read as
+  // uniformly uppercase for shipment 1 and inconsistently cased for the rest.
+  it("uppercases every shipment in the shipments[] array, including recipient", () => {
+    const multi = toDisplayDeca(
+      structuredClone({
+        ...raw,
+        shipments: [
+          { loadLocation: raw.loadLocation, unloadLocation: raw.unloadLocation, goods: raw.goods },
+          {
+            loadLocation: {
+              name: "almacén castellón",
+              address: "av. del mar 5",
+              city: "castellón",
+            },
+            unloadLocation: raw.unloadLocation,
+            goods: "azulejos",
+            recipient: "logística madrid sl",
+            notes: "frágil",
+          },
+        ],
+      }),
+    ) as { shipments: Array<Record<string, unknown>> };
+    expect((multi.shipments[0].loadLocation as { name: string }).name).toBe("ALMACÉN NORTE");
+    expect(multi.shipments[0].goods).toBe("MERCANCÍA GENERAL PALETIZADA");
+    expect((multi.shipments[1].loadLocation as { name: string }).name).toBe("ALMACÉN CASTELLÓN");
+    expect((multi.shipments[1].loadLocation as { address: string }).address).toBe("AV. DEL MAR 5");
+    expect(multi.shipments[1].goods).toBe("AZULEJOS");
+    expect(multi.shipments[1].recipient).toBe("LOGÍSTICA MADRID SL");
+    expect(multi.shipments[1].notes).toBe("FRÁGIL");
+  });
+
+  it("tolerates a payload with no shipments[] array at all (pre-#112 stored data)", () => {
+    expect(() => toDisplayDeca(structuredClone(raw))).not.toThrow();
+  });
 });

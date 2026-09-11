@@ -23,6 +23,11 @@ export type HistoryRow = {
   versionNo: number;
   token: string;
   status: "activo" | "no disponible";
+  /** #112 — total shipments on this DeCA. 1 for every pre-#112 document and
+   *  the still-common single-shipment case; the row's own loadLocation/
+   *  unloadLocation/goods above always describe shipment 1 only — list
+   *  surfaces show a "+N envíos" indicator when this is > 1 (Sprint 2). */
+  shipmentCount: number;
 };
 
 type Data = {
@@ -37,6 +42,7 @@ type Data = {
   trailerPlate?: string;
   shipper?: { name?: string; nif?: string; address?: string; postalCode?: string; city?: string };
   carrier?: { name?: string; nif?: string; address?: string; postalCode?: string; city?: string };
+  shipments?: unknown[];
 };
 
 export type DecaPayloadData = Data;
@@ -81,6 +87,7 @@ export async function listHistory(
       versionNo: d.currentVersion.versionNo,
       token: d.currentVersion.token,
       status: isPubliclyAvailable(d.serviceEnd) ? "activo" : "no disponible",
+      shipmentCount: Array.isArray(raw.shipments) ? Math.max(1, raw.shipments.length) : 1,
     };
     if (
       rowMatches(

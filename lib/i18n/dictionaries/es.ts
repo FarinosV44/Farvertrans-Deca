@@ -14,6 +14,10 @@ export const es = {
     loginCta: "Entrar",
     panelCta: "Ir a mi panel",
     skipToContent: "Saltar al contenido",
+    /** #112 — "+N envíos" badge shared by every list surface (Historial,
+     *  Inicio, buscador, panel admin) that shows one row per DeCA: the row
+     *  itself always describes shipment 1; `extra` is the count BEYOND it. */
+    shipmentsBadge: (extra: number) => (extra === 1 ? "+1 envío" : `+${extra} envíos`),
   },
   nav: {
     howItWorks: "Cómo funciona",
