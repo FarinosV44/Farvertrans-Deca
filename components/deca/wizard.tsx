@@ -4,7 +4,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Field } from "./field";
 import { SaveShipment } from "./save-shipment";
-import { step1Schema, step2Schema, step3Schema, shipmentSchema } from "@/lib/deca/schema";
+import {
+  step1Schema,
+  step2Schema,
+  step3Schema,
+  shipmentSchema,
+  sumWeights,
+} from "@/lib/deca/schema";
 import { validateDeca } from "@/lib/deca/validate";
 import { leadSchema } from "@/lib/deca/lead";
 import { track, getSessionId } from "@/lib/analytics/client";
@@ -12,6 +18,7 @@ import { looksLikeSpanishPlate } from "@/lib/deca/plate";
 import { upperText } from "@/lib/text/normalize";
 import { clientFingerprint, solveChallenge } from "@/lib/abuse/client";
 import { useT } from "@/lib/i18n/client";
+import { PlusIcon, CopyIcon } from "@/components/panel/icons";
 
 type FormState = {
   shipperName: string;
@@ -91,11 +98,14 @@ const EMPTY: FormState = {
  * #112 — one additional shipment ("envío") beyond the always-present first
  * one (which stays `FormState`'s own load/unload/goods/weight fields,
  * unchanged). Origin/destination/goods/weight/recipient are always explicit
- * here, never defaulted; loadDate/unloadDate/tractorPlate/trailerPlate/notes
- * are pre-filled from the DeCA-level values when a block is added, but are
- * always submitted explicitly too — an unedited pre-filled value and an
- * "inherited" one resolve identically server-side, so there is no need to
- * track which fields were actually touched.
+ * here, never defaulted; loadDate/unloadDate/notes are pre-filled from the
+ * DeCA-level values when a block is added, but are always submitted
+ * explicitly too — an unedited pre-filled value and an "inherited" one
+ * resolve identically server-side, so there is no need to track which
+ * fields were actually touched. Tractor/trailer plate are deliberately NOT
+ * part of this type: the issue requires a single vehicle for the whole
+ * DeCA — `shipmentSchema` still accepts a per-shipment override for
+ * backward compatibility, this client simply never sends one.
  */
 export type ExtraShipment = {
   loadLocationName: string;
@@ -115,8 +125,6 @@ export type ExtraShipment = {
   recipient: string;
   loadDate: string;
   unloadDate: string;
-  tractorPlate: string;
-  trailerPlate: string;
   notes: string;
   /**
    * #113 — which SavedLocation (if any) currently backs this leg's origin/
@@ -130,29 +138,93 @@ export type ExtraShipment = {
   unloadLocationId?: string;
 };
 
-function emptyExtraShipment(f: FormState): ExtraShipment {
+/** The 6 load-side / 6 unload-side field names, shared structurally by
+ *  `FormState` and `ExtraShipment` — lets the `+` handlers below read "the
+ *  other side" from EITHER shipment 1 (`form`) or an `extraShipments[i]`
+ *  without caring which one it came from. */
+type RouteSide = {
+  loadLocationName: string;
+  loadLocationAddress: string;
+  loadLocationPostalCode: string;
+  loadLocationCity: string;
+  loadLocationProvince: string;
+  loadLocationCountry: string;
+  unloadLocationName: string;
+  unloadLocationAddress: string;
+  unloadLocationPostalCode: string;
+  unloadLocationCity: string;
+  unloadLocationProvince: string;
+  unloadLocationCountry: string;
+};
+
+/**
+ * #112 — the `+` button beside "Lugar de carga": creates a new envío with a
+ * BLANK load side and the UNLOAD side copied verbatim from `source` (same
+ * physical place, so its saved-location credit travels with it too).
+ * `goods` is seeded from `source` (copy/edit, per the issue); `weight` is
+ * left EMPTY on purpose — never copied as a "final" value the operator
+ * might forget to check. Exactly one new envío is created per press: this
+ * is what keeps the operation from ever producing a cartesian product.
+ */
+function shipmentKeepingUnload(
+  source: RouteSide & { goods: string; unloadLocationId?: string },
+  deca: FormState,
+): ExtraShipment {
   return {
     loadLocationName: "",
     loadLocationAddress: "",
     loadLocationPostalCode: "",
     loadLocationCity: "",
     loadLocationProvince: "",
-    loadLocationCountry: f.loadLocationCountry || "España",
+    loadLocationCountry: deca.loadLocationCountry || "España",
+    unloadLocationName: source.unloadLocationName,
+    unloadLocationAddress: source.unloadLocationAddress,
+    unloadLocationPostalCode: source.unloadLocationPostalCode,
+    unloadLocationCity: source.unloadLocationCity,
+    unloadLocationProvince: source.unloadLocationProvince,
+    unloadLocationCountry: source.unloadLocationCountry,
+    goods: source.goods,
+    weight: "",
+    recipient: "",
+    loadDate: deca.loadDate,
+    unloadDate: deca.unloadDate,
+    notes: "",
+    unloadLocationId: source.unloadLocationId,
+  };
+}
+
+/** The mirror of `shipmentKeepingUnload` — the `+` beside "Lugar de descarga". */
+function shipmentKeepingLoad(
+  source: RouteSide & { goods: string; loadLocationId?: string },
+  deca: FormState,
+): ExtraShipment {
+  return {
+    loadLocationName: source.loadLocationName,
+    loadLocationAddress: source.loadLocationAddress,
+    loadLocationPostalCode: source.loadLocationPostalCode,
+    loadLocationCity: source.loadLocationCity,
+    loadLocationProvince: source.loadLocationProvince,
+    loadLocationCountry: source.loadLocationCountry,
     unloadLocationName: "",
     unloadLocationAddress: "",
     unloadLocationPostalCode: "",
     unloadLocationCity: "",
     unloadLocationProvince: "",
-    unloadLocationCountry: f.unloadLocationCountry || "España",
-    goods: "",
+    unloadLocationCountry: deca.unloadLocationCountry || "España",
+    goods: source.goods,
     weight: "",
     recipient: "",
-    loadDate: f.loadDate,
-    unloadDate: f.unloadDate,
-    tractorPlate: f.tractorPlate,
-    trailerPlate: f.trailerPlate,
+    loadDate: deca.loadDate,
+    unloadDate: deca.unloadDate,
     notes: "",
+    loadLocationId: source.loadLocationId,
   };
+}
+
+/** #112 — "Duplicar este envío": every field, including the saved-place
+ *  credits (it's a literal copy, not a derived one). */
+function duplicateShipment(s: ExtraShipment): ExtraShipment {
+  return { ...s };
 }
 
 function extraShipmentToPayload(s: ExtraShipment) {
@@ -178,10 +250,52 @@ function extraShipmentToPayload(s: ExtraShipment) {
     recipient: s.recipient || undefined,
     loadDate: s.loadDate,
     unloadDate: s.unloadDate,
-    tractorPlate: s.tractorPlate,
-    trailerPlate: s.trailerPlate || undefined,
     notes: s.notes || undefined,
   };
+}
+
+/** Whether an envío has anything worth confirming before deletion (issue §9:
+ *  "confirmación accesible antes de eliminar un envío CON DATOS"). A freshly
+ *  created envío always has ONE side pre-filled (the inherited one, by
+ *  design) — that alone is never "data worth confirming", since pressing
+ *  `+` again reproduces it instantly. What matters is whether the operator
+ *  has actually typed the fields that are NEVER auto-filled: the blank
+ *  side's own name, or any of goods/weight/recipient/notes. */
+function shipmentHasData(s: ExtraShipment): boolean {
+  return (
+    (!!s.loadLocationName && !!s.unloadLocationName) ||
+    !!s.goods ||
+    !!s.weight ||
+    !!s.recipient ||
+    !!s.notes
+  );
+}
+
+/** #112 — the small round `+` beside "Lugar de carga"/"Lugar de descarga".
+ *  A real `<button>` (valid inside `<legend>`, phrasing content) with its own
+ *  accessible name and tooltip — never relies on the icon alone, comfortable
+ *  touch target (28px) even next to a compact label. */
+function AddPlaceButton({
+  label,
+  testId,
+  onClick,
+}: {
+  label: string;
+  testId: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)]"
+    >
+      <PlusIcon width={16} height={16} />
+    </button>
+  );
 }
 
 const STORAGE_KEY = "fvd_crear_draft";
@@ -309,8 +423,9 @@ export type WizardTemplate = {
 };
 
 /** A template shipment never carries a date (see `SaveTemplate`'s doc comment) — the
- *  operator fills loadDate/unloadDate by hand, exactly like a freshly added envío. */
-function templateShipmentToExtra(ts: WizardTemplateShipment, tpl: WizardTemplate): ExtraShipment {
+ *  operator fills loadDate/unloadDate by hand, exactly like a freshly added envío.
+ *  Takes no vehicle info now that a shipment never overrides it (#112). */
+function templateShipmentToExtra(ts: WizardTemplateShipment): ExtraShipment {
   return {
     loadLocationName: ts.loadLocation?.name || "",
     loadLocationAddress: ts.loadLocation?.address || "",
@@ -329,8 +444,6 @@ function templateShipmentToExtra(ts: WizardTemplateShipment, tpl: WizardTemplate
     recipient: ts.recipient || "",
     loadDate: "",
     unloadDate: "",
-    tractorPlate: ts.tractorPlate || tpl.tractorPlate || "",
-    trailerPlate: ts.trailerPlate || tpl.trailerPlate || "",
     notes: ts.notes || "",
   };
 }
@@ -520,10 +633,11 @@ function ReviewSummary({
     },
     // #112: one read-only block per extra shipment, so a multi-shipment
     // DeCA never generates something the review never showed. "Editar"
-    // points back to step 2, where every shipment block lives.
+    // points back to step 1, where every shipment block lives (the `+`
+    // buttons beside Lugar de carga/descarga).
     ...extraShipments.map((s, i) => ({
       title: t.crear.shipments.heading(i + 2),
-      step: 2,
+      step: 1,
       key: `shipment-${i}`,
       rows: [
         [r.locationName + " (carga)", s.loadLocationName],
@@ -535,6 +649,23 @@ function ReviewSummary({
           : []),
       ] as [string, string][],
     })),
+    // #112: peso total, solo cuando hay más de un envío y todos los pesos son
+    // numéricos (nunca un total inventado o parcial — mismo criterio que el PDF).
+    ...(extraShipments.length > 0
+      ? (() => {
+          const totals = sumWeights([{ weight: form.weight }, ...extraShipments]);
+          return totals.allParsed
+            ? [
+                {
+                  title: r.totalWeightTitle,
+                  step: 1,
+                  key: "total-weight",
+                  rows: [[r.weight, totals.total]] as [string, string][],
+                },
+              ]
+            : [];
+        })()
+      : []),
   ];
   return (
     <section
@@ -799,14 +930,14 @@ export function CrearWizard({
   // D-060: identity captured before an anonymous FIRST DeCA (lib/deca/lead.ts).
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
-  // #112 — multiple shipments ("envíos"). Off by default: the common,
-  // single-origin/destination flow is completely unaffected until this is
-  // turned on. Pre-filled ON when correcting an already-multi-shipment DeCA
+  // #112 — multiple shipments ("envíos"), added via a `+` beside "Lugar de
+  // carga"/"Lugar de descarga" — no toggle, no separate mode: the single-
+  // shipment flow is simply what's shown while `extraShipments` is empty.
+  // Pre-filled when correcting an already-multi-shipment DeCA
   // (`initial.extraShipments`, set by the corrección page) so its envíos
   // are never silently dropped. `extraShipmentErrors[i]` mirrors `errors`'s
   // shape but scoped to shipment `i` (1-based, since shipment 0 is `form`
   // itself).
-  const [multiShipment, setMultiShipment] = useState(!!initial?.extraShipments?.length);
   const [extraShipments, setExtraShipments] = useState<ExtraShipment[]>(
     initial?.extraShipments ?? [],
   );
@@ -951,6 +1082,35 @@ export function CrearWizard({
     setUsedShipmentIds((ids) => (ids.includes(r.id) ? ids : [...ids, r.id]));
   };
 
+  /** #112 — the `+` beside "Lugar de carga" on shipment 1 or any envío: appends
+   *  exactly one new envío, blank on the load side, keeping `source`'s unload
+   *  side. Never touches any OTHER existing envío — this is what keeps the
+   *  operation from ever producing a cartesian product. */
+  const addLoadFrom = (source: RouteSide & { goods: string; unloadLocationId?: string }) => {
+    const newIndex = extraShipments.length;
+    setExtraShipments((arr) => [...arr, shipmentKeepingUnload(source, form)]);
+    setExtraShipmentErrors({});
+    requestAnimationFrame(() => document.getElementById(`extraLoadName${newIndex}`)?.focus());
+  };
+  /** The mirror — the `+` beside "Lugar de descarga". */
+  const addUnloadFrom = (source: RouteSide & { goods: string; loadLocationId?: string }) => {
+    const newIndex = extraShipments.length;
+    setExtraShipments((arr) => [...arr, shipmentKeepingLoad(source, form)]);
+    setExtraShipmentErrors({});
+    requestAnimationFrame(() => document.getElementById(`extraUnloadName${newIndex}`)?.focus());
+  };
+  /** "Duplicar este envío" — appends a full copy at the end. */
+  const duplicateExtraShipment = (i: number) => {
+    setExtraShipments((arr) => [...arr, duplicateShipment(arr[i])]);
+  };
+  /** "Eliminar este envío" — confirms first only when the block has data (issue
+   *  §9), mirroring the existing `window.confirm` pattern in `team-manager.tsx`. */
+  const removeExtraShipment = (i: number) => {
+    const s = extraShipments[i];
+    if (shipmentHasData(s) && !window.confirm(t.crear.shipments.removeConfirm(i + 2))) return;
+    setExtraShipments((arr) => arr.filter((_, j) => j !== i));
+  };
+
   /**
    * The 4 party quick-fills are toggles: press once to fill from `source`,
    * press again (same button) to clear those 3 fields. `party` is the target;
@@ -1051,7 +1211,7 @@ export function CrearWizard({
         ...(challenge ? { "x-fvd-challenge": challenge } : {}),
       },
       body: JSON.stringify({
-        ...toPayload(form, multiShipment ? extraShipments : []),
+        ...toPayload(form, extraShipments),
         // WORKSPACE #24 / #113: which saved records this DeCA actually used,
         // so the server can bump their "last used" timestamp. Best-effort
         // only — never validated against the payload, never blocks
@@ -1059,7 +1219,7 @@ export function CrearWizard({
         // beyond the first, which `picked` (shipment 1 only) doesn't reach.
         usedSaved: {
           ...picked,
-          extraLocationIds: (multiShipment ? extraShipments : []).flatMap((s) =>
+          extraLocationIds: extraShipments.flatMap((s) =>
             [s.loadLocationId, s.unloadLocationId].filter((v): v is string => !!v),
           ),
           shipmentIds: usedShipmentIds,
@@ -1106,13 +1266,9 @@ export function CrearWizard({
     }
     // #112 — each extra shipment re-runs the SAME schema the server
     // validates with, same principle as `DecaCheck` above for shipment 1.
-    if (multiShipment) {
-      if (extraShipments.length === 0) {
-        setErrors({});
-        setExtraShipmentErrors({ 0: t.crear.shipments.minOneError });
-        requestAnimationFrame(() => summaryRef.current?.focus());
-        return;
-      }
+    // No "toggle on with zero shipments" state exists anymore: an empty
+    // `extraShipments` simply means the single-shipment flow.
+    if (extraShipments.length > 0) {
       const fieldErrors: Record<number, string> = {};
       extraShipments.forEach((s, i) => {
         const r = shipmentSchema.safeParse(extraShipmentToPayload(s));
@@ -1135,7 +1291,7 @@ export function CrearWizard({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             changeReason: reason.trim(),
-            payload: toPayload(form, multiShipment ? extraShipments : []),
+            payload: toPayload(form, extraShipments),
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -1328,10 +1484,7 @@ export function CrearWizard({
                     // extra shipments too; prefill them the same way a legacy
                     // single-shipment template always has (no regression there).
                     if (tpl?.shipments && tpl.shipments.length > 0) {
-                      setMultiShipment(true);
-                      setExtraShipments(
-                        tpl.shipments.map((ts) => templateShipmentToExtra(ts, tpl)),
-                      );
+                      setExtraShipments(tpl.shipments.map((ts) => templateShipmentToExtra(ts)));
                     }
                     e.currentTarget.value = "";
                   }}
@@ -1644,7 +1797,16 @@ export function CrearWizard({
               </label>
             )}
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="px-1 text-sm font-bold">{t.crear.legends.loadLocation}</legend>
+              <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-bold">
+                <span>{t.crear.legends.loadLocation}</span>
+                <AddPlaceButton
+                  label={t.crear.shipments.addLoadAria}
+                  testId="add-load-1"
+                  onClick={() =>
+                    addLoadFrom({ ...form, unloadLocationId: picked.unloadLocationId })
+                  }
+                />
+              </legend>
               <p className="text-xs text-[var(--color-text-muted)]">
                 {t.crear.sectionHints.loadLocation}
               </p>
@@ -1748,7 +1910,14 @@ export function CrearWizard({
             </fieldset>
 
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="px-1 text-sm font-bold">{t.crear.legends.unloadLocation}</legend>
+              <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-bold">
+                <span>{t.crear.legends.unloadLocation}</span>
+                <AddPlaceButton
+                  label={t.crear.shipments.addUnloadAria}
+                  testId="add-unload-1"
+                  onClick={() => addUnloadFrom({ ...form, loadLocationId: picked.loadLocationId })}
+                />
+              </legend>
               <p className="text-xs text-[var(--color-text-muted)]">
                 {t.crear.sectionHints.unloadLocation}
               </p>
@@ -2017,278 +2186,243 @@ export function CrearWizard({
           </fieldset>
         )}
 
-        {/* #112 — multiple shipments ("envíos"). Available during a
-            correction too (Sprint 2): the corrección page pre-loads any
-            existing extra envíos into `initial.extraShipments`, so nothing
-            is silently dropped when correcting an already-multi-shipment
-            DeCA. */}
-        {step === 2 && (
-          <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <legend className="px-1 text-sm font-bold">{t.crear.shipments.toggle}</legend>
-            <p className="text-xs text-[var(--color-text-muted)]">{t.crear.shipments.toggleHint}</p>
-            <label className="mt-3 flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                data-testid="multi-shipment-toggle"
-                checked={multiShipment}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setMultiShipment(on);
-                  setExtraShipmentErrors({});
-                  if (on) {
-                    if (extraShipments.length === 0) setExtraShipments([emptyExtraShipment(form)]);
-                  } else {
-                    setExtraShipments([]);
-                  }
-                }}
-              />
-              <span>{t.crear.shipments.toggle}</span>
-            </label>
-
-            {multiShipment && (
-              <div className="mt-4 space-y-4">
-                {extraShipmentErrors[0] && (
-                  <p role="alert" className="text-sm text-[var(--color-danger)]">
-                    {extraShipmentErrors[0]}
+        {/* #112 — envíos adicionales, creados por los `+` de "Lugar de carga"/
+            "Lugar de descarga" (aquí arriba, para el envío 1; y dentro de cada
+            bloque, para los siguientes). No hay selector ni CTA genérico.
+            Disponible también al corregir (Sprint 2): la página de corrección
+            precarga los envíos existentes en `initial.extraShipments`, así
+            que nunca se pierden silenciosamente. */}
+        {step === 1 && extraShipments.length > 0 && (
+          <div className="mt-4 space-y-4">
+            <p className="text-xs text-[var(--color-text-muted)]" role="note">
+              {t.crear.shipments.orderNote}
+            </p>
+            {extraShipments.map((s, i) => (
+              <div
+                key={i}
+                data-testid={`extra-shipment-${i + 1}`}
+                className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold">{t.crear.shipments.heading(i + 2)}</p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      data-testid={`extra-shipment-duplicate-${i + 1}`}
+                      onClick={() => duplicateExtraShipment(i)}
+                      aria-label={t.crear.shipments.duplicate}
+                      title={t.crear.shipments.duplicate}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-primary)]"
+                    >
+                      <CopyIcon width={16} height={16} />
+                    </button>
+                    <button
+                      type="button"
+                      data-testid={`extra-shipment-remove-${i + 1}`}
+                      onClick={() => removeExtraShipment(i)}
+                      className="text-sm font-medium text-[var(--color-danger)] underline"
+                    >
+                      {t.crear.shipments.remove}
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                  {t.crear.shipments.ownFieldsHint}
+                </p>
+                {extraShipmentErrors[i + 1] && (
+                  <p role="alert" className="mt-1 text-sm text-[var(--color-danger)]">
+                    {extraShipmentErrors[i + 1]}
                   </p>
                 )}
-                {extraShipments.map((s, i) => (
-                  <div
-                    key={i}
-                    data-testid={`extra-shipment-${i + 1}`}
-                    className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-bold">{t.crear.shipments.heading(i + 2)}</p>
-                      <button
-                        type="button"
-                        data-testid={`extra-shipment-remove-${i + 1}`}
-                        onClick={() =>
-                          setExtraShipments((arr) => {
-                            const next = arr.filter((_, j) => j !== i);
-                            if (next.length === 0) setMultiShipment(false);
-                            return next;
-                          })
-                        }
-                        className="text-sm font-medium text-[var(--color-danger)] underline"
-                      >
-                        {t.crear.shipments.remove}
-                      </button>
-                    </div>
-                    <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                      {t.crear.shipments.ownFieldsHint}
-                    </p>
-                    {extraShipmentErrors[i + 1] && (
-                      <p role="alert" className="mt-1 text-sm text-[var(--color-danger)]">
-                        {extraShipmentErrors[i + 1]}
-                      </p>
-                    )}
-                    {saved && saved.shipments.length > 0 && (
-                      <label className="mt-3 block text-sm">
-                        <span className="font-medium">{t.crear.autofill.shipment}</span>
-                        <select
-                          data-testid={`autofill-shipment-extra-${i + 1}`}
-                          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
-                          defaultValue=""
-                          onChange={(e) => {
-                            const r = saved.shipments.find((x) => x.id === e.target.value);
-                            if (r) applySavedShipmentTo(r, i);
-                            e.currentTarget.value = "";
-                          }}
-                        >
-                          <option value="">{t.crear.autofill.newOption}</option>
-                          {saved.shipments.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {savedShipmentLabel(r)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
+                {saved && saved.shipments.length > 0 && (
+                  <label className="mt-3 block text-sm">
+                    <span className="font-medium">{t.crear.autofill.shipment}</span>
+                    <select
+                      data-testid={`autofill-shipment-extra-${i + 1}`}
+                      className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const r = saved.shipments.find((x) => x.id === e.target.value);
+                        if (r) applySavedShipmentTo(r, i);
+                        e.currentTarget.value = "";
+                      }}
+                    >
+                      <option value="">{t.crear.autofill.newOption}</option>
+                      {saved.shipments.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {savedShipmentLabel(r)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
 
-                    <p className="mt-3 text-xs font-bold uppercase text-[var(--color-text-muted)]">
-                      {t.crear.legends.loadLocation}
-                    </p>
-                    <Field
-                      id={`extraLoadName${i}`}
-                      label={t.crear.fields.locationName}
-                      value={s.loadLocationName}
-                      onChange={setExtraAndUnpick(i, "loadLocationName", "loadLocationId")}
-                    />
-                    <Field
-                      id={`extraLoadAddress${i}`}
-                      label={t.crear.fields.locationAddress}
-                      value={s.loadLocationAddress}
-                      onChange={setExtraAndUnpick(i, "loadLocationAddress", "loadLocationId")}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field
-                        id={`extraLoadPostalCode${i}`}
-                        label={t.crear.fields.postalCode}
-                        value={s.loadLocationPostalCode}
-                        onChange={setExtraAndUnpick(i, "loadLocationPostalCode", "loadLocationId")}
-                      />
-                      <Field
-                        id={`extraLoadCity${i}`}
-                        label={t.crear.fields.city}
-                        value={s.loadLocationCity}
-                        onChange={setExtraAndUnpick(i, "loadLocationCity", "loadLocationId")}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field
-                        id={`extraLoadProvince${i}`}
-                        label={t.crear.fields.province}
-                        value={s.loadLocationProvince}
-                        onChange={setExtraAndUnpick(i, "loadLocationProvince", "loadLocationId")}
-                        required={false}
-                      />
-                      <Field
-                        id={`extraLoadCountry${i}`}
-                        label={t.crear.fields.country}
-                        value={s.loadLocationCountry}
-                        onChange={setExtraAndUnpick(i, "loadLocationCountry", "loadLocationId")}
-                      />
-                    </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                    {t.crear.legends.loadLocation}
+                  </p>
+                  <AddPlaceButton
+                    label={t.crear.shipments.addLoadAria}
+                    testId={`add-load-${i + 2}`}
+                    onClick={() => addLoadFrom(s)}
+                  />
+                </div>
+                <Field
+                  id={`extraLoadName${i}`}
+                  label={t.crear.fields.locationName}
+                  value={s.loadLocationName}
+                  onChange={setExtraAndUnpick(i, "loadLocationName", "loadLocationId")}
+                />
+                <Field
+                  id={`extraLoadAddress${i}`}
+                  label={t.crear.fields.locationAddress}
+                  value={s.loadLocationAddress}
+                  onChange={setExtraAndUnpick(i, "loadLocationAddress", "loadLocationId")}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    id={`extraLoadPostalCode${i}`}
+                    label={t.crear.fields.postalCode}
+                    value={s.loadLocationPostalCode}
+                    onChange={setExtraAndUnpick(i, "loadLocationPostalCode", "loadLocationId")}
+                  />
+                  <Field
+                    id={`extraLoadCity${i}`}
+                    label={t.crear.fields.city}
+                    value={s.loadLocationCity}
+                    onChange={setExtraAndUnpick(i, "loadLocationCity", "loadLocationId")}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    id={`extraLoadProvince${i}`}
+                    label={t.crear.fields.province}
+                    value={s.loadLocationProvince}
+                    onChange={setExtraAndUnpick(i, "loadLocationProvince", "loadLocationId")}
+                    required={false}
+                  />
+                  <Field
+                    id={`extraLoadCountry${i}`}
+                    label={t.crear.fields.country}
+                    value={s.loadLocationCountry}
+                    onChange={setExtraAndUnpick(i, "loadLocationCountry", "loadLocationId")}
+                  />
+                </div>
 
-                    <p className="mt-3 text-xs font-bold uppercase text-[var(--color-text-muted)]">
-                      {t.crear.legends.unloadLocation}
-                    </p>
-                    <Field
-                      id={`extraUnloadName${i}`}
-                      label={t.crear.fields.locationName}
-                      value={s.unloadLocationName}
-                      onChange={setExtraAndUnpick(i, "unloadLocationName", "unloadLocationId")}
-                    />
-                    <Field
-                      id={`extraUnloadAddress${i}`}
-                      label={t.crear.fields.locationAddress}
-                      value={s.unloadLocationAddress}
-                      onChange={setExtraAndUnpick(i, "unloadLocationAddress", "unloadLocationId")}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field
-                        id={`extraUnloadPostalCode${i}`}
-                        label={t.crear.fields.postalCode}
-                        value={s.unloadLocationPostalCode}
-                        onChange={setExtraAndUnpick(
-                          i,
-                          "unloadLocationPostalCode",
-                          "unloadLocationId",
-                        )}
-                      />
-                      <Field
-                        id={`extraUnloadCity${i}`}
-                        label={t.crear.fields.city}
-                        value={s.unloadLocationCity}
-                        onChange={setExtraAndUnpick(i, "unloadLocationCity", "unloadLocationId")}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field
-                        id={`extraUnloadProvince${i}`}
-                        label={t.crear.fields.province}
-                        value={s.unloadLocationProvince}
-                        onChange={setExtraAndUnpick(
-                          i,
-                          "unloadLocationProvince",
-                          "unloadLocationId",
-                        )}
-                        required={false}
-                      />
-                      <Field
-                        id={`extraUnloadCountry${i}`}
-                        label={t.crear.fields.country}
-                        value={s.unloadLocationCountry}
-                        onChange={setExtraAndUnpick(i, "unloadLocationCountry", "unloadLocationId")}
-                      />
-                    </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                    {t.crear.legends.unloadLocation}
+                  </p>
+                  <AddPlaceButton
+                    label={t.crear.shipments.addUnloadAria}
+                    testId={`add-unload-${i + 2}`}
+                    onClick={() => addUnloadFrom(s)}
+                  />
+                </div>
+                <Field
+                  id={`extraUnloadName${i}`}
+                  label={t.crear.fields.locationName}
+                  value={s.unloadLocationName}
+                  onChange={setExtraAndUnpick(i, "unloadLocationName", "unloadLocationId")}
+                />
+                <Field
+                  id={`extraUnloadAddress${i}`}
+                  label={t.crear.fields.locationAddress}
+                  value={s.unloadLocationAddress}
+                  onChange={setExtraAndUnpick(i, "unloadLocationAddress", "unloadLocationId")}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    id={`extraUnloadPostalCode${i}`}
+                    label={t.crear.fields.postalCode}
+                    value={s.unloadLocationPostalCode}
+                    onChange={setExtraAndUnpick(i, "unloadLocationPostalCode", "unloadLocationId")}
+                  />
+                  <Field
+                    id={`extraUnloadCity${i}`}
+                    label={t.crear.fields.city}
+                    value={s.unloadLocationCity}
+                    onChange={setExtraAndUnpick(i, "unloadLocationCity", "unloadLocationId")}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    id={`extraUnloadProvince${i}`}
+                    label={t.crear.fields.province}
+                    value={s.unloadLocationProvince}
+                    onChange={setExtraAndUnpick(i, "unloadLocationProvince", "unloadLocationId")}
+                    required={false}
+                  />
+                  <Field
+                    id={`extraUnloadCountry${i}`}
+                    label={t.crear.fields.country}
+                    value={s.unloadLocationCountry}
+                    onChange={setExtraAndUnpick(i, "unloadLocationCountry", "unloadLocationId")}
+                  />
+                </div>
 
-                    <Field
-                      id={`extraGoods${i}`}
-                      label={t.crear.fields.goods}
-                      value={s.goods}
-                      onChange={setExtra(i, "goods")}
-                    />
-                    <Field
-                      id={`extraWeight${i}`}
-                      label={t.crear.fields.weight}
-                      value={s.weight}
-                      onChange={setExtra(i, "weight")}
-                      hint={t.crear.fields.weightHint}
-                    />
-                    <Field
-                      id={`extraRecipient${i}`}
-                      label={t.crear.shipments.recipient}
-                      value={s.recipient}
-                      onChange={setExtra(i, "recipient")}
-                      required={false}
-                    />
+                <Field
+                  id={`extraGoods${i}`}
+                  label={t.crear.fields.goods}
+                  value={s.goods}
+                  onChange={setExtra(i, "goods")}
+                />
+                <Field
+                  id={`extraWeight${i}`}
+                  label={t.crear.fields.weight}
+                  value={s.weight}
+                  onChange={setExtra(i, "weight")}
+                  hint={t.crear.fields.weightHint}
+                />
+                <Field
+                  id={`extraRecipient${i}`}
+                  label={t.crear.shipments.recipient}
+                  value={s.recipient}
+                  onChange={setExtra(i, "recipient")}
+                  required={false}
+                />
 
-                    <p className="mt-3 text-xs text-[var(--color-text-muted)]">
-                      {t.crear.shipments.overridesHint}
-                    </p>
-                    <Field
-                      id={`extraLoadDate${i}`}
-                      label={t.crear.fields.loadDate}
-                      type="date"
-                      value={s.loadDate}
-                      onChange={setExtra(i, "loadDate")}
-                    />
-                    <Field
-                      id={`extraUnloadDate${i}`}
-                      label={t.crear.fields.unloadDate}
-                      type="date"
-                      value={s.unloadDate}
-                      onChange={setExtra(i, "unloadDate")}
-                    />
-                    <Field
-                      id={`extraTractorPlate${i}`}
-                      label={t.crear.fields.tractorPlate}
-                      value={s.tractorPlate}
-                      onChange={setExtra(i, "tractorPlate")}
-                    />
-                    <Field
-                      id={`extraTrailerPlate${i}`}
-                      label={t.crear.fields.trailerPlate}
-                      value={s.trailerPlate}
-                      onChange={setExtra(i, "trailerPlate")}
-                      required={false}
-                    />
-                    <Field
-                      id={`extraNotes${i}`}
-                      label={t.crear.shipments.notes}
-                      value={s.notes}
-                      onChange={setExtra(i, "notes")}
-                      required={false}
-                    />
-                    {s.loadLocationId && s.unloadLocationId && (
-                      <SaveShipment
-                        loadLocationId={s.loadLocationId}
-                        unloadLocationId={s.unloadLocationId}
-                        goods={s.goods}
-                        weight={s.weight}
-                        recipient={s.recipient}
-                        suggestedName={
-                          s.loadLocationCity && s.unloadLocationCity
-                            ? `${s.loadLocationCity} → ${s.unloadLocationCity}`
-                            : ""
-                        }
-                      />
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  data-testid="add-shipment"
-                  onClick={() => setExtraShipments((arr) => [...arr, emptyExtraShipment(form)])}
-                  className="rounded-[var(--radius-md)] border border-[var(--color-primary)] px-3 py-1.5 text-sm font-medium text-[var(--color-primary)]"
-                >
-                  {t.crear.shipments.addAnother}
-                </button>
+                <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                  {t.crear.shipments.overridesHint}
+                </p>
+                <Field
+                  id={`extraLoadDate${i}`}
+                  label={t.crear.fields.loadDate}
+                  type="date"
+                  value={s.loadDate}
+                  onChange={setExtra(i, "loadDate")}
+                />
+                <Field
+                  id={`extraUnloadDate${i}`}
+                  label={t.crear.fields.unloadDate}
+                  type="date"
+                  value={s.unloadDate}
+                  onChange={setExtra(i, "unloadDate")}
+                />
+                <Field
+                  id={`extraNotes${i}`}
+                  label={t.crear.shipments.notes}
+                  value={s.notes}
+                  onChange={setExtra(i, "notes")}
+                  required={false}
+                />
+                {s.loadLocationId && s.unloadLocationId && (
+                  <SaveShipment
+                    loadLocationId={s.loadLocationId}
+                    unloadLocationId={s.unloadLocationId}
+                    goods={s.goods}
+                    weight={s.weight}
+                    recipient={s.recipient}
+                    suggestedName={
+                      s.loadLocationCity && s.unloadLocationCity
+                        ? `${s.loadLocationCity} → ${s.unloadLocationCity}`
+                        : ""
+                    }
+                  />
+                )}
               </div>
-            )}
-          </fieldset>
+            ))}
+          </div>
         )}
 
         {step === 2 && showCommercialShare && (
@@ -2378,7 +2512,7 @@ export function CrearWizard({
             />
             <ReviewSummary
               form={form}
-              extraShipments={multiShipment ? extraShipments : []}
+              extraShipments={extraShipments}
               onEdit={(s) => {
                 setErrors({});
                 setStep(s);

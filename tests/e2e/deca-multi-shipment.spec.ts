@@ -2,12 +2,12 @@ import { test, expect, type Page } from "@playwright/test";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
 /**
- * #112 — multiple shipments ("envíos") per DeCA, driven through the real
- * wizard in a real browser, against the real server. The issue's own worked
- * example: Valencia→Madrid + Castellón→Madrid, one DeCA, 2 envíos, same
- * shipper/carrier. Covers the acceptance criteria that are actually testable
- * end to end in Sprint 1 (creation); correction-flow + list-view summary
- * surfaces are Sprint 2.
+ * #112 (rewritten spec) — multiple loads/unloads via `+` buttons beside
+ * "Lugar de carga"/"Lugar de descarga", replacing the earlier toggle +
+ * "Añadir otro envío" CTA entirely. Driven through the real wizard in a real
+ * browser, against the real server. The issue's own worked example:
+ * Valencia→Madrid + Castellón→Madrid, one DeCA, 2 envíos, same shipper/
+ * carrier, one shared vehicle.
  */
 
 const DECA = {
@@ -43,6 +43,14 @@ const SHIPMENT_2 = {
   loadCity: "Castellón de la Plana",
   goods: "Azulejos",
   weight: "8000 kg",
+};
+
+const SHIPMENT_3 = {
+  unloadName: "Plataforma Toledo",
+  unloadAddress: "Polígono La Sisla, nave 4",
+  unloadPostalCode: "45200",
+  unloadCity: "Illescas",
+  weight: "5000 kg",
 };
 
 function email() {
@@ -81,7 +89,9 @@ async function fillStep1(page: Page) {
   await page.fill("#carrierAddress", DECA.carrierAddress);
 }
 
-async function fillStep2(page: Page) {
+/** Step 1 (route) — shipment 1's own load/unload, always visible, `+`
+ *  buttons beside each legend. */
+async function fillRoute(page: Page) {
   await page.fill("#loadLocationName", DECA.loadLocationName);
   await page.fill("#loadLocationAddress", DECA.loadLocationAddress);
   await page.fill("#loadLocationPostalCode", DECA.loadLocationPostalCode);
@@ -98,28 +108,79 @@ async function fillStep2(page: Page) {
   await page.fill("#unloadDate", DECA.unloadDate);
 }
 
-test.describe("#112 — multiple shipments per DeCA", () => {
-  test("the single-shipment flow is completely unaffected: the toggle is off by default and generates exactly as before", async ({
+async function fillVehicleAndGoods(page: Page) {
+  await page.fill("#goods", DECA.goods);
+  await page.fill("#weight", DECA.weight);
+  await page.fill("#tractorPlate", DECA.tractorPlate);
+}
+
+test.describe("#112 — multiple loads/unloads via + buttons", () => {
+  test("the single-shipment flow is completely unaffected: no extra block, `+` buttons present but unused", async ({
     page,
   }) => {
     await register(page);
     await page.goto("/crear");
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
-    await fillStep2(page);
-    await page.getByTestId("wizard-next").click();
-    await page.fill("#goods", DECA.goods);
-    await page.fill("#weight", DECA.weight);
-    await page.fill("#tractorPlate", DECA.tractorPlate);
+    await fillRoute(page);
 
-    await expect(page.getByTestId("multi-shipment-toggle")).not.toBeChecked();
+    // The `+` buttons are always there — issue §2 — but nothing has been
+    // pressed, so the route stays exactly as clean as before #112.
+    await expect(page.getByTestId("add-load-1")).toBeVisible();
+    await expect(page.getByTestId("add-unload-1")).toBeVisible();
     await expect(page.getByTestId("extra-shipment-1")).toHaveCount(0);
 
+    await page.getByTestId("wizard-next").click();
+    await fillVehicleAndGoods(page);
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
   });
 
-  test("Valencia→Madrid + Castellón→Madrid saves as ONE DeCA with 2 envíos, correct PDF, and both shipments in the review", async ({
+  test("`+` on carga inherits the destino; `+` on descarga inherits the origen; never a cartesian product", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+
+    // Valencia→Madrid exists. Press `+` on Lugar de carga: a new envío
+    // appears, blank origin, Madrid already filled in as the destino —
+    // never re-typed.
+    await page.getByTestId("add-load-1").click();
+    await expect(page.getByTestId("extra-shipment-1")).toBeVisible();
+    await expect(page.locator("#extraUnloadName0")).toHaveValue(DECA.unloadLocationName);
+    await expect(page.locator("#extraLoadName0")).toHaveValue("");
+    // The new block's first field gets focus automatically (keyboard flow).
+    await expect(page.locator("#extraLoadName0")).toBeFocused();
+    await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
+    await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
+    await page.fill("#extraLoadPostalCode0", SHIPMENT_2.loadPostalCode);
+    await page.fill("#extraLoadCity0", SHIPMENT_2.loadCity);
+    await page.fill("#extraGoods0", SHIPMENT_2.goods);
+    await page.fill("#extraWeight0", SHIPMENT_2.weight);
+
+    // Now press `+` on THIS envío's own Lugar de descarga: a third envío
+    // appears, Castellón already filled in as the origen (never re-typed),
+    // blank destino.
+    await page.getByTestId("add-unload-2").click();
+    await expect(page.getByTestId("extra-shipment-2")).toBeVisible();
+    await expect(page.locator("#extraLoadName1")).toHaveValue(SHIPMENT_2.loadName);
+    await expect(page.locator("#extraUnloadName1")).toHaveValue("");
+    await page.fill("#extraUnloadName1", SHIPMENT_3.unloadName);
+    await page.fill("#extraUnloadAddress1", SHIPMENT_3.unloadAddress);
+    await page.fill("#extraUnloadPostalCode1", SHIPMENT_3.unloadPostalCode);
+    await page.fill("#extraUnloadCity1", SHIPMENT_3.unloadCity);
+    await page.fill("#extraWeight1", SHIPMENT_3.weight);
+
+    // Exactly 3 real trayectos exist — Valencia→Madrid, Castellón→Madrid,
+    // Castellón→Toledo (well, Illescas) — never a 4th "Valencia→Toledo"
+    // nobody asked for. Two EXTRA blocks (envío 2 and envío 3), never more.
+    await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(2);
+  });
+
+  test("vehicle is a single shared field: no tractor/trailer input inside any envío block, shown once in the PDF", async ({
     page,
     request,
   }) => {
@@ -127,39 +188,28 @@ test.describe("#112 — multiple shipments per DeCA", () => {
     await page.goto("/crear");
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
-    await fillStep2(page);
-    await page.getByTestId("wizard-next").click();
-    await page.fill("#goods", DECA.goods);
-    await page.fill("#weight", DECA.weight);
-    await page.fill("#tractorPlate", DECA.tractorPlate);
-
-    await page.getByTestId("multi-shipment-toggle").check();
-    await expect(page.getByTestId("extra-shipment-1")).toBeVisible();
+    await fillRoute(page);
+    await page.getByTestId("add-load-1").click();
     await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
     await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
     await page.fill("#extraLoadPostalCode0", SHIPMENT_2.loadPostalCode);
     await page.fill("#extraLoadCity0", SHIPMENT_2.loadCity);
-    await page.fill("#extraLoadCountry0", "España");
-    // same destination as shipment 1 (Plataforma Norte, Madrid) — the
-    // issue's own worked example.
-    await page.fill("#extraUnloadName0", DECA.unloadLocationName);
-    await page.fill("#extraUnloadAddress0", DECA.unloadLocationAddress);
-    await page.fill("#extraUnloadPostalCode0", DECA.unloadLocationPostalCode);
-    await page.fill("#extraUnloadCity0", DECA.unloadLocationCity);
-    await page.fill("#extraUnloadCountry0", "España");
     await page.fill("#extraGoods0", SHIPMENT_2.goods);
     await page.fill("#extraWeight0", SHIPMENT_2.weight);
-    await page.fill("#extraLoadDate0", DECA.loadDate);
-    await page.fill("#extraUnloadDate0", DECA.unloadDate);
-    await page.fill("#extraTractorPlate0", DECA.tractorPlate);
 
-    // Review shows BOTH shipments before generating (Sprint 2, D-205) — not
-    // just shipment 1, which was the whole point of the review step.
+    await expect(page.locator("#extraTractorPlate0")).toHaveCount(0);
+    await expect(page.locator("#extraTrailerPlate0")).toHaveCount(0);
+
+    // Review shows BOTH shipments and one computed total before generating.
     const review = page.getByTestId("review-summary");
+    await page.getByTestId("wizard-next").click();
+    await fillVehicleAndGoods(page);
     await expect(review).toContainText(DECA.goods.toUpperCase());
     await expect(review).toContainText("Envío 2");
     await expect(review).toContainText(SHIPMENT_2.loadName.toUpperCase());
     await expect(review).toContainText(SHIPMENT_2.goods.toUpperCase());
+    await expect(review).toContainText("Peso total");
+    await expect(review).toContainText(/20\.000 kg/i);
 
     const [genRes] = await Promise.all([
       page.waitForResponse((r) => r.url().includes("/api/deca") && r.request().method() === "POST"),
@@ -186,19 +236,20 @@ test.describe("#112 — multiple shipments per DeCA", () => {
     expect(upper).toContain(DECA.goods.toUpperCase());
     expect(upper).toContain(SHIPMENT_2.goods.toUpperCase());
     expect(upper).toContain("PESO TOTAL");
-    // 12000 kg + 8000 kg = 20000 kg — pdfjs's text-layer extraction of the
-    // thousands separator glyph is not reliably the literal "." (a known
-    // pdfjs quirk this file's own compliance suite works around elsewhere:
-    // "pdfjs inserts positional whitespace, so compare whitespace-
-    // insensitively"), so the separator character itself is not asserted.
+    // 12000 kg + 8000 kg = 20000 kg (pdfjs's thousands-separator glyph
+    // extraction is not reliably the literal "." — whitespace-insensitive
+    // match, same workaround this project's compliance suite already uses).
     expect(upper).toMatch(/20.000 KG/);
+    // The plate appears exactly ONCE — a single shared "Vehículo" block, not
+    // repeated per envío.
+    expect(upper.match(new RegExp(DECA.tractorPlate.toUpperCase(), "g"))?.length).toBe(1);
     // Shipper/carrier appear once each — DeCA-level, never duplicated.
     expect(upper.match(new RegExp(DECA.shipperName.toUpperCase(), "g"))?.length).toBe(1);
     expect(upper.match(new RegExp(DECA.carrierName.toUpperCase(), "g"))?.length).toBe(1);
 
-    // Sprint 2 (D-205): Historial shows a "+1 envío" indicator next to the
-    // shipment-1 route summary — never a second row, never the full breakdown.
-    // #86 p3: the table renders every visible field uppercase.
+    // Historial shows a "+1 envío" indicator next to the shipment-1 route
+    // summary — never a second row, never the full breakdown (#86 p3:
+    // uppercase throughout).
     await page.goto("/panel/historico");
     const historyRow = page.locator("tbody tr", {
       hasText: new RegExp(DECA.loadLocationName, "i"),
@@ -206,79 +257,153 @@ test.describe("#112 — multiple shipments per DeCA", () => {
     await expect(historyRow).toContainText("+1 envío");
   });
 
-  test("removing every extra shipment turns the toggle back off", async ({ page }) => {
-    await register(page);
-    await page.goto("/crear");
-    await fillStep1(page);
-    await page.getByTestId("wizard-next").click();
-    await fillStep2(page);
-    await page.getByTestId("wizard-next").click();
-    await page.fill("#goods", DECA.goods);
-    await page.fill("#weight", DECA.weight);
-    await page.fill("#tractorPlate", DECA.tractorPlate);
-
-    await page.getByTestId("multi-shipment-toggle").check();
-    await expect(page.getByTestId("extra-shipment-1")).toBeVisible();
-    await page.getByTestId("extra-shipment-remove-1").click();
-    await expect(page.getByTestId("multi-shipment-toggle")).not.toBeChecked();
-    await expect(page.getByTestId("extra-shipment-1")).toHaveCount(0);
-  });
-
-  test("Sprint 2: correcting an already-multi-shipment DeCA pre-loads its extra envíos — never silently drops them", async ({
+  test("naturaleza is pre-filled from the source envío but stays editable; peso is never copied", async ({
     page,
   }) => {
     await register(page);
     await page.goto("/crear");
     await fillStep1(page);
     await page.getByTestId("wizard-next").click();
-    await fillStep2(page);
-    await page.getByTestId("wizard-next").click();
-    await page.fill("#goods", DECA.goods);
-    await page.fill("#weight", DECA.weight);
-    await page.fill("#tractorPlate", DECA.tractorPlate);
+    await fillRoute(page);
 
-    await page.getByTestId("multi-shipment-toggle").check();
+    await page.getByTestId("add-unload-1").click();
+    // Shipment 1's own `goods` is entered on step 2 of this wizard, so at
+    // this point (still step 1) there is nothing yet for the new envío to
+    // copy — the point under test is that WEIGHT is NEVER pre-filled as a
+    // "final" value, and the field stays freely editable either way.
+    await expect(page.locator("#extraWeight0")).toHaveValue("");
+    await page.fill("#extraGoods0", SHIPMENT_2.goods);
+    await expect(page.locator("#extraGoods0")).toHaveValue(SHIPMENT_2.goods);
+  });
+
+  test("duplicar este envío clones every field into a new block at the end", async ({ page }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+    await page.getByTestId("add-load-1").click();
+    await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
+    await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
+    await page.fill("#extraGoods0", SHIPMENT_2.goods);
+    await page.fill("#extraWeight0", SHIPMENT_2.weight);
+
+    await page.getByTestId("extra-shipment-duplicate-1").click();
+    await expect(page.getByTestId("extra-shipment-2")).toBeVisible();
+    await expect(page.locator("#extraLoadName1")).toHaveValue(SHIPMENT_2.loadName);
+    await expect(page.locator("#extraGoods1")).toHaveValue(SHIPMENT_2.goods);
+    await expect(page.locator("#extraWeight1")).toHaveValue(SHIPMENT_2.weight);
+  });
+
+  test("removing an empty envío needs no confirmation; removing one with data does", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+
+    // Empty block: no dialog should ever fire. If one did, Playwright's
+    // default (no listener registered) auto-dismisses it, which would leave
+    // the block in place — the assertion below catches that regression.
+    await page.getByTestId("add-load-1").click();
+    await page.getByTestId("extra-shipment-remove-1").click();
+    await expect(page.getByTestId("extra-shipment-1")).toHaveCount(0);
+
+    // With data: a real confirmation is required first.
+    await page.getByTestId("add-load-1").click();
+    await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
+    page.once("dialog", (d) => d.accept());
+    await page.getByTestId("extra-shipment-remove-1").click();
+    await expect(page.getByTestId("extra-shipment-1")).toHaveCount(0);
+  });
+
+  test("correcting an already-multi-shipment DeCA pre-loads its extra envíos — never silently drops them", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+    await page.getByTestId("add-load-1").click();
     await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
     await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
     await page.fill("#extraLoadPostalCode0", SHIPMENT_2.loadPostalCode);
     await page.fill("#extraLoadCity0", SHIPMENT_2.loadCity);
-    await page.fill("#extraLoadCountry0", "España");
-    await page.fill("#extraUnloadName0", DECA.unloadLocationName);
-    await page.fill("#extraUnloadAddress0", DECA.unloadLocationAddress);
-    await page.fill("#extraUnloadPostalCode0", DECA.unloadLocationPostalCode);
-    await page.fill("#extraUnloadCity0", DECA.unloadLocationCity);
-    await page.fill("#extraUnloadCountry0", "España");
     await page.fill("#extraGoods0", SHIPMENT_2.goods);
     await page.fill("#extraWeight0", SHIPMENT_2.weight);
-    await page.fill("#extraLoadDate0", DECA.loadDate);
-    await page.fill("#extraUnloadDate0", DECA.unloadDate);
-    await page.fill("#extraTractorPlate0", DECA.tractorPlate);
-
+    await page.getByTestId("wizard-next").click();
+    await fillVehicleAndGoods(page);
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });
     const decaId = page.url().split("/crear/")[1].split("?")[0];
 
-    // Open the correction form for this DeCA and walk to step 2 (same
-    // step-based flow as creation) — the toggle must already be ON there
-    // and shipment 2's fields already filled, with NO manual re-entry.
+    // Open the correction form and walk to step 1 (route) — shipment 2's
+    // block must already be there, filled in, with NO manual re-entry and
+    // no toggle to check.
     await page.goto(`/panel/deca/${decaId}/corregir`);
     await page.getByTestId("wizard-next").click();
-    await page.getByTestId("wizard-next").click();
-    await expect(page.getByTestId("multi-shipment-toggle")).toBeChecked();
+    await expect(page.getByTestId("extra-shipment-1")).toBeVisible();
     await expect(page.locator("#extraLoadName0")).toHaveValue(SHIPMENT_2.loadName);
     await expect(page.locator("#extraGoods0")).toHaveValue(SHIPMENT_2.goods);
     await expect(page.locator("#extraWeight0")).toHaveValue(SHIPMENT_2.weight);
 
     // Edit shipment 2's weight and save the correction.
     await page.fill("#extraWeight0", "9000 kg");
+    await page.getByTestId("wizard-next").click();
     await page.getByTestId("correction-reason").fill("Ajuste de peso en envío 2");
     await page.getByTestId("wizard-generate").click();
     await expect(page).toHaveURL(new RegExp(`/panel/deca/${decaId}$`), { timeout: 15_000 });
 
-    // The corrected version's own PDF reflects the new weight, and the
-    // "qué ha cambiado" diff names shipment 2 specifically — never conflated
-    // with shipment 1's own weight (still 12000 kg, unchanged).
     await expect(page.getByTestId("change-list")).toContainText("Envío 2");
     await expect(page.getByTestId("change-list")).toContainText("9000 kg");
+  });
+
+  test("responsive: the + buttons stay visible, reachable and non-overlapping at every breakpoint", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+
+    for (const width of [320, 375, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const addLoad = page.getByTestId("add-load-1");
+      const addUnload = page.getByTestId("add-unload-1");
+      await expect(addLoad).toBeVisible();
+      await expect(addUnload).toBeVisible();
+      const loadBox = await addLoad.boundingBox();
+      const unloadBox = await addUnload.boundingBox();
+      expect(loadBox).not.toBeNull();
+      expect(unloadBox).not.toBeNull();
+      // A real, comfortable touch target (issue §9), and it never overlaps
+      // its own label (both fit inside the fieldset's own width).
+      expect(loadBox!.width).toBeGreaterThanOrEqual(24);
+      expect(loadBox!.height).toBeGreaterThanOrEqual(24);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      await page.evaluate(() => document.documentElement.clientWidth + 1),
+    );
+  });
+
+  test("keyboard: the + buttons have a real accessible name and are reachable without a mouse", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+
+    await expect(page.getByRole("button", { name: "Añadir otro lugar de carga" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Añadir otro lugar de descarga" })).toBeVisible();
+
+    await page.getByTestId("add-load-1").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("extra-shipment-1")).toBeVisible();
   });
 });

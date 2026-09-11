@@ -824,19 +824,21 @@ export const ca = {
         "No sembla una matrícula espanyola (format 1234 BCD). És vàlida si el vehicle és estranger.",
     },
     shipments: {
-      toggle: "Aquest transport té diversos llocs de càrrega o descàrrega?",
-      toggleHint:
-        "Activa-ho per documentar en un mateix DeCA diversos enviaments reals — han de compartir el mateix carregador contractual i transportista efectiu.",
-      addAnother: "+ Afegeix un altre enviament",
+      addLoadAria: "Afegeix un altre lloc de càrrega",
+      addUnloadAria: "Afegeix un altre lloc de descàrrega",
+      duplicate: "Duplica aquest enviament",
       remove: "Elimina aquest enviament",
       heading: (n: number) => `Enviament ${n}`,
       ownFieldsHint:
         "L'origen, la destinació, la mercaderia i el pes són propis d'aquest enviament.",
       overridesHint:
-        "La data, la matrícula i les notes fan servir els valors generals llevat que els canviïs aquí.",
+        "La data i les notes fan servir els valors generals llevat que els canviïs aquí.",
       recipient: "Destinatari (opcional)",
       notes: "Informació especial (opcional)",
-      minOneError: "Afegeix almenys un enviament o desactiva l'opció.",
+      removeConfirm: (n: number) =>
+        `L'Enviament ${n} ja té dades introduïdes. Segur que vols eliminar-lo?`,
+      orderNote:
+        "La numeració dels enviaments és identificativa i no determina l'ordre d'execució.",
     },
     errorSummaryTitle: "Revisa aquests camps:",
     lead: {
@@ -886,6 +888,7 @@ export const ca = {
       loadTitle: "Lloc i data de càrrega",
       unloadTitle: "Lloc i data de descàrrega",
       vehicleTitle: "Vehicle i mercaderia",
+      totalWeightTitle: "Pes total",
       name: "Nom o raó social",
       nif: "NIF / VAT",
       address: "Domicili",

@@ -842,18 +842,19 @@ export const de = {
         "Dies sieht nicht wie ein spanisches Kennzeichen aus (Format 1234 BCD). Es ist gültig, wenn das Fahrzeug ausländisch ist.",
     },
     shipments: {
-      toggle: "Hat dieser Transport mehrere Lade- oder Entladeorte?",
-      toggleHint:
-        "Aktivieren Sie dies, um mehrere echte Sendungen in einem DeCA zu dokumentieren — sie müssen denselben Vertragsabsender und ausführenden Frachtführer teilen.",
-      addAnother: "+ Weitere Sendung hinzufügen",
+      addLoadAria: "Weiteren Ladeort hinzufügen",
+      addUnloadAria: "Weiteren Entladeort hinzufügen",
+      duplicate: "Diese Sendung duplizieren",
       remove: "Diese Sendung entfernen",
       heading: (n: number) => `Sendung ${n}`,
       ownFieldsHint: "Herkunft, Ziel, Ware und Gewicht gehören zu dieser Sendung.",
       overridesHint:
-        "Datum, Kennzeichen und Notizen verwenden die allgemeinen Werte, sofern Sie sie hier nicht ändern.",
+        "Datum und Notizen verwenden die allgemeinen Werte, sofern Sie sie hier nicht ändern.",
       recipient: "Empfänger (optional)",
       notes: "Besondere Hinweise (optional)",
-      minOneError: "Fügen Sie mindestens eine Sendung hinzu oder deaktivieren Sie die Option.",
+      removeConfirm: (n: number) => `Sendung ${n} enthält bereits Daten. Wirklich entfernen?`,
+      orderNote:
+        "Die Nummerierung der Sendungen dient nur der Identifikation und bestimmt nicht die Ausführungsreihenfolge.",
     },
     errorSummaryTitle: "Überprüfen Sie diese Felder:",
     lead: {
@@ -904,6 +905,7 @@ export const de = {
       loadTitle: "Ort und Datum der Beladung",
       unloadTitle: "Ort und Datum der Entladung",
       vehicleTitle: "Fahrzeug und Ware",
+      totalWeightTitle: "Gesamtgewicht",
       name: "Name oder Firmenname",
       nif: "Steuernummer / USt-IdNr.",
       address: "Adresse",

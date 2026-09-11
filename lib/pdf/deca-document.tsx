@@ -500,13 +500,31 @@ export function DecaDocument(p: DecaDocProps) {
           </View>
         </View>
 
-        {/* #112 — one ROUTE + GOODS/VEHICLE block PER SHIPMENT. Exactly one
-            shipment (still the default, still the common case) renders
-            IDENTICALLY to before #112 — no "ENVÍO 1" badge, no total —
-            so today's single-origin/destination PDF is byte-for-byte
-            unchanged. Multiple shipments each get a visibly separated,
-            solid-fill "ENVÍO N" badge (Resolución apdo. Sexto: "muy visible
-            y separada"), never implying an execution order. */}
+        {/* #112 — vehicle is a single DeCA-level datum shared by every
+            shipment (never a per-shipment selector) — shown ONCE, before the
+            per-shipment loop, when there's more than one shipment. The
+            single-shipment case keeps the plate inside its own "Mercancía y
+            vehículo" table below, exactly as before (byte-for-byte
+            unchanged). */}
+        {p.data.shipments.length > 1 && (
+          <View style={s.section}>
+            <Text style={s.sectionHeading}>Vehículo</Text>
+            <View style={[s.techTable, s.sectionBody]}>
+              <View style={s.techTableRow}>
+                <TechCell label="Matrícula tractora" value={p.data.tractorPlate} />
+                <TechCell label="Matrícula remolque" value={p.data.trailerPlate || "—"} bordered />
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* #112 — one ROUTE + GOODS block PER SHIPMENT. Exactly one shipment
+            (still the default, still the common case) renders IDENTICALLY to
+            before #112 — no "ENVÍO 1" badge, no total, vehicle stays inside
+            this same table — so today's single-origin/destination PDF is
+            byte-for-byte unchanged. Multiple shipments each get a visibly
+            separated, solid-fill "ENVÍO N" badge (Resolución apdo. Sexto:
+            "muy visible y separada"), never implying an execution order. */}
         {p.data.shipments.map((shipment, i) => {
           const multi = p.data.shipments.length > 1;
           const r = resolveShipment(p.data, shipment);
@@ -552,18 +570,21 @@ export function DecaDocument(p: DecaDocProps) {
                 </View>
               </View>
 
-              {/* GOODS + VEHICLE — a real technical table */}
+              {/* GOODS (+ VEHICLE when this is the only shipment) — a real
+                  technical table */}
               <View style={s.section}>
-                <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
+                <Text style={s.sectionHeading}>{multi ? "Mercancía" : "Mercancía y vehículo"}</Text>
                 <View style={[s.techTable, s.sectionBody]}>
                   <View style={s.techTableRow}>
                     <TechCell label="Naturaleza de la mercancía" value={r.goods} />
                     <TechCell label="Peso o medida" value={r.weight} bordered />
                   </View>
-                  <View style={[s.techTableRow, s.techTableRowBorder]}>
-                    <TechCell label="Matrícula tractora" value={r.tractorPlate} />
-                    <TechCell label="Matrícula remolque" value={r.trailerPlate || "—"} bordered />
-                  </View>
+                  {!multi && (
+                    <View style={[s.techTableRow, s.techTableRowBorder]}>
+                      <TechCell label="Matrícula tractora" value={r.tractorPlate} />
+                      <TechCell label="Matrícula remolque" value={r.trailerPlate || "—"} bordered />
+                    </View>
+                  )}
                   {r.recipient && (
                     <View style={[s.techTableRow, s.techTableRowBorder]}>
                       <TechCell label="Destinatario" value={r.recipient} />

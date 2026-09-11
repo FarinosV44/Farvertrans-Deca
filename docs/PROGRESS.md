@@ -45,6 +45,22 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-214 — I-112 REWRITTEN by the user, superseding D-205/D-206: `+` buttons replace the toggle,
+  this session (2026-09-12). Full detail in `docs/decisions.md` D-214. Worked on its OWN branch
+  `feat/112-plus-button-shipments`, per the user's explicit "separate branch/PR per issue, do not
+  merge" instruction for this task — NOT pushed to `develop`.** No data-model or migration change
+  (the existing `DeCA 1─N shipments` JSON model already matched). Wizard rewrite: no toggle, `+`
+  icon buttons beside "Lugar de carga"/"Lugar de descarga" (shipment 1 and every extra envío),
+  inheriting the opposite side with zero cartesian-product risk (one press = exactly one new
+  envío). Vehicle now strictly DeCA-level (client no longer sends a per-shipment override; PDF
+  shows it once when multi). Weight's bare-number default changed from tonnes to **kg** (trailing
+  request, same PR) — de-risked by confirming zero e2e fixtures relied on the old default. Real
+  mid-build fix: the extra-shipment render was gated to the wrong step (`step===2`, should be
+  `step===1` where the `+` buttons actually are) — moved so pressing `+` shows the new block
+  immediately. **Gate: tsc/eslint/prettier clean throughout, 444/444 unit, 9/9 new e2e + 4/4 +
+  29/29 regression green** (one contention flake under 5-file parallel load, confirmed clean in
+  isolation and on repeat). Pre-implementation comment posted on #112 per its own requirement.
+  **Next: commit, push the branch, open a PR into `develop` (not merged), then #119.**
 - **D-213 — I-118: branded incident page for 5xx / server-render errors, this session
   (2026-09-12), immediately after D-212. Full detail in `docs/decisions.md` D-213.** New
   `components/errors/incident-page.tsx` (shared branded screen, reuses the existing `Wordmark`/

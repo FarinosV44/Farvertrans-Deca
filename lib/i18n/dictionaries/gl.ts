@@ -829,18 +829,19 @@ export const gl = {
         "Non parece unha matrícula española (formato 1234 BCD). É válida se o vehículo é estranxeiro.",
     },
     shipments: {
-      toggle: "Este transporte ten varios lugares de carga ou descarga?",
-      toggleHint:
-        "Actívao para documentar nun mesmo DeCA varios envíos reais — deben compartir o mesmo cargador contractual e transportista efectivo.",
-      addAnother: "+ Engadir outro envío",
+      addLoadAria: "Engadir outro lugar de carga",
+      addUnloadAria: "Engadir outro lugar de descarga",
+      duplicate: "Duplicar este envío",
       remove: "Eliminar este envío",
       heading: (n: number) => `Envío ${n}`,
       ownFieldsHint: "A orixe, o destino, a mercadoría e o peso son propios deste envío.",
-      overridesHint:
-        "A data, a matrícula e as notas usan os valores xerais salvo que os cambies aquí.",
+      overridesHint: "A data e as notas usan os valores xerais salvo que os cambies aquí.",
       recipient: "Destinatario (opcional)",
       notes: "Información especial (opcional)",
-      minOneError: "Engade polo menos un envío ou desactiva a opción.",
+      removeConfirm: (n: number) =>
+        `O Envío ${n} xa ten datos introducidos. Seguro que queres eliminalo?`,
+      orderNote:
+        "A numeración dos envíos é identificativa e non determina a súa orde de execución.",
     },
     errorSummaryTitle: "Revisa estes campos:",
     lead: {
@@ -890,6 +891,7 @@ export const gl = {
       loadTitle: "Lugar e data de carga",
       unloadTitle: "Lugar e data de descarga",
       vehicleTitle: "Vehículo e mercadoría",
+      totalWeightTitle: "Peso total",
       name: "Nome ou razón social",
       nif: "NIF / VAT",
       address: "Domicilio",

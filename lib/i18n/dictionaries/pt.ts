@@ -813,9 +813,9 @@ export const pt = {
       loadDate: "Data de carga",
       unloadDate: "Data de descarga",
       goods: "Natureza da mercadoria",
-      weight: "Peso em toneladas (ou medida alternativa)",
+      weight: "Peso em kg (ou medida alternativa)",
       weightHint:
-        "Ex.: 12 (é acrescentado «t» automaticamente), ou «uma plataforma completa» se o peso exato não for determinável.",
+        "Ex.: 12000 (é acrescentado «kg» automaticamente), ou «uma plataforma completa» se o peso exato não for determinável.",
       tractorPlate: "Matrícula do trator",
       trailerPlate: "Matrícula do reboque / semirreboque",
       trailerHint: "Se não houver reboque, deixe em branco.",
@@ -829,18 +829,19 @@ export const pt = {
     },
     // #112 — vários envios (locais de carga/descarga) num mesmo DeCA.
     shipments: {
-      toggle: "Este transporte tem vários locais de carga ou descarga?",
-      toggleHint:
-        "Ative esta opção para documentar num único DeCA vários envios reais — devem partilhar o mesmo carregador contratual e transportador efetivo.",
-      addAnother: "+ Adicionar outro envio",
+      addLoadAria: "Adicionar outro local de carga",
+      addUnloadAria: "Adicionar outro local de descarga",
+      duplicate: "Duplicar este envio",
       remove: "Eliminar este envio",
       heading: (n: number) => `Envio ${n}`,
       ownFieldsHint: "A origem, o destino, a mercadoria e o peso são próprios deste envio.",
-      overridesHint:
-        "A data, a matrícula e as notas utilizam os valores gerais, salvo se os alterar aqui.",
+      overridesHint: "A data e as notas utilizam os valores gerais, salvo se os alterar aqui.",
       recipient: "Destinatário (opcional)",
       notes: "Informação especial (opcional)",
-      minOneError: "Adicione pelo menos um envio ou desative a opção.",
+      removeConfirm: (n: number) =>
+        `O Envio ${n} já tem dados introduzidos. Tem a certeza de que quer eliminá-lo?`,
+      orderNote:
+        "A numeração dos envios é meramente identificativa e não determina a sua ordem de execução.",
     },
     errorSummaryTitle: "Reveja estes campos:",
     lead: {
@@ -890,6 +891,7 @@ export const pt = {
       loadTitle: "Local e data de carga",
       unloadTitle: "Local e data de descarga",
       vehicleTitle: "Veículo e mercadoria",
+      totalWeightTitle: "Peso total",
       name: "Nome ou denominação social",
       nif: "NIF / IVA",
       address: "Morada",

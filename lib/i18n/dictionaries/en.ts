@@ -809,17 +809,18 @@ export const en = {
         "This doesn't look like a Spanish plate (format 1234 BCD). It's valid if the vehicle is foreign.",
     },
     shipments: {
-      toggle: "Does this transport have several loading or unloading places?",
-      toggleHint:
-        "Turn this on to document several real shipments in one DeCA — they must share the same contractual shipper and effective carrier.",
-      addAnother: "+ Add another shipment",
+      addLoadAria: "Add another loading place",
+      addUnloadAria: "Add another unloading place",
+      duplicate: "Duplicate this shipment",
       remove: "Remove this shipment",
       heading: (n: number) => `Shipment ${n}`,
       ownFieldsHint: "Origin, destination, goods and weight belong to this shipment specifically.",
-      overridesHint: "Date, plate and notes use the general values unless you change them here.",
+      overridesHint: "Date and notes use the general values unless you change them here.",
       recipient: "Recipient (optional)",
       notes: "Special information (optional)",
-      minOneError: "Add at least one shipment or turn this off.",
+      removeConfirm: (n: number) => `Shipment ${n} already has data entered. Remove it anyway?`,
+      orderNote:
+        "Shipment numbering is for identification only and does not set the execution order.",
     },
     errorSummaryTitle: "Please check these fields:",
     lead: {
@@ -869,6 +870,7 @@ export const en = {
       loadTitle: "Loading location and date",
       unloadTitle: "Unloading location and date",
       vehicleTitle: "Vehicle and goods",
+      totalWeightTitle: "Total weight",
       name: "Company name",
       nif: "Tax ID (NIF/VAT)",
       address: "Address",
