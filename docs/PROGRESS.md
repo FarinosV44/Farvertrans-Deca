@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `efe970c` (2026-09-11 — D-202…D-208 all pushed to both). Nothing awaits `main`. No tag requested. **Production NOT yet redeployed for any of today's work (D-202–D-208)** — still runs a pre-`cc82787` build; the user's next Hostinger redeploy picks up everything through D-208 at once (including the D-207 `saved_shipment` migration, not yet applied to production).
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `d1fd931` (2026-09-11 — D-202…D-209 all pushed to both). Nothing awaits `main`. No tag requested. **Production DB schema is current through D-208** (the D-207 `saved_shipment` migration was applied directly this session, verified RLS on + 0 rows) — **production APP CODE is NOT yet redeployed** for any of today's work; still runs a pre-`cc82787` build. The user's next Hostinger redeploy picks up everything through D-209 at once.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -64,7 +64,8 @@
   it), confirmed not a pre-existing bug this session introduced elsewhere, then removed entirely
   rather than worked around — full account in `docs/lessons-learned.md`. **Gate: 443/443 unit
   (+4 new), tsc/eslint/prettier/keel-verify clean, full targeted e2e regression sweep 34/34
-  green.** Ready to commit/push. **I-114 complete — #115 now fully unblocked** (#112/#113/#114 all
+  green.** **PUSHED to `develop` AND `main`** (commit `d1fd931`). **I-114 complete — #115 now fully
+  unblocked** (#112/#113/#114 all
   done).
 - **D-208 — I-113 Phase 2: Datos habituales visual redesign, this session (2026-09-11), immediately
   after D-207 (user: "continue"). Full detail in `docs/decisions.md` D-208.** Tabbed redesign
