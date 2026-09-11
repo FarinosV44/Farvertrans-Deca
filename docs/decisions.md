@@ -7357,3 +7357,53 @@ stays Spanish-only (D-002) — not part of the per-locale dictionary system this
 professional legal review named in D-072.
 
 **Next:** no issue is currently queued. #112 through #116 are all complete.
+
+## D-212 — I-117: Historial row vertical alignment fix (2026-09-12)
+
+Issue #117, opened this session per the user's direct report (a follow-up to #114/D-209): the
+redesigned Historial table's rows read as top-aligned/cramped, especially once the route/shipper/
+carrier cells wrap onto multiple lines — the status badge, plate and action links sat pinned to
+the top of the row instead of centered against the row's tallest cell.
+
+**Root cause, confirmed by reading the code, not guessed:** `app/panel/historico/page.tsx`'s
+`<tr>` carried `align-top` (Tailwind's `vertical-align: top`), which cascades to every `<td>` in
+that row that doesn't set its own `vertical-align` — none of the six cells did. So a row whose
+route cell wrapped into 2–4 lines (route + extra-envío summary + date/reference) left every
+single-line sibling cell (shipper, carrier, plate, status, actions) glued to the top rather than
+centered against the tallest cell.
+
+**Fix — CSS-only, zero data/logic change:**
+1. `<tr className="... align-top ...">` → `align-middle` — the one-line root cause fix; every cell
+   without its own override now vertically centers against the tallest cell in its row.
+2. Added a uniform `py-4` to every `<td>` (the route cell already had `py-3`; the other five had
+   NONE — relying purely on line-height, which is exactly why they read as cramped even before
+   considering vertical alignment). Bumped the route cell's `py-3` to `py-4` too, for one
+   consistent row height contribution.
+3. `pr-3` → `pr-4` on every column, on BOTH the `<thead>` `<th>`s and the body `<td>`s (kept in
+   sync deliberately — a table's columns are only as wide as their widest cell across header AND
+   body, so bumping body padding without matching the header would have made the header text's
+   right edge sit closer to the column divider than the body text's, a subtle but real
+   inconsistency).
+
+**Verified for real, not just "should work":** a temporary, uncommitted script (mirroring this
+session's own established "temporary render script, deleted after use" practice from D-181/182
+and D-210) registered a demo account, created one DeCA with deliberately long shipper/carrier
+names (forcing 4+ line wraps in the route/shipper/carrier cells) alongside one plain short-name
+DeCA for comparison, and screenshotted the real rendered table against a genuine production build.
+The screenshot confirms exactly the intended effect: in the long-name row, the "Vigente" badge,
+the plate, and the action links (Ver detalle/Inspección/Compartir/···) sit vertically centered
+against the wrapped multi-line content — not pinned to the top — while the short-name row (nothing
+to center against) is visually unchanged. Screenshot and script deleted after inspection, never
+committed.
+
+**Gate:** 444/444 unit (no new — CSS-only change, no logic touched), tsc/eslint/prettier clean.
+Full targeted e2e regression sweep 17/17 green (`historico-redesign.spec.ts` 4/4 incl. the mobile-
+card test — confirming mobile, which uses a flex-column card layout with no `<table>`/
+`vertical-align` involved at all, was correctly unaffected; `workspace.spec.ts` 7/7 incl. the a11y
+scan; `master-data.spec.ts` 2/2; `export-csv.spec.ts` 1/1; `row-share.spec.ts` 1/1).
+
+**Out of scope, confirmed by design:** mobile cards (`<ul>`/`<li>`, flex-column, #114 §10) were
+left untouched — the reported problem is specific to `<table>` cell vertical-align, which has no
+equivalent concept in a flex-column card; the existing mobile e2e coverage confirms no regression.
+
+**Next:** no issue is currently queued.

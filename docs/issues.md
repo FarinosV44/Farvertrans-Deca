@@ -938,6 +938,27 @@ anonymize-in-place (no hard delete, D-067).
   queda completamente cerrado. #112 a #116 están ya todos completos — no queda ningún issue en
   cola.**
 
+## I-117 — Historial: filas top-aligned/apretadas, falta equilibrio vertical
+- 2026-09-12. Issue abierto por el propio asistente esta sesión (política "Issue capture: on"),
+  por un reporte directo del usuario en conversación — un seguimiento del #114/D-209. Con el
+  contenido/texto envolviendo en varias líneas (ruta, cargador, transportista), el badge de estado,
+  la matrícula y las acciones quedaban pegados arriba de la fila en vez de quedar centrados.
+- **HECHA en `develop`, sin fusionar a `main` (D-212).** Causa raíz confirmada leyendo el código: el
+  `<tr>` llevaba `align-top`, que se propaga a cada `<td>` que no defina su propio valor — ninguna
+  de las seis celdas lo hacía, y 5 de 6 no tenían ningún padding vertical propio. Corrección
+  (solo CSS, cero cambios de datos o lógica): `align-top` → `align-middle` en la fila; `py-4`
+  uniforme añadido a las seis celdas; `pr-3` → `pr-4` en todas las columnas (cabecera Y cuerpo, a
+  la vez, para no desalinear el ancho de columna entre ambas).
+- **Verificado de verdad, no supuesto:** un script temporal sin comprometer (mismo patrón ya
+  establecido esta sesión) creó un DeCA con nombres de cargador/transportista deliberadamente
+  largos contra una build de producción real y capturó el resultado — confirma que el badge/
+  matrícula/acciones quedan centrados frente al contenido envuelto, no pegados arriba. Captura y
+  script borrados tras revisar.
+- Gate: 444/444 unitarios (sin nuevos — solo CSS), tsc/eslint/prettier limpios, barrido de
+  regresión e2e dirigido 17/17 en verde (incluida la prueba de tarjetas móviles, confirmando que el
+  móvil —diseño flex sin concepto de vertical-align— no se vio afectado; incluido el escaneo de
+  accesibilidad). **I-117 queda completamente cerrado.**
+
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
 - **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**

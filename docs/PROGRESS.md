@@ -45,6 +45,20 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-212 — I-117: Historial row vertical alignment fix, this session (2026-09-12), immediately
+  after D-211. Full detail in `docs/decisions.md` D-212.** Direct user report (follow-up to #114):
+  rows felt top-aligned/cramped once a cell wrapped onto multiple lines. Root cause: the `<tr>`
+  carried `align-top`, cascading to every `<td>` — none had its own vertical-align, and 5 of 6
+  cells had NO vertical padding at all. Fix (CSS-only, zero data/logic change): `align-top` →
+  `align-middle` on the row; uniform `py-4` added to every cell; `pr-3` → `pr-4` on every column
+  (header AND body, kept in sync to avoid a header/body column-width mismatch). **Verified for
+  real**, not assumed: a temporary uncommitted script rendered a real DeCA with deliberately long
+  shipper/carrier names against a genuine production build and screenshotted the actual result —
+  confirmed the status badge/plate/actions now sit centered against the wrapped content, not
+  pinned to the top; screenshot deleted after inspection. **Gate: 444/444 unit (no new — CSS-only),
+  tsc/eslint/prettier clean, full targeted e2e regression sweep 17/17 green** (incl. the mobile
+  card test, confirming mobile — a flex layout with no vertical-align concept — was correctly
+  unaffected; incl. the a11y scan). Ready to commit/push.
 - **D-211 — I-116: Portuguese (`pt`) added as a 9th UI locale, this session (2026-09-11),
   immediately after D-210. Full detail in `docs/decisions.md` D-211.** New
   `lib/i18n/dictionaries/pt.ts` (European pt-PT, `satisfies Messages`) + `pt` added to

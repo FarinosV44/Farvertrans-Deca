@@ -211,11 +211,11 @@ export default async function HistoricoPage({
             <table className="hidden w-full text-sm md:table" data-testid="historico-table">
               <thead>
                 <tr className="border-b-2 border-[var(--color-text)] text-left text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[var(--color-text-muted)]">
-                  <th className="py-2.5 pr-3">{t.historico.colRoute}</th>
-                  <th className="pr-3">{t.historico.colShipper}</th>
-                  <th className="pr-3">{t.historico.colCarrier}</th>
-                  <th className="pr-3">{t.historico.colPlate}</th>
-                  <th className="pr-3">{t.historico.colStatus}</th>
+                  <th className="py-2.5 pr-4">{t.historico.colRoute}</th>
+                  <th className="pr-4">{t.historico.colShipper}</th>
+                  <th className="pr-4">{t.historico.colCarrier}</th>
+                  <th className="pr-4">{t.historico.colPlate}</th>
+                  <th className="pr-4">{t.historico.colStatus}</th>
                   <th>{t.historico.colActions}</th>
                 </tr>
               </thead>
@@ -223,9 +223,9 @@ export default async function HistoricoPage({
                 {rows.map((r) => (
                   <tr
                     key={r.id}
-                    className="border-b border-[var(--color-border-soft)] align-top hover:bg-[var(--color-surface)]"
+                    className="border-b border-[var(--color-border-soft)] align-middle hover:bg-[var(--color-surface)]"
                   >
-                    <td className="py-3 pr-3">
+                    <td className="py-4 pr-4">
                       <p className="font-semibold">
                         {r.loadLocation} → {r.unloadLocation}
                         {r.shipmentCount > 1 && (
@@ -243,17 +243,17 @@ export default async function HistoricoPage({
                         {r.loadDate || r.createdAt.toISOString().slice(0, 10)} · {r.reference}
                       </p>
                     </td>
-                    <td className="pr-3 text-[var(--color-text-muted)]">
+                    <td className="py-4 pr-4 text-[var(--color-text-muted)]">
                       <span className="text-[var(--color-text)]">{r.shipper}</span>
                     </td>
-                    <td className="pr-3 text-[var(--color-text-muted)]">
+                    <td className="py-4 pr-4 text-[var(--color-text-muted)]">
                       <span className="text-[var(--color-text)]">{r.carrier}</span>
                     </td>
-                    <td className="pr-3">
+                    <td className="py-4 pr-4">
                       {r.tractorPlate}
                       {r.trailerPlate ? ` + ${r.trailerPlate}` : ""}
                     </td>
-                    <td className="pr-3">
+                    <td className="py-4 pr-4">
                       <span className="inline-flex items-center gap-1.5">
                         <StatusPill raw={docWorkflowStatus(r)} t={t} />
                         {r.versionNo > 1 ? (
@@ -263,7 +263,7 @@ export default async function HistoricoPage({
                         ) : null}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap">
+                    <td className="whitespace-nowrap py-4">
                       <div className="flex items-center gap-3">
                         <Link
                           href={`/panel/deca/${r.id}`}
