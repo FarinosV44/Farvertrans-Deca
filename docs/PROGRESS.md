@@ -84,9 +84,16 @@
   register-specific) showing mild repeated-attempt activity. **Production app logs (Hostinger
   docker/console output) were NOT reachable this session** — no SSH/Docker access, DB access only —
   that specific evidence needs the user's own `docker logs` pull or the next deploy + a monitoring
-  pass. **STILL OPEN: applying the D-203 migration to production itself** (confirmed safe, not yet
-  executed — awaiting the user's go-ahead for a production schema change) and the next Hostinger
-  redeploy (needed for ALL of D-202/D-203/D-204 to take effect live).
+  pass. **D-203's migration DEPLOYED to production** this session (`prisma migrate deploy` against
+  the production DB, `20260911090000_unique_user_email` — confirmed applied: `prisma migrate status`
+  reports up to date, all 40/40; `user_email_key` unique constraint verified present directly;
+  `relrowsecurity=t` unchanged (D-186's RLS posture intact); row count unchanged at 73 before/after,
+  no data loss). Full migration-gap sweep run before and after: zero gap. **`develop`/`main` code
+  (D-202/D-203/D-204) still needs the user's next Hostinger redeploy to actually run in production** —
+  the DB schema is ahead of the currently-deployed app code, which is fine (additive, backward-
+  compatible) but the UX/latency/foreign-registration fixes are not live until that redeploy. The
+  temporary production credential used for all of this was deleted from disk
+  (`.env.prod-readonly.local`) once verification was complete.
 - **`develop` == `main` == `cc82787` (2026-09-10), both pushed. EVERYTHING from this session is on
   `main`:** D-194, #111 (D-195…D-198), D-199, D-200, the D-200 badge-mobile-chip follow-up, and
   **D-201 / D-201b / D-201c (DECA Conecta)**. CI: run 34534080435 (DECA Conecta merge).

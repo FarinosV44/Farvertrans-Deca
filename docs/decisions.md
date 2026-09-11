@@ -6632,7 +6632,17 @@ assertions assumed the OLD stricter validation rules from D-202, now updated the
 decision's own test fixes; once fully green after both fixes), 399/399 unit, tsc/prettier/keel-verify
 clean.
 
-**Not yet done:** production deploy (this exists on `develop`/`main` pending the user's next Hostinger
-redeploy, same as D-202); applying the D-203 migration to production itself (confirmed safe — zero
-existing duplicates — but not yet executed, pending the user's go-ahead per this session's own risk
-posture for production schema changes).
+**D-203's migration deployed to production, same session, after this was written:** `prisma migrate
+deploy` against production applied `20260911090000_unique_user_email` cleanly. Verified directly
+(read-only queries, not just the CLI's own "success" report): `prisma migrate status` → all 40/40
+applied, zero gap; `pg_constraint` shows `user_email_key` (`contype='u'`) present on `"user"`;
+`pg_class.relrowsecurity` unchanged (`t`, forcerowsecurity `f`) — D-186's RLS posture untouched by
+this migration; `"user"` row count unchanged at 73 before and after — no data loss. The temporary
+production credential (provided in-chat by the user, a repeat of the D-158 exposure — rotation still
+recommended) was deleted from disk (`.env.prod-readonly.local`) once this verification was complete.
+
+**Still not yet done:** the app-code deploy itself (D-202/D-203/D-204 exist on `develop`/`main`
+pending the user's next Hostinger redeploy) — the production DB schema is now ahead of the currently-
+running app code, which is safe (the new constraint is additive and the old `findFirst`-only code path
+simply doesn't know about it yet) but the UX/latency/foreign-registration fixes are not live until
+that redeploy happens.
