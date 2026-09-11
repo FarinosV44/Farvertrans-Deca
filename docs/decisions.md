@@ -7600,3 +7600,15 @@ full run).
 **Next:** commit to `feat/112-plus-button-shipments`, push, open a PR into `develop` (screenshots +
 PR body), per the user's explicit "separate branch/PR per issue, don't merge" instruction. Then
 investigate and plan #119 on its own branch.
+
+## D-215 — CI workflow extended to `develop` (2026-09-12)
+
+The user asked for #112 and #119 to each land as an independent PR against `develop` (not `main`),
+never merged/pushed directly — a deliberate one-off deviation from this session's usual "push
+straight to develop/main" flow. `ci.yml` (D-010) only triggered on `push`/`pull_request` targeting
+`main`, so a PR into `develop` got NO CI checks at all — surfaced when PR #120 (#112) showed "no
+checks reported." Asked the user how to resolve it; approved extending the trigger. One-line
+change per trigger: `branches: [main]` → `branches: [main, develop]` for both `push` and
+`pull_request`. No other CI behavior changes — same jobs, same gates, just also armed for the
+integration branch. Committed directly to `develop` (a repo-config change, not feature work bound
+for either PR) so both open/future PRs into `develop` get real CI.
