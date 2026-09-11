@@ -230,3 +230,34 @@ create/edit path, not the gate. Also: a gate message must name the real blocker,
   flows), check what's actually listening on the port and whether it was started via Playwright's own
   `webServer.command` before debugging the "regression" itself.
 - **Check added:** none mechanical yet — the immediate practice is the rule above.
+
+## 2026-09-11 — a route's `loading.tsx` can silently break same-route `<Link>` navigations that only change search params
+
+- **Symptom:** during #114 (D-209), a new e2e test clicked the redesigned empty state's "Limpiar
+  filtros" link (`href="/panel/historico"`, no query) while on `/panel/historico?plate=0000ZZZ`.
+  The click registered (no Playwright actionability timeout), but the URL never changed — it sat
+  at `?plate=0000ZZZ` immediately after the click and stayed there after a 2s wait. The SAME
+  pre-existing "Limpiar" link in the filter form (unchanged code, present before this session)
+  showed the identical failure once tested directly — this was not new-code-specific.
+- **Root cause, isolated by controlled A/B (one file toggled, nothing else changed):** this
+  session had just added `app/panel/historico/loading.tsx` (a Suspense loading skeleton, planned
+  per the issue's own §12). With it present, network logging showed the click DID fire the
+  navigation's RSC fetch (`GET /panel/historico?_rsc=...`) — but that fetch immediately
+  self-aborted (`net::ERR_ABORTED`), and nothing else happened. Removing ONLY `loading.tsx`
+  (same page.tsx, same everything else) made the identical click work correctly. This is a Next.js
+  App Router router-cache interaction: a route-level loading boundary changes how same-pathname
+  navigations that differ only in search params get deduped/cancelled internally.
+- **Why this is dangerous, specifically:** `loading.tsx` is added with zero code changes to the
+  page itself — no import, no wiring, App Router picks it up automatically by file convention.
+  There is nothing in `page.tsx`'s diff that would make a reviewer suspect it, and the failure
+  mode (a link click that silently no-ops) looks exactly like a filter-clearing bug in the PAGE
+  logic, not an artifact of an unrelated sibling file three directories away.
+- **Rule going forward:** after adding a `loading.tsx` (or any other Next.js App Router
+  convention file — `error.tsx`, `not-found.tsx`, route groups) to an EXISTING route, re-test
+  every same-route `<Link>` on that page whose target differs only by search params (filter-clear
+  links, "remove this filter" chips, tab/anchor links that also touch query state) — don't assume
+  a purely-additive convention file is risk-free just because it required no code changes.
+- **Check added:** none mechanical yet — the immediate practice is the rule above. The `loading.tsx`
+  that triggered this was removed rather than worked around, since Historial's own page render is
+  already fast enough that the loading state wasn't load-bearing for the issue's acceptance
+  criteria.

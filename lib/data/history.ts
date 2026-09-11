@@ -4,8 +4,10 @@ import { isPubliclyAvailable } from "@/lib/deca/deactivation";
 import { formatLocationShort, type TransportLocation } from "@/lib/deca/location";
 import { toDisplayDeca } from "@/lib/deca/display";
 import { rowMatches, type HistoryFilters } from "./history-filter";
+import { extraRouteSummaries } from "./history-routes";
 
 export type { HistoryFilters } from "./history-filter";
+export { extraRouteSummaries } from "./history-routes";
 
 export type HistoryRow = {
   id: string;
@@ -28,6 +30,10 @@ export type HistoryRow = {
    *  unloadLocation/goods above always describe shipment 1 only — list
    *  surfaces show a "+N envíos" indicator when this is > 1 (Sprint 2). */
   shipmentCount: number;
+  /** #114 — up to 3 routes ("ORIGEN → DESTINO") for shipments beyond the
+   *  first, already uppercased (#86 p3), for the redesigned Historial row's
+   *  multi-envío summary line. Empty for every single-shipment document. */
+  extraRoutes: string[];
 };
 
 type Data = {
@@ -88,6 +94,7 @@ export async function listHistory(
       token: d.currentVersion.token,
       status: isPubliclyAvailable(d.serviceEnd) ? "activo" : "no disponible",
       shipmentCount: Array.isArray(raw.shipments) ? Math.max(1, raw.shipments.length) : 1,
+      extraRoutes: extraRouteSummaries(data.shipments),
     };
     if (
       rowMatches(

@@ -7070,3 +7070,95 @@ own, unbuilt territory; `getDecaForDuplicate`/`FavoriteRoute` still aren't shipm
 
 **Next:** #114 (Historial redesign), then #115 (v0.2.0 → v0.3.0 + docs close-out, gated on
 #112/#113/#114 — #112 and #113 are now both fully done).
+
+## D-209 — I-114: Historial visual redesign, filters untouched (2026-09-11)
+
+Issue #114 (P1 UX) asked for the Historial screen's results area to read as an "operational
+document manager" instead of a raw admin table — cramped columns, a 6-link action chain, weak
+mobile — while explicitly forbidding any change to the filter LOGIC itself (search/from/to/
+carrier/plate/CSV export all had to keep working exactly as before).
+
+**Design decisions, from direct investigation (single-file scope, no exploration agent needed):**
+1. **Desktop stays a real `<table>`**, heavily restyled rather than switched to div-based card
+   rows — matches the issue's own stated preference ("mantener tabla en desktop si encaja") and
+   avoids rewriting the `page.getByTestId("historico-table").locator("tr", {...})` row-locator
+   pattern already depended on by 3 other e2e specs (`workspace.spec.ts`, `creator-v2.spec.ts`,
+   `driver-delivery.spec.ts`) for no product benefit.
+2. **The primary action's visible text changed "Detalle" → "Ver detalle"** (issue's own first
+   suggestion). `getByRole("link", {name: "Detalle"})`'s default matching is case-insensitive
+   SUBSTRING, so every existing such locator kept matching unmodified — confirmed by design, then
+   verified by running those specs, not assumed.
+3. **`HistoryRow` gains `extraRoutes: string[]`** (up to 3 "ORIGEN → DESTINO" summaries for
+   shipments beyond the first, #112) via a new pure `extraRouteSummaries()` helper in a new
+   sibling file `lib/data/history-routes.ts` (not inline in `lib/data/history.ts`, which is
+   `server-only` — mirrors the pre-existing `history-filter.ts` split so the pure logic stays
+   unit-testable). Capped at 3 so a many-shipment DeCA's row never becomes an unbounded list
+   ("no convertir la fila en una lista enorme").
+4. **Versioning/status (§9) needed no new logic** — `listHistory` already reads only
+   `d.currentVersion`, so exactly one row per DeCA is ever listed, always the vigente one;
+   `docWorkflowStatus()` already derives Vigente/Corregida/No disponible correctly. This slice
+   only regroups the existing `StatusPill` + `vN` into one visual cluster — the issue's own
+   "Vigente"/"Modificado"/"Anulado" wording was an example, not a mandate to invent new states,
+   and the real existing labels are kept ("no inventar estados nuevos" applied correctly).
+5. **New `RowMenu`** (`components/deca/row-menu.tsx`) — the "···" overflow menu holding
+   Corregir/Duplicar/PDF (moved off the old flat link chain; Ver detalle/Inspección/Compartir
+   stay directly visible as the frequent actions). Mirrors `RowShare`'s existing popover
+   mechanics (absolute panel, backdrop-less, click-away) but ADDS keyboard support RowShare
+   doesn't have: Escape closes and returns focus to the trigger — the project's own WCAG 2.2 AA
+   bar, applied to a genuinely new interactive pattern rather than retrofitted onto RowShare in
+   this slice.
+6. **Filtered vs. truly-empty empty states (§11)** — the page already computed an `active`
+   boolean (any filter param set); branching on it needed no new logic, just two different
+   `EmptyState`/copy blocks: "No se han encontrado DeCA" + "Limpiar filtros" when filters
+   produced zero rows, vs. the pre-existing "sin DeCA aún, crea uno" when the company simply has
+   none yet.
+7. **`loading.tsx` was planned (§12) but REMOVED after being built and shown to actively break
+   navigation — a real bug found via the new e2e test, not a speculative risk avoided in
+   advance.** A route-level Suspense loading boundary in Next.js App Router interacts badly with
+   `<Link>` navigation to the SAME pathname differing only by search params (going from
+   `?plate=0000ZZZ` to no query): the click DOES fire the RSC fetch (confirmed via a temporary
+   request-logging debug spec, deleted after diagnosis), but that fetch self-aborts
+   (`net::ERR_ABORTED`) and the URL never updates — reproduced consistently, then confirmed fixed
+   by removing `loading.tsx` and nothing else (isolated via a controlled A/B: same code, only the
+   file's presence toggled). The issue's own §12 wording — "solo si... es sencillo integrarlo" —
+   gates this exact case: it was not simple, it actively broke a real user flow (clicking
+   "Limpiar filtros"/"Limpiar" from the empty state), so it stays out. `page.tsx` itself already
+   degrades gracefully without a loading skeleton (server-rendered on each request, same as
+   before this slice).
+
+**Verified for real:** `tests/unit/history-routes.test.ts` (4 tests, test-first) — no-shipments/
+single-shipment returns empty, skips shipment 1, caps at 3, matches `formatLocationShort`'s own
+name-over-city preference. New `tests/e2e/historico-redesign.spec.ts` (4 tests): a multi-envío
+DeCA shows its extra route + the "+1 envío" badge in the redesigned row; the "···" menu
+opens/closes via mouse AND keyboard (Escape returns focus to the trigger — a11y proof, not just a
+visual check); the filtered empty state's "Limpiar filtros" link ACTUALLY clears the filters (this
+is the test that caught the `loading.tsx` bug — it failed with the URL staying `?plate=0000ZZZ`
+before the fix, passed identically after removing only that one file); mobile cards show the same
+actions with confirmed zero horizontal-scroll overflow. Existing `workspace.spec.ts`,
+`creator-v2.spec.ts`, `driver-delivery.spec.ts`, `team.spec.ts`, `master-data.spec.ts`,
+`export-csv.spec.ts`, `row-share.spec.ts` all re-run UNMODIFIED (per the "Detalle" substring-match
+reasoning above) and confirmed still green — proving the filter logic and every pre-existing
+action genuinely survived the redesign untouched.
+
+**Gate, confirmed complete:** 443/443 unit (+4 new), tsc/eslint/prettier/keel-verify clean, full
+targeted e2e regression sweep 34/34 green across the 8 files this slice's surfaces touch.
+
+**Out of scope, genuinely — not discovered late:** visual regression/screenshot testing
+infrastructure doesn't exist in this repo (the issue's own §15 checklist item "tests de regresión
+visual... según la infraestructura del repo" — there is none, so component/e2e tests are the
+right substitute, which is what was built); the 8 named breakpoints were verified via the actual
+Tailwind responsive classes (`md:table`/`md:hidden` split, `grid`/`flex-wrap` filter form, no fixed
+pixel widths) plus one real 375px e2e run with an overflow assertion, not 8 separate manual checks
+(no browser tool was available this session for that).
+
+**Also verified against production this session, before starting #114:** ran a full migration-gap
+check against the production DB (transient connection string supplied in chat per the user's
+explicit request, deleted immediately after — not written to disk or committed) — found and
+applied the one pending migration (`20260911200000_saved_shipment`, D-207's `SavedShipment` table),
+confirmed RLS enabled on the new table (`relrowsecurity: true`) and 0 rows (zero data risk).
+`develop`/`main` were already in sync (`ee018ea`) before this check; production's DB schema is now
+current with everything through D-208, though the app CODE still needs the user's Hostinger
+redeploy to actually run any of today's work.
+
+**Next:** #115 (v0.2.0 → v0.3.0 + docs close-out) — now fully unblocked, #112/#113/#114 all
+complete.

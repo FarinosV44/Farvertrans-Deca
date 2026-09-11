@@ -842,6 +842,34 @@ anonymize-in-place (no hard delete, D-067).
   Gate: 439/439 unitarios (+10 nuevos), tsc/eslint/prettier/keel-verify limpios, barrido de regresión
   e2e dirigido 34/34 en verde. **I-113 queda completamente cerrado (Fase 1 + Fase 2).**
 
+## I-114 — Mejorar visual y usabilidad del Histórico sin alterar filtros actuales
+- 2026-09-11. Issue del usuario, ya existía en el forge. Pide expresamente NO tocar la lógica de
+  filtros (búsqueda/desde/hasta/transportista/matrícula/CSV) — solo la zona de resultados: jerarquía
+  visual, agrupar la cadena de 6 enlaces de acciones, ser consciente de multi-envío (#112), estados/
+  versión, empty state y móvil.
+- **HECHA en `develop`, sin fusionar a `main` (D-209).** El escritorio sigue usando una `<table>` real
+  (muy restilizada, no tarjetas div) — decisión tomada porque 3 specs e2e ya localizan filas vía
+  `historico-table` + `<tr>`, y porque el propio issue prefiere mantener tabla si encaja. La ruta pasa
+  a ser el dato visual dominante; cargador/transportista ganan micro-etiquetas; estado + versión se
+  agrupan en un único badge; multi-envío (#112) muestra hasta 3 rutas adicionales
+  (`HistoryRow.extraRoutes`, nuevo helper puro en `lib/data/history-routes.ts`, testeado primero).
+  Nuevo `RowMenu` ("···", `components/deca/row-menu.tsx`) agrupa Corregir/Duplicar/PDF —
+  Ver detalle/Inspección/Compartir quedan visibles como acciones frecuentes. Empty state distingue
+  "sin DeCA aún" de "sin resultados para estos filtros" (con "Limpiar filtros"). La lógica de filtros
+  no cambió ni una línea — verificado re-ejecutando 7 specs e2e preexistentes sin modificar, todas en
+  verde. **Fallo real encontrado por el nuevo test e2e y corregido ELIMINANDO una función ya
+  construida:** un `loading.tsx` de ruta (planeado según el propio §12 del issue) rompía en
+  silencio los clics en enlaces `<Link>` a la MISMA ruta que solo cambian los parámetros de
+  búsqueda — "Limpiar filtros"/"Limpiar" dejaban de navegar (la petición RSC se autocancelaba).
+  Aislado con una prueba A/B controlada (quitar solo ese fichero lo arregla); eliminado en vez de
+  parcheado, ya que el propio issue solo pedía el skeleton "si es sencillo integrarlo" — no lo era.
+  Detalle completo en `docs/decisions.md` D-209 y `docs/lessons-learned.md`. **Verificación previa a
+  empezar esta sesión:** comprobación completa de huecos de migración en producción — solo faltaba la
+  de D-207 (`saved_shipment`), aplicada y verificada (RLS activo, 0 filas). Gate: 443/443 unitarios
+  (+4 nuevos), tsc/eslint/prettier/keel-verify limpios, barrido de regresión e2e dirigido 34/34 en
+  verde. **I-114 queda completamente cerrado. #115 queda totalmente desbloqueado** (#112/#113/#114
+  ya están todos completos).
+
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
 - **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**

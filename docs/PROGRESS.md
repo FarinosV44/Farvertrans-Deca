@@ -45,6 +45,27 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **Production migration gap check (2026-09-11), before starting I-114:** confirmed no gap other
+  than D-207's `saved_shipment` migration, applied it directly to production, verified RLS enabled
+  (`relrowsecurity: true`) and 0 rows. Production DB schema is now current through D-208; app code
+  still needs the user's Hostinger redeploy.
+- **D-209 — I-114: Historial visual redesign, this session (2026-09-11), immediately after D-208.
+  Full detail in `docs/decisions.md` D-209.** Results area restyled (desktop stays a real
+  `<table>`, mobile stays cards) — route as the dominant line, shipper/carrier micro-labels, a
+  status+version badge cluster, multi-envío extra-route summaries (new `HistoryRow.extraRoutes`,
+  pure helper in new `lib/data/history-routes.ts`). New `RowMenu` (`components/deca/row-menu.tsx`)
+  "···" overflow menu for Corregir/Duplicar/PDF (mirrors `RowShare`'s popover but adds
+  keyboard/Escape support). Filtered vs. genuinely-empty empty states. Filter LOGIC completely
+  untouched — verified by re-running 7 pre-existing e2e specs unmodified, all green. **Real bug
+  found via the new e2e test and fixed by REMOVING a planned feature:** a route-level
+  `loading.tsx` (Suspense skeleton, planned per the issue's own §12) silently broke same-route
+  `<Link>` clicks that only change search params — the "Limpiar filtros"/"Limpiar" links stopped
+  navigating (RSC fetch self-aborted). Isolated via controlled A/B (removing only that file fixed
+  it), confirmed not a pre-existing bug this session introduced elsewhere, then removed entirely
+  rather than worked around — full account in `docs/lessons-learned.md`. **Gate: 443/443 unit
+  (+4 new), tsc/eslint/prettier/keel-verify clean, full targeted e2e regression sweep 34/34
+  green.** Ready to commit/push. **I-114 complete — #115 now fully unblocked** (#112/#113/#114 all
+  done).
 - **D-208 — I-113 Phase 2: Datos habituales visual redesign, this session (2026-09-11), immediately
   after D-207 (user: "continue"). Full detail in `docs/decisions.md` D-208.** Tabbed redesign
   (`components/app/saved-data-manager.tsx`, rewritten in place, export renamed

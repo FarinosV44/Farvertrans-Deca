@@ -22,6 +22,7 @@ const row = (over: Partial<HistoryRow> = {}): HistoryRow => ({
   token: "tok_abc",
   status: "activo",
   shipmentCount: 1,
+  extraRoutes: [],
   ...over,
 });
 
