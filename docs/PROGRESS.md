@@ -45,6 +45,25 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-211 — I-116: Portuguese (`pt`) added as a 9th UI locale, this session (2026-09-11),
+  immediately after D-210. Full detail in `docs/decisions.md` D-211.** New
+  `lib/i18n/dictionaries/pt.ts` (European pt-PT, `satisfies Messages`) + `pt` added to
+  `LOCALES`/`LOCALE_NAMES`. **Real wiring surface was 6 files, not the 2 the issue's own scope
+  named** — investigation found `lib/i18n/server.ts`, `lib/i18n/client.tsx`, and the hand-kept
+  client-safe `lib/i18n/header-strings.ts` slice (#96/D-172) all needed an explicit `pt` entry;
+  `tests/unit/header-strings.test.ts` needed `pt` in its own `FULL_DICTS` too. `LanguageSwitcher`,
+  `/api/i18n/locale`, and `relativeTime()` confirmed to need NO changes — all three already derive
+  from `LOCALES` generically. The ~1000-line translation itself was delegated to a subagent
+  (self-verified via tsc/eslint before reporting), then INDEPENDENTLY re-verified — spot-read
+  multiple sections, confirmed every function-valued key's logic preserved. **One real
+  discrepancy found by this cross-check, not by either tool:** `header-strings.ts`'s hand-written
+  `pt.regulation` didn't byte-match `pt.ts`'s own `nav.regulation` — fixed. **Gate: 444/444 unit
+  (+1 — the 9th locale extends an existing parameterised test), tsc/eslint/prettier/keel-verify
+  clean, i18n-header/landing e2e specs green** (1 pre-existing unrelated `test.fixme` skip in
+  each, confirmed unrelated). New e2e test proves `pt` end-to-end: selectable in the switcher,
+  updates the header live, AND a full dynamic-page load renders real Portuguese content (not just
+  the header slice). Ready to commit/push. **#112 through #116 are now ALL complete — no issue is
+  currently queued.**
 - **D-210 — I-115: Guía de uso updated + v0.2.0 → v0.3.0 release closeout, this session
   (2026-09-11), immediately after D-209. Full detail in `docs/decisions.md` D-210.** Version
   bumped in the single mechanical source (`package.json` + `lib/version.ts`, cross-checked by

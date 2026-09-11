@@ -118,4 +118,15 @@ export const HEADER_STRINGS: Record<Locale, HeaderStrings> = {
     blog: "Blog",
     faq: "Domande",
   },
+  pt: {
+    headerCta: "Criar DeCA",
+    loginCta: "Entrar",
+    panelCta: "Ir para o meu painel",
+    howItWorks: "Como funciona",
+    plans: "Planos",
+    regulation: "Regulamentação",
+    guides: "Guias",
+    blog: "Blog",
+    faq: "Perguntas",
+  },
 };

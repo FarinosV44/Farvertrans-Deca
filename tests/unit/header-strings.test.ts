@@ -9,9 +9,10 @@ import { en } from "@/lib/i18n/dictionaries/en";
 import { fr } from "@/lib/i18n/dictionaries/fr";
 import { de } from "@/lib/i18n/dictionaries/de";
 import { it as itDict } from "@/lib/i18n/dictionaries/it";
+import { pt } from "@/lib/i18n/dictionaries/pt";
 import { BRAND } from "@/lib/brand";
 
-const FULL_DICTS = { es, ca, eu, gl, en, fr, de, it: itDict };
+const FULL_DICTS = { es, ca, eu, gl, en, fr, de, it: itDict, pt };
 
 /**
  * #96 — `lib/i18n/header-strings.ts` is a hand-kept CLIENT-SAFE slice of the

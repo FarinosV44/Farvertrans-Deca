@@ -7272,3 +7272,88 @@ architecture (D-002, D-072). Not started — queued.
 **Next:** #115 is the last issue in the explicitly-ordered queue the user gave this session
 (#112→#115) — all four are now complete. #116 (Portuguese i18n) is open and unstarted, no other
 issue is queued.
+
+## D-211 — I-116: Portuguese (pt) added as a 9th UI locale (2026-09-11)
+
+Issue #116, opened earlier this session per the user's request, motivated by D-202's Portuguese-
+registration incident. Scope was narrow and mechanical (the issue itself, self-authored during
+this session's investigation, specified the exact file list) — no design decisions needed, so
+this slice skipped formal plan-mode and went straight to implementation.
+
+**Real wiring surface was 6 files, not the 2 the issue's own scope listed** — investigation before
+touching anything found 4 additional consumers of the locale system beyond `lib/i18n/locale.ts`
+and the per-locale dictionary itself, each of which would have silently left `pt` half-wired if
+missed:
+1. `lib/i18n/server.ts` — hand-kept `DICTS: Record<Locale, Messages>` map (server-side dictionary
+   lookup) needing an explicit `pt` import + entry.
+2. `lib/i18n/client.tsx` — the same hand-kept map, client-side (`LocaleProvider`/`useT()`).
+3. `lib/i18n/header-strings.ts` (#96/D-172) — a SEPARATE, hand-kept, client-safe SLICE of ~9
+   header strings per locale (kept intentionally small to avoid bundling the full dictionary into
+   every static page's client JS). `tests/unit/header-strings.test.ts` already asserts
+   `Object.keys(HEADER_STRINGS) === Set(LOCALES)` — this would have hard-failed the moment `pt` was
+   added to `LOCALES` without a matching `HEADER_STRINGS.pt` entry, catching the gap immediately
+   rather than shipping a half-translated header.
+4. `tests/unit/header-strings.test.ts` itself — needed `pt` added to its own `FULL_DICTS` map to
+   actually exercise the verbatim-equality check for the new locale (adding `pt` to `LOCALES` alone
+   would have made the test's `it.each(LOCALES)` iterate over `"pt"` but read `undefined` from an
+   un-updated `FULL_DICTS`, failing for the wrong reason).
+Confirmed via a full read of `LanguageSwitcher`, the `/api/i18n/locale` route, and `relative.ts`
+that none of the three needed any change — all three already derive from `LOCALES`/`Locale`
+generically (the switcher maps over `LOCALES`, the route validates via `z.enum(LOCALES)`,
+`Intl.RelativeTimeFormat` accepts `"pt"` as a valid BCP-47 tag natively) — confirming the original
+issue's own claim that those three "should work with no separate wiring" was correct for exactly
+those three, just not exhaustive of the full surface.
+
+**Translation delegated to a subagent, verified independently afterward — not trusted blind.** The
+actual ~1000-line translation (`lib/i18n/dictionaries/pt.ts`, European pt-PT, matching `fr.ts`/
+`it.ts`'s established structural pattern) was produced by a general-purpose subagent instructed to
+self-verify via `tsc`/`eslint` before reporting back (bulk mechanical translation work with a
+clear, narrow spec — a good fit for delegation per this project's own execution-discipline
+practice). The agent's self-report was independently re-verified, not accepted at face value:
+`npx tsc --noEmit` re-run directly (clean, confirming `satisfies Messages` structural fidelity —
+same key set, same array lengths, same function signatures as `es.ts`, or the build fails), spot-
+read several sections directly (hero/landing copy, the full `cargador contractual`/`transportista
+efectivo` terminology thread across 6+ occurrences, every function-valued key — `shipmentsBadge`,
+`removeConfirm`, `limit`, `heading`, `edited`, etc. — confirmed each preserved its exact parameter
+type and conditional logic with only the string literals translated). **One real discrepancy found
+and fixed by this cross-check, not caught by the agent's own tsc/eslint pass (neither tool can
+catch a translated-but-inconsistent copy of the same logical string):** `header-strings.ts`'s
+hand-written `pt.regulation` ("Regulamento") didn't match `pt.ts`'s own `nav.regulation`
+("Regulamentação") — the two are meant to be byte-identical (the whole point of
+`header-strings.test.ts`'s verbatim-equality assertions), so a naive assumption instead of a direct
+compare would have shipped a real, silent inconsistency invisible to any automated check that
+doesn't run the specific cross-file test. Fixed by reading `pt.ts`'s actual value and copying it
+verbatim.
+
+Terminology choices (agent-flagged, reviewed and accepted): NIF/CIF collapsed to just NIF (Portugal
+has no CIF/NIF distinction); "NIF / VAT" → "NIF / IVA"; "Plantillas" → "Modelos"; "Equipo" → "Equipa"
+(European, not Brazilian "Equipe"); "Provincia" → "Província" (a literal cognate, matching how
+`fr.ts`/`it.ts` already handle this generically-named address field, even though Portugal's own
+real administrative unit is "distrito" — the field is used for ANY country's address, not
+specifically Portuguese ones).
+
+**Verified for real:** `tests/unit/header-strings.test.ts` (11 tests, +3 from the 9th locale
+joining the existing `it.each(LOCALES)` parameterised checks) — all pass, confirming byte-exact
+equality between `header-strings.ts` and `pt.ts` across every header string. New e2e test in
+`tests/e2e/i18n-header.spec.ts`: Portuguese is selectable in the switcher (`language-switcher-pt`),
+switching updates the header text live with no navigation, AND — proving coverage beyond just the
+header slice, the issue's own "no fallback-to-Spanish gaps" AC — a full page load of `/` (a
+genuinely dynamic, server-rendered route) with the `pt` cookie set renders the real translated hero
+copy ("DeCA profissional..."). Existing `landing.spec.ts` (17/18, 1 pre-existing unrelated
+`test.fixme` skip) and the rest of `i18n-header.spec.ts` re-run unmodified and confirmed still
+green — the switcher's fixed-width dropdown menu (already redesigned in D-081 specifically to have
+a footprint independent of locale count) needed no layout change for a 9th entry, confirmed by
+running the existing on-screen/no-overflow assertions rather than assuming the prior redesign still
+holds.
+
+**Gate, confirmed complete:** 444/444 unit (+1 net — the 9th locale extends `header-strings.test.ts`'s
+existing parameterised check), tsc/eslint/prettier/keel-verify clean, 4/5 `i18n-header.spec.ts`
+green (1 pre-existing unrelated `test.fixme`), 17/18 `landing.spec.ts` green (same pre-existing
+skip).
+
+**Out of scope, confirmed by design, not overlooked:** editorial content (blog, the usage guide)
+stays Spanish-only (D-002) — not part of the per-locale dictionary system this issue touches; the
+3 fixed-Spanish legal pages (`/terminos`, `/privacidad`, `/aviso-legal`) are untouched, pending the
+professional legal review named in D-072.
+
+**Next:** no issue is currently queued. #112 through #116 are all complete.

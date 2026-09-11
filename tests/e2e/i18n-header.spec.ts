@@ -52,6 +52,24 @@ test.describe("#96 — static-page header stays locale-correct client-side (D-17
     await expect(page.getByTestId("header-login")).toHaveText("Log in");
   });
 
+  // #116, D-211 — Portuguese (pt) added as a 9th locale.
+  test("Portuguese is selectable in the switcher, updates the header, and a full page load renders real Portuguese content", async ({
+    page,
+  }) => {
+    await page.goto("/que-es-el-deca");
+    await page.getByTestId("language-switcher").locator("summary").click();
+    await page.getByTestId("language-switcher-pt").click();
+    await expect(page.getByTestId("header-login")).toHaveText("Entrar");
+    await expect(page.getByTestId("language-switcher").locator("summary span")).toHaveText("pt");
+
+    // A genuinely dynamic page, server-rendered directly in Portuguese from
+    // the cookie the switch above just set — proves coverage beyond the
+    // header slice (the issue's own "no fallback-to-Spanish gaps" AC).
+    await page.goto("/");
+    await expect(page.getByTestId("header-login")).toHaveText("Entrar");
+    await expect(page.locator("h1")).toContainText("DeCA profissional");
+  });
+
   // D-172: the `SiteHeader` fix above was necessary but NOT sufficient —
   // `app/layout.tsx` (the root layout, wraps every route, no exception)
   // independently calls `getLocale()` itself, and that alone still forces

@@ -1,4 +1,4 @@
-export const LOCALES = ["es", "ca", "eu", "gl", "en", "fr", "de", "it"] as const;
+export const LOCALES = ["es", "ca", "eu", "gl", "en", "fr", "de", "it", "pt"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "es";
 
@@ -18,6 +18,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   fr: "Français",
   de: "Deutsch",
   it: "Italiano",
+  pt: "Português",
 };
 /** Client-readable (not httpOnly) — the switcher and analytics both read it. */
 export const LOCALE_COOKIE = "fvd_locale";

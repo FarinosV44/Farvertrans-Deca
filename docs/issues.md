@@ -908,7 +908,35 @@ anonymize-in-place (no hard delete, D-067).
 - **También en esta sesión:** abierto el issue #116 (soporte de portugués `pt` como idioma de la
   interfaz), a petición explícita del usuario, motivado por el incidente D-202 de esta misma
   sesión. Acotado al sistema de diccionarios de 8 idiomas ya existente; el contenido editorial y
-  las páginas legales quedan fuera (D-002/D-072). Sin empezar.
+  las páginas legales quedan fuera (D-002/D-072).
+
+## I-116 — Añadir portugués (pt) como idioma de la interfaz
+- 2026-09-11. Issue abierto por el propio asistente en esta sesión, a petición explícita del
+  usuario, motivado por el incidente D-202 (una empresa portuguesa bloqueada al registrarse).
+  Alcance mecánico y ya acotado por el propio issue — sin decisiones de diseño pendientes, así que
+  esta vez se pasó directamente a implementar sin sesión formal de plan mode.
+- **HECHA en `develop`, sin fusionar a `main` (D-211).** Nuevo `lib/i18n/dictionaries/pt.ts`
+  (portugués europeo, `satisfies Messages`) + `pt` añadido a `LOCALES`/`LOCALE_NAMES`. **La
+  superficie real de cableado eran 6 ficheros, no los 2 que el propio issue enumeraba** —
+  `lib/i18n/server.ts`, `lib/i18n/client.tsx` y la rebanada aparte `lib/i18n/header-strings.ts`
+  (#96/D-172, mantenida a mano por rendimiento) necesitaban su propia entrada `pt`; el propio test
+  `tests/unit/header-strings.test.ts` necesitaba `pt` en su `FULL_DICTS`. Se confirmó que
+  `LanguageSwitcher`, `/api/i18n/locale` y `relativeTime()` NO necesitaban ningún cambio — los tres
+  ya derivan de `LOCALES` de forma genérica.
+- La traducción (~1000 líneas) se delegó a un subagente (que se autoverificó con tsc/eslint antes
+  de reportar), y después se verificó de forma independiente — no se dio por buena a ciegas: se
+  releyeron varias secciones directamente, se confirmó que cada función (`shipmentsBadge`,
+  `removeConfirm`, `limit`, etc.) conservaba su lógica exacta, solo con las cadenas traducidas.
+  **Una discrepancia real encontrada por esa revisión cruzada, no por ninguna herramienta
+  automática:** el `pt.regulation` escrito a mano en `header-strings.ts` no coincidía byte a byte
+  con el `nav.regulation` real de `pt.ts` — corregido.
+- Gate: 444/444 unitarios (+1 — el noveno idioma amplía un test parametrizado ya existente),
+  tsc/eslint/prettier/keel-verify limpios, specs e2e de i18n-header y landing en verde (mismo
+  `test.fixme` preexistente y no relacionado en ambos). Nuevo test e2e prueba `pt` de extremo a
+  extremo: seleccionable en el selector, actualiza la cabecera en vivo, y una carga completa de
+  página dinámica renderiza contenido portugués real (no solo la rebanada de cabecera). **I-116
+  queda completamente cerrado. #112 a #116 están ya todos completos — no queda ningún issue en
+  cola.**
 
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
