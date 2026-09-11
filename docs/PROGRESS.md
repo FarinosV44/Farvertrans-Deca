@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `12a5760` (2026-09-11 — D-202…D-210 all pushed to both; product version is now **0.3.0**). Nothing awaits `main`. No tag requested. **Production DB schema is current through D-208** (the D-207 `saved_shipment` migration was applied directly this session, verified RLS on + 0 rows) — **production APP CODE is NOT yet redeployed** for any of today's work; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything through D-210 at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210).
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `abfca16` (2026-09-11 — D-202…D-211 all pushed to both; product version is **0.3.0**; UI now supports 9 locales incl. `pt`). Nothing awaits `main`. No tag requested. **Production DB schema is current through D-208** (the D-207 `saved_shipment` migration was applied directly this session, verified RLS on + 0 rows) — **production APP CODE is NOT yet redeployed** for any of today's work; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything through D-211 at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210).
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -62,7 +62,8 @@
   clean, i18n-header/landing e2e specs green** (1 pre-existing unrelated `test.fixme` skip in
   each, confirmed unrelated). New e2e test proves `pt` end-to-end: selectable in the switcher,
   updates the header live, AND a full dynamic-page load renders real Portuguese content (not just
-  the header slice). Ready to commit/push. **#112 through #116 are now ALL complete — no issue is
+  the header slice). **PUSHED to `develop` AND `main`** (commit `abfca16`). **#112 through #116 are
+  now ALL complete — no issue is
   currently queued.**
 - **D-210 — I-115: Guía de uso updated + v0.2.0 → v0.3.0 release closeout, this session
   (2026-09-11), immediately after D-209. Full detail in `docs/decisions.md` D-210.** Version
