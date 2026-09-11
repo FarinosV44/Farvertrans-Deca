@@ -7407,3 +7407,85 @@ left untouched — the reported problem is specific to `<table>` cell vertical-a
 equivalent concept in a flex-column card; the existing mobile e2e coverage confirms no regression.
 
 **Next:** no issue is currently queued.
+
+## D-213 — I-118: branded incident page for 5xx / server-render errors (2026-09-12)
+
+**Problem (#118):** `app/error.tsx` (the route-segment error boundary) was a bare, unbranded
+fallback — plain "Error" heading, no logo, only a "Reintentar" button, no "Ir al inicio" — and no
+`app/global-error.tsx` existed at all, so an error thrown by the ROOT layout itself (which only
+`global-error.tsx` can catch) fell through to Next's own generic/technical error page. Neither
+boundary is allowed to depend on the DB/backend being up, and neither may leak a stack trace,
+table name, or internal message to the user.
+
+**Design:**
+1. **`components/errors/incident-page.tsx`** (new) — the shared branded presentational component:
+   reuses `components/brand/wordmark.tsx` (`Wordmark`/`BrandGlyph`, pure inline SVG + the static
+   `lib/brand.ts` `BRAND` const — zero DB/network dependency) and the `.auth-ground` calm-branded
+   backdrop already used by `components/auth/auth-shell.tsx`, so the incident screen matches an
+   existing, already-shipped visual language rather than inventing a new one. Renders "Lo
+   sentimos" + the incident copy + two real actions (`<button>` "Intentar de nuevo" calling
+   `onRetry`, `<Link>` "Ir al inicio"). Copy comes from `es.ts`'s pre-existing top-level `errors`
+   block (new keys `incidentTitle`/`incidentMessage`/`retry`/`goHome`), imported directly — the
+   SAME deliberate pattern `error.tsx`/`not-found.tsx` already used for `generic`/`notFound`
+   (Spanish-only, no `getDictionary()`/locale-cookie dependency, since the thing that broke could
+   be exactly what locale resolution needs). Because `Messages = typeof es.ts` and every other
+   locale dictionary asserts `satisfies Messages`, the same 4 keys were added (translated) to all
+   8 other dictionaries too — content-only, these boundaries still only ever import `es.ts`
+   directly.
+2. **`app/error.tsx`** rewritten to render `<IncidentPage onRetry={reset} />`; kept and extended
+   its existing `console.error` logging to include `error.digest` (Next's own correlation key) —
+   the user sees only the generic message, the real detail still reaches the server console/log
+   pipeline untouched.
+3. **`app/global-error.tsx`** (new) — the ONLY mechanism that catches a root-layout (`app/layout.tsx`)
+   error. Defines its own `<html lang="es"><body>` and imports `./globals.css` directly, and
+   deliberately does NOT use `LocaleProvider`/`getLocale()`/`getDictionary()`/fonts/JSON-LD — none
+   of what the root layout provides can be trusted if the root layout is what just broke.
+   Renders the same `IncidentPage`.
+4. **No maintenance-mode system was built.** Grepped for any existing `FVD_*` maintenance flag —
+   none exists — and the issue explicitly forbids inventing one "just for looks." Scope is the
+   generic branded incident experience only.
+5. **No incident-reference/correlation code shown to the user.** `lib/deca/generation.ts`'s
+   correlation-ID system (#29) is DB-backed and scoped specifically to DeCA PDF generation
+   failures, surfaced at `/admin/errores/[correlationId]` — reusing it here would violate "must
+   not query DB to render" and stretch infra built for a different, narrower problem. The issue
+   itself says not to add a reference code "solo por estética" when there's no matching support
+   flow behind it for general app errors, so #118 ships with none.
+6. **`app/not-found.tsx` left untouched** — already fully distinct from the incident copy, and the
+   issue explicitly forbids conflating "page doesn't exist" with "service unavailable."
+
+**Test seam — `app/test-only/error-boundary/page.tsx`** (new): throws a real server-render error,
+gated by a new `FVD_ENABLE_TEST_ROUTES` env var (mirrors the existing `FVD_EXPOSE_RESET_TOKEN`
+"test seam ONLY, never in production" convention), added to `playwright.config.ts`'s
+`webServer.env`. **Found and fixed a real routing bug while building this:** the route was first
+placed at `app/_test/error-boundary/` — a LEADING UNDERSCORE makes Next.js treat a folder as
+private and exclude it from routing entirely, so the route silently 404'd regardless of the env
+flag (confirmed via the build log never listing the route at all). Moved to
+`app/test-only/error-boundary/` and it correctly triggers `app/error.tsx`.
+
+**`tests/e2e/error-pages.spec.ts`** (new, 3 tests, all against a real render-time throw, not a
+mocked API response): the branded incident page shows the logo/heading/both actions and never
+leaks the raw error text; "Ir al inicio" navigates home; a nonexistent route still shows the
+distinct, untouched 404 page and never the incident copy. 3/3 green. Also ran
+`workspace.spec.ts` + `seo-regression.spec.ts` (30/30 green) to confirm no regression from the new
+dictionary keys or the new route.
+
+**`app/global-error.tsx` has no automated coverage** — jsdom/RTL isn't in the unit-test setup
+(`vitest.config.ts` → `environment: "node"`), and the only way to trigger a ROOT-layout error is
+the layout itself throwing, which isn't safely exposable as a production env-gated seam (touching
+`app/layout.tsx` for a test trigger is exactly the "could cause an error loop" risk the issue warns
+against). Verified manually instead, mirroring this session's established temporary-uncommitted-
+script practice (D-181/182, D-210, D-212): a LOCAL, UNCOMMITTED edit added a header-gated throw
+(`x-fvd-tmp-verify-global-error` request header, not an env var — so normal static prerendering
+during `npm run build` never fires it, unlike an env-var gate which would abort the whole build)
+to `app/layout.tsx`, then a temporary Playwright script hit a real `npm run start` production
+server with that header set and screenshotted the result: 500 status, "Lo sentimos" heading, both
+actions, no dev-mode error overlay (production mode, unlike `next dev`, renders the real error
+boundary instead of Next's debug overlay). Screenshot/script deleted and `app/layout.tsx` reverted
+to its exact committed state (`git diff` empty) before committing anything.
+
+**Gate:** `npx tsc --noEmit` clean, `eslint`/`prettier` clean on every changed file, 444/444 unit
+(no unit-level logic changed — pure presentational + static dictionary additions), 3/3 new e2e +
+30/30 regression e2e green, `global-error.tsx` manually verified with a real screenshot per above.
+
+**Next:** no issue is currently queued beyond #118, which is fixed and about to be commented on
+GitHub — left OPEN for the user's own confirmation/close, per this project's established practice.

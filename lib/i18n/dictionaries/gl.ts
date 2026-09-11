@@ -982,6 +982,11 @@ export const gl = {
   errors: {
     generic: "Algo non foi ben. Téntao de novo nuns segundos.",
     notFound: "Non atopamos esta páxina.",
+    incidentTitle: "Sentímolo",
+    incidentMessage:
+      "Produciuse unha incidencia temporal e DeCA Profesional non está dispoñible neste momento. Téntao de novo dentro duns minutos.",
+    retry: "Téntao de novo",
+    goHome: "Ir ao inicio",
   },
   legal: {
     roles: {

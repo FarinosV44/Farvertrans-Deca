@@ -961,6 +961,11 @@ export const en = {
   errors: {
     generic: "Something went wrong. Please try again in a few seconds.",
     notFound: "We couldn't find this page.",
+    incidentTitle: "We're sorry",
+    incidentMessage:
+      "A temporary issue occurred and DeCA Profesional is unavailable right now. Please try again in a few minutes.",
+    retry: "Try again",
+    goHome: "Go to homepage",
   },
   legal: {
     roles: {

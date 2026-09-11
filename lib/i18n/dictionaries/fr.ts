@@ -1001,6 +1001,11 @@ export const fr = {
   errors: {
     generic: "Une erreur s'est produite. Réessayez dans quelques secondes.",
     notFound: "Nous n'avons pas trouvé cette page.",
+    incidentTitle: "Nous sommes désolés",
+    incidentMessage:
+      "Un incident temporaire s'est produit et DeCA Profesional n'est pas disponible pour le moment. Réessayez dans quelques minutes.",
+    retry: "Réessayer",
+    goHome: "Retour à l'accueil",
   },
   legal: {
     roles: {

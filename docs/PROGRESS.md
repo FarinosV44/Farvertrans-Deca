@@ -45,6 +45,26 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-213 — I-118: branded incident page for 5xx / server-render errors, this session
+  (2026-09-12), immediately after D-212. Full detail in `docs/decisions.md` D-213.** New
+  `components/errors/incident-page.tsx` (shared branded screen, reuses the existing `Wordmark`/
+  `.auth-ground` visual language — zero DB/network dependency). `app/error.tsx` rewritten to use
+  it; new `app/global-error.tsx` (the ONLY boundary that catches a root-layout error — self-
+  contained, no `LocaleProvider`/`getLocale()`/fonts). New copy in `es.ts`'s `errors` block
+  (`incidentTitle`/`incidentMessage`/`retry`/`goHome`), mirrored in all 8 other locale dictionaries
+  since `Messages = typeof es` and each asserts `satisfies Messages` — content-only, these
+  boundaries still only ever import `es.ts` directly. Deliberately built NO maintenance-mode system
+  (none existed, issue forbids inventing one) and reused NO correlation-ID (the #29 DeCA-generation
+  one is DB-backed and scoped to a different problem). **Found and fixed a real Next.js routing bug
+  while building the e2e test seam:** `app/_test/error-boundary/` (leading underscore) is a Next.js
+  "private folder" excluded from routing entirely — the route silently 404'd regardless of the env
+  flag; moved to `app/test-only/error-boundary/`, confirmed working. New
+  `tests/e2e/error-pages.spec.ts` (3/3 green) exercises a REAL server-render throw, not a mocked
+  response. `global-error.tsx` has no automated coverage (no jsdom in the unit setup, and an
+  env-gated root-layout throw is unsafe to ship) — verified manually instead with a temporary,
+  uncommitted header-gated throw + a real production-build screenshot, then fully reverted
+  (`git diff app/layout.tsx` empty before commit). **Gate: tsc/eslint/prettier clean, 444/444 unit,
+  3/3 new e2e + 30/30 regression e2e (`workspace.spec.ts` + `seo-regression.spec.ts`) green.**
 - **D-212 — I-117: Historial row vertical alignment fix, this session (2026-09-12), immediately
   after D-211. Full detail in `docs/decisions.md` D-212.** Direct user report (follow-up to #114):
   rows felt top-aligned/cramped once a cell wrapped onto multiple lines. Root cause: the `<tr>`

@@ -990,6 +990,11 @@ export const es = {
   errors: {
     generic: "Algo no ha ido bien. Vuelve a intentarlo en unos segundos.",
     notFound: "No hemos encontrado esta página.",
+    incidentTitle: "Lo sentimos",
+    incidentMessage:
+      "Se ha producido una incidencia temporal y DeCA Profesional no está disponible en este momento. Inténtalo de nuevo dentro de unos minutos.",
+    retry: "Intentar de nuevo",
+    goHome: "Ir al inicio",
   },
   /**
    * LEGAL #52/#54: the legal pages themselves (aviso legal, privacidad,

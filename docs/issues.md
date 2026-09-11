@@ -957,7 +957,39 @@ anonymize-in-place (no hard delete, D-067).
 - Gate: 444/444 unitarios (sin nuevos — solo CSS), tsc/eslint/prettier limpios, barrido de
   regresión e2e dirigido 17/17 en verde (incluida la prueba de tarjetas móviles, confirmando que el
   móvil —diseño flex sin concepto de vertical-align— no se vio afectado; incluido el escaneo de
-  accesibilidad). **I-117 queda completamente cerrado.**
+  accesibilidad). **I-117 fijado y comentado en el issue, dejado ABIERTO para que el usuario lo
+  confirme/cierre él mismo** (política "nunca cerrar por lectura propia del código").
+
+## I-118 — [P1 UX] Página de error branded para errores comunes 5xx / mantenimiento
+- 2026-09-12. Issue ya existente en el backlog del usuario (no abierto por el asistente).
+  Trabajado esta sesión (D-213). `app/error.tsx` (boundary de segmento de ruta) era mínimo y sin
+  marca; no existía `app/global-error.tsx` (el único mecanismo que captura un error del ROOT
+  layout).
+- **HECHA en `develop`, pendiente de fusionar a `main`.** Nuevo `components/errors/incident-page.tsx`
+  compartido — reutiliza `Wordmark`/`.auth-ground` (ya usados por `AuthShell`), sin dependencia de
+  BD/red. `app/error.tsx` reescrito para usarlo; nuevo `app/global-error.tsx` (su propio
+  `<html>/<body>`, sin `LocaleProvider`/`getLocale()`/fuentes — nada que el layout roto pudiera
+  fallar en proveer). Copy nuevo en el bloque `errors` de `es.ts` (`incidentTitle`/
+  `incidentMessage`/`retry`/`goHome`), replicado (traducido) en los otros 8 diccionarios porque
+  `Messages = typeof es` y cada uno afirma `satisfies Messages` — solo contenido, estos boundaries
+  siguen importando `es.ts` directamente. **Sin sistema de mantenimiento** (no existía ninguno, y
+  el issue prohíbe inventarlo) y **sin código de referencia/correlación** (el de #29 es específico
+  de fallos de generación de DeCA y depende de BD — reusarlo aquí violaría "no consultar BD para
+  renderizar").
+- **Bug real encontrado y corregido construyendo el seam de test:** la ruta de disparo E2E se puso
+  primero en `app/_test/error-boundary/` — el guion bajo inicial hace que Next.js excluya toda la
+  carpeta del enrutado ("private folder"), así que la ruta daba 404 siempre, sin importar la
+  variable de entorno. Movida a `app/test-only/error-boundary/`, confirmada funcionando.
+- **`app/global-error.tsx` sin cobertura automatizada** (no hay jsdom en el setup de unit tests, y
+  un disparo de root-layout gateado por env es inseguro de exponer). Verificado a mano: un throw
+  temporal sin comprometer, gateado por CABECERA (no por env — un env gate habría abortado el
+  propio `npm run build` durante el prerenderizado estático) en una copia local de `app/layout.tsx`,
+  contra una build de producción real, capturado por pantalla (500, "Lo sentimos", ambas acciones,
+  sin overlay de depuración de Next dev). Script/captura borrados y `app/layout.tsx` revertido a su
+  estado exacto comprometido (`git diff` vacío) antes de comitear nada.
+- Gate: tsc/eslint/prettier limpios, 444/444 unitarios, 3/3 e2e nuevos
+  (`error-pages.spec.ts`) + 30/30 de regresión (`workspace.spec.ts` + `seo-regression.spec.ts`) en
+  verde. **I-118 completo, comentado en el issue, dejado ABIERTO para confirmación del usuario.**
 
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.

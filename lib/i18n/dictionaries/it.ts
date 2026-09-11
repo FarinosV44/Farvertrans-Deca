@@ -976,6 +976,11 @@ export const it = {
   errors: {
     generic: "Qualcosa è andato storto. Riprova tra qualche secondo.",
     notFound: "Non abbiamo trovato questa pagina.",
+    incidentTitle: "Siamo spiacenti",
+    incidentMessage:
+      "Si è verificato un problema temporaneo e DeCA Profesional non è disponibile in questo momento. Riprova tra qualche minuto.",
+    retry: "Riprova",
+    goHome: "Torna alla home",
   },
   legal: {
     roles: {

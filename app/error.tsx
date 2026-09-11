@@ -1,8 +1,15 @@
 "use client";
-import { useEffect } from "react";
-import { es } from "@/lib/i18n/dictionaries/es";
 
-export default function GlobalError({
+import { useEffect } from "react";
+import { IncidentPage } from "@/components/errors/incident-page";
+
+/**
+ * Route-segment error boundary (#118): catches an uncontrolled render/server
+ * error anywhere below the root layout and shows the branded incident screen
+ * instead of a framework/technical page. Kept separate from `app/not-found.tsx`
+ * (404 is "page doesn't exist", this is "something broke").
+ */
+export default function RouteError({
   error,
   reset,
 }: {
@@ -10,21 +17,14 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Client-visible errors are also surfaced in the server log via Next's reporting.
-    console.error(error);
+    // Full detail (message, stack, Next's own digest) stays server/console-side —
+    // the user only ever sees the generic branded message.
+    console.error("[error.tsx]", {
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+    });
   }, [error]);
 
-  return (
-    <main id="contenido" className="mx-auto max-w-[1120px] px-4 py-24 md:px-6">
-      <h1 className="text-2xl font-bold">Error</h1>
-      <p className="mt-2 text-[var(--color-text-muted)]">{es.errors.generic}</p>
-      <button
-        type="button"
-        onClick={reset}
-        className="mt-6 min-h-12 rounded-[var(--radius-md)] border border-[var(--color-primary)] px-5 font-medium text-[var(--color-primary)]"
-      >
-        Reintentar
-      </button>
-    </main>
-  );
+  return <IncidentPage onRetry={reset} />;
 }

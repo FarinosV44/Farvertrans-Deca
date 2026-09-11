@@ -982,6 +982,11 @@ export const pt = {
   errors: {
     generic: "Algo correu mal. Tente novamente dentro de alguns segundos.",
     notFound: "Não encontrámos esta página.",
+    incidentTitle: "Lamentamos",
+    incidentMessage:
+      "Ocorreu uma incidência temporária e o DeCA Profesional não está disponível neste momento. Tente novamente dentro de alguns minutos.",
+    retry: "Tentar novamente",
+    goHome: "Ir para o início",
   },
   /**
    * LEGAL #52/#54: the legal pages themselves (aviso legal, privacidad,

@@ -997,6 +997,11 @@ export const de = {
   errors: {
     generic: "Etwas ist schiefgelaufen. Versuchen Sie es in wenigen Sekunden erneut.",
     notFound: "Wir haben diese Seite nicht gefunden.",
+    incidentTitle: "Es tut uns leid",
+    incidentMessage:
+      "Es ist eine vorübergehende Störung aufgetreten und DeCA Profesional ist derzeit nicht verfügbar. Bitte versuchen Sie es in ein paar Minuten erneut.",
+    retry: "Erneut versuchen",
+    goHome: "Zur Startseite",
   },
   legal: {
     roles: {

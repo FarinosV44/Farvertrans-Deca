@@ -978,6 +978,11 @@ export const ca = {
   errors: {
     generic: "Alguna cosa no ha anat bé. Torna-ho a intentar d'aquí uns segons.",
     notFound: "No hem trobat aquesta pàgina.",
+    incidentTitle: "Ho sentim",
+    incidentMessage:
+      "S'ha produït una incidència temporal i DeCA Profesional no està disponible en aquest moment. Torna-ho a intentar d'aquí a uns minuts.",
+    retry: "Torna-ho a intentar",
+    goHome: "Anar a l'inici",
   },
   legal: {
     roles: {

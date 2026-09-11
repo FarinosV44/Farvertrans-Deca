@@ -999,6 +999,11 @@ export const eu = {
   errors: {
     generic: "Zerbait ez da ondo joan. Saiatu berriro segundo batzuen buruan.",
     notFound: "Ez dugu orri hau aurkitu.",
+    incidentTitle: "Sentitzen dugu",
+    incidentMessage:
+      "Aldi baterako gorabehera bat gertatu da eta DeCA Profesional ez dago erabilgarri unean. Saiatu berriro minutu batzuen buruan.",
+    retry: "Saiatu berriro",
+    goHome: "Joan hasierara",
   },
   legal: {
     roles: {

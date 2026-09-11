@@ -32,10 +32,13 @@ export default defineConfig({
     // - FVD_DISABLE_ABUSE_CHECKS: the suite creates dozens of real accounts from one
     //   machine inside one rate-limit window by design; see lib/abuse/index.ts.
     // - SUPERADMIN_BACKUP_PASSWORD: the #91 backup-password e2e needs a known value.
+    // - FVD_ENABLE_TEST_ROUTES: exposes app/test-only/* render-throw routes (#118) so
+    //   the error-boundary e2e can trigger a REAL server-render error, not a mocked one.
     env: {
       FVD_EXPOSE_RESET_TOKEN: "1",
       FVD_DISABLE_ABUSE_CHECKS: "1",
       SUPERADMIN_BACKUP_PASSWORD: "e2e-backup-Sup3r!",
+      FVD_ENABLE_TEST_ROUTES: "1",
     },
   },
 });
