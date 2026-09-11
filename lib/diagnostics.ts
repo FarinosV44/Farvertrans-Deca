@@ -305,7 +305,9 @@ export async function runDiagnostics(): Promise<DiagnosticsReport> {
   };
 }
 
-/** Synthetic payload for the render smoke test — never real data. */
+/** Synthetic payload for the render smoke test — never real data. #112: the
+ *  smoke test always exercises the real `shipments`-array shape (never the
+ *  legacy flat one), so it actually proves the current PDF code path works. */
 const SMOKE_PAYLOAD = {
   shipper: { name: "Diagnóstico S.L.", nif: "B00000000", address: "Calle Prueba 1, Madrid" },
   carrier: {
@@ -313,27 +315,31 @@ const SMOKE_PAYLOAD = {
     nif: "B00000001",
     address: "Calle Prueba 2, Madrid",
   },
-  loadLocation: {
-    name: "Almacén Diagnóstico",
-    address: "Calle Prueba 1",
-    postalCode: "28001",
-    city: "Madrid",
-    province: "Madrid",
-    country: "España",
-  },
-  unloadLocation: {
-    name: "Almacén Diagnóstico Destino",
-    address: "Calle Prueba 2",
-    postalCode: "08001",
-    city: "Barcelona",
-    province: "Barcelona",
-    country: "España",
-  },
   loadDate: new Date().toISOString().slice(0, 10),
   unloadDate: new Date().toISOString().slice(0, 10),
-  goods: "Prueba de diagnóstico",
-  weight: "1000 kg",
   tractorPlate: "0000 XXX",
   trailerPlate: "",
   reference: "DIAGNOSTICS",
+  shipments: [
+    {
+      loadLocation: {
+        name: "Almacén Diagnóstico",
+        address: "Calle Prueba 1",
+        postalCode: "28001",
+        city: "Madrid",
+        province: "Madrid",
+        country: "España",
+      },
+      unloadLocation: {
+        name: "Almacén Diagnóstico Destino",
+        address: "Calle Prueba 2",
+        postalCode: "08001",
+        city: "Barcelona",
+        province: "Barcelona",
+        country: "España",
+      },
+      goods: "Prueba de diagnóstico",
+      weight: "1000 kg",
+    },
+  ],
 } satisfies DecaPayload;

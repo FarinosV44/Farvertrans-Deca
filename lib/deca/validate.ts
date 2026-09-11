@@ -1,4 +1,4 @@
-import { decaPayloadSchema, type DecaPayload } from "./schema";
+import { decaPayloadSchema, resolveShipments, type DecaPayload } from "./schema";
 import { checkNif } from "./nif";
 import { DECA_ROLES } from "./roles";
 
@@ -50,10 +50,19 @@ export function validateDeca(input: unknown): ValidatedDeca {
     }
   }
 
-  // If a trailer plate is given it should not equal the tractor plate.
-  if (data.trailerPlate && data.trailerPlate === data.tractorPlate) {
-    warnings.push("La matrícula del remolque coincide con la de la tractora.");
-  }
+  // If a trailer plate is given it should not equal the tractor plate — #112:
+  // checked on each shipment's RESOLVED (default + override) plates, since a
+  // shipment may override either one independently of the DeCA-level default.
+  const shipments = resolveShipments(data);
+  shipments.forEach((s, i) => {
+    if (s.trailerPlate && s.trailerPlate === s.tractorPlate) {
+      warnings.push(
+        shipments.length > 1
+          ? `Envío ${i + 1}: la matrícula del remolque coincide con la de la tractora.`
+          : "La matrícula del remolque coincide con la de la tractora.",
+      );
+    }
+  });
 
   return { data, warnings };
 }

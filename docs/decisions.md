@@ -6646,3 +6646,131 @@ pending the user's next Hostinger redeploy) — the production DB schema is now 
 running app code, which is safe (the new constraint is additive and the old `findFirst`-only code path
 simply doesn't know about it yet) but the UX/latency/foreign-registration fixes are not live until
 that redeploy happens.
+
+## D-205 — #112 Sprint 1: multiple shipments ("envíos") per DeCA — creation (2026-09-11)
+
+Full issue text logged as I-112 (`docs/issues.md`) — a substantial feature with real legal grounding
+(Resolución de 5 de junio de 2026 apdos. Quinto/Sexto; Ley 15/2009 art. 7.2/7.3; Orden FOM/2861/2012
+art. 6.c/d): a DeCA may bundle several real loading/unloading legs ("envíos") when they share the same
+cargador contractual and transportista efectivo. Planned via plan mode with the user (16 acceptance
+criteria; the user chose to phase it — Sprint 1 = creation, Sprint 2 = correction-flow diff + the ~15
+list-view summary surfaces, both still open). Queued after this: #113 (Datos habituales redesign,
+references #112), #114 (Historial redesign), #115 (v0.2.0 → v0.3.0 + docs close-out, gated on
+#112/#113/#114) — none investigated yet.
+
+**Data model, exactly as the user specified (their own words, not a default I picked):**
+- Shipper/carrier stay **DeCA-level only** — no per-shipment field exists for them, so "cannot mix a
+  different cargador/transportista in one DeCA" is true by construction, not an added validation rule.
+- **Always explicit per shipment, never defaulted:** `loadLocation`, `unloadLocation`, `goods`,
+  `weight`, and a new lightweight `recipient` (name only — today's DeCA has no formal "destinatario"
+  party with NIF/address; the user explicitly chose the lightweight field over adding a full new party
+  or reusing `unloadLocation.name`).
+- **DeCA-level defaults, per-shipment overridable:** `loadDate`/`unloadDate`, `tractorPlate`/
+  `trailerPlate`, `notes`. `resolveShipment()`/`resolveShipments()` (`lib/deca/schema.ts`) compute the
+  final effective value; the PDF and every other consumer reads ONLY the resolved value, never a
+  shipment's raw (possibly-absent) override field directly.
+
+**Key architectural finding that kept this bounded:** `DecaVersion.dataJson` is a free-form JSON blob
+per version, not relational columns — `shipments` is a new array INSIDE that JSON, not a new Prisma
+model/migration. `createDeca`/`correctDeca` (`lib/deca/persist.ts`) were already payload-shape-agnostic.
+The existing correction/versioning system (new token/URL/QR per correction, `changeReason` required,
+prior version preserved, all reused unchanged from `lib/deca/detail.ts`'s cockpit) already satisfies the
+issue's "modificación trazable" requirement (Resolución apdo. Quinto) for multi-shipment payloads too —
+nothing new was built for traceability itself.
+
+**Backward compatibility — two layers, both required (the first was designed but NOT actually wired in
+until testing caught it, see "Real bug found and fixed" below):**
+1. `decaPayloadSchema` (`lib/deca/schema.ts`) accepts EITHER the pre-#112 flat single-shipment body
+   (`normalizeDecaInput()` reshapes it into a single-element `shipments` array before validation — every
+   existing caller of `POST /api/deca`/`POST /api/deca/[id]/version`, including ~30 e2e specs and
+   `lib/diagnostics.ts`'s smoke payload, needed ZERO changes) or the new `{ ..., shipments: [...] }` body.
+2. `dataJson` itself keeps its pre-#112 flat top-level fields (`loadLocation`/`goods`/`weight`/etc.) as a
+   mirror of `shipments[0]`'s RESOLVED values (`legacyMirrorFields()` + `toDataJson()` in
+   `lib/deca/persist.ts`), alongside the new `shipments` array — every existing reader of the stored
+   flat shape (history, search, CSV export, templates, route-intel, the admin cross-tenant table — NONE
+   of them touched this sprint, deliberately deferred to Sprint 2) keeps reading shipment 1 unchanged.
+
+**Real bug found and fixed during testing, recorded so it isn't repeated:** `legacyMirrorFields()` was
+written and unit-tested in isolation but never actually called from `createDeca`/`correctDeca` — the
+first implementation pass left `dataJson` as the bare canonical shape with NO flat mirror. This passed
+every unit test (which exercise the pure functions directly) but broke 5 real e2e tests reading the
+STORED data back through the normal app surfaces (`doc-cockpit.spec.ts` ×2, `build13.spec.ts`,
+`creator-v2.spec.ts`, `crear.spec.ts`) — the "Datos del documento" cockpit view showed empty
+loadLocation/goods/weight for a plain single-shipment DeCA. Root cause: unit tests proved the helper
+function was correct; nothing proved it was actually *called*. Fixed by wiring `toDataJson()` into both
+`dataJson` write sites. **Lesson: a backward-compatibility helper is unverified until an end-to-end test
+reads the data back through a real consumer, not just calls the helper directly** — added to
+`docs/lessons-learned.md`.
+
+**Also fixed as part of the same wiring (a real correctness gap, not originally scoped):** the R-9
+public-availability window (`Deca.serviceStart`/`serviceEnd`) used to be set from the DeCA-level default
+`loadDate`/`unloadDate` alone. A shipment that overrides its own dates to start earlier or finish later
+than the default would have been excluded from part of its own legally-required availability window.
+`serviceWindow()` now takes the min resolved load date / max resolved unload date across every shipment;
+for the still-common single-shipment case this is unchanged from before #112.
+
+**PDF (`lib/pdf/deca-document.tsx`):** one ROUTE + GOODS/VEHICLE block per resolved shipment. Exactly 1
+shipment (the default, still the common case) renders BYTE-IDENTICAL to before #112 — proven by every
+pre-existing PDF snapshot/compliance test passing unmodified. 2+ shipments each get a solid-fill
+"ENVÍO N" badge (Resolución's own "muy visible y separada"), a `Destinatario` row when given, a
+PESO TOTAL line via `sumWeights()` (kg-normalized sum, es-ES formatted — shown ONLY when every
+shipment's weight is numeric-parseable; a genuinely alternative measure like "una plataforma completa"
+on any shipment means no total is shown at all, never a partial/fabricated one, consistent with the
+existing "weight is never reformatted" rule), and the Resolución's own suggested disclaimer that the
+numbering is identificative, not an execution order. No italic style used (only Inter Regular/Bold are
+registered, `lib/pdf/fonts.ts` — discovered by a real font-resolution failure, not guessed).
+
+**Wizard (`components/deca/wizard.tsx`):** off by default — the single-origin/destination flow is
+pixel-identical to before #112 (verified: `multi-shipment-toggle` unchecked, zero extra-shipment blocks
+rendered, generation unchanged). Toggling it on reveals "+ Añadir otro envío" — each block is a
+self-contained manual-entry form (no autofill/saved-data dropdowns in Sprint 1, a deliberate scope trim)
+pre-filled from the DeCA-level current values for the override-able fields. Client-side validation
+re-runs the SAME `shipmentSchema` the server validates with, same principle as the existing `DecaCheck`.
+**Hidden entirely while correcting an existing DeCA** (`!isCorrection`) — an already-multi-shipment
+DeCA's extra envíos are not pre-loaded into the correction form (`WizardInitial` has no such field yet),
+so exposing the toggle there could silently DROP shipments 2+ on save; closing this gap is explicit
+Sprint 2 scope, not forgotten.
+
+**Not yet built (Sprint 1 scope, explicitly deferred, tracked as Sprint 2):** the review-summary step
+does not yet show extra shipments before generating (only the generated PDF reflects them — a real,
+disclosed UX gap for this sprint); `lib/deca/detail.ts`'s `diffVersions` is not shipment-aware (a
+correction's "qué ha cambiado" view still only diffs the flat/shipment-1 fields); none of the ~15
+list-view summary surfaces show a "+N envíos" indicator yet (agreed design: first shipment + badge).
+
+**Verified for real, not just unit-level:** new `tests/e2e/deca-multi-shipment.spec.ts` drives the real
+wizard in a real browser against a real server — the issue's own Valencia→Madrid + Castellón→Madrid
+worked example — and downloads + text-extracts the REAL generated PDF via `/d/[token]` to assert both
+ENVÍO blocks, both routes, both goods/weights, the PESO TOTAL, and the disclaimer are actually present
+(one assertion uses a `.` wildcard for the thousands-separator glyph — a known pdfjs text-extraction
+quirk this project's own compliance suite already works around elsewhere for whitespace, not a real
+formatting defect: Node's own `toLocaleString("es-ES")` produces the correct "20.000" reliably). Also
+verifies the single-shipment flow is completely unaffected, and that removing every extra shipment turns
+the toggle back off.
+
+**A SECOND real bug, same class, found by the full-suite run:** `app/api/deca/route.ts` passed
+`validated.data` straight into `recordAvailabilityShare()` (#84, the commercial-availability "ficha")
+— another direct consumer of the flat shape the first sweep missed, since it reads the freshly-
+validated in-memory payload rather than stored `dataJson`. Fixed the same way as `route-intel.ts`:
+resolve shipment 1 at the call site. Confirmed by an EXHAUSTIVE follow-up grep of every
+`.loadLocation`/`.unloadLocation` site in `app/`, `lib/`, `components/` — every other hit reads from
+stored `dataJson` (safe, carries the `legacyMirrorFields` mirror) or an unrelated saved-template
+record; these two (`route-intel.ts`, `recordAvailabilityShare`) were the only direct `validated.data`
+consumers outside `persist.ts` itself.
+
+**Infrastructure detour that delayed confirming the fix (full account in
+`docs/lessons-learned.md` 2026-09-11):** the first full-suite attempt was OOM-killed by the OS; a
+retry failed because Docker Desktop's WSL2 networking had gotten stuck (two of Docker's own internal
+processes both bound to port 5432); the user approved and Docker Desktop was restarted, which itself
+initially failed to come back up, requiring the user's own intervention. Once Docker was healthy again,
+the availability-share fix APPEARED not to work — the exact same 5 tests failed with the exact same
+errors — which traced not to the fix but to a THIRD infrastructure issue: `playwright.config.ts`'s
+`reuseExistingServer: true` had reused an `node.exe` server orphaned by the original OOM-killed run,
+silently serving a build from before the fix. Killing that orphaned process and forcing a fresh build
+made the real fix visible immediately.
+
+**Final gate, genuinely complete:** 413/413 unit (14 new), tsc/eslint/prettier/keel-verify clean, full
+Playwright suite run twice after all fixes (321–323 passed each run, 1 skipped); the only failure
+across both runs (`content-cms.spec.ts`, unrelated to #112) confirmed as a pre-existing contention
+flake — 6/6 green in isolation at `--workers=1`, matching this project's own already-documented flake
+pattern for other files. This slice is fully gated — `docs/05-test-points.md`'s full-regression row is
+PASS, not VERIFY.

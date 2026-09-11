@@ -30,28 +30,32 @@ const payload: DecaPayload = {
     postalCode: "46988",
     city: "Paterna",
   },
-  loadLocation: {
-    name: "Almacén Turia",
-    address: "Av. del Puerto 120",
-    postalCode: "46023",
-    city: "Valencia",
-    province: "Valencia",
-    country: "España",
-  },
-  unloadLocation: {
-    name: "Plataforma Norte",
-    address: "Calle Alcalá 200",
-    postalCode: "28028",
-    city: "Madrid",
-    province: "Madrid",
-    country: "España",
-  },
   loadDate: "2026-10-06",
   unloadDate: "2026-10-06",
-  goods: "Palés de cerámica",
-  weight: "12000 kg",
   tractorPlate: "1234 BCD",
   trailerPlate: "R-4471",
+  shipments: [
+    {
+      loadLocation: {
+        name: "Almacén Turia",
+        address: "Av. del Puerto 120",
+        postalCode: "46023",
+        city: "Valencia",
+        province: "Valencia",
+        country: "España",
+      },
+      unloadLocation: {
+        name: "Plataforma Norte",
+        address: "Calle Alcalá 200",
+        postalCode: "28028",
+        city: "Madrid",
+        province: "Madrid",
+        country: "España",
+      },
+      goods: "Palés de cerámica",
+      weight: "12000 kg",
+    },
+  ],
 };
 
 // `newPublicToken()` is randomBytes(32).base64url → exactly 43 chars.

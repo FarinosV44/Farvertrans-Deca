@@ -723,7 +723,55 @@ anonymize-in-place (no hard delete, D-067).
   aparte del resto de #96 — incidente en vivo, no una entrega programada. Issue #104 abierto
   retroactivamente (ya corregido) por la política "Issue capture: on" de este proyecto.
 
-## I-111 (D-195…) — Soporte y documentación: guía de uso, pulido de Ayuda, verificación E2E de incidencias e integraciones
+## I-112 — Múltiples envíos (varios lugares de carga/descarga) en un único DeCA
+- 2026-09-11. Issue del usuario, triaged al empezar a trabajarla (no requirió apertura por Keel — ya
+  existía en el forge). Feature grande, con base normativa detallada (Resolución de 5 de junio de
+  2026, apdos. Quinto y Sexto; Ley 15/2009 art. 7.2/7.3; Orden FOM/2861/2012 art. 6.c/d). Requiere
+  planificación de sprint antes de tocar código — no es un fix puntual: toca el modelo de datos del
+  DeCA, el wizard de creación, la plantilla del PDF, y la validación de corrección/versionado.
+- **Hallazgo clave de la investigación previa a planificar:** `DecaVersion.dataJson` ya es un JSON
+  libre por versión (no columnas relacionales) — modelar `shipments: Shipment[]` dentro de ese JSON,
+  en vez de una tabla `Envio` nueva, evita una migración relacional y hace la compatibilidad hacia
+  atrás casi automática (un DeCA antiguo es, conceptualmente, `shipments: [ese único envío]`).
+  Además, el sistema de corrección/versionado (R-13, `POST /api/deca/[id]/version`,
+  `changeReason` obligatorio, versión anterior conservada, nueva URL/QR) YA CUMPLE la mayor parte del
+  requisito "modificación trazable" del issue — reutiliza el mismo `validateDeca()`/`decaPayloadSchema`
+  que la creación, así que extender el payload beneficia a ambos flujos a la vez.
+- **Sprint 1 (creación) — HECHO en `develop`, sin fusionar a `main` (D-205).** Modelo de datos tal
+  como lo especificó el usuario: cargador/transportista solo a nivel de DeCA (sin campo por envío —
+  "no se pueden mezclar" es cierto por construcción, no una regla añadida); origen/destino/mercancía/
+  peso/`recipient` (nuevo, ligero: solo nombre, sin NIF/domicilio) siempre explícitos por envío;
+  fecha/matrícula/notas son valores por defecto a nivel de DeCA que un envío puede sobrescribir.
+  `decaPayloadSchema` acepta el cuerpo plano de antes de #112 O el nuevo `{..., shipments: [...]}` —
+  cero cambios en ningún llamador existente. PDF: un bloque ENVÍO N por envío resuelto; con 1 solo
+  envío el PDF es byte-idéntico a antes de #112; con 2+, insignia "ENVÍO N", PESO TOTAL (solo si
+  todos los pesos son numéricos) y el aviso de que la numeración no implica orden de ejecución.
+  Wizard: apagado por defecto (flujo de un solo envío sin cambios), interruptor "+ Añadir otro envío"
+  con bloques de entrada manual; oculto durante la corrección de un DeCA existente (hueco real,
+  Sprint 2). **Fallo real encontrado y corregido en la propia sesión** (ver
+  `docs/lessons-learned.md`): el mirror de compatibilidad hacia atrás (`legacyMirrorFields`) se
+  escribió y se probó en unitarios, pero nunca se llamó realmente desde `createDeca`/`correctDeca` —
+  lo detectaron 5 tests e2e reales (no los unitarios) al leer los datos guardados. Corregido
+  (`toDataJson()`); de paso se corrigió también la ventana de disponibilidad pública R-9
+  (`serviceStart`/`serviceEnd`), que antes solo cubría las fechas por defecto del DeCA y no las de
+  cada envío resuelto. Nuevo `tests/e2e/deca-multi-shipment.spec.ts` (el ejemplo del propio issue,
+  Valencia→Madrid + Castellón→Madrid) descarga y lee el PDF real generado. Gate: 413/413 unitarios,
+  tsc/eslint/prettier/keel-verify limpios, y el conjunto de regresión dirigido (38 tests, los ficheros
+  afectados por el fallo del mirror) en verde. **Un SEGUNDO fallo real de la misma clase** apareció al
+  correr la suite completa: `app/api/deca/route.ts` pasaba `validated.data` directamente a
+  `recordAvailabilityShare()` (#84) — otro consumidor directo del formato plano que el primer barrido
+  no detectó. Corregido igual que `route-intel.ts`. Confirmado completo con un grep exhaustivo de todo
+  el código. **Suite e2e completa confirmada, dos veces, en verde** (321-323/323, 1 skip; el único
+  fallo, `content-cms.spec.ts`, es un flake de contención ya documentado en el proyecto, no relacionado
+  con #112 — confirmado 6/6 en verde en aislamiento). Ver `docs/lessons-learned.md` para el desvío de
+  infraestructura (OOM, reinicio de Docker Desktop, servidor huérfano por `reuseExistingServer`) que
+  retrasó confirmar el segundo fallo.
+- **Sprint 2 (aún NO empezado, alcance ya delimitado en D-205):** que la revisión previa a generar
+  muestre los envíos adicionales; que `diffVersions` (la vista "qué ha cambiado" de una corrección)
+  sea consciente de los envíos; la insignia "+N envíos" en los ~15 listados/buscador/plantillas/panel
+  admin; poder corregir un DeCA que ya tiene varios envíos desde el wizard.
+- **Cola después de #112:** #113 (rediseño de Datos habituales), #114 (rediseño de Historial), #115
+  (subir versión 0.2.0→0.3.0 + cierre de documentación) — ninguno investigado todavía.
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
 - **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**

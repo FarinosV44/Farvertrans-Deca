@@ -200,7 +200,9 @@ test.describe("POST /api/deca (F1/F2/R-2)", () => {
     expect(res.status()).toBe(422);
     const body = await res.json();
     expect(body.error.code).toBe("validation");
-    expect(body.error.fields).toHaveProperty(["loadLocation.name"]);
+    // #112: a flat legacy body's loadLocation becomes shipments[0]'s, so a
+    // field error on it now paths through the shipments array.
+    expect(body.error.fields).toHaveProperty(["shipments.0.loadLocation.name"]);
   });
 
   test("AC-01: an authenticated caller gets 201 + token", async ({ request }) => {

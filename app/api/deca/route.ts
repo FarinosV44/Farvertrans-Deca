@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { validateDeca, DecaValidationError } from "@/lib/deca/validate";
 import { LEAD_COOKIE, leadSchema } from "@/lib/deca/lead";
+import { resolveShipments } from "@/lib/deca/schema";
 
 export const runtime = "nodejs";
 
@@ -183,18 +184,31 @@ export async function POST(req: Request) {
       // #84: per-DeCA commercial-share opt-in. A SEPARATE top-level key, never
       // part of `validated`/`data_json`. `recordAvailabilityShare` re-checks the
       // company's live preference and writes ONLY the authorised fields.
+      // #112: `DecaFacts` is shipment 1's resolved view — the same
+      // "first shipment is the summary" choice used everywhere else a
+      // multi-shipment DeCA needs a single representative value.
       const cs = (body as { commercialShare?: unknown } | null)?.commercialShare;
       if (cs && typeof cs === "object") {
         const c = cs as Record<string, unknown>;
         const s = (v: unknown) => (typeof v === "string" && v ? v : undefined);
         const ch = s(c.channel);
         const { recordAvailabilityShare } = await import("@/lib/commercial/availability");
-        recordAvailabilityShare(created.decaId, owner.companyId, validated.data, {
-          enabled: c.enabled === true,
-          destination: s(c.destination),
-          availabilityDate: s(c.availabilityDate),
-          channel: ch === "email" || ch === "phone" || ch === "both" ? ch : undefined,
-        }).catch(() => {
+        const firstShipment = resolveShipments(validated.data)[0];
+        recordAvailabilityShare(
+          created.decaId,
+          owner.companyId,
+          {
+            carrier: validated.data.carrier,
+            unloadLocation: firstShipment.unloadLocation,
+            unloadDate: firstShipment.unloadDate,
+          },
+          {
+            enabled: c.enabled === true,
+            destination: s(c.destination),
+            availabilityDate: s(c.availabilityDate),
+            channel: ch === "email" || ch === "phone" || ch === "both" ? ch : undefined,
+          },
+        ).catch(() => {
           // best-effort — never blocks generation
         });
       }

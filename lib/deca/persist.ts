@@ -7,6 +7,46 @@ import { getPdfStore, pdfKey, pdfSha256 } from "@/lib/storage";
 import { GenerationError, newCorrelationId } from "./generation";
 import type { ValidatedDeca } from "./validate";
 import { recordRouteIntel } from "./route-intel";
+import { legacyMirrorFields, resolveShipments } from "./schema";
+
+/**
+ * #112: `dataJson` stores the canonical `{ shipper, carrier, ...defaults,
+ * shipments }` shape PLUS `shipments[0]`'s resolved values mirrored at the
+ * top level, in the exact pre-#112 flat shape — every existing reader of
+ * `dataJson` (`lib/deca/detail.ts`'s cockpit/diff, `lib/data/history.ts`,
+ * search, CSV export, templates, the admin cross-tenant table — none of them
+ * touched in Sprint 1) keeps reading `loadLocation`/`goods`/`weight`/etc.
+ * unchanged; they see shipment 1, which is the correct, intentional summary.
+ */
+function toDataJson(data: ValidatedDeca["data"]): object {
+  // Mirror LAST: it must win over `data`'s own DeCA-level default fields
+  // (loadDate/unloadDate/tractorPlate/trailerPlate/notes) for the handful of
+  // keys both sides carry, since the mirror is shipment 1's RESOLVED value —
+  // which differs from the default only if shipment 1 itself overrides it.
+  return { ...data, ...legacyMirrorFields(data) } as unknown as object;
+}
+
+/**
+ * #112: the public-availability window (R-9, "documento disponible al menos
+ * 7 días tras el servicio") must cover the WHOLE transport, not just the
+ * DeCA-level default dates — a shipment that overrides its own dates to
+ * start earlier or finish later than the default must still be inside the
+ * window. Min load date / max unload date across every resolved shipment;
+ * for the still-common single-shipment case this is exactly that shipment's
+ * own dates, unchanged from before #112.
+ */
+function serviceWindow(data: ValidatedDeca["data"]): { start: Date; end: Date } {
+  const resolved = resolveShipments(data);
+  const loadDate = resolved.reduce(
+    (min, s) => (s.loadDate < min ? s.loadDate : min),
+    data.loadDate,
+  );
+  const unloadDate = resolved.reduce(
+    (max, s) => (s.unloadDate > max ? s.unloadDate : max),
+    data.unloadDate,
+  );
+  return { start: new Date(`${loadDate}T00:00:00Z`), end: new Date(`${unloadDate}T00:00:00Z`) };
+}
 
 const CLAIM_TTL_DAYS = 30;
 
@@ -148,6 +188,7 @@ export async function createDeca(
 
   // 3. Persist atomically. If this fails the object is already stored, so clean
   //    it up best-effort — an unreachable PDF must never accumulate (#29 §6).
+  const window = serviceWindow(validated.data);
   const result = await withOrphanCleanup(key, correlationId, () =>
     prisma.$transaction(async (tx) => {
       const deca = await tx.deca.create({
@@ -157,8 +198,8 @@ export async function createDeca(
           companyId: opts.companyId,
           creatorName: opts.creatorName,
           creatorEmail: opts.creatorEmail,
-          serviceStart: new Date(`${validated.data.loadDate}T00:00:00Z`),
-          serviceEnd: new Date(`${validated.data.unloadDate}T00:00:00Z`),
+          serviceStart: window.start,
+          serviceEnd: window.end,
         },
       });
       const version = await tx.decaVersion.create({
@@ -168,7 +209,7 @@ export async function createDeca(
           token,
           pdfPath: key,
           pdfSha256: sha256,
-          dataJson: validated.data as unknown as object,
+          dataJson: toDataJson(validated.data),
           createdByUserId: opts.createdByUserId,
           createdAt,
         },
@@ -304,6 +345,7 @@ export async function correctDeca(
   const sha256 = pdfSha256(pdf);
   await stage("pdf_storage", correlationId, () => getPdfStore().put(key, pdf));
 
+  const window = serviceWindow(validated.data);
   const version = await withOrphanCleanup(key, correlationId, () =>
     prisma.$transaction(async (tx) => {
       const v = await tx.decaVersion.create({
@@ -313,7 +355,7 @@ export async function correctDeca(
           token,
           pdfPath: key,
           pdfSha256: sha256,
-          dataJson: validated.data as unknown as object,
+          dataJson: toDataJson(validated.data),
           changeReason: reason,
           createdByUserId: userId,
           createdAt: modifiedAt,
@@ -323,8 +365,8 @@ export async function correctDeca(
         where: { id: decaId },
         data: {
           currentVersionId: v.id,
-          serviceStart: new Date(`${validated.data.loadDate}T00:00:00Z`),
-          serviceEnd: new Date(`${validated.data.unloadDate}T00:00:00Z`),
+          serviceStart: window.start,
+          serviceEnd: window.end,
         },
       });
       return v;

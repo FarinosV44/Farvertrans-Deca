@@ -832,6 +832,21 @@ export const fr = {
       plateForeign:
         "Cela ne ressemble pas à une immatriculation espagnole (format 1234 BCD). Elle est valide si le véhicule est étranger.",
     },
+    shipments: {
+      toggle: "Ce transport a-t-il plusieurs lieux de chargement ou de déchargement ?",
+      toggleHint:
+        "Activez cette option pour documenter plusieurs envois réels dans un même DeCA — ils doivent partager le même chargeur contractuel et le même transporteur effectif.",
+      addAnother: "+ Ajouter un autre envoi",
+      remove: "Supprimer cet envoi",
+      heading: (n: number) => `Envoi ${n}`,
+      ownFieldsHint:
+        "L'origine, la destination, la marchandise et le poids sont propres à cet envoi.",
+      overridesHint:
+        "La date, l'immatriculation et les notes utilisent les valeurs générales sauf si vous les modifiez ici.",
+      recipient: "Destinataire (facultatif)",
+      notes: "Information spéciale (facultatif)",
+      minOneError: "Ajoutez au moins un envoi ou désactivez l'option.",
+    },
     errorSummaryTitle: "Vérifiez ces champs :",
     lead: {
       title: "Plus qu'une étape : à qui envoyons-nous le DeCA ?",

@@ -150,3 +150,54 @@ create/edit path, not the gate. Also: a gate message must name the real blocker,
   email fails to deliver now gets a prominent (not subdued) warning plus a WhatsApp-share and
   copy-link fallback, so a failed send is never a dead end even while the provider issue is being
   resolved operationally.
+
+## 2026-09-11 — A backward-compat helper is unverified until something reads the data back through a real consumer
+
+- **Symptom:** #112 (D-205) introduced `legacyMirrorFields()` to keep `dataJson`'s pre-#112 flat
+  shape readable by every existing consumer (history, cockpit, search, CSV export…). It was written,
+  unit-tested in isolation, and the unit tests passed — but it was never actually CALLED from
+  `createDeca`/`correctDeca`. `dataJson` was persisted as the bare new canonical shape with no mirror
+  at all. 399→413 unit tests all stayed green throughout, because unit tests called the helper
+  function directly, which was itself correct — they never touched the code path that was supposed
+  to call it.
+- **Caught by:** 5 real e2e tests reading the STORED data back through the app's normal surfaces
+  (`doc-cockpit.spec.ts` ×2, `build13.spec.ts`, `creator-v2.spec.ts`, `crear.spec.ts`) — the
+  "Datos del documento" cockpit view showed empty `loadLocation`/`goods`/`weight` for a plain,
+  ordinary single-shipment DeCA.
+- **The gap:** proving a pure function is correct (unit test) is a different claim from proving it is
+  actually wired into the path that needs it (integration/e2e test reading real persisted data). Both
+  are necessary; neither substitutes for the other.
+- **Rule going forward:** when a change introduces a backward-compatibility shim/mirror/adapter
+  specifically so EXISTING code keeps working unchanged, don't just unit-test the shim — run (or keep
+  running) the existing tests that exercise those unchanged consumers against data that went through
+  the new write path. A green full-suite run on the OLD code paths, after the change, is the actual
+  proof the shim is wired in; a passing unit test of the shim alone is not.
+- **Check added:** none new and mechanical (this is inherently an integration-level property) — the
+  existing full e2e suite already would have caught this on any full run; the fix was running it
+  before declaring the slice done, not adding a new check.
+
+## 2026-09-11 — `reuseExistingServer: true` means a re-run can silently test YESTERDAY's build
+
+- **Symptom:** during the same #112 (D-205) slice, a second real bug was found (`recordAvailabilityShare`
+  in `app/api/deca/route.ts` also assumed the pre-#112 flat `DecaPayload` shape — same class as the
+  `legacyMirrorFields` wiring bug above). It was fixed, `tsc`/`eslint`/`prettier` all confirmed clean,
+  and the specific e2e spec was re-run — and the exact same 5 tests failed AGAIN, unchanged, byte-for-
+  byte the same errors. Only after adding a temporary `console.error` in the `.catch()` and seeing
+  NOTHING printed was the real cause found: `playwright.config.ts`'s `webServer.reuseExistingServer:
+  !process.env.CI` had reused a `node.exe` process orphaned by an EARLIER interrupted run (the very
+  first full-suite attempt, killed by the OS for low memory mid-run) — that server was still bound to
+  port 3000, serving a build from BEFORE the fix, and every `npx playwright test` invocation since had
+  silently reused it instead of rebuilding.
+- **Why this is dangerous, specifically:** the failure signature after the "fix" was IDENTICAL to the
+  failure before it — no new error, no different line, nothing that looks like "still running old
+  code." A change that appears to have no effect looks exactly like a change that was correct but
+  insufficient, which sends debugging in the wrong direction (deeper into the fix's own logic, when
+  the fix was never actually exercised).
+- **Rule going forward:** after ANY interrupted/killed Playwright run (OOM kill, Ctrl-C, a crashed
+  terminal), check `netstat`/`tasklist` for a process still bound to the dev-server port before
+  trusting the next run's result — an orphaned `reuseExistingServer` process is invisible in the test
+  output itself. When a fix that should obviously change a test's outcome produces the EXACT same
+  failure as before, suspect a stale server before suspecting the fix.
+- **Check added:** none mechanical yet (would need a pre-flight "is this server's build newer than the
+  newest source file" check, not attempted here) — the immediate practice is checking for an orphaned
+  server explicitly after any abnormal Playwright termination.

@@ -821,6 +821,20 @@ export const gl = {
       plateForeign:
         "Non parece unha matrícula española (formato 1234 BCD). É válida se o vehículo é estranxeiro.",
     },
+    shipments: {
+      toggle: "Este transporte ten varios lugares de carga ou descarga?",
+      toggleHint:
+        "Actívao para documentar nun mesmo DeCA varios envíos reais — deben compartir o mesmo cargador contractual e transportista efectivo.",
+      addAnother: "+ Engadir outro envío",
+      remove: "Eliminar este envío",
+      heading: (n: number) => `Envío ${n}`,
+      ownFieldsHint: "A orixe, o destino, a mercadoría e o peso son propios deste envío.",
+      overridesHint:
+        "A data, a matrícula e as notas usan os valores xerais salvo que os cambies aquí.",
+      recipient: "Destinatario (opcional)",
+      notes: "Información especial (opcional)",
+      minOneError: "Engade polo menos un envío ou desactiva a opción.",
+    },
     errorSummaryTitle: "Revisa estes campos:",
     lead: {
       title: "Só un paso máis: a quen enviamos o DeCA?",

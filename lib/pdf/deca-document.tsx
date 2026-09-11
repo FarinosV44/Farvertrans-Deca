@@ -9,7 +9,12 @@ import {
   Rect,
   Path,
 } from "@react-pdf/renderer";
-import { type DecaPayload, formatPartyAddressLines } from "@/lib/deca/schema";
+import {
+  type DecaPayload,
+  formatPartyAddressLines,
+  resolveShipment,
+  sumWeights,
+} from "@/lib/deca/schema";
 import { BRAND } from "@/lib/brand";
 import { DECA_ROLES } from "@/lib/deca/roles";
 import { formatLocationCityLine } from "@/lib/deca/location";
@@ -191,6 +196,44 @@ const s = StyleSheet.create({
   techCellBorder: { borderLeftWidth: 1, borderLeftColor: BORDER },
   techLabel: { fontSize: 7.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.4 },
   techValue: { fontSize: 11, fontFamily: "Inter", fontWeight: 700, color: NAVY, marginTop: 4 },
+
+  // #112 — multiple shipments ("envíos") per DeCA. Each shipment beyond the
+  // first opens with a visibly separated, solid-fill badge — "muy visible y
+  // separada" per the Resolución's own wording — never rendered at all for
+  // the (still default, still most common) single-shipment case, so today's
+  // exact single-origin/destination layout is byte-for-byte unchanged then.
+  shipmentDivider: { borderTopWidth: 1, borderTopColor: BORDER, marginTop: 22, paddingTop: 2 },
+  shipmentBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: ACCENT,
+    borderRadius: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    marginTop: 14,
+  },
+  shipmentBadgeText: {
+    fontSize: 9,
+    fontFamily: "Inter",
+    fontWeight: 700,
+    color: "#ffffff",
+    letterSpacing: 0.8,
+  },
+  totalWeightRow: {
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "baseline",
+  },
+  totalWeightLabel: {
+    fontSize: 8,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginRight: 6,
+  },
+  totalWeightValue: { fontSize: 12, fontFamily: "Inter", fontWeight: 700, color: NAVY },
+  // No italic — only Inter Regular/Bold are registered (`lib/pdf/fonts.ts`).
+  shipmentDisclaimer: { fontSize: 7.5, color: MUTED, marginTop: 6 },
 
   spacer: { flex: 1, minHeight: 16 },
 
@@ -457,54 +500,101 @@ export function DecaDocument(p: DecaDocProps) {
           </View>
         </View>
 
-        {/* ROUTE — a discreet origin→destination graphic device */}
-        <View style={s.section}>
-          <Text style={s.sectionHeading}>Ruta del transporte</Text>
-          <View style={[s.twoCol, s.sectionBody]}>
-            <View style={s.colLeft}>
-              <RouteColumn
-                kind="Lugar de carga"
-                name={p.data.loadLocation.name}
-                address={p.data.loadLocation.address}
-                postalCode={p.data.loadLocation.postalCode}
-                city={p.data.loadLocation.city}
-                province={p.data.loadLocation.province}
-                country={p.data.loadLocation.country}
-                dateLabel="Fecha de carga"
-                dateValue={p.data.loadDate}
-              />
-            </View>
-            <View style={s.colDividerDashed} />
-            <View style={s.colRight}>
-              <RouteColumn
-                kind="Lugar de descarga"
-                name={p.data.unloadLocation.name}
-                address={p.data.unloadLocation.address}
-                postalCode={p.data.unloadLocation.postalCode}
-                city={p.data.unloadLocation.city}
-                province={p.data.unloadLocation.province}
-                country={p.data.unloadLocation.country}
-                dateLabel="Fecha de descarga"
-                dateValue={p.data.unloadDate}
-              />
-            </View>
-          </View>
-        </View>
+        {/* #112 — one ROUTE + GOODS/VEHICLE block PER SHIPMENT. Exactly one
+            shipment (still the default, still the common case) renders
+            IDENTICALLY to before #112 — no "ENVÍO 1" badge, no total —
+            so today's single-origin/destination PDF is byte-for-byte
+            unchanged. Multiple shipments each get a visibly separated,
+            solid-fill "ENVÍO N" badge (Resolución apdo. Sexto: "muy visible
+            y separada"), never implying an execution order. */}
+        {p.data.shipments.map((shipment, i) => {
+          const multi = p.data.shipments.length > 1;
+          const r = resolveShipment(p.data, shipment);
+          return (
+            <View key={i} style={multi && i > 0 ? s.shipmentDivider : undefined}>
+              {multi && (
+                <View style={s.shipmentBadge}>
+                  <Text style={s.shipmentBadgeText}>ENVÍO {i + 1}</Text>
+                </View>
+              )}
 
-        {/* GOODS + VEHICLE — a real technical table */}
-        <View style={s.section}>
-          <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
-          <View style={[s.techTable, s.sectionBody]}>
-            <View style={s.techTableRow}>
-              <TechCell label="Naturaleza de la mercancía" value={p.data.goods} />
-              <TechCell label="Peso o medida" value={p.data.weight} bordered />
+              {/* ROUTE — a discreet origin→destination graphic device */}
+              <View style={s.section}>
+                <Text style={s.sectionHeading}>Ruta del transporte</Text>
+                <View style={[s.twoCol, s.sectionBody]}>
+                  <View style={s.colLeft}>
+                    <RouteColumn
+                      kind="Lugar de carga"
+                      name={r.loadLocation.name}
+                      address={r.loadLocation.address}
+                      postalCode={r.loadLocation.postalCode}
+                      city={r.loadLocation.city}
+                      province={r.loadLocation.province}
+                      country={r.loadLocation.country}
+                      dateLabel="Fecha de carga"
+                      dateValue={r.loadDate}
+                    />
+                  </View>
+                  <View style={s.colDividerDashed} />
+                  <View style={s.colRight}>
+                    <RouteColumn
+                      kind="Lugar de descarga"
+                      name={r.unloadLocation.name}
+                      address={r.unloadLocation.address}
+                      postalCode={r.unloadLocation.postalCode}
+                      city={r.unloadLocation.city}
+                      province={r.unloadLocation.province}
+                      country={r.unloadLocation.country}
+                      dateLabel="Fecha de descarga"
+                      dateValue={r.unloadDate}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* GOODS + VEHICLE — a real technical table */}
+              <View style={s.section}>
+                <Text style={s.sectionHeading}>Mercancía y vehículo</Text>
+                <View style={[s.techTable, s.sectionBody]}>
+                  <View style={s.techTableRow}>
+                    <TechCell label="Naturaleza de la mercancía" value={r.goods} />
+                    <TechCell label="Peso o medida" value={r.weight} bordered />
+                  </View>
+                  <View style={[s.techTableRow, s.techTableRowBorder]}>
+                    <TechCell label="Matrícula tractora" value={r.tractorPlate} />
+                    <TechCell label="Matrícula remolque" value={r.trailerPlate || "—"} bordered />
+                  </View>
+                  {r.recipient && (
+                    <View style={[s.techTableRow, s.techTableRowBorder]}>
+                      <TechCell label="Destinatario" value={r.recipient} />
+                      <View style={[s.techCell, s.techCellBorder]} />
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
-            <View style={[s.techTableRow, s.techTableRowBorder]}>
-              <TechCell label="Matrícula tractora" value={p.data.tractorPlate} />
-              <TechCell label="Matrícula remolque" value={p.data.trailerPlate || "—"} bordered />
-            </View>
-          </View>
-        </View>
+          );
+        })}
+
+        {/* PESO TOTAL — only once every shipment's weight is numeric-parseable
+            (never a fabricated or partial total); each shipment's own weight
+            stays fully visible above, this never replaces it. */}
+        {p.data.shipments.length > 1 &&
+          (() => {
+            const totals = sumWeights(p.data.shipments.map((sh) => resolveShipment(p.data, sh)));
+            return totals.allParsed ? (
+              <View style={s.totalWeightRow}>
+                <Text style={s.totalWeightLabel}>Peso total</Text>
+                <Text style={s.totalWeightValue}>{totals.total}</Text>
+              </View>
+            ) : null;
+          })()}
+        {p.data.shipments.length > 1 && (
+          <Text style={s.shipmentDisclaimer}>
+            La numeración de los envíos tiene carácter identificativo y no determina su orden de
+            ejecución.
+          </Text>
+        )}
 
         {/* Fills whatever vertical space remains, so the band below always
             closes the physical page — never position:absolute. */}

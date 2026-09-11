@@ -103,14 +103,14 @@ describe("validateDeca (R-2 / AC-09)", () => {
       },
     };
     const r = validateDeca(noProvince);
-    expect(r.data.loadLocation.province).toBeUndefined();
-    expect(r.data.unloadLocation.province).toBeUndefined();
+    expect(r.data.shipments[0].loadLocation.province).toBeUndefined();
+    expect(r.data.shipments[0].unloadLocation.province).toBeUndefined();
   });
 
   it("trims a real province and rejects a 1-char one (#75)", () => {
     expect(
       validateDeca({ ...valid, loadLocation: { ...valid.loadLocation, province: " Valencia " } })
-        .data.loadLocation.province,
+        .data.shipments[0].loadLocation.province,
     ).toBe("Valencia");
     expect(() =>
       validateDeca({ ...valid, loadLocation: { ...valid.loadLocation, province: "x" } }),
@@ -173,7 +173,7 @@ describe("validateDeca (R-2 / AC-09)", () => {
       "una plataforma completa (aprox. 24 t)",
     ]) {
       const r = validateDeca({ ...valid, weight: w });
-      expect(r.data.weight).toBe(w);
+      expect(r.data.shipments[0].weight).toBe(w);
     }
   });
 
@@ -189,7 +189,7 @@ describe("validateDeca (R-2 / AC-09)", () => {
       ["1234", "1234 t"],
     ] as const) {
       const r = validateDeca({ ...valid, weight: input });
-      expect(r.data.weight).toBe(expected);
+      expect(r.data.shipments[0].weight).toBe(expected);
     }
   });
 
@@ -206,8 +206,10 @@ describe("validateDeca (R-2 / AC-09)", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(DecaValidationError);
       const err = e as DecaValidationError;
+      // #112: a flat legacy body's loadLocation/goods become shipments[0]'s,
+      // so a field error on either now paths through the shipments array.
       expect(Object.keys(err.fieldErrors)).toEqual(
-        expect.arrayContaining(["loadLocation.name", "goods"]),
+        expect.arrayContaining(["shipments.0.loadLocation.name", "shipments.0.goods"]),
       );
     }
   });

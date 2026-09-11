@@ -45,6 +45,54 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-205 — I-112 Sprint 1: multiple shipments ("envíos") per DeCA — creation, this session
+  (2026-09-11). CODE COMPLETE on `develop`, NOT YET pushed/merged to `main` (pending final full e2e
+  gate + commit — see below).** Planned in plan mode with the user first (16 AC issue). Data model
+  exactly as the user specified: shipper/carrier DeCA-level only (no per-shipment field — "can't mix"
+  is true by construction); `loadLocation`/`unloadLocation`/`goods`/`weight`/new lightweight
+  `recipient` always explicit per shipment; `loadDate`/`unloadDate`/`tractorPlate`/`trailerPlate`/
+  `notes` are DeCA-level defaults a shipment may override (`resolveShipment()`/`resolveShipments()`,
+  `lib/deca/schema.ts`). `DecaVersion.dataJson` is free-form JSON (no migration needed — `shipments`
+  is just a new array inside it); `createDeca`/`correctDeca` were already payload-shape-agnostic; the
+  EXISTING correction/versioning system already satisfies the "modificación trazable" requirement for
+  multi-shipment payloads, nothing new built there. `decaPayloadSchema` accepts the pre-#112 flat body
+  OR the new `shipments[]` body (zero changes needed anywhere that posts the flat shape — ~30 e2e
+  specs, `lib/diagnostics.ts`'s smoke payload, all unchanged). PDF (`lib/pdf/deca-document.tsx`): one
+  route+goods block per resolved shipment; exactly 1 shipment renders byte-identical to before #112;
+  2+ get a solid-fill "ENVÍO N" badge, a PESO TOTAL (`sumWeights()`, only when every weight is
+  numeric-parseable), and the Resolución's own disclaimer that numbering ≠ execution order. Wizard
+  (`components/deca/wizard.tsx`): off by default, pixel-identical single-shipment flow; a toggle
+  reveals manual-entry "+ Añadir otro envío" blocks (no autofill in Sprint 1); hidden entirely during
+  correction (`!isCorrection`) since an existing multi-shipment DeCA's extras aren't pre-loaded yet —
+  closing that gap is explicit Sprint 2 scope. **Real bug found + fixed mid-slice (now in
+  `docs/lessons-learned.md`):** `legacyMirrorFields()` (the backward-compat write that keeps
+  `dataJson`'s flat top-level fields readable by every untouched consumer — history/search/CSV/
+  templates/route-intel/admin table) was written and unit-tested but never actually wired into
+  `createDeca`/`correctDeca` — caught by 5 real e2e tests reading stored data back (cockpit showed
+  empty loadLocation/goods/weight), not by any unit test. Fixed (`toDataJson()` in
+  `lib/deca/persist.ts`); also fixed as part of the same pass, a real correctness gap not originally
+  scoped: R-9's `serviceStart`/`serviceEnd` now cover the min/max resolved date across ALL shipments,
+  not just the DeCA-level default (a shipment overriding its own dates outside the default window
+  would have been excluded from part of its own legal availability window). New
+  `tests/e2e/deca-multi-shipment.spec.ts` drives the real wizard → real server → downloads and
+  text-extracts the REAL generated PDF for the issue's own Valencia→Madrid + Castellón→Madrid example.
+  **A second real bug of the same class was then found by the full e2e suite:**
+  `app/api/deca/route.ts` passed `validated.data` straight into `recordAvailabilityShare()` (#84) —
+  another direct flat-shape consumer the first sweep missed. Fixed the same way (resolve shipment 1 at
+  the call site); confirmed complete via an exhaustive grep of every `.loadLocation`/`.unloadLocation`
+  site in the codebase. **Real infrastructure detour along the way (full account in
+  `docs/lessons-learned.md`):** an OOM-killed first full-suite attempt, a Docker Desktop WSL2
+  networking failure needing a user-approved restart, and — the one that actually delayed confirming
+  the fix — `reuseExistingServer: true` silently reusing a `node.exe` server orphaned by the killed
+  run, testing yesterday's build until that process was found and killed. **Gate, now genuinely
+  complete: 413/413 unit (14 new), tsc/eslint/prettier/keel-verify clean, full Playwright suite run
+  TWICE after all fixes (321–323 passed each time, 1 skipped) — the only failure across both runs
+  (`content-cms.spec.ts`, unrelated to #112) confirmed a pre-existing contention flake, 6/6 green in
+  isolation.** **Deliberately NOT built this sprint (Sprint 2, tracked in D-205):**
+  review-summary display for extra shipments before generating; `diffVersions` shipment-awareness for
+  corrections; the "+N envíos" badge on the ~15 list-view summary surfaces; correcting an
+  already-multi-shipment DeCA through the wizard. **Queued after Sprint 2:** #113 (Datos habituales
+  redesign), #114 (Historial redesign), #115 (v0.2.0→v0.3.0 + docs close-out) — none investigated yet.
 - **D-202 — LIVE INCIDENT hotfix, this session (2026-09-11): a foreign (Portuguese) company could not
   self-register** — #59's "own company" NIF/postal-code validators were Spain-only hard gates,
   unlike R-2's deliberate "foreign counterparty" leniency elsewhere. Fixed: `isValidOwnNif()` now

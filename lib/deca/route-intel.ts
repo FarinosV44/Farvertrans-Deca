@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { ValidatedDeca } from "./validate";
+import { resolveShipments } from "./schema";
 
 /**
  * Normalized/queryable route data derived from a goods DeCA version (DATA #45).
@@ -43,8 +44,14 @@ export async function recordRouteIntel(
   companyId: string | undefined,
   data: ValidatedDeca["data"],
 ): Promise<void> {
-  const load = data.loadLocation;
-  const unload = data.unloadLocation;
+  // #112: one DeCA can now bundle several shipments/legs. Route intelligence
+  // stays a single row per DeCA version for this sprint — the first shipment
+  // is the representative route, same "first shipment is the summary" choice
+  // made for every other list/analytics surface (history, search, admin
+  // table). A row per shipment is deferred to #112 Sprint 2.
+  const first = resolveShipments(data)[0];
+  const load = first?.loadLocation;
+  const unload = first?.unloadLocation;
   if (!load || !unload) return; // not a goods payload
 
   await prisma.decaRouteIntel.create({
@@ -63,10 +70,10 @@ export async function recordRouteIntel(
       unloadProvince: unload.province,
       unloadCountry: unload.country,
       unloadPostalCode: unload.postalCode,
-      loadDate: data.loadDate ? new Date(`${data.loadDate}T00:00:00Z`) : undefined,
-      unloadDate: data.unloadDate ? new Date(`${data.unloadDate}T00:00:00Z`) : undefined,
-      tractorPlate: data.tractorPlate,
-      trailerPlate: data.trailerPlate || undefined,
+      loadDate: first.loadDate ? new Date(`${first.loadDate}T00:00:00Z`) : undefined,
+      unloadDate: first.unloadDate ? new Date(`${first.unloadDate}T00:00:00Z`) : undefined,
+      tractorPlate: first.tractorPlate,
+      trailerPlate: first.trailerPlate || undefined,
       routeKey: routeKeyFor(load.city, load.country, unload.city, unload.country) ?? undefined,
     },
   });

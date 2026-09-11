@@ -46,29 +46,34 @@ const validated = {
   data: {
     shipper: { name: "Cargador S.L.", nif: "B11111111", address: "Calle 1" },
     carrier: { name: "Transportes S.L.", nif: "B22222222", address: "Calle 2" },
-    loadLocation: {
-      name: "Almacén Madrid",
-      address: "Calle 1",
-      postalCode: "28001",
-      city: "Madrid",
-      province: "Madrid",
-      country: "España",
-    },
-    unloadLocation: {
-      name: "Almacén Valencia",
-      address: "Calle 2",
-      postalCode: "46001",
-      city: "Valencia",
-      province: "Valencia",
-      country: "España",
-    },
     loadDate: "2026-10-06",
     unloadDate: "2026-10-06",
-    goods: "Palés",
-    weight: "12.000 kg",
     tractorPlate: "1234BCD",
     trailerPlate: "",
     reference: "",
+    // #112: the canonical shape always carries a `shipments` array.
+    shipments: [
+      {
+        loadLocation: {
+          name: "Almacén Madrid",
+          address: "Calle 1",
+          postalCode: "28001",
+          city: "Madrid",
+          province: "Madrid",
+          country: "España",
+        },
+        unloadLocation: {
+          name: "Almacén Valencia",
+          address: "Calle 2",
+          postalCode: "46001",
+          city: "Valencia",
+          province: "Valencia",
+          country: "España",
+        },
+        goods: "Palés",
+        weight: "12.000 kg",
+      },
+    ],
   },
   warnings: [],
 } as unknown as ValidatedDeca;

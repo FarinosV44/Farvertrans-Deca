@@ -816,6 +816,19 @@ export const it = {
       plateForeign:
         "Non sembra una targa spagnola (formato 1234 BCD). È valida se il veicolo è straniero.",
     },
+    shipments: {
+      toggle: "Questo trasporto ha più luoghi di carico o scarico?",
+      toggleHint:
+        "Attivalo per documentare in un unico DeCA più spedizioni reali — devono condividere lo stesso mittente contrattuale e vettore effettivo.",
+      addAnother: "+ Aggiungi un'altra spedizione",
+      remove: "Rimuovi questa spedizione",
+      heading: (n: number) => `Spedizione ${n}`,
+      ownFieldsHint: "Origine, destinazione, merce e peso sono propri di questa spedizione.",
+      overridesHint: "Data, targa e note usano i valori generali salvo che li modifichi qui.",
+      recipient: "Destinatario (facoltativo)",
+      notes: "Informazioni speciali (facoltativo)",
+      minOneError: "Aggiungi almeno una spedizione o disattiva l'opzione.",
+    },
     errorSummaryTitle: "Controlla questi campi:",
     lead: {
       title: "Solo un altro passaggio: a chi inviamo il DeCA?",

@@ -801,6 +801,19 @@ export const en = {
       plateForeign:
         "This doesn't look like a Spanish plate (format 1234 BCD). It's valid if the vehicle is foreign.",
     },
+    shipments: {
+      toggle: "Does this transport have several loading or unloading places?",
+      toggleHint:
+        "Turn this on to document several real shipments in one DeCA — they must share the same contractual shipper and effective carrier.",
+      addAnother: "+ Add another shipment",
+      remove: "Remove this shipment",
+      heading: (n: number) => `Shipment ${n}`,
+      ownFieldsHint: "Origin, destination, goods and weight belong to this shipment specifically.",
+      overridesHint: "Date, plate and notes use the general values unless you change them here.",
+      recipient: "Recipient (optional)",
+      notes: "Special information (optional)",
+      minOneError: "Add at least one shipment or turn this off.",
+    },
     errorSummaryTitle: "Please check these fields:",
     lead: {
       title: "One last step: who should we send the DeCA to?",

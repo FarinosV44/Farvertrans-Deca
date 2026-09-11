@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Field } from "./field";
-import { step1Schema, step2Schema, step3Schema } from "@/lib/deca/schema";
+import { step1Schema, step2Schema, step3Schema, shipmentSchema } from "@/lib/deca/schema";
 import { validateDeca } from "@/lib/deca/validate";
 import { leadSchema } from "@/lib/deca/lead";
 import { track, getSessionId } from "@/lib/analytics/client";
@@ -85,6 +85,93 @@ const EMPTY: FormState = {
   commercialShareDate: "",
   commercialShareChannel: "",
 };
+
+/**
+ * #112 — one additional shipment ("envío") beyond the always-present first
+ * one (which stays `FormState`'s own load/unload/goods/weight fields,
+ * unchanged). Origin/destination/goods/weight/recipient are always explicit
+ * here, never defaulted; loadDate/unloadDate/tractorPlate/trailerPlate/notes
+ * are pre-filled from the DeCA-level values when a block is added, but are
+ * always submitted explicitly too — an unedited pre-filled value and an
+ * "inherited" one resolve identically server-side, so there is no need to
+ * track which fields were actually touched.
+ */
+type ExtraShipment = {
+  loadLocationName: string;
+  loadLocationAddress: string;
+  loadLocationPostalCode: string;
+  loadLocationCity: string;
+  loadLocationProvince: string;
+  loadLocationCountry: string;
+  unloadLocationName: string;
+  unloadLocationAddress: string;
+  unloadLocationPostalCode: string;
+  unloadLocationCity: string;
+  unloadLocationProvince: string;
+  unloadLocationCountry: string;
+  goods: string;
+  weight: string;
+  recipient: string;
+  loadDate: string;
+  unloadDate: string;
+  tractorPlate: string;
+  trailerPlate: string;
+  notes: string;
+};
+
+function emptyExtraShipment(f: FormState): ExtraShipment {
+  return {
+    loadLocationName: "",
+    loadLocationAddress: "",
+    loadLocationPostalCode: "",
+    loadLocationCity: "",
+    loadLocationProvince: "",
+    loadLocationCountry: f.loadLocationCountry || "España",
+    unloadLocationName: "",
+    unloadLocationAddress: "",
+    unloadLocationPostalCode: "",
+    unloadLocationCity: "",
+    unloadLocationProvince: "",
+    unloadLocationCountry: f.unloadLocationCountry || "España",
+    goods: "",
+    weight: "",
+    recipient: "",
+    loadDate: f.loadDate,
+    unloadDate: f.unloadDate,
+    tractorPlate: f.tractorPlate,
+    trailerPlate: f.trailerPlate,
+    notes: "",
+  };
+}
+
+function extraShipmentToPayload(s: ExtraShipment) {
+  return {
+    loadLocation: {
+      name: s.loadLocationName,
+      address: s.loadLocationAddress,
+      postalCode: s.loadLocationPostalCode,
+      city: s.loadLocationCity,
+      province: s.loadLocationProvince,
+      country: s.loadLocationCountry,
+    },
+    unloadLocation: {
+      name: s.unloadLocationName,
+      address: s.unloadLocationAddress,
+      postalCode: s.unloadLocationPostalCode,
+      city: s.unloadLocationCity,
+      province: s.unloadLocationProvince,
+      country: s.unloadLocationCountry,
+    },
+    goods: s.goods,
+    weight: s.weight,
+    recipient: s.recipient || undefined,
+    loadDate: s.loadDate,
+    unloadDate: s.unloadDate,
+    tractorPlate: s.tractorPlate,
+    trailerPlate: s.trailerPlate || undefined,
+    notes: s.notes || undefined,
+  };
+}
 
 const STORAGE_KEY = "fvd_crear_draft";
 
@@ -175,7 +262,10 @@ export type WizardCompany = {
 /** Pre-fill for the duplicate flow (a source DeCA's payload, date left blank). */
 export type WizardInitial = Partial<FormState>;
 
-function toPayload(f: FormState) {
+/** Always the flat, single-shipment shape — used by `validateStep()`, which
+ *  validates the current step's OWN fields regardless of any extra
+ *  shipments (#112). */
+function toFlatFields(f: FormState) {
   return {
     shipper: {
       name: f.shipperName,
@@ -214,6 +304,27 @@ function toPayload(f: FormState) {
     tractorPlate: f.tractorPlate,
     trailerPlate: f.trailerPlate || undefined,
     reference: f.reference || undefined,
+  };
+}
+
+/**
+ * #112: when `extraShipments` is empty (the default, still the common case)
+ * this returns EXACTLY the pre-#112 flat body — byte-identical to before —
+ * since the server's schema accepts that shape unchanged. Only when the
+ * operator has actually added another envío does the body gain a
+ * `shipments` array (shipment 1 built from `f`'s own fields, same as
+ * always, plus each extra one).
+ */
+function toPayload(f: FormState, extraShipments: ExtraShipment[] = []) {
+  const flat = toFlatFields(f);
+  if (extraShipments.length === 0) return flat;
+  const { loadLocation, unloadLocation, goods, weight, ...deca } = flat;
+  return {
+    ...deca,
+    shipments: [
+      { loadLocation, unloadLocation, goods, weight },
+      ...extraShipments.map(extraShipmentToPayload),
+    ],
   };
 }
 
@@ -368,7 +479,7 @@ function DecaCheck({
 }) {
   const t = useT();
   const c = t.crear.check;
-  const p = toPayload(form);
+  const p = toFlatFields(form);
 
   const s1 = step1Schema.safeParse({ shipper: p.shipper, carrier: p.carrier });
   const s2 = step2Schema.safeParse({
@@ -573,6 +684,13 @@ export function CrearWizard({
   // D-060: identity captured before an anonymous FIRST DeCA (lib/deca/lead.ts).
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
+  // #112 — multiple shipments ("envíos"). Off by default: the common,
+  // single-origin/destination flow is completely unaffected until this is
+  // turned on. `extraShipmentErrors[i]` mirrors `errors`'s shape but scoped
+  // to shipment `i` (1-based, since shipment 0 is `form` itself).
+  const [multiShipment, setMultiShipment] = useState(false);
+  const [extraShipments, setExtraShipments] = useState<ExtraShipment[]>([]);
+  const [extraShipmentErrors, setExtraShipmentErrors] = useState<Record<number, string>>({});
   const idempotencyKey = useMemo(
     () => (typeof crypto !== "undefined" ? crypto.randomUUID() : String(Date.now())),
     [],
@@ -671,6 +789,10 @@ export function CrearWizard({
     if (party) setQuickFill((q) => (q[party] ? { ...q, [party]: undefined } : q));
   };
 
+  /** #112: set one field on extra shipment `i`. */
+  const setExtra = (i: number, k: keyof ExtraShipment) => (v: string) =>
+    setExtraShipments((arr) => arr.map((s, j) => (j === i ? { ...s, [k]: v } : s)));
+
   /**
    * The 4 party quick-fills are toggles: press once to fill from `source`,
    * press again (same button) to clear those 3 fields. `party` is the target;
@@ -709,7 +831,7 @@ export function CrearWizard({
       : undefined;
 
   function validateStep(): boolean {
-    const p = toPayload(form);
+    const p = toFlatFields(form);
     const schema = [step1Schema, step2Schema, step3Schema][step];
     const slice =
       step === 0
@@ -771,7 +893,7 @@ export function CrearWizard({
         ...(challenge ? { "x-fvd-challenge": challenge } : {}),
       },
       body: JSON.stringify({
-        ...toPayload(form),
+        ...toPayload(form, multiShipment ? extraShipments : []),
         // WORKSPACE #24: which saved records this DeCA actually used, so the
         // server can bump their "last used" timestamp. Best-effort only —
         // never validated against the payload, never blocks generation.
@@ -816,6 +938,27 @@ export function CrearWizard({
         return;
       }
     }
+    // #112 — each extra shipment re-runs the SAME schema the server
+    // validates with, same principle as `DecaCheck` above for shipment 1.
+    if (multiShipment) {
+      if (extraShipments.length === 0) {
+        setErrors({});
+        setExtraShipmentErrors({ 0: t.crear.shipments.minOneError });
+        requestAnimationFrame(() => summaryRef.current?.focus());
+        return;
+      }
+      const fieldErrors: Record<number, string> = {};
+      extraShipments.forEach((s, i) => {
+        const r = shipmentSchema.safeParse(extraShipmentToPayload(s));
+        if (!r.success) fieldErrors[i + 1] = r.error.issues[0]?.message ?? "";
+      });
+      if (Object.keys(fieldErrors).length > 0) {
+        setExtraShipmentErrors(fieldErrors);
+        requestAnimationFrame(() => summaryRef.current?.focus());
+        return;
+      }
+      setExtraShipmentErrors({});
+    }
     setSubmitting(true);
     setSubmitError(null);
     setFailure(null);
@@ -824,7 +967,10 @@ export function CrearWizard({
         const res = await fetch(`/api/deca/${correctDecaId}/version`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ changeReason: reason.trim(), payload: toPayload(form) }),
+          body: JSON.stringify({
+            changeReason: reason.trim(),
+            payload: toPayload(form, multiShipment ? extraShipments : []),
+          }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -1632,6 +1778,235 @@ export function CrearWizard({
                     {errors.reason}
                   </p>
                 )}
+              </div>
+            )}
+          </fieldset>
+        )}
+
+        {/* #112 — multiple shipments ("envíos"). Hidden while correcting an
+            existing DeCA (Sprint 1 scope): an already-multi-shipment DeCA's
+            extra envíos are not pre-loaded into the form, so exposing this
+            here could silently drop them on save — deferred to Sprint 2. */}
+        {step === 2 && !isCorrection && (
+          <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
+            <legend className="px-1 text-sm font-bold">{t.crear.shipments.toggle}</legend>
+            <p className="text-xs text-[var(--color-text-muted)]">{t.crear.shipments.toggleHint}</p>
+            <label className="mt-3 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                data-testid="multi-shipment-toggle"
+                checked={multiShipment}
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  setMultiShipment(on);
+                  setExtraShipmentErrors({});
+                  if (on) {
+                    if (extraShipments.length === 0) setExtraShipments([emptyExtraShipment(form)]);
+                  } else {
+                    setExtraShipments([]);
+                  }
+                }}
+              />
+              <span>{t.crear.shipments.toggle}</span>
+            </label>
+
+            {multiShipment && (
+              <div className="mt-4 space-y-4">
+                {extraShipmentErrors[0] && (
+                  <p role="alert" className="text-sm text-[var(--color-danger)]">
+                    {extraShipmentErrors[0]}
+                  </p>
+                )}
+                {extraShipments.map((s, i) => (
+                  <div
+                    key={i}
+                    data-testid={`extra-shipment-${i + 1}`}
+                    className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-bold">{t.crear.shipments.heading(i + 2)}</p>
+                      <button
+                        type="button"
+                        data-testid={`extra-shipment-remove-${i + 1}`}
+                        onClick={() =>
+                          setExtraShipments((arr) => {
+                            const next = arr.filter((_, j) => j !== i);
+                            if (next.length === 0) setMultiShipment(false);
+                            return next;
+                          })
+                        }
+                        className="text-sm font-medium text-[var(--color-danger)] underline"
+                      >
+                        {t.crear.shipments.remove}
+                      </button>
+                    </div>
+                    <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                      {t.crear.shipments.ownFieldsHint}
+                    </p>
+                    {extraShipmentErrors[i + 1] && (
+                      <p role="alert" className="mt-1 text-sm text-[var(--color-danger)]">
+                        {extraShipmentErrors[i + 1]}
+                      </p>
+                    )}
+
+                    <p className="mt-3 text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                      {t.crear.legends.loadLocation}
+                    </p>
+                    <Field
+                      id={`extraLoadName${i}`}
+                      label={t.crear.fields.locationName}
+                      value={s.loadLocationName}
+                      onChange={setExtra(i, "loadLocationName")}
+                    />
+                    <Field
+                      id={`extraLoadAddress${i}`}
+                      label={t.crear.fields.locationAddress}
+                      value={s.loadLocationAddress}
+                      onChange={setExtra(i, "loadLocationAddress")}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field
+                        id={`extraLoadPostalCode${i}`}
+                        label={t.crear.fields.postalCode}
+                        value={s.loadLocationPostalCode}
+                        onChange={setExtra(i, "loadLocationPostalCode")}
+                      />
+                      <Field
+                        id={`extraLoadCity${i}`}
+                        label={t.crear.fields.city}
+                        value={s.loadLocationCity}
+                        onChange={setExtra(i, "loadLocationCity")}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field
+                        id={`extraLoadProvince${i}`}
+                        label={t.crear.fields.province}
+                        value={s.loadLocationProvince}
+                        onChange={setExtra(i, "loadLocationProvince")}
+                        required={false}
+                      />
+                      <Field
+                        id={`extraLoadCountry${i}`}
+                        label={t.crear.fields.country}
+                        value={s.loadLocationCountry}
+                        onChange={setExtra(i, "loadLocationCountry")}
+                      />
+                    </div>
+
+                    <p className="mt-3 text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                      {t.crear.legends.unloadLocation}
+                    </p>
+                    <Field
+                      id={`extraUnloadName${i}`}
+                      label={t.crear.fields.locationName}
+                      value={s.unloadLocationName}
+                      onChange={setExtra(i, "unloadLocationName")}
+                    />
+                    <Field
+                      id={`extraUnloadAddress${i}`}
+                      label={t.crear.fields.locationAddress}
+                      value={s.unloadLocationAddress}
+                      onChange={setExtra(i, "unloadLocationAddress")}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field
+                        id={`extraUnloadPostalCode${i}`}
+                        label={t.crear.fields.postalCode}
+                        value={s.unloadLocationPostalCode}
+                        onChange={setExtra(i, "unloadLocationPostalCode")}
+                      />
+                      <Field
+                        id={`extraUnloadCity${i}`}
+                        label={t.crear.fields.city}
+                        value={s.unloadLocationCity}
+                        onChange={setExtra(i, "unloadLocationCity")}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field
+                        id={`extraUnloadProvince${i}`}
+                        label={t.crear.fields.province}
+                        value={s.unloadLocationProvince}
+                        onChange={setExtra(i, "unloadLocationProvince")}
+                        required={false}
+                      />
+                      <Field
+                        id={`extraUnloadCountry${i}`}
+                        label={t.crear.fields.country}
+                        value={s.unloadLocationCountry}
+                        onChange={setExtra(i, "unloadLocationCountry")}
+                      />
+                    </div>
+
+                    <Field
+                      id={`extraGoods${i}`}
+                      label={t.crear.fields.goods}
+                      value={s.goods}
+                      onChange={setExtra(i, "goods")}
+                    />
+                    <Field
+                      id={`extraWeight${i}`}
+                      label={t.crear.fields.weight}
+                      value={s.weight}
+                      onChange={setExtra(i, "weight")}
+                      hint={t.crear.fields.weightHint}
+                    />
+                    <Field
+                      id={`extraRecipient${i}`}
+                      label={t.crear.shipments.recipient}
+                      value={s.recipient}
+                      onChange={setExtra(i, "recipient")}
+                      required={false}
+                    />
+
+                    <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+                      {t.crear.shipments.overridesHint}
+                    </p>
+                    <Field
+                      id={`extraLoadDate${i}`}
+                      label={t.crear.fields.loadDate}
+                      type="date"
+                      value={s.loadDate}
+                      onChange={setExtra(i, "loadDate")}
+                    />
+                    <Field
+                      id={`extraUnloadDate${i}`}
+                      label={t.crear.fields.unloadDate}
+                      type="date"
+                      value={s.unloadDate}
+                      onChange={setExtra(i, "unloadDate")}
+                    />
+                    <Field
+                      id={`extraTractorPlate${i}`}
+                      label={t.crear.fields.tractorPlate}
+                      value={s.tractorPlate}
+                      onChange={setExtra(i, "tractorPlate")}
+                    />
+                    <Field
+                      id={`extraTrailerPlate${i}`}
+                      label={t.crear.fields.trailerPlate}
+                      value={s.trailerPlate}
+                      onChange={setExtra(i, "trailerPlate")}
+                      required={false}
+                    />
+                    <Field
+                      id={`extraNotes${i}`}
+                      label={t.crear.shipments.notes}
+                      value={s.notes}
+                      onChange={setExtra(i, "notes")}
+                      required={false}
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  data-testid="add-shipment"
+                  onClick={() => setExtraShipments((arr) => [...arr, emptyExtraShipment(form)])}
+                  className="rounded-[var(--radius-md)] border border-[var(--color-primary)] px-3 py-1.5 text-sm font-medium text-[var(--color-primary)]"
+                >
+                  {t.crear.shipments.addAnother}
+                </button>
               </div>
             )}
           </fieldset>

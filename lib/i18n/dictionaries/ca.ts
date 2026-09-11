@@ -816,6 +816,21 @@ export const ca = {
       plateForeign:
         "No sembla una matrícula espanyola (format 1234 BCD). És vàlida si el vehicle és estranger.",
     },
+    shipments: {
+      toggle: "Aquest transport té diversos llocs de càrrega o descàrrega?",
+      toggleHint:
+        "Activa-ho per documentar en un mateix DeCA diversos enviaments reals — han de compartir el mateix carregador contractual i transportista efectiu.",
+      addAnother: "+ Afegeix un altre enviament",
+      remove: "Elimina aquest enviament",
+      heading: (n: number) => `Enviament ${n}`,
+      ownFieldsHint:
+        "L'origen, la destinació, la mercaderia i el pes són propis d'aquest enviament.",
+      overridesHint:
+        "La data, la matrícula i les notes fan servir els valors generals llevat que els canviïs aquí.",
+      recipient: "Destinatari (opcional)",
+      notes: "Informació especial (opcional)",
+      minOneError: "Afegeix almenys un enviament o desactiva l'opció.",
+    },
     errorSummaryTitle: "Revisa aquests camps:",
     lead: {
       title: "Només un pas més: a qui enviem el DeCA?",

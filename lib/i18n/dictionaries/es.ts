@@ -825,6 +825,21 @@ export const es = {
       plateForeign:
         "No parece una matrícula española (formato 1234 BCD). Es válida si el vehículo es extranjero.",
     },
+    // #112 — varios envíos (lugares de carga/descarga) en un mismo DeCA.
+    shipments: {
+      toggle: "¿Este transporte tiene varios lugares de carga o descarga?",
+      toggleHint:
+        "Actívalo para documentar en un mismo DeCA varios envíos reales — deben compartir el mismo cargador contractual y transportista efectivo.",
+      addAnother: "+ Añadir otro envío",
+      remove: "Eliminar este envío",
+      heading: (n: number) => `Envío ${n}`,
+      ownFieldsHint: "El origen, destino, mercancía y peso son propios de este envío.",
+      overridesHint:
+        "La fecha, la matrícula y las notas usan los valores generales salvo que los cambies aquí.",
+      recipient: "Destinatario (opcional)",
+      notes: "Información especial (opcional)",
+      minOneError: "Añade al menos un envío o desactiva la opción.",
+    },
     errorSummaryTitle: "Revisa estos campos:",
     lead: {
       title: "Solo un paso más: ¿a quién enviamos el DeCA?",

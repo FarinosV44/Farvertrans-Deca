@@ -838,6 +838,20 @@ export const eu = {
       plateForeign:
         "Ez dirudi Espainiako matrikula bat (1234 BCD formatua). Baliozkoa da ibilgailua atzerrikoa bada.",
     },
+    shipments: {
+      toggle: "Garraio honek zama-gune edo deskarga-gune bat baino gehiago ditu?",
+      toggleHint:
+        "Aktibatu DeCA berean benetako bidalketa bat baino gehiago dokumentatzeko — kargatzaile kontraktual eta garraiolari eragile berbera izan behar dute.",
+      addAnother: "+ Gehitu beste bidalketa bat",
+      remove: "Kendu bidalketa hau",
+      heading: (n: number) => `Bidalketa ${n}`,
+      ownFieldsHint: "Jatorria, helmuga, salgaia eta pisua bidalketa honi berari dagozkio.",
+      overridesHint:
+        "Data, matrikula eta oharrek balio orokorrak erabiltzen dituzte, hemen aldatzen ez badituzu.",
+      recipient: "Hartzailea (aukerakoa)",
+      notes: "Informazio berezia (aukerakoa)",
+      minOneError: "Gehitu gutxienez bidalketa bat edo desaktibatu aukera.",
+    },
     errorSummaryTitle: "Berrikusi eremu hauek:",
     lead: {
       title: "Urrats bat besterik ez: nori bidaliko diogu DeCA?",

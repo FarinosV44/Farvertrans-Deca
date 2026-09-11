@@ -27,28 +27,32 @@ const payload: DecaPayload = {
     postalCode: "46988",
     city: "Paterna",
   },
-  loadLocation: {
-    name: "Almacén Turia",
-    address: "Av. del Puerto 120",
-    postalCode: "46023",
-    city: "Valencia",
-    province: "Valencia",
-    country: "España",
-  },
-  unloadLocation: {
-    name: "Plataforma Norte",
-    address: "Calle Alcalá 200",
-    postalCode: "28028",
-    city: "Madrid",
-    province: "Madrid",
-    country: "España",
-  },
   loadDate: "2026-10-06",
   unloadDate: "2026-10-06",
-  goods: "Palés de cerámica",
-  weight: "12000 kg",
   tractorPlate: "1234 BCD",
   trailerPlate: "R-4471",
+  shipments: [
+    {
+      loadLocation: {
+        name: "Almacén Turia",
+        address: "Av. del Puerto 120",
+        postalCode: "46023",
+        city: "Valencia",
+        province: "Valencia",
+        country: "España",
+      },
+      unloadLocation: {
+        name: "Plataforma Norte",
+        address: "Calle Alcalá 200",
+        postalCode: "28028",
+        city: "Madrid",
+        province: "Madrid",
+        country: "España",
+      },
+      goods: "Palés de cerámica",
+      weight: "12000 kg",
+    },
+  ],
 };
 
 async function text() {
@@ -140,14 +144,19 @@ describe("#66 — generated DeCA structural snapshot", () => {
   it("renders a location with no province cleanly — no stray separators (#75)", async () => {
     const noProv: DecaPayload = {
       ...payload,
-      loadLocation: { ...payload.loadLocation, province: undefined },
-      unloadLocation: {
-        name: "Dépôt Lyon Est",
-        address: "12 rue de la Logistique",
-        postalCode: "69120",
-        city: "Vaulx-en-Velin",
-        country: "Francia",
-      },
+      shipments: [
+        {
+          ...payload.shipments[0],
+          loadLocation: { ...payload.shipments[0].loadLocation, province: undefined },
+          unloadLocation: {
+            name: "Dépôt Lyon Est",
+            address: "12 rue de la Logistique",
+            postalCode: "69120",
+            city: "Vaulx-en-Velin",
+            country: "Francia",
+          },
+        },
+      ],
     };
     const buf = await renderDecaPdf({
       data: noProv,
@@ -238,5 +247,70 @@ describe("#66 — generated DeCA structural snapshot", () => {
     expect(t.toUpperCase()).toContain("DOCUMENTO CORREGIDO");
     expect(t).toContain("2026-10-07 10:00:00 UTC");
     expect(t).toMatch(/Versión 2 del documento/);
+  });
+
+  // #112 — multiple shipments ("envíos"). The issue's own worked example:
+  // Valencia→Madrid and Castellón→Madrid, same shipper/carrier, one shipment
+  // overriding the DeCA-level date. A single-shipment payload (every test
+  // above) must render with NO "ENVÍO" badge and no total — proven by every
+  // one of those tests still passing unmodified against the same `payload`.
+  it("#112: renders every shipment as a separated, numbered ENVÍO block with a total weight and the ordering disclaimer", async () => {
+    const multi: DecaPayload = {
+      ...payload,
+      shipments: [
+        payload.shipments[0],
+        {
+          loadLocation: {
+            name: "Almacén Castellón",
+            address: "Av. del Mar 5",
+            postalCode: "12003",
+            city: "Castellón de la Plana",
+            province: "Castellón",
+            country: "España",
+          },
+          unloadLocation: payload.shipments[0].unloadLocation,
+          goods: "Azulejos",
+          weight: "8000 kg",
+          loadDate: "2026-10-07", // overrides the DeCA-level default
+        },
+      ],
+    };
+    const buf = await renderDecaPdf({
+      data: multi,
+      publicUrl: "https://decaprofesional.es/d/A4F2C9E1",
+      reference: "DECA-A4F2C9E1",
+      versionNo: 1,
+      createdAt: new Date("2026-10-06T08:41:00Z"),
+    });
+    const doc = await getDocument({ data: new Uint8Array(buf) }).promise;
+    let out = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const c = await (await doc.getPage(i)).getTextContent();
+      out += " " + c.items.map((it) => ("str" in it ? it.str : "")).join(" ");
+    }
+    const flat = out.replace(/\s+/g, " ");
+    const upper = flat.toUpperCase();
+
+    expect(upper).toContain("ENVÍO 1");
+    expect(upper).toContain("ENVÍO 2");
+    expect(upper).toContain("ALMACÉN TURIA");
+    expect(upper).toContain("ALMACÉN CASTELLÓN");
+    expect(upper).toContain("PALÉS DE CERÁMICA");
+    expect(upper).toContain("AZULEJOS");
+    expect(upper).toContain("12000 KG");
+    expect(upper).toContain("8000 KG");
+    // Both parties still appear exactly once each — DeCA-level, never
+    // duplicated per shipment.
+    expect(upper.match(/LOGÍSTICA DEL TURIA SA/g)?.length).toBe(1);
+    // 12000 kg + 8000 kg = 20.000 kg (es-ES thousands separator)
+    expect(upper).toContain("PESO TOTAL");
+    expect(upper).toContain("20.000 KG");
+    expect(upper).toContain(
+      "LA NUMERACIÓN DE LOS ENVÍOS TIENE CARÁCTER IDENTIFICATIVO Y NO DETERMINA SU ORDEN DE EJECUCIÓN",
+    );
+    // The override on shipment 2 took effect; shipment 1 still shows the
+    // DeCA-level default date.
+    expect(flat).toContain("2026-10-06");
+    expect(flat).toContain("2026-10-07");
   });
 });
