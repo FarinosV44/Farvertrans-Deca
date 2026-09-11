@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `3c344e1` (2026-09-11 — D-202…D-207 all pushed to both). Nothing awaits `main`. No tag requested. **Production NOT yet redeployed for any of today's work (D-202–D-207)** — still runs a pre-`cc82787` build; the user's next Hostinger redeploy picks up everything through D-207 at once.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `efe970c` (2026-09-11 — D-202…D-208 all pushed to both). Nothing awaits `main`. No tag requested. **Production NOT yet redeployed for any of today's work (D-202–D-208)** — still runs a pre-`cc82787` build; the user's next Hostinger redeploy picks up everything through D-208 at once (including the D-207 `saved_shipment` migration, not yet applied to production).
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -77,8 +77,8 @@
   (`datos-habituales-rutas.spec.ts` 4/4 new, `master-data.spec.ts` 2/2, `favorites.spec.ts` 1/1,
   `workspace.spec.ts` 7/7 incl. a11y, `saved-shipments.spec.ts` 2/2, `deca-multi-shipment.spec.ts`
   4/4, `crear.spec.ts` 9/9, `creator-v2.spec.ts` 5/5 — across two runs, 1 transient `ECONNRESET`
-  confirmed a contention flake in isolation). **PUSHED to `develop` AND `main`** (see commit hash
-  below). **I-113 is now FULLY complete (Phase 1 + Phase 2). Queued next:** #114, then #115.
+  confirmed a contention flake in isolation). **PUSHED to `develop` AND `main`** (commit `efe970c`).
+  **I-113 is now FULLY complete (Phase 1 + Phase 2). Queued next:** #114, then #115.
 - **D-207 — I-113 Phase 1: "Ruta/envío habitual" + wizard integration, this session (2026-09-11),
   immediately after D-205/D-206. Full detail in `docs/decisions.md` D-207.** New `SavedShipment`
   model (`prisma/schema.prisma`, migration `20260911200000_saved_shipment`, additive-only, RLS
