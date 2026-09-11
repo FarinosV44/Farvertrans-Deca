@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isValidSpanishPostalCode, isValidPhone, isValidOwnNif } from "@/lib/validation/spanish";
+import {
+  isValidSpanishPostalCode,
+  isValidPostalCode,
+  isValidPhone,
+  isValidOwnNif,
+} from "@/lib/validation/spanish";
 
 describe("isValidSpanishPostalCode (#59)", () => {
   it("accepts a real 5-digit code with a province prefix 01–52", () => {
@@ -10,6 +15,24 @@ describe("isValidSpanishPostalCode (#59)", () => {
   it("rejects wrong length, non-digits and out-of-range provinces", () => {
     for (const cp of ["2801", "280012", "abcde", "00123", "53001", "99999", ""]) {
       expect(isValidSpanishPostalCode(cp), cp).toBe(false);
+    }
+  });
+});
+
+describe("isValidPostalCode (live incident — Portuguese self-registration blocked)", () => {
+  it("still accepts every valid Spanish postal code", () => {
+    for (const cp of ["28001", "08015", "46540", "01001", "52001"]) {
+      expect(isValidPostalCode(cp), cp).toBe(true);
+    }
+  });
+  it("accepts a plausible foreign postal code (e.g. Portuguese NNNN-NNN)", () => {
+    for (const cp of ["1000-001", "4000-123", "75008", "SW1A 1AA"]) {
+      expect(isValidPostalCode(cp), cp).toBe(true);
+    }
+  });
+  it("still rejects empty or nonsense input", () => {
+    for (const cp of ["", "ab", "-----"]) {
+      expect(isValidPostalCode(cp), cp).toBe(false);
     }
   });
 });
@@ -33,10 +56,17 @@ describe("isValidOwnNif (#59 — hard gate for our own company)", () => {
     expect(isValidOwnNif("12345678Z")).toBe(true);
     expect(isValidOwnNif("X1234567L")).toBe(true);
   });
-  it("rejects a bad checksum and an unrecognised shape (unlike the wizard's soft warning)", () => {
+  it("rejects a bad checksum on a recognisably Spanish shape", () => {
     expect(isValidOwnNif("B21810453")).toBe(false); // wrong control
     expect(isValidOwnNif("12345678A")).toBe(false); // wrong DNI letter
+  });
+  it("rejects nonsense with no digits, and empty input", () => {
     expect(isValidOwnNif("NOTANIF")).toBe(false);
     expect(isValidOwnNif("")).toBe(false);
+  });
+  it("accepts a plausible foreign tax id (live incident — Portuguese self-registration blocked)", () => {
+    expect(isValidOwnNif("501442600")).toBe(true); // PT NIPC, 9 digits
+    expect(isValidOwnNif("PT501442600")).toBe(true);
+    expect(isValidOwnNif("FR12345678901")).toBe(true);
   });
 });

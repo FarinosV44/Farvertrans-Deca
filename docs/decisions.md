@@ -6468,3 +6468,51 @@ The `badge` i18n key dropped from all 8 locales; the two `toContainText("OPCIONA
 removed from `commercial-consent.spec.ts`. The feature is still described as optional in the prose,
 the intro, the legal copy and the per-DeCA wizard legend ("DECA Conecta (opcional)") — only the
 pill is gone. `deca-conecta-registro.png` + `privacidad.png` re-captured. 23/23 consent tests green.
+
+## D-202 — LIVE PRODUCTION INCIDENT: a foreign (Portuguese) company could not self-register (2026-09-11)
+
+User report mid-session: "hay un portugués intentando registrarse y no puede tampoco" — a real user
+blocked right now. Root-caused by direct code inspection (no prod DB access at the time): #59's "own
+company" validators in `lib/validation/spanish.ts` are Spain-only and hard-block, unlike every other
+caller of `checkNif()` in this codebase, which R-2 deliberately treats as a soft warning ("foreign
+counterparty" — see `lib/deca/nif.ts`'s own comment). Two independent hard gates:
+- `isValidOwnNif()` rejected any `checkNif` "unknown" shape outright — a Portuguese NIPC (9 plain
+  digits) is always "unknown" here, so it was flatly rejected regardless of validity.
+- `postalCode` was bounded to exactly 5 characters (`trimmed(5, 5, …)`) and checked against
+  `isValidSpanishPostalCode()` (exactly 5 digits, province 01–52) — a Portuguese `NNNN-NNN` code
+  fails both the length bound and the digit-only pattern.
+
+**Fix (not a product-scope decision — no recorded decision restricted self-registration to Spanish
+companies; this was an unintentional implementation gap):**
+- New `isValidPostalCode()` in `lib/validation/spanish.ts`: tries the strict Spanish rule first, then
+  falls back to a lenient generic check (3–10 chars after removing spaces, at least one digit,
+  alphanumeric/hyphen only) — same "warn, don't block" spirit R-2 already applies to counterparties.
+  `isValidSpanishPostalCode()` itself is UNCHANGED and still used internally.
+- `isValidOwnNif()`: a recognisably Spanish shape (DNI/NIE/CIF) still fails on a bad checksum exactly
+  as before; an "unknown" shape is now accepted when it is a plausible foreign tax id (has a digit,
+  5–20 chars) instead of being rejected outright. Pure nonsense with no digits ("NOTANIF") is still
+  rejected — the existing test for that case is unchanged.
+- `lib/validation/company.ts`'s `companyDataSchema.postalCode` bound widened from `trimmed(5, 5, …)`
+  to `trimmed(3, 12, …)` and switched to `isValidPostalCode`; same swap in the soft gate
+  (`lib/company/completeness.ts`) and the profile-edit route (`app/api/company/profile/route.ts`) —
+  every "own company" surface stays on one shared rule, per #59's own design intent.
+- `docs/api/INDEX.md` row updated in the same slice.
+
+**Test-first (pure-logic policy):** new tests added and observed red before the fix
+(`tests/unit/validation-spanish.test.ts` — foreign postal code + foreign tax id acceptance;
+existing "NOTANIF"/empty-string rejection cases kept and still pass). Two pre-existing tests in
+`tests/unit/validation-company.test.ts` asserted the OLD Spain-only behavior for a postal code
+("99999" — a plausible-looking but out-of-range Spanish code); updated to use a value with no
+digits at all ("sin numero"), which is unambiguously malformed under BOTH the old and new rule —
+this is a requirement change, not a weakened assertion. Full unit suite green (399/399); tsc clean;
+prettier clean; `keel-verify` clean.
+
+**Known, accepted trade-off:** a self-registering user can no longer be blocked by a plausible-looking
+but out-of-range/garbled Spanish-shaped identifier (e.g. a mistyped DNI/postal code that happens to
+look foreign) — it now passes as "foreign" instead. This mirrors the exact ambiguity R-2 already
+accepts for counterparties elsewhere in the app, and is a strictly better outcome than blocking real
+foreign businesses; a bad self-reported identifier is still correctable by the superadmin (#62).
+
+**Not yet done:** confirming this actually unblocks the reporting user (no production access from this
+session — see the separate production-log/DB-access request to the user), and no production deploy has
+happened yet — this fix exists on `develop` pending deploy.

@@ -45,6 +45,20 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-202 — LIVE INCIDENT hotfix, this session (2026-09-11): a foreign (Portuguese) company could not
+  self-register** — #59's "own company" NIF/postal-code validators were Spain-only hard gates,
+  unlike R-2's deliberate "foreign counterparty" leniency elsewhere. Fixed: `isValidOwnNif()` now
+  accepts a plausible foreign tax id (digit-bearing, 5–20 chars) when the shape isn't recognisably
+  Spanish (Spanish-shaped ids still checksum-validated); new `isValidPostalCode()` falls back to a
+  lenient foreign-postal-code check after the strict Spanish one; `companyDataSchema.postalCode`
+  bound widened 5→3–12 chars. Same rule now shared by registration, the profile-edit route, and the
+  soft-completeness gate. Test-first (red confirmed): `tests/unit/validation-spanish.test.ts` +
+  2 pre-existing `validation-company.test.ts` cases updated (requirement change, not a weakened
+  assertion — see D-202). 399/399 unit, tsc, prettier, keel-verify all clean. **NOT YET VERIFIED
+  against the actual reporting user or production** — no prod DB/log access from this session yet
+  (separate ask to the user, in progress). Also this session: user separately asked for a full
+  registration-endpoint latency audit + duplicate-submission hardening — **IN PROGRESS, not yet
+  complete** (see below once written).
 - **`develop` == `main` == `cc82787` (2026-09-10), both pushed. EVERYTHING from this session is on
   `main`:** D-194, #111 (D-195…D-198), D-199, D-200, the D-200 badge-mobile-chip follow-up, and
   **D-201 / D-201b / D-201c (DECA Conecta)**. CI: run 34534080435 (DECA Conecta merge).

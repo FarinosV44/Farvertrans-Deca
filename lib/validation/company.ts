@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isValidSpanishPostalCode, isValidPhone, isValidOwnNif } from "./spanish";
+import { isValidPostalCode, isValidPhone, isValidOwnNif } from "./spanish";
 
 /**
  * The one schema for a complete company ficha (#59). Every "our own company"
@@ -28,8 +28,8 @@ export const companyDataSchema = z.object({
   ),
   email: z.string().trim().max(160).email("El correo electrónico no es válido"),
   address: trimmed(4, 300, "Indica la dirección"),
-  postalCode: trimmed(5, 5, "Indica el código postal").refine(
-    isValidSpanishPostalCode,
+  postalCode: trimmed(3, 12, "Indica el código postal").refine(
+    isValidPostalCode,
     "El código postal no es válido",
   ),
   city: trimmed(2, 120, "Indica la población"),

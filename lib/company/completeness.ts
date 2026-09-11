@@ -1,5 +1,5 @@
 import { companyDataSchema, COMPANY_DATA_FIELDS } from "@/lib/validation/company";
-import { isValidSpanishPostalCode, isValidPhone } from "@/lib/validation/spanish";
+import { isValidPostalCode, isValidPhone } from "@/lib/validation/spanish";
 
 type CompanyLike = Partial<Record<(typeof COMPANY_DATA_FIELDS)[number], string | null | undefined>>;
 
@@ -31,7 +31,7 @@ export function companyDataComplete(
     return companyDataSchema.safeParse({ ...company }).success;
   }
   return (
-    isValidSpanishPostalCode(String(company.postalCode)) &&
+    isValidPostalCode(String(company.postalCode)) &&
     isValidPhone(String(company.phone)) &&
     EMAIL_RE.test(String(company.email).trim())
   );
@@ -53,7 +53,7 @@ export function missingCompanyFields(
     const parsed = companyDataSchema.safeParse({ ...company });
     if (!parsed.success) for (const i of parsed.error.issues) missing.add(String(i.path[0]));
   } else {
-    if (has("postalCode") && !isValidSpanishPostalCode(String(company.postalCode)))
+    if (has("postalCode") && !isValidPostalCode(String(company.postalCode)))
       missing.add("postalCode");
     if (has("phone") && !isValidPhone(String(company.phone))) missing.add("phone");
     if (has("email") && !EMAIL_RE.test(String(company.email).trim())) missing.add("email");

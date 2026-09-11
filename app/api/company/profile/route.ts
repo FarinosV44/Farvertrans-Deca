@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isValidSpanishPostalCode, isValidPhone } from "@/lib/validation/spanish";
+import { isValidPostalCode, isValidPhone } from "@/lib/validation/spanish";
 import { companyDataComplete } from "@/lib/company/completeness";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ const bodySchema = z.object({
   email: z.string().trim().max(160).email("El correo electrónico no es válido"),
   phone: z.string().trim().max(20).refine(isValidPhone, "El teléfono no tiene un formato válido"),
   address: z.string().trim().min(4, "Indica la dirección").max(300),
-  postalCode: z.string().trim().refine(isValidSpanishPostalCode, "El código postal no es válido"),
+  postalCode: z.string().trim().refine(isValidPostalCode, "El código postal no es válido"),
   city: z.string().trim().min(2, "Indica la población").max(120),
   contactName: z.string().trim().min(2, "Indica la persona de contacto").max(120),
 });

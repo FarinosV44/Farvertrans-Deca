@@ -31,7 +31,10 @@ describe("companyDataSchema (#59)", () => {
   });
   it("rejects an invalid CIF, postal code, phone and email", () => {
     expect(companyDataSchema.safeParse({ ...valid, nif: "B21810453" }).success).toBe(false);
-    expect(companyDataSchema.safeParse({ ...valid, postalCode: "99999" }).success).toBe(false);
+    // "99999" is out of the Spanish province range but is now accepted as a
+    // plausible FOREIGN postal code (#59 bug fix — see isValidPostalCode);
+    // "sin numero" has no digits at all, so it is rejected under both rules.
+    expect(companyDataSchema.safeParse({ ...valid, postalCode: "sin numero" }).success).toBe(false);
     expect(companyDataSchema.safeParse({ ...valid, phone: "123" }).success).toBe(false);
     expect(companyDataSchema.safeParse({ ...valid, email: "nope" }).success).toBe(false);
   });
@@ -70,7 +73,7 @@ describe("soft gate is lenient on a locked, pre-#59 identifier (#59 bug fix)", (
   });
 
   it("the soft gate still catches a genuinely missing / malformed editable field", () => {
-    expect(companyDataComplete({ ...preExisting, postalCode: "99999" }, false)).toBe(false);
+    expect(companyDataComplete({ ...preExisting, postalCode: "sin numero" }, false)).toBe(false);
     expect(missingCompanyFields({ ...preExisting, phone: "" }, false)).toContain("phone");
     expect(missingCompanyFields({ ...preExisting, city: "" }, false)).toContain("city");
   });
