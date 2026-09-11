@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `cc82787` (D-194, #111, D-199, D-200, D-201/b/c all merged to `main` 2026-09-10 on user instruction). Nothing awaits `main`. No tag requested. **Production redeployed once this session** (#111 + D-194 live); a further redeploy lands D-200 + DECA Conecta.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `3c344e1` (2026-09-11 — D-202…D-207 all pushed to both). Nothing awaits `main`. No tag requested. **Production NOT yet redeployed for any of today's work (D-202–D-207)** — still runs a pre-`cc82787` build; the user's next Hostinger redeploy picks up everything through D-207 at once.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -69,8 +69,8 @@
   wizard) and consume (the picker). **Gate: 429/429 unit (+9 new), tsc/eslint/prettier clean;
   targeted e2e regression sweep 21/21 green** (`saved-shipments.spec.ts` 2/2 new,
   `deca-multi-shipment.spec.ts` 4/4, `crear.spec.ts` 9/9, `creator-v2.spec.ts` 5/5, `favorites.spec.ts`
-  1/1 — not the full suite, scoped to every surface this slice touched). Ready to commit/push
-  develop→main. **Queued next:** #113 Phase 2, then #114, #115.
+  1/1 — not the full suite, scoped to every surface this slice touched). **PUSHED to `develop` AND
+  `main`** (commit `3c344e1`). **Queued next:** #113 Phase 2, then #114, #115.
 - **D-205 — I-112 Sprint 1: multiple shipments ("envíos") per DeCA — creation, this session
   (2026-09-11). CODE COMPLETE on `develop`, NOT YET pushed/merged to `main` (pending final full e2e
   gate + commit — see below).** Planned in plan mode with the user first (16 AC issue). Data model
