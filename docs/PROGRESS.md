@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `d1fd931` (2026-09-11 — D-202…D-209 all pushed to both). Nothing awaits `main`. No tag requested. **Production DB schema is current through D-208** (the D-207 `saved_shipment` migration was applied directly this session, verified RLS on + 0 rows) — **production APP CODE is NOT yet redeployed** for any of today's work; still runs a pre-`cc82787` build. The user's next Hostinger redeploy picks up everything through D-209 at once.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. `develop` == `main` == `12a5760` (2026-09-11 — D-202…D-210 all pushed to both; product version is now **0.3.0**). Nothing awaits `main`. No tag requested. **Production DB schema is current through D-208** (the D-207 `saved_shipment` migration was applied directly this session, verified RLS on + 0 rows) — **production APP CODE is NOT yet redeployed** for any of today's work; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything through D-210 at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210).
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -66,8 +66,9 @@
   header into the composite) for the one new capture, `crear-multi-envio.png`. **Gate: 443/443
   unit (no new — content/config/scripts only), tsc/eslint/prettier/keel-verify clean, guide e2e
   suite 4/4 green (run twice, once via Playwright's own properly-managed server per this
-  session's own lessons-learned rule), the one affected `admin.spec.ts` test green.** Ready to
-  commit/push. **I-115 complete — this was the LAST issue in the user's explicitly-ordered queue
+  session's own lessons-learned rule), the one affected `admin.spec.ts` test green.** **PUSHED to
+  `develop` AND `main`** (commit `12a5760`). **I-115 complete — this was the LAST issue in the
+  user's explicitly-ordered queue
   (#112→#115); all four are now done.**
 - **New issue #116 opened this session** (Portuguese `pt` as a supported UI language, per the
   user's explicit request) — motivated by this session's own D-202 incident. Scoped to the
