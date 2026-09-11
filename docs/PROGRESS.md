@@ -45,6 +45,34 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-210 — I-115: Guía de uso updated + v0.2.0 → v0.3.0 release closeout, this session
+  (2026-09-11), immediately after D-209. Full detail in `docs/decisions.md` D-210.** Version
+  bumped in the single mechanical source (`package.json` + `lib/version.ts`, cross-checked by
+  `scripts/keel-verify.mjs` — confirmed `version in sync (0.3.0)`). New lightweight
+  `docs/CHANGELOG.md` (none existed before). Guide (`prisma/content/guia-de-uso.ts`) updated with
+  a new "Varios envíos en un mismo DeCA" section (#112) and rewritten Historial/Datos habituales
+  sections matching D-209/D-207/D-208's real redesigns — deliberately did NOT do the issue's
+  suggested full top-level reorder (confirmed with the user via the plan approval), since the
+  current "Paso 1/2/3" structure already mirrors the real wizard and a reorder would have churned
+  every anchor/cross-link for a cosmetic change. **Real finding, not originally scoped:** editing
+  the guide's TS constant alone does NOT update an already-seeded `ContentItem` row —
+  `seedContent()` is create-only-if-absent. Fixed via a targeted `contentItem.update` (temporary,
+  uncommitted script, deleted after use) mirroring the exact D-201c precedent for this same row —
+  same id, same status, same total row count before/after. **Production needs the identical
+  targeted update at deploy time** — a plain redeploy will NOT refresh the live guide's body.
+  All screenshots regenerated for real via the existing automated `scripts/guide-screenshots.mjs`
+  against a genuine production build (confirmed `/health` → `"version":"0.3.0"` first); found and
+  fixed a real capture-tool bug along the way (a too-tall element screenshot baked the sticky
+  header into the composite) for the one new capture, `crear-multi-envio.png`. **Gate: 443/443
+  unit (no new — content/config/scripts only), tsc/eslint/prettier/keel-verify clean, guide e2e
+  suite 4/4 green (run twice, once via Playwright's own properly-managed server per this
+  session's own lessons-learned rule), the one affected `admin.spec.ts` test green.** Ready to
+  commit/push. **I-115 complete — this was the LAST issue in the user's explicitly-ordered queue
+  (#112→#115); all four are now done.**
+- **New issue #116 opened this session** (Portuguese `pt` as a supported UI language, per the
+  user's explicit request) — motivated by this session's own D-202 incident. Scoped to the
+  existing 8-locale dictionary pattern; editorial content and legal pages excluded per D-002/D-072.
+  Not started.
 - **Production migration gap check (2026-09-11), before starting I-114:** confirmed no gap other
   than D-207's `saved_shipment` migration, applied it directly to production, verified RLS enabled
   (`relrowsecurity: true`) and 0 rows. Production DB schema is now current through D-208; app code

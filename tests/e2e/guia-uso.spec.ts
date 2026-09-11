@@ -51,13 +51,31 @@ test("the guide renders its structure: TOC, working anchors, a callout and a fig
   await expect(page.getByText("¿Tengo que instalar una aplicación?")).toBeVisible();
 });
 
-test("the guide is indexable and has no horizontal overflow on a phone", async ({ page }) => {
+test("#112/#115 — the multi-envío section is documented and reachable from the TOC", async ({
+  page,
+}) => {
+  await page.goto(PATH);
+
+  const toc = page.getByRole("navigation", { name: "Contenido" });
+  const multiEnvioLink = toc.getByRole("link", { name: /Varios envíos en un mismo DeCA/i });
+  await expect(multiEnvioLink).toHaveAttribute("href", "#varios-envios-en-un-mismo-deca");
+  await multiEnvioLink.click();
+  await expect(page).toHaveURL(new RegExp(`${PATH}#varios-envios-en-un-mismo-deca$`));
+  await expect(page.locator("#varios-envios-en-un-mismo-deca")).toBeInViewport();
+
+  await expect(page.getByText("Añadir otro envío", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/Castellón.*Madrid/).first()).toBeVisible();
+});
+
+test("the guide is indexable and has no horizontal overflow at any of the product's breakpoints", async ({
+  page,
+}) => {
   await page.goto(PATH);
 
   // Indexable — no robots noindex (ArticleLayout only adds it in preview mode).
   await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
 
-  for (const width of [320, 1440]) {
+  for (const width of [320, 375, 390, 430, 768, 1024, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(150);
     const overflow = await page.evaluate(

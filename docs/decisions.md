@@ -7162,3 +7162,113 @@ redeploy to actually run any of today's work.
 
 **Next:** #115 (v0.2.0 → v0.3.0 + docs close-out) — now fully unblocked, #112/#113/#114 all
 complete.
+
+## D-210 — I-115: Guía de uso updated, v0.2.0 → v0.3.0 release closeout (2026-09-11)
+
+Issue #115 was explicitly gated on #112 (multi-envío), #113 (Datos habituales redesign) and #114
+(Historial redesign) all being integrated — all three shipped earlier this session. This is a
+documentation/version closeout only, no new business logic, per the issue's own explicit
+instruction (§10).
+
+**Version bump — single source of truth, cascaded automatically.** `package.json` and
+`lib/version.ts`'s `APP_VERSION` (already the one mechanical source read by the footer, `/health`,
+admin `/sistema`, PDF producer metadata, and analytics — `scripts/keel-verify.mjs` already
+cross-checks the two never drift) both moved `0.2.0` → `0.3.0`. `package-lock.json`'s two root-
+project version mirrors updated to match (not touched via a full `npm install`, which would risk
+touching dependency versions). Two test fixtures using an arbitrary "0.2.0" literal (neither
+asserts it against the real `APP_VERSION` — `tests/e2e/admin.spec.ts`'s fabricated
+`generationFailure` row, `tests/unit/analytics.test.ts`'s schema-acceptance fixture) updated to
+`0.3.0` for consistency, not because either needed to. `node scripts/keel-verify.mjs` confirms
+`version in sync (0.3.0)`. Exhaustive grep confirmed zero remaining `0.2.0` string anywhere in
+tracked source outside `package-lock.json`'s dependency entries.
+
+**New `docs/CHANGELOG.md`** — no changelog existed before this session. One lightweight v0.3.0
+entry (the issue's own suggested bullet list: multi-envío, Datos habituales, Histórico,
+usability/responsive, guide update) — no new tooling, no retroactively-invented prior versions.
+
+**Guía de uso updated** (`prisma/content/guia-de-uso.ts`) to describe the product as it actually
+is post-#112/#113/#114:
+1. **New section "Varios envíos en un mismo DeCA"**, inserted directly after "Cómo crear un DeCA"
+   (where the real wizard's toggle lives) rather than following the issue's suggested full
+   top-level reorder splitting creation into separate empresas/vehículos/lugares sections — a
+   deliberate, flagged deviation (confirmed with the user via the plan's ExitPlanMode approval):
+   the current order already mirrors the real 3-step wizard, and the suggested reorder is the
+   issue's "recommended," not mandated, and would have churned every anchor link (TOC,
+   `relatedSlugs` cross-links, the e2e test's own anchor assertions) for a cosmetic reordering.
+   Covers when multi-envío applies (same cargador/transportista), how to use "Añadir otro envío",
+   per-envío data, PESO TOTAL, the numbering-≠-order disclaimer, the PDF rendering, and correction/
+   versioning of a multi-envío document — using the issue's own worked examples (Valencia→Madrid +
+   Castellón→Madrid; Valencia→Madrid + Valencia→Toledo).
+2. **"Historial" section rewritten** for the D-209 redesign: route-first row hierarchy, the
+   "+N envíos" summary, "Ver detalle" as the primary action with Inspección/Compartir visible and
+   Corregir/Duplicar/PDF under the "···" menu, Vigente/Corregida/No disponible status, and the
+   filtered-empty-state "Limpiar filtros" flow.
+3. **"Datos habituales" section rewritten** for the D-207/D-208 redesign: the 4 tabs (Empresas/
+   Vehículos/Lugares/Rutas), global search, the "+ Añadir dato habitual" modal, duplicate-warning
+   behaviour, and the new "ruta/envío habitual" concept explained specifically in terms of filling
+   an ENVÍO N block from the wizard.
+4. Terminology spot-checked (DeCA/cargador contractual/transportista efectivo/envío/lugar de
+   carga/lugar de descarga/PDF/QR/Modo inspección) — already consistent from prior sessions' legal-
+   terminology passes, no rewrite needed. Every other section (12 of 19) reviewed and left as-is —
+   none of #112/#113/#114 touched those areas, and the issue explicitly forbids documenting
+   speculative functionality.
+5. **i18n out of scope, confirmed by design (D-002):** editorial content (blog/guides) is Spanish-
+   only; the product UI's 8-locale dictionary system is separate and untouched here. Issue §8 is
+   conditional on the guide supporting multiple languages, which it doesn't.
+6. **Image lightbox/zoom (§9) skipped** — no such UI exists in `lib/content/markdown.tsx` today,
+   and building one is not "simple to integrate" as the issue's own conditional requires.
+
+**A real, non-obvious finding: editing the TS constant alone does NOT update already-seeded
+content.** `prisma/content-seed.ts`'s `seedContent()` is create-only-if-absent (`if (existing)
+continue`) — the guide's `ContentItem` row already existed in the dev DB from the original #111
+seeding, so re-running `npm run seed:content` would have silently skipped the new body entirely.
+Fixed by a targeted `contentItem.update` (temporary, uncommitted script, deleted after use)
+against the existing row by id — same id, same `published` status, same total `ContentItem` count
+before/after (5→5) — mirroring the exact practice already established and documented at D-201c for
+this same guide row. **This same gap will exist in production**: deploying the new code alone will
+not update the live guide's already-seeded body; the production row needs the identical targeted
+update at deploy time (or via the existing admin CMS edit UI), not a re-seed.
+
+**Screenshots regenerated for real** via the existing, already-automated
+`scripts/guide-screenshots.mjs` (built for #111, zero manual browser work) against a genuine
+`npm run build && npm run start` production server with the version bump and updated guide content
+both live (`/health` confirmed `"version":"0.3.0"` before capturing). `mis-deca.png` and
+`datos-habituales.png` regenerated automatically with the new D-209/D-208 UI, no script change
+needed since both already pointed at the real routes. One new capture added,
+`crear-multi-envio.png` (the wizard's ENVÍO 2 block, filled with the guide's own worked example
+data) — **found and fixed a real rendering bug in the capture itself, not the product**: an
+element screenshot taller than the default viewport baked the page's sticky header into the middle
+of the composite (a Playwright/CDP capture quirk, not a UI bug); fixed by measuring the block's
+real height, temporarily widening the viewport to fit it in one frame, and nudging the scroll
+position up by the header's own measured height plus blurring the last-focused field so no stray
+focus ring was captured — verified by inspecting the resulting PNG directly, twice, before and
+after the fix.
+
+**Verified for real:** `tests/e2e/guia-uso.spec.ts` extended (not replaced) — a new test confirms
+the "Varios envíos en un mismo DeCA" heading is in the TOC, its anchor resolves and scrolls into
+view, and the section's own body text (the "Añadir otro envío" instruction, the Castellón→Madrid
+example) is actually present; the existing responsive check widened from [320, 1440] to the
+issue's full named breakpoint list [320, 375, 390, 430, 768, 1024, 1280, 1440]. All 4 guide e2e
+tests run twice — once against a manually-started server (caught nothing new, confirmed clean),
+once via Playwright's own properly-configured `webServer` per this session's own lessons-learned
+rule — both runs 4/4 green. `tests/e2e/admin.spec.ts`'s specific test touching the `appVersion`
+fixture re-run directly and confirmed green.
+
+**Gate, confirmed complete:** 443/443 unit (no new — this issue changed content/config/scripts,
+not logic), tsc/eslint/prettier/keel-verify clean (`version in sync (0.3.0)` specifically
+confirmed), guide e2e suite 4/4 green, `admin.spec.ts`'s affected test green. Exhaustive grep
+confirmed zero remaining `v0.2.0`/`0.2.0` string anywhere in tracked, non-lockfile-dependency
+source.
+
+**Also this session, before starting #115:** created GitHub issue #116 (Portuguese, `pt`, as a
+supported UI language) per the user's explicit request — motivated by this session's own D-202
+incident (a Portuguese company blocked from self-registering) surfacing that Portuguese-speaking
+users are real, and Portugal's direct border with Spain makes it a meaningfully sized addressable
+market. Scoped narrowly to the existing 8-locale dictionary-system pattern
+(`lib/i18n/dictionaries/*.ts` + `lib/i18n/locale.ts`'s `LOCALES` tuple) — explicitly excludes
+editorial content and the fixed-Spanish legal pages, matching this project's own existing i18n
+architecture (D-002, D-072). Not started — queued.
+
+**Next:** #115 is the last issue in the explicitly-ordered queue the user gave this session
+(#112→#115) — all four are now complete. #116 (Portuguese i18n) is open and unstarted, no other
+issue is queued.

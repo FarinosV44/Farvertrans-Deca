@@ -135,7 +135,7 @@ test.describe("ADMIN #33 — internal command center", () => {
         route: "POST /api/deca",
         authenticated: false,
         storageDriver: "local",
-        appVersion: "0.2.0",
+        appVersion: "0.3.0",
       },
     });
 

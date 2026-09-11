@@ -870,6 +870,46 @@ anonymize-in-place (no hard delete, D-067).
   verde. **I-114 queda completamente cerrado. #115 queda totalmente desbloqueado** (#112/#113/#114
   ya están todos completos).
 
+## I-115 — Actualizar Guía de uso y subir versión de v0.2.0 a v0.3.0
+- 2026-09-11. Issue del usuario, ya existía en el forge. Explícitamente supeditado a que #112, #113
+  y #114 estuvieran integrados — los tres se cerraron antes en esta misma sesión. Es un cierre de
+  versión: solo documentación y versión visible, nada de lógica de negocio nueva (§10 del propio
+  issue).
+- **HECHA en `develop`, sin fusionar a `main` (D-210).** Versión subida en la única fuente mecánica
+  (`package.json` + `lib/version.ts`, ya cruzadas por `scripts/keel-verify.mjs` — confirmado
+  "version in sync (0.3.0)"). Nuevo `docs/CHANGELOG.md` ligero (no existía ninguno) con una entrada
+  v0.3.0. Guía (`prisma/content/guia-de-uso.ts`) actualizada: nueva sección "Varios envíos en un
+  mismo DeCA" (#112, insertada justo después de "Cómo crear un DeCA", donde vive el interruptor
+  real del asistente) y las secciones de Histórico y Datos habituales reescritas para reflejar los
+  rediseños reales de D-209/D-207/D-208. **Decisión deliberada, distinta de lo que pedía el propio
+  issue:** NO se hizo la reordenación completa de secciones que sugería el §4 — el orden actual ya
+  sigue el asistente real paso a paso, y esa reordenación era "recomendada", no obligatoria; habría
+  roto todos los anclajes (índice, enlaces cruzados, las propias comprobaciones del test e2e) para
+  un cambio cosmético. Confirmado con el usuario en la aprobación del plan.
+- **Hallazgo real, no previsto originalmente:** editar la constante TS de la guía NO actualiza un
+  `ContentItem` ya sembrado — `seedContent()` solo crea si no existe, nunca actualiza. Corregido con
+  un `contentItem.update` dirigido (script temporal, no comprometido, borrado tras usarlo),
+  exactamente el mismo patrón ya establecido en D-201c para esta misma fila (mismo id, mismo
+  estado, mismo recuento total antes/después). **Producción necesitará la misma actualización
+  dirigida al desplegar** — un simple redeploy no refresca el cuerpo de la guía ya sembrada allí.
+- Capturas de pantalla regeneradas de verdad con el script ya automatizado
+  `scripts/guide-screenshots.mjs` (de #111, sin trabajo manual de navegador) contra una build de
+  producción real (`/health` confirmó "version":"0.3.0" antes de capturar). `mis-deca.png` y
+  `datos-habituales.png` se regeneraron solas con la UI nueva; nueva captura
+  `crear-multi-envio.png` (bloque ENVÍO 2). **Fallo real encontrado y corregido en la propia
+  herramienta de captura, no en el producto:** una captura de elemento más alta que el viewport
+  metía la cabecera fija en medio de la imagen; corregido midiendo la altura real del bloque,
+  ampliando el viewport solo para esa captura y desplazando el scroll para compensar la cabecera.
+- Gate: 443/443 unitarios (sin nuevos — solo contenido/config/scripts), tsc/eslint/prettier/
+  keel-verify limpios, suite e2e de la guía 4/4 en verde (ejecutada dos veces, una con el servidor
+  gestionado correctamente por Playwright según la propia lección de esta sesión), el test afectado
+  de `admin.spec.ts` en verde. **I-115 queda completamente cerrado — era el ÚLTIMO issue de la cola
+  explícita del usuario (#112→#115); los cuatro están ya completos.**
+- **También en esta sesión:** abierto el issue #116 (soporte de portugués `pt` como idioma de la
+  interfaz), a petición explícita del usuario, motivado por el incidente D-202 de esta misma
+  sesión. Acotado al sistema de diccionarios de 8 idiomas ya existente; el contenido editorial y
+  las páginas legales quedan fuera (D-002/D-072). Sin empezar.
+
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
 - **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**

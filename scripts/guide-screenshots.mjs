@@ -257,6 +257,86 @@ async function main() {
     }
   }
 
+  // #112/#115 — the "varios envíos" toggle + a filled ENVÍO 2 block, for the
+  // new guide section documenting multi-shipment DeCAs.
+  {
+    await page.goto("/crear", { waitUntil: "networkidle" });
+    const fill = async (id, v) => page.fill(`#${id}`, v).catch(() => {});
+    await fill("shipperName", "Cargas del Levante SL");
+    await fill("shipperNif", "B96789011");
+    await fill("shipperAddress", "Av. del Puerto 120, Valencia");
+    await fill("carrierName", "Transportes Demo SL");
+    await fill("carrierNif", "B12345674");
+    await fill("carrierAddress", "Polígono La Demo 4, El Puig");
+    await page
+      .getByTestId("wizard-next")
+      .click()
+      .catch(() => {});
+    await fill("loadLocationName", "Nave central");
+    await fill("loadLocationAddress", "Calle Uno 1");
+    await fill("loadLocationPostalCode", "46023");
+    await fill("loadLocationCity", "Valencia");
+    await fill("loadLocationCountry", "España");
+    await fill("loadDate", "2026-10-06");
+    await fill("unloadLocationName", "Plataforma norte");
+    await fill("unloadLocationAddress", "Calle Dos 2");
+    await fill("unloadLocationPostalCode", "28053");
+    await fill("unloadLocationCity", "Madrid");
+    await fill("unloadLocationCountry", "España");
+    await fill("unloadDate", "2026-10-06");
+    await page
+      .getByTestId("wizard-next")
+      .click()
+      .catch(() => {});
+    await fill("goods", "Palés de cerámica");
+    await fill("weight", "12000 kg");
+    await fill("tractorPlate", "1234 BCD");
+    await page
+      .getByTestId("multi-shipment-toggle")
+      .check()
+      .catch(() => {});
+    await fill("extraLoadName0", "Almacén Castellón");
+    await fill("extraLoadAddress0", "Av. del Mar 5");
+    await fill("extraLoadPostalCode0", "12003");
+    await fill("extraLoadCity0", "Castellón de la Plana");
+    await fill("extraUnloadName0", "Plataforma norte");
+    await fill("extraUnloadAddress0", "Calle Dos 2");
+    await fill("extraUnloadPostalCode0", "28053");
+    await fill("extraUnloadCity0", "Madrid");
+    await fill("extraGoods0", "Azulejos");
+    await fill("extraWeight0", "8000 kg");
+    await page.waitForTimeout(400);
+    const extra = page.locator("[data-testid='extra-shipment-1']");
+    if (await extra.count()) {
+      // The full ENVÍO 2 block (heading through goods/weight — its own
+      // origin/destino/mercancía/peso, the point of this screenshot) is
+      // taller than the default viewport. An element screenshot of
+      // something taller than the viewport bakes the sticky header into
+      // the middle of the composite, so widen the viewport just for this
+      // one capture rather than clip away real content.
+      const blockHeight = await extra.evaluate((el) => el.getBoundingClientRect().height);
+      await page.setViewportSize({
+        width: VIEWPORT.width,
+        height: Math.ceil(blockHeight) + 200,
+      });
+      await extra.scrollIntoViewIfNeeded();
+      // Nudge back up by the sticky header's own height so its heading
+      // ("Envío 2 · ...") isn't hidden behind the header, and drop focus
+      // so no stray focus ring is baked into the image.
+      await page.evaluate(() => {
+        const header = document.querySelector("header");
+        window.scrollBy(0, -(header?.getBoundingClientRect().height ?? 0));
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
+      await page.waitForTimeout(200);
+      await extra.screenshot({ path: `${OUT}crear-multi-envio.png` });
+      await page.setViewportSize(VIEWPORT);
+      console.log("  ✓ crear-multi-envio.png");
+    } else {
+      console.warn("  ! extra-shipment-1 block not found — crear-multi-envio.png skipped");
+    }
+  }
+
   // Step 1 of the creation wizard, from a fresh anonymous context.
   const anon = await browser.newContext({ viewport: VIEWPORT, baseURL: BASE, locale: "es-ES" });
   const anonPage = await anon.newPage();

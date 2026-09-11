@@ -117,6 +117,39 @@ La pantalla de revisión muestra **exactamente** lo que irá en el PDF. Es el me
 - **Remolque cuando no hay.** La matrícula del remolque solo se rellena en conjuntos articulados.
 - **NIF/VAT mal escrito.** Revisa la letra inicial y el dígito de control; se aceptan identificadores extranjeros.
 
+## Varios envíos en un mismo DeCA
+
+Un mismo transporte puede tener **más de un lugar de carga o descarga** — por ejemplo, recoger mercancía en dos almacenes distintos antes de entregarla, o repartirla en dos puntos diferentes. DeCA Profesional permite documentar todos esos **envíos** dentro de un único DeCA, siempre que compartan el mismo **cargador contractual** y el mismo **transportista efectivo**.
+
+::: important
+Los distintos envíos de un mismo DeCA deben tener idéntico **cargador contractual** y **transportista efectivo**. Si cambia cualquiera de los dos, se trata de un transporte distinto y necesita su propio DeCA.
+:::
+
+### Cómo añadir varios envíos
+
+En el **paso 2** del asistente (Carga y descarga) verás la pregunta **«¿Este transporte tiene varios lugares de carga o descarga?»**. Actívala para desplegar el flujo de varios envíos:
+
+1. El **primer envío** usa los campos que ya conoces: lugar de carga, lugar de descarga, mercancía y peso.
+2. Pulsa **«+ Añadir otro envío»** para abrir un bloque **ENVÍO 2** (y así sucesivamente).
+3. Cada envío tiene **su propio** origen, destino, mercancía y peso — nunca se comparten entre envíos.
+4. La fecha, la matrícula y las notas son, por defecto, las mismas del transporte, pero puedes **cambiarlas envío a envío** si ese tramo concreto usa un vehículo o una fecha distinta.
+
+![Añadir un segundo envío en el asistente de creación](/guia/crear-multi-envio.png "Envío 2: origen, destino, mercancía y peso propios")
+
+::: example
+**Valencia → Madrid + Castellón → Madrid**: recoges palés de cerámica en Valencia y azulejos en Castellón, y entregas ambos en el mismo almacén de Madrid. Es un único DeCA con dos envíos, mismo cargador y transportista.
+
+Otro caso frecuente: **Valencia → Madrid + Valencia → Toledo** — cargas en un único punto y repartes en dos destinos distintos.
+:::
+
+### Cómo se ve en el PDF
+
+El PDF muestra un bloque **«ENVÍO 1»**, **«ENVÍO 2»**… con los datos propios de cada uno, y un **PESO TOTAL** que suma los pesos de todos los envíos (cuando todos son valores numéricos comparables). El documento incluye un aviso de que **la numeración de los envíos es solo identificativa y no indica el orden en que se realizan**.
+
+### Si un dato cambia durante el transporte
+
+Si necesitas corregir cualquier dato de un DeCA con varios envíos — una dirección, un peso, una fecha — se aplica la misma corrección con versionado que en un DeCA normal: se genera una **versión nueva** conservando la anterior, y puedes editar cualquier envío individualmente sin perder los demás (ver **Histórico**, más adelante).
+
 ## PDF del DeCA
 
 El **PDF se genera al pulsar GENERAR DECA**, al terminar los tres pasos. Es un PDF nativo, no una foto del formulario.
@@ -144,12 +177,20 @@ La lista de documentos generados está en el **Histórico** y, en versión corta
 
 ## Historial
 
-El **Historial** reúne todos los DeCA de tu empresa, ordenados por fecha. Puedes:
+El **Historial** reúne todos los DeCA de tu empresa, ordenados por fecha, en un listado pensado para identificar cada documento de un vistazo: la ruta es el dato principal, seguida de la fecha y la referencia; debajo, quién carga y quién transporta; y a la derecha, el estado del documento.
 
 - **Buscar** por texto (localidad, transportista, referencia…).
-- **Filtrar por rango de fechas**.
+- **Filtrar por rango de fechas y por transportista o matrícula**.
 - **Guardar vistas** de búsqueda que uses a menudo.
 - **Exportar el histórico a CSV** para tu control interno.
+
+![Listado del Histórico](/guia/mis-deca.png "Cada DeCA se identifica por su ruta, fecha y estado")
+
+Cada fila muestra la acción principal, **«Ver detalle»**, siempre visible; **Inspección** y **Compartir** como acciones frecuentes; y el resto — **Corregir**, **Duplicar**, **PDF** — agrupadas bajo el menú **«···»**.
+
+Si un DeCA tiene **varios envíos** (ver la sección anterior), la fila muestra una insignia **«+N envíos»** junto a la ruta principal y un resumen de los trayectos adicionales, sin necesidad de abrir el detalle para saber que hay más de un envío.
+
+El **estado** de cada documento distingue entre **Vigente** (la versión actual), **Corregida** (tiene una versión posterior a la mostrada) y **No disponible**. Si buscas o filtras y no aparece ningún resultado, el Historial te lo indica claramente y te ofrece **«Limpiar filtros»** para volver a empezar.
 
 Es útil para llevar el control de la actividad y para localizar rápidamente un documento si te lo piden en una inspección o una revisión interna.
 
@@ -171,17 +212,20 @@ Ejemplos típicos de plantilla: **cliente frecuente**, **ruta habitual** (Valenc
 
 ## Datos habituales
 
-Los **datos habituales** son piezas sueltas que se reutilizan al rellenar cualquier DeCA:
+Los **datos habituales** son piezas sueltas que se reutilizan al rellenar cualquier DeCA, organizadas en pestañas:
 
-- **Empresas / transportistas habituales** (con su NIF y dirección).
-- **Vehículos** guardados (matrículas).
-- **Lugares habituales** de carga y descarga.
+- **Empresas y contactos** — cargadores y transportistas habituales, con su NIF y dirección.
+- **Vehículos** — matrículas guardadas.
+- **Lugares** — direcciones habituales de carga y descarga (un mismo lugar sirve para ambos usos, no hace falta guardarlo dos veces).
+- **Rutas / envíos habituales** — un trayecto completo (lugar de carga + lugar de descarga + mercancía y peso habituales) que se usa para rellenar de un solo golpe un **envío** dentro de un DeCA, incluido un ENVÍO N adicional en un DeCA de varios envíos (ver **Varios envíos en un mismo DeCA**).
 
-Se guardan desde **Datos habituales** y también sobre la marcha al crear un DeCA. Puedes **editarlos** o **eliminarlos** en esa misma sección.
+![Datos habituales, organizados en pestañas](/guia/datos-habituales.png "Empresas, vehículos, lugares y rutas habituales")
 
-**Diferencia con las plantillas:** una plantilla es un **porte completo** (cargador + transportista + ruta + vehículo). Un dato habitual es **un solo elemento** (una empresa, un vehículo, un lugar) que combinas libremente en cada documento.
+Un **buscador** en la parte superior filtra por cualquier campo dentro de la pestaña activa. El botón **«+ Añadir dato habitual»** abre un formulario compacto para crear una empresa, un vehículo, un lugar o una ruta; si al guardar detecta un dato muy parecido a uno ya existente, te avisa antes de crear un duplicado, pero nunca te lo impide.
 
-![Sección de datos habituales](/guia/datos-habituales.png "Empresas, vehículos y lugares habituales")
+Se guardan desde esta sección y también **sobre la marcha** al crear un DeCA — cada campo del asistente que tiene un equivalente habitual ofrece elegirlo de una lista, y puedes marcar «guardar como habitual» un dato que acabas de escribir para no volver a teclearlo. Puedes **editarlos** o **eliminarlos** cuando quieras.
+
+**Diferencia con las plantillas:** una plantilla es un **porte completo** (cargador + transportista + ruta + vehículo). Un dato habitual es **un solo elemento** (una empresa, un vehículo, un lugar o una ruta) que combinas libremente en cada documento.
 
 ## Equipo
 
