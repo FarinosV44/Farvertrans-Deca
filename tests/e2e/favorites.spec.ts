@@ -27,20 +27,18 @@ async function register(page: Page) {
   await page.request.get(`/verificar-email/${(await res.json()).verifyTestToken}`);
 }
 
-function vehicleSection(page: Page) {
-  return page.locator("section", { hasText: "Vehículos" });
+function vehiclePanel(page: Page) {
+  return page.locator("#panel-vehicle");
 }
 
 async function addVehicle(page: Page, alias: string, plate: string) {
-  if (!(await page.locator("#v-alias").isVisible())) {
-    await vehicleSection(page).getByText("Añadir").click();
-  }
+  await page.getByTestId("add-vehicle").click();
   await page.fill("#v-alias", alias);
   await page.fill("#v-tractor", plate);
-  await vehicleSection(page).getByRole("button", { name: "Guardar" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
   // #86 p3 — alias stored uppercase
   await expect(
-    vehicleSection(page).locator("ul > li").filter({ hasText: alias.toUpperCase() }),
+    vehiclePanel(page).locator("ul > li").filter({ hasText: alias.toUpperCase() }),
   ).toBeVisible();
 }
 
@@ -49,11 +47,12 @@ test("starring a saved vehicle floats it to the top and is reversible; no duplic
 }) => {
   await register(page);
   await page.goto("/panel/datos");
+  await page.getByTestId("tab-vehicle").click();
 
   await addVehicle(page, "Camion Uno", "1111AAA");
   await addVehicle(page, "Camion Dos", "2222BBB"); // newest → currently first
 
-  const list = vehicleSection(page).locator("ul > li");
+  const list = vehiclePanel(page).locator("ul > li");
   await expect(list).toHaveCount(2);
   await expect(list.first()).toContainText("CAMION DOS");
 

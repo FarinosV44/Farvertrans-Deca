@@ -548,6 +548,7 @@ export const gl = {
         empresas: "Empresas habituais",
         vehiculos: "Vehículos",
         lugares: "Lugares de carga/descarga",
+        rutas: "Rutas habituais",
         equipo: "Equipo",
         empresa: "A miña empresa",
         ayuda: "Axuda",

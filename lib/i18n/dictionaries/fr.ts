@@ -553,6 +553,7 @@ export const fr = {
         empresas: "Entreprises habituelles",
         vehiculos: "Véhicules",
         lugares: "Lieux de chargement/déchargement",
+        rutas: "Itinéraires habituels",
         equipo: "Équipe",
         empresa: "Mon entreprise",
         ayuda: "Aide",

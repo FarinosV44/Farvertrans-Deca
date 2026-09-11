@@ -557,6 +557,7 @@ export const de = {
         empresas: "Häufige Unternehmen",
         vehiculos: "Fahrzeuge",
         lugares: "Be-/Entladeorte",
+        rutas: "Übliche Routen",
         equipo: "Team",
         empresa: "Mein Unternehmen",
         ayuda: "Hilfe",

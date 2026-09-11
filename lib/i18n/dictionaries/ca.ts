@@ -546,6 +546,7 @@ export const ca = {
         empresas: "Empreses habituals",
         vehiculos: "Vehicles",
         lugares: "Llocs de càrrega/descàrrega",
+        rutas: "Rutes habituals",
         equipo: "Equip",
         empresa: "La meva empresa",
         ayuda: "Ajuda",

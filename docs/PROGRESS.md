@@ -45,6 +45,40 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-208 — I-113 Phase 2: Datos habituales visual redesign, this session (2026-09-11), immediately
+  after D-207 (user: "continue"). Full detail in `docs/decisions.md` D-208.** Tabbed redesign
+  (`components/app/saved-data-manager.tsx`, rewritten in place, export renamed
+  `DatosHabitualesManager`) covering all 4 kinds now that Rutas exists: global search, compact
+  summary counts, a "+ Añadir dato habitual" menu, `role="tablist"` tabs, and a new `Modal` overlay
+  (`components/app/modal.tsx`, extracted from the command palette's existing pattern) replacing the
+  old `<details>` "Añadir". New Rutas tab reuses `savedShipmentLabel()` (now exported from
+  `wizard.tsx`); its form has no free-text location fields, only 2 selects over already-saved
+  places. **3 scope decisions confirmed with the user beforehand** (AskUserQuestion, all
+  "Recommended"): no wizard deep-link pre-select for "Usar" (the existing pickers already cover it);
+  a real Modal for creation (not just restyling `<details>`); client-side duplicate detection
+  (`lib/data/saved-dedup.ts`, new, pure, 10 unit tests) shown as a non-blocking warning. **2 real
+  bugs found and fixed before shipping, not originally scoped:** (1) conditionally mounting only the
+  active tab left the other 3 tabs' `aria-controls` pointing at a nonexistent id — an
+  `aria-valid-attr-value` a11y violation; fixed by keeping all 4 panels mounted and toggling the
+  `hidden` attribute instead (the correct WAI-ARIA tabs pattern). (2) `/panel/datos#rutas` (and the
+  pre-existing `#empresas`/`#vehiculos`/`#lugares`, which #93's quick-actions catalogue links to
+  directly) didn't actually open that tab — reading `location.hash` inside `useState`'s lazy
+  initializer looked right but never won out over Next.js's SSR reconciliation; fixed with the
+  standard pattern (SSR-safe default + a `useEffect` correcting it post-mount). Also: `#93` gains a
+  4th `rutas` quick action (D-156's "no such destination exists" premise is now false, superseded by
+  fact — not re-litigated); `FavoriteStar`'s type was missing the `"shipment"` kind (blocked starring
+  a route from any UI, one-line fix). **A real environment trap along the way (now in
+  `docs/lessons-learned.md`):** a manually-started `npm run dev` (leftover from an abandoned manual
+  browser smoke-test) silently got reused by Playwright's `reuseExistingServer` instead of its own
+  properly-configured `npm run build && npm run start` — missing `FVD_EXPOSE_RESET_TOKEN=1` meant
+  every e2e registration's email verification silently no-opped, causing near-total, misleadingly
+  generic test failures unrelated to the actual code. **Gate, confirmed complete: 439/439 unit
+  (+10 new), tsc/eslint/prettier/keel-verify clean, targeted e2e regression sweep 34/34 green**
+  (`datos-habituales-rutas.spec.ts` 4/4 new, `master-data.spec.ts` 2/2, `favorites.spec.ts` 1/1,
+  `workspace.spec.ts` 7/7 incl. a11y, `saved-shipments.spec.ts` 2/2, `deca-multi-shipment.spec.ts`
+  4/4, `crear.spec.ts` 9/9, `creator-v2.spec.ts` 5/5 — across two runs, 1 transient `ECONNRESET`
+  confirmed a contention flake in isolation). **PUSHED to `develop` AND `main`** (see commit hash
+  below). **I-113 is now FULLY complete (Phase 1 + Phase 2). Queued next:** #114, then #115.
 - **D-207 — I-113 Phase 1: "Ruta/envío habitual" + wizard integration, this session (2026-09-11),
   immediately after D-205/D-206. Full detail in `docs/decisions.md` D-207.** New `SavedShipment`
   model (`prisma/schema.prisma`, migration `20260911200000_saved_shipment`, additive-only, RLS

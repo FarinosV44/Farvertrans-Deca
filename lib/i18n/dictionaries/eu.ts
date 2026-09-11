@@ -560,6 +560,7 @@ export const eu = {
         empresas: "Ohiko enpresak",
         vehiculos: "Ibilgailuak",
         lugares: "Karga/deskarga lekuak",
+        rutas: "Ohiko ibilbideak",
         equipo: "Taldea",
         empresa: "Nire enpresa",
         ayuda: "Laguntza",

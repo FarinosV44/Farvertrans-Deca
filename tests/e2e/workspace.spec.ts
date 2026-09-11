@@ -191,27 +191,22 @@ test.describe("BUILD 10 — registered workspace", () => {
 
     await page.goto("/panel/datos");
     // add a saved company
-    await page.getByText("Empresas y contactos").scrollIntoViewIfNeeded();
-    await page.locator("section", { hasText: "Empresas y contactos" }).getByText("Añadir").click();
+    await page.getByTestId("tab-company").click();
+    await page.getByTestId("add-company").click();
     await page.fill("#c-name", "Habitual Cargas SL");
     await page.fill("#c-nif", "B12345674");
     await page.fill("#c-address", "Calle Habitual 1");
     await page.fill("#c-postal-code", "46001"); // #86 p2 — mandatory
     await page.fill("#c-city", "Valencia");
-    await page
-      .locator("section", { hasText: "Empresas y contactos" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     // #86 p3 — descriptive fields stored uppercase
     await expect(page.getByText("HABITUAL CARGAS SL")).toBeVisible();
 
     // add a saved vehicle
-    await page.locator("section", { hasText: "Vehículos" }).getByText("Añadir").click();
+    await page.getByTestId("tab-vehicle").click();
+    await page.getByTestId("add-vehicle").click();
     await page.fill("#v-tractor", "5555 XYZ");
-    await page
-      .locator("section", { hasText: "Vehículos" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("5555XYZ")).toBeVisible();
 
     // autofill in the wizard

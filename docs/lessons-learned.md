@@ -201,3 +201,32 @@ create/edit path, not the gate. Also: a gate message must name the real blocker,
 - **Check added:** none mechanical yet (would need a pre-flight "is this server's build newer than the
   newest source file" check, not attempted here) — the immediate practice is checking for an orphaned
   server explicitly after any abnormal Playwright termination.
+
+## 2026-09-11 — a manually-started `npm run dev` silently steals `reuseExistingServer` from Playwright's own env-configured server
+
+- **Symptom:** during #113 Phase 2 (D-208), the updated e2e suite failed almost totally — even old,
+  completely untouched tests (plain DeCA generation) timed out waiting for the `wizard-generate`
+  button click. The page snapshot at failure showed "Verifica tu correo para generar el DeCA" — the
+  wizard's own email-verification gate — even though every test's own `register()` helper calls
+  `GET /verificar-email/${body.verifyTestToken}` right after signup, exactly as it always has.
+- **Root cause:** a `npm run dev` server had been started manually earlier in the session, to attempt
+  a manual browser smoke-test (abandoned when the Claude-in-Chrome extension turned out not to be
+  connected). That process was still bound to port 3000. `playwright.config.ts`'s `webServer.command`
+  is `npm run build && npm run start` (a PRODUCTION build, not dev mode) and sets 3 test-seam env vars
+  — `FVD_EXPOSE_RESET_TOKEN=1` (without it, `verifyTestToken` in the register response is simply
+  `undefined`), `FVD_DISABLE_ABUSE_CHECKS=1`, `SUPERADMIN_BACKUP_PASSWORD`. Those vars are set only
+  when Playwright starts ITS OWN server; `reuseExistingServer: !process.env.CI` means that locally, if
+  ANY server already answers on the port — including one started completely outside Playwright's
+  knowledge — it is reused as-is, env vars and all (or lack of them). Every test's verification call
+  was silently hitting `GET /verificar-email/undefined`, doing nothing.
+- **Why this is dangerous, specifically:** the failure mode (a generic 30s timeout waiting for a
+  button) gives no hint that the actual problem is "wrong server flavor, missing 3 env vars" — it
+  looks exactly like a real regression in whatever was just changed, and every affected test's own
+  code was completely correct and unmodified.
+- **Rule going forward:** never manually start `npm run dev` (or any other server) on the Playwright
+  port during a session that will also run `npx playwright test` — let Playwright's own `webServer`
+  start and own it. If a server is already running and e2e results look systemically wrong in a way
+  unrelated to the current change (not a specific failing assertion but broad timeouts on unrelated
+  flows), check what's actually listening on the port and whether it was started via Playwright's own
+  `webServer.command` before debugging the "regression" itself.
+- **Check added:** none mechanical yet — the immediate practice is the rule above.

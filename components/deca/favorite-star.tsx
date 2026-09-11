@@ -10,7 +10,7 @@ type RouteInfo = {
   unloadCountry: string | null;
 };
 type PayloadInput =
-  | { kind: "company" | "vehicle" | "location" | "template"; id: string }
+  | { kind: "company" | "vehicle" | "location" | "template" | "shipment"; id: string }
   | { kind: "route"; route: RouteInfo };
 
 /**

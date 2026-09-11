@@ -6953,3 +6953,120 @@ regression), `favorites.spec.ts` (1/1) — 21/21 green, covering every surface t
 
 **Next:** #113 Phase 2 (Datos habituales visual redesign) whenever picked back up; then #114, #115 per
 the standing queue (`docs/issues.md`).
+
+## D-208 — I-113 Phase 2: Datos habituales visual redesign (2026-09-11)
+
+Continuation of D-207 (#113), same session (user: "continue"). Turns the page from three stacked,
+mostly-empty sections with a plain `<details>` "Añadir" link into the "compact operational agenda"
+the issue asks for (§1-3, §6-9, §13-15), now covering all FOUR kinds since Phase 1 added the fourth
+(rutas/envíos habituales) with no browsing UI of its own yet.
+
+**Three scope decisions, confirmed with the user via AskUserQuestion before implementing** (all
+"Recommended" chosen):
+1. **"Usar" (§9)** — no deep-link pre-select wiring into the wizard. Every kind already has a working
+   autofill picker in `/crear` (company/vehicle/location pre-#113, shipment since Phase 1) — the
+   issue's own explicitly-stated fallback when a deep-link "provocan un flujo confuso". Each record
+   gets a plain "Usar" link to `/crear` instead of new per-kind URL-param wiring.
+2. **Creation UI (§7)** — a real `Modal` (`components/app/modal.tsx`, new), extracted from
+   `command-palette.tsx`'s existing overlay pattern (`role="dialog"`, `aria-modal`, Escape/backdrop
+   close, first-field focus), used for every "+ Añadir" across all 4 tabs — replaces the old
+   `<details>` disclosure.
+3. **Duplicate detection (§13)** — included now, client-side (`lib/data/saved-dedup.ts`, new, pure,
+   test-first): one `findDuplicateX` function per kind (NIF/name+address for companies, normalized
+   plate for vehicles, normalized address for locations, exact load+unload id pair for shipments),
+   using the SAME normalization each kind's own schema already applies on save (`upperText`/
+   `normalizePlate`) so a client-side pre-check and the server's own storage shape never disagree.
+   Shown as a non-blocking "Ya existe un dato parecido" warning inside the create modal, with "Usar
+   el existente" (closes, no-op) or "Guardar de todas formas" (saves anyway) — never blocks.
+
+**Redesign** (`components/app/saved-data-manager.tsx`, rewritten in place, export renamed
+`DatosHabitualesManager` — the file's scope now spans a 4th kind with no prior "saved data" identity):
+header + global search (client-side `.filter()` across all 4 kinds' already-loaded arrays — no
+pagination anywhere in this system, so no new API needed) + a compact "N empresas · N vehículos ·
+N lugares · N rutas" summary line + a "+ Añadir dato habitual" menu (4 options, opens the matching
+tab's modal) + `role="tablist"/"tab"/"tabpanel"` tabs (Empresas/Vehículos/Lugares/Rutas). Per-tab:
+the existing compact row (FavoriteStar + primary/secondary + Editar/Borrar, kept — `CompanyForm`/
+`VehicleForm`/`LocationForm` also kept as-is, only their container changed) plus a new "Usar" link and
+a per-tab empty state (§14 copy + a CTA opening that tab's modal). New Rutas tab reuses
+`savedShipmentLabel()` (now exported from `wizard.tsx` rather than redefined) for its row label; its
+`ShipmentForm` (new) has NO free-text location fields — two `<select>`s over the already-loaded
+`locations` array, disabled with an explanatory empty state when fewer than 2 places exist yet (never
+a dead-end select with nothing in it).
+
+**A real accessibility bug found and fixed before it shipped, not originally scoped:** the first
+implementation conditionally MOUNTED only the active tab's panel (`{tab === "x" && <TabPanel .../>}`),
+which left the OTHER 3 tabs' `aria-controls` attributes pointing at a `panel-*` id that didn't exist
+in the DOM — an `aria-valid-attr-value` violation (WCAG 4.1.2, Level A) the project's own a11y test
+(`workspace.spec.ts`'s axe scan of `/panel/datos`) would have caught. Fixed by keeping all 4 panels
+mounted at all times and toggling visibility with the `hidden` attribute instead — the WAI-ARIA APG's
+own recommended tabs pattern, not a workaround. This also let `openCreate()` (the top menu's bridge
+into whichever tab's create modal) drop a `requestAnimationFrame` it needed while panels mounted
+lazily.
+
+**A real hydration bug found and fixed via the new deep-link e2e test, not originally scoped:**
+`/panel/datos#rutas` (and the pre-existing `#empresas`/`#vehiculos`/`#lugares`, which the dashboard's
+own #93 quick-actions catalogue links to directly) is supposed to open that tab on load. The first
+implementation read `window.location.hash` inside `useState`'s lazy initializer — plausible-looking,
+but Next.js SSRs this client component (server-rendered HTML always shows "company" active, since
+`window` is undefined server-side), and the hash-driven client value never actually won out over the
+server-matched reconciliation in practice. Fixed with the standard pattern for this exact problem:
+default state to the SSR-safe value, correct it in a `useEffect` that runs once after mount. Caught
+by the new `datos-habituales-rutas.spec.ts`'s deep-link test, which failed with `aria-selected=false`
+before the fix.
+
+**#93 quick actions gains a 4th destination.** `lib/panel/quick-actions.ts`'s own D-156 comment
+explicitly recorded "there is no such destination in the product... offering it would mean inventing
+a screen, which this issue explicitly forbids" as the reason "Rutas habituales" was omitted. That
+premise is now false — this slice (with Phase 1) built exactly that screen — so a `rutas` entry
+(`/panel/datos#rutas`, new `route` icon key → the already-existing `RouteIcon`) is added on that
+basis. This supersedes D-156's OUTCOME because the FACT it was conditioned on changed, not because
+the original call was reconsidered — Plantillas remains a separate, still-valid destination for the
+different case (a whole recurring multi-envío lane, not a single leg).
+
+**Also fixed in passing (found while wiring the Rutas tab, blocking it otherwise):**
+`FavoriteStar`'s `PayloadInput` type (`components/deca/favorite-star.tsx`) was missing the
+`"shipment"` kind — the `/api/favorites` route already accepted it (D-207), but the client type never
+followed, so a saved shipment couldn't actually be starred from any UI. One-line fix.
+
+**Verified for real:** `tests/unit/saved-dedup.test.ts` (10 tests, test-first — red observed via
+"Cannot find module" before the file existed): a real duplicate is caught across case/format
+variations (different NIF casing, different plate spacing) for every kind, and near-misses (different
+NIF, different city, a reversed load/unload pair, a pair sharing only one leg) are never flagged. New
+`tests/e2e/datos-habituales-rutas.spec.ts` (4 tests, real browser + real DB): the Rutas tab's
+disabled-until-2-places state, then create/favorite/edit/delete a saved route through the real UI
+(selects, not the API) and confirm it appears in the wizard's own picker; global search filtering the
+active tab; the §13 duplicate-warning-then-save-anyway flow; the `#rutas` deep-link plus the new
+dashboard quick action. Existing `tests/e2e/master-data.spec.ts` (2 tests), `favorites.spec.ts`
+(1 test) and `workspace.spec.ts` (2 tests + the a11y scan) updated to the new tab/modal selectors —
+same assertions, same user-visible outcomes, new DOM path (expected for a genuine redesign, not a
+regression to guard against).
+
+**A real environment trap hit and resolved mid-slice, not a code issue:** running the updated e2e
+suite first showed near-total failure — even old, untouched tests (basic DeCA generation) timing out
+waiting for the `wizard-generate` click. Root cause: a `npm run dev` server had been started manually
+earlier in the session (for an attempted manual browser smoke-test, abandoned when the Chrome
+extension wasn't connected) and was still running; Playwright's own `webServer` config
+(`playwright.config.ts`) only sets `FVD_EXPOSE_RESET_TOKEN=1` (and 2 other test seams) when it starts
+ITS OWN server (`npm run build && npm run start`) — `reuseExistingServer: true` locally means it
+silently reused the manual dev-mode server instead, which lacked the env var, so every e2e
+registration's `verifyTestToken` came back `undefined` and email verification silently never happened
+(`GET /verificar-email/undefined`), gating every generation attempt behind the "verify your email"
+screen. Fixed by killing the manual server and letting Playwright manage its own. Lesson recorded in
+`docs/lessons-learned.md`.
+
+**Gate, confirmed complete:** 439/439 unit (+10 new), tsc/eslint/prettier/keel-verify clean. Targeted
+e2e regression sweep (Playwright-managed server, not the full suite): `datos-habituales-rutas.spec.ts`
+(4/4, new), `master-data.spec.ts` (2/2), `favorites.spec.ts` (1/1), `workspace.spec.ts` (7/7 incl.
+a11y), `saved-shipments.spec.ts` (2/2), `deca-multi-shipment.spec.ts` (4/4), `crear.spec.ts` (9/9),
+`creator-v2.spec.ts` (5/5) — 34/34 green across two runs (1 transient `ECONNRESET` under 3-worker
+parallel load on the first pass, confirmed passing in isolation, not a regression).
+
+**Out of scope, genuinely — not discovered late:** responsive verification was done by reading the
+Tailwind-equivalent classes (`flex-wrap` tab row, no fixed-width containers) and the a11y scan, not by
+visually checking all 8 breakpoints the issue names (no browser tool was available this session to do
+that manually); the multi-envío "combo" template UI improvements implied by #113 §5 stay Plantillas'
+own, unbuilt territory; `getDecaForDuplicate`/`FavoriteRoute` still aren't shipment-aware (not named in
+#113's acceptance criteria).
+
+**Next:** #114 (Historial redesign), then #115 (v0.2.0 → v0.3.0 + docs close-out, gated on
+#112/#113/#114 — #112 and #113 are now both fully done).

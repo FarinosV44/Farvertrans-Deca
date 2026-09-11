@@ -5,6 +5,12 @@ import { test, expect, type Page } from "@playwright/test";
  * reusable parties/locations/vehicles, build a DeCA entirely from the
  * searchable dropdowns (no retyping), generate, then duplicate and confirm
  * the second document is materially faster (only date changes).
+ *
+ * #113 Phase 2: Datos habituales is now tabbed (one tab per kind) with a
+ * modal "+ Añadir" flow instead of the old stacked-sections/<details> UI —
+ * every interaction below goes through a tab first, then opens the create
+ * modal (which CLOSES on a successful save, unlike the old always-open
+ * <details>, so a second record needs its own "+ Añadir" click).
  */
 
 function email() {
@@ -43,9 +49,8 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     // 1. Create the habitual records the issue asks for.
     await page.goto("/panel/datos");
 
-    // the <details> panel stays open (uncontrolled) across the router.refresh()
-    // after each save, so "Añadir" is only clicked once per section.
-    await page.locator("section", { hasText: "Empresas y contactos" }).getByText("Añadir").click();
+    await page.getByTestId("tab-company").click();
+    await page.getByTestId("add-company").click();
     await page.getByTestId("c-role").selectOption("shipper");
     await page.fill("#c-name", "Cargador Habitual SL");
     await page.fill("#c-nif", "B11111111");
@@ -53,59 +58,45 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
     await page.fill("#c-postal-code", "46001");
     await page.fill("#c-city", "Valencia");
     await page.fill("#c-contact-name", "Marta Ruiz");
-    await page
-      .locator("section", { hasText: "Empresas y contactos" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("CARGADOR HABITUAL SL")).toBeVisible();
 
+    await page.getByTestId("add-company").click();
     await page.getByTestId("c-role").selectOption("carrier");
     await page.fill("#c-name", "Transportista Habitual SL");
     await page.fill("#c-nif", "B22222222");
     await page.fill("#c-address", "Calle Dos 2");
     await page.fill("#c-postal-code", "46980");
     await page.fill("#c-city", "Paterna");
-    await page
-      .locator("section", { hasText: "Empresas y contactos" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("TRANSPORTISTA HABITUAL SL")).toBeVisible();
 
-    await page
-      .locator("section", { hasText: "Lugares de carga y descarga" })
-      .getByText("Añadir")
-      .click();
+    await page.getByTestId("tab-location").click();
+    await page.getByTestId("add-location").click();
     await page.getByTestId("l-type").selectOption("load");
     await page.fill("#l-name", "Almacén Habitual Valencia");
     await page.fill("#l-address", "Av. del Puerto 120");
     await page.fill("#l-postal-code", "46023");
     await page.fill("#l-city", "Valencia");
     await page.fill("#l-province", "Valencia");
-    await page
-      .locator("section", { hasText: "Lugares de carga y descarga" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("ALMACÉN HABITUAL VALENCIA")).toBeVisible();
 
+    await page.getByTestId("add-location").click();
     await page.getByTestId("l-type").selectOption("unload");
     await page.fill("#l-name", "Plataforma Habitual Madrid");
     await page.fill("#l-address", "Calle Alcalá 200");
     await page.fill("#l-postal-code", "28028");
     await page.fill("#l-city", "Madrid");
     await page.fill("#l-province", "Madrid");
-    await page
-      .locator("section", { hasText: "Lugares de carga y descarga" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("PLATAFORMA HABITUAL MADRID")).toBeVisible();
 
-    await page.locator("section", { hasText: "Vehículos" }).getByText("Añadir").click();
+    await page.getByTestId("tab-vehicle").click();
+    await page.getByTestId("add-vehicle").click();
     await page.fill("#v-alias", "Camión 1");
     await page.fill("#v-tractor", "9999 ABC");
-    await page
-      .locator("section", { hasText: "Vehículos" })
-      .getByRole("button", { name: "Guardar" })
-      .click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("CAMIÓN 1")).toBeVisible();
 
     // 2. Build the DeCA entirely from the dropdowns — no manual typing of
@@ -184,6 +175,7 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
 
     // 4. Editing/removing master data never mutates an already-generated DeCA.
     await page.goto("/panel/datos");
+    await page.getByTestId("tab-company").click();
     await page
       .locator("li", { hasText: "CARGADOR HABITUAL SL" })
       .getByRole("button", { name: "Borrar" })
@@ -198,36 +190,34 @@ test.describe("WORKSPACE #24 — real operational master-data system", () => {
   }) => {
     await register(page);
     await page.goto("/panel/datos");
-    const section = page.locator("section", { hasText: "Empresas y contactos" });
-    await section.getByText("Añadir").click();
+    await page.getByTestId("tab-company").click();
+    await page.getByTestId("add-company").click();
 
     // CP + población are mandatory (#86 part 2) — a clear per-field message
     await page.fill("#c-name", "Habitual Edición SL");
     await page.fill("#c-nif", "B33333333");
     await page.fill("#c-address", "Calle Tres 3");
-    await section.getByRole("button", { name: "Guardar" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     await expect(page.locator("#c-postal-code-error")).toBeVisible();
     await expect(page.locator("#c-city-error")).toBeVisible();
 
     await page.fill("#c-postal-code", "03001");
     await page.fill("#c-city", "Alicante");
-    await section.getByRole("button", { name: "Guardar" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
     // #86 p3: descriptive fields are stored uppercase
-    await expect(section.getByText("HABITUAL EDICIÓN SL")).toBeVisible();
-    await expect(section.locator("li", { hasText: "HABITUAL EDICIÓN SL" })).toContainText(
-      "ALICANTE",
-    );
+    await expect(page.getByText("HABITUAL EDICIÓN SL")).toBeVisible();
+    await expect(page.locator("li", { hasText: "HABITUAL EDICIÓN SL" })).toContainText("ALICANTE");
 
     // edit in place — no delete + recreate
-    await section
+    await page
       .locator("li", { hasText: "HABITUAL EDICIÓN SL" })
       .getByTestId("edit-company")
       .click();
     await page.fill("#c-city", "Elche");
     await page.fill("#c-postal-code", "03203");
-    await section.getByRole("button", { name: "Guardar cambios" }).click();
-    await expect(section.locator("li", { hasText: "HABITUAL EDICIÓN SL" })).toContainText("ELCHE");
-    await expect(section.getByText("HABITUAL EDICIÓN SL")).toHaveCount(1); // same row, not a new one
+    await page.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(page.locator("li", { hasText: "HABITUAL EDICIÓN SL" })).toContainText("ELCHE");
+    await expect(page.getByText("HABITUAL EDICIÓN SL")).toHaveCount(1); // same row, not a new one
 
     // the edited value flows into the wizard autofill
     await page.goto("/crear");

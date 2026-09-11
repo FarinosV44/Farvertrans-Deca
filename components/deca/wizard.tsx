@@ -265,7 +265,7 @@ export type SavedShipmentOption = {
 };
 
 /** Display label for a saved-shipment `<option>` — the name if set, else "ORIGEN → DESTINO". */
-function savedShipmentLabel(s: SavedShipmentOption): string {
+export function savedShipmentLabel(s: SavedShipmentOption): string {
   if (s.name) return s.name;
   const from = s.loadLocation.city || s.loadLocation.name;
   const to = s.unloadLocation.city || s.unloadLocation.name;

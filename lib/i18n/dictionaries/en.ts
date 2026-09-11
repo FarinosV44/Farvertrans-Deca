@@ -533,6 +533,7 @@ export const en = {
         empresas: "Frequent companies",
         vehiculos: "Vehicles",
         lugares: "Loading/unloading places",
+        rutas: "Regular routes",
         equipo: "Team",
         empresa: "My company",
         ayuda: "Help",

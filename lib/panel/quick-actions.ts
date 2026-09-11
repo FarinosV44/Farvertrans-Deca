@@ -11,11 +11,12 @@
  *  - no two entries share a destination, so three slots can never end up as
  *    three shortcuts to the same page.
  *
- * DELIBERATE OMISSION (D-156): the issue lists "Rutas habituales", and there is
- * no such destination in the product — recurring routes are surfaced as the
- * "Rutas frecuentes" block on Inicio itself and as saved templates. Offering it
- * would mean inventing a screen, which this issue explicitly forbids. Plantillas
- * ("Guarda las rutas que repites") is offered instead and covers the intent.
+ * D-156 originally omitted "Rutas habituales" — at the time there was no such
+ * destination in the product. #113 Phase 1/2 (D-207/D-208) built exactly that
+ * screen (`/panel/datos#rutas`, "ruta/envío habitual"), so the omission's own
+ * premise no longer holds; the `rutas` entry below supersedes it on that basis,
+ * not by re-litigating the original call. Plantillas remains a SEPARATE, still
+ * valid destination (a whole recurring multi-envío lane, not a single leg).
  */
 export const MAX_QUICK_ACTIONS = 3;
 
@@ -27,6 +28,7 @@ export type QuickActionKey =
   | "empresas"
   | "vehiculos"
   | "lugares"
+  | "rutas"
   | "equipo"
   | "empresa"
   | "ayuda";
@@ -44,6 +46,7 @@ export type QuickAction = {
     | "building"
     | "truck"
     | "mapPin"
+    | "route"
     | "users"
     | "gear"
     | "lifebuoy";
@@ -53,12 +56,13 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
   { key: "crear", labelKey: "crear", href: "/crear", icon: "plus" },
   { key: "historico", labelKey: "historico", href: "/panel/historico", icon: "history" },
   { key: "plantillas", labelKey: "plantillas", href: "/panel/plantillas", icon: "copy" },
-  // The three `datos` entries are the SAME existing screen, addressed at its
-  // three existing sections — hence the anchors, which is why they are distinct
-  // destinations rather than three copies of one.
+  // The four `datos` entries are the SAME existing screen, addressed at its
+  // four tabs — hence the anchors, which is why they are distinct
+  // destinations rather than four copies of one.
   { key: "empresas", labelKey: "empresas", href: "/panel/datos#empresas", icon: "building" },
   { key: "vehiculos", labelKey: "vehiculos", href: "/panel/datos#vehiculos", icon: "truck" },
   { key: "lugares", labelKey: "lugares", href: "/panel/datos#lugares", icon: "mapPin" },
+  { key: "rutas", labelKey: "rutas", href: "/panel/datos#rutas", icon: "route" },
   { key: "equipo", labelKey: "equipo", href: "/panel/equipo", icon: "users" },
   { key: "empresa", labelKey: "empresa", href: "/panel/empresa", icon: "gear" },
   { key: "ayuda", labelKey: "ayuda", href: "/panel/ayuda", icon: "lifebuoy" },

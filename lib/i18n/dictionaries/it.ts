@@ -548,6 +548,7 @@ export const it = {
         empresas: "Aziende abituali",
         vehiculos: "Veicoli",
         lugares: "Luoghi di carico/scarico",
+        rutas: "Percorsi abituali",
         equipo: "Squadra",
         empresa: "La mia azienda",
         ayuda: "Aiuto",

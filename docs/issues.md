@@ -815,9 +815,32 @@ anonymize-in-place (no hard delete, D-067).
   regresión e2e dirigido 21/21 en verde (`saved-shipments.spec.ts` nuevo 2/2,
   `deca-multi-shipment.spec.ts` 4/4, `crear.spec.ts` 9/9, `creator-v2.spec.ts` 5/5,
   `favorites.spec.ts` 1/1).
-- **Pendiente (Fase 2, sesión futura):** el rediseño visual de la propia pantalla Datos habituales —
-  hoy no existe ninguna pestaña ni listado para ver/gestionar las rutas guardadas, solo crearlas
-  (desde el wizard) y consumirlas (el selector).
+- **Fase 2 (rediseño visual) — HECHA, misma sesión, inmediatamente después de la Fase 1 (D-208).**
+  `Datos habituales` pasa a pestañas (`role="tablist"`) — Empresas/Vehículos/Lugares/Rutas —, buscador
+  global, resumen compacto ("N empresas · N vehículos · N lugares · N rutas"), menú "+ Añadir dato
+  habitual" y un `Modal` real (nuevo, `components/app/modal.tsx`) que sustituye el antiguo `<details>`
+  "Añadir". La pestaña Rutas reutiliza `savedShipmentLabel()` (ahora exportada desde `wizard.tsx`); su
+  formulario no tiene campos de texto libre para el lugar, solo 2 `<select>` sobre los lugares ya
+  guardados. **3 decisiones de alcance confirmadas con el usuario antes de programar** (todas la opción
+  recomendada): sin deep-link de preselección para "Usar" (los selectores del wizard ya cubren esa
+  necesidad); modal real para crear (no solo restilizar el `<details>`); detección de duplicados en
+  cliente (`lib/data/saved-dedup.ts`, nuevo, puro, 10 tests) como aviso no bloqueante. **2 fallos reales
+  encontrados y corregidos antes de publicar, no previstos originalmente:** (1) montar solo la pestaña
+  activa dejaba el `aria-controls` de las otras 3 apuntando a un id inexistente — violación de
+  accesibilidad (`aria-valid-attr-value`); corregido montando las 4 siempre y alternando el atributo
+  `hidden` (el patrón WAI-ARIA correcto). (2) `/panel/datos#rutas` (y los anclajes previos, que el
+  widget de accesos rápidos usa directamente) no abrían la pestaña correcta — leer `location.hash`
+  dentro del inicializador de `useState` no sobrevivía a la reconciliación de hidratación de Next.js;
+  corregido con el patrón estándar (valor inicial seguro para SSR + `useEffect` que lo corrige tras
+  montar). También: #93 gana un 4º acceso rápido "Rutas habituales" (la premisa de D-156 de que "no
+  existe tal pantalla" ya no es cierta); `FavoriteStar` no aceptaba `"shipment"` como tipo (bloqueaba
+  marcar una ruta como favorita desde cualquier UI). **Trampa de entorno real encontrada en el camino**
+  (ver `docs/lessons-learned.md`): un `npm run dev` arrancado a mano antes en la sesión fue reutilizado
+  por error por Playwright en lugar de su propio servidor (`npm run build && npm run start`), sin la
+  variable `FVD_EXPOSE_RESET_TOKEN=1` — la verificación de email de cada test e2e no hacía nada,
+  bloqueando la generación de cualquier DeCA con fallos genéricos que parecían una regresión real.
+  Gate: 439/439 unitarios (+10 nuevos), tsc/eslint/prettier/keel-verify limpios, barrido de regresión
+  e2e dirigido 34/34 en verde. **I-113 queda completamente cerrado (Fase 1 + Fase 2).**
 
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
