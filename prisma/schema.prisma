@@ -89,6 +89,7 @@ model Company {
   savedCompanies        SavedCompany[]
   savedVehicles         SavedVehicle[]
   savedLocations        SavedLocation[]
+  savedShipments        SavedShipment[]
   decaDrafts            DecaDraft[]
   favoriteRoutes        FavoriteRoute[]
   integrationRequests   IntegrationRequest[]
@@ -373,6 +374,7 @@ model User {
   savedCompanies      SavedCompany[]
   savedVehicles       SavedVehicle[]
   savedLocations      SavedLocation[]
+  savedShipments      SavedShipment[]
   recoveryCodes       AdminRecoveryCode[]
   webauthnCredentials WebAuthnCredential[]
   trustedDevices      TrustedDevice[]
@@ -890,8 +892,40 @@ model SavedLocation {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  shipmentsAsLoad   SavedShipment[] @relation("SavedShipmentLoad")
+  shipmentsAsUnload SavedShipment[] @relation("SavedShipmentUnload")
+
   @@index([companyId])
   @@map("saved_location")
+}
+
+/// A reusable single leg — place + place (+ optional goods/weight/recipient) —
+/// for #113. Always references two existing `SavedLocation` rows; never
+/// duplicates address text (issue §12). Deleting a `SavedLocation` still in
+/// use by a route is RESTRICTED — a silent cascade would quietly destroy a
+/// saved route the user is relying on, so the API surfaces a clear error
+/// instead. Editing/deleting a route never touches an already-generated DeCA.
+model SavedShipment {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  companyId        String    @map("company_id")
+  name             String?
+  loadLocationId   String    @map("load_location_id")
+  unloadLocationId String    @map("unload_location_id")
+  goods            String?
+  weight           String?
+  recipient        String?
+  favorite         Boolean   @default(false)
+  lastUsedAt       DateTime? @map("last_used_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  loadLocation   SavedLocation @relation("SavedShipmentLoad", fields: [loadLocationId], references: [id], onDelete: Restrict)
+  unloadLocation SavedLocation @relation("SavedShipmentUnload", fields: [unloadLocationId], references: [id], onDelete: Restrict)
+
+  @@index([companyId])
+  @@map("saved_shipment")
 }
 
 /// First-party analytics event. Never carries PII.

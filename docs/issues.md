@@ -782,6 +782,43 @@ anonymize-in-place (no hard delete, D-067).
   19/19 en verde juntos en aislamiento).
 - **Cola después de #112:** #113 (rediseño de Datos habituales), #114 (rediseño de Historial), #115
   (subir versión 0.2.0→0.3.0 + cierre de documentación) — ninguno investigado todavía.
+
+## I-113 — Rediseñar Datos habituales y adaptarlo a DeCA con múltiples envíos
+- 2026-09-11. Issue del usuario, ya existía en el forge (18 secciones: rediseño visual completo +
+  nuevo concepto de dato reutilizable + integración con el wizard + deduplicación + móvil en 8
+  anchos). El propio issue pide responder, antes de tocar código, 5 preguntas de investigación —
+  respondidas en sesión de plan mode con el usuario (documentado en detalle en `docs/decisions.md`
+  D-207): cómo se guardan hoy empresas/vehículos/lugares (`SavedCompany/Vehicle/Location`, ya
+  existen, con `favorite`/`lastUsedAt` ya conectados); si carga/descarga usan modelos separados (NO —
+  `SavedLocation` ya los unifica con un `type: load|unload|both`, la preocupación del §12 del issue
+  ya estaba resuelta); cómo debe integrarse un "SavedShipment" con el modelo multi-envío de #112
+  (nuevo, un único tramo reutilizable, siempre por `loadLocationId`/`unloadLocationId` a lugares ya
+  guardados, nunca texto libre); qué responsabilidad queda en Plantillas para no duplicar el concepto
+  (Plantillas sigue siendo dueña de la ruta compuesta completa — `DecaTemplate.shipments[]`); cómo se
+  preservan los habituales existentes (aditivo puro, nada existente se toca).
+- **Fase 1 (creación del concepto + integración con el wizard) — HECHA en `develop`, sin fusionar a
+  `main` (D-207).** El usuario eligió fasear el issue (igual que #112): Fase 1 = el nuevo concepto
+  "Ruta/envío habitual" + su integración en el wizard; Fase 2 (sesión futura) = el rediseño visual
+  completo de la propia pantalla Datos habituales (pestañas, buscador global, empty states, móvil).
+  Nuevo modelo `SavedShipment` (migración aditiva, sin tocar nada existente, con RLS habilitado) +
+  CRUD (`lib/data/saved-shipments.ts`) + `POST/GET /api/saved-shipments` +
+  `PATCH/DELETE /api/saved-shipments/[id]`. En el wizard: selector "Usar ruta/envío habitual" en el
+  envío 1 Y en cada bloque ENVÍO N adicional (antes NINGÚN bloque adicional tenía selectores de datos
+  habituales — el hueco concreto que el §10 del issue señala), más "☆ Guardar como envío habitual" en
+  línea durante la creación (§11), visible solo cuando ambos lugares ya son `SavedLocation`.
+  Plantillas (`DecaTemplate`) extendida con `shipments[]` opcional para la ruta compuesta completa
+  (§5); `templates.ts` partido en un fichero de esquema puro (`template-schema.ts`) para que sea
+  testeable, mismo patrón que `saved-schema.ts`/`saved.ts`. **Hueco adyacente preexistente
+  encontrado y corregido de paso:** la página de corrección pasaba un `saved` vacío a mano — los
+  selectores de datos habituales llevaban muertos ahí desde siempre, no solo para envíos; ahora carga
+  los datos reales. Gate: 429/429 unitarios (+9 nuevos), tsc/eslint/prettier limpios, barrido de
+  regresión e2e dirigido 21/21 en verde (`saved-shipments.spec.ts` nuevo 2/2,
+  `deca-multi-shipment.spec.ts` 4/4, `crear.spec.ts` 9/9, `creator-v2.spec.ts` 5/5,
+  `favorites.spec.ts` 1/1).
+- **Pendiente (Fase 2, sesión futura):** el rediseño visual de la propia pantalla Datos habituales —
+  hoy no existe ninguna pestaña ni listado para ver/gestionar las rutas guardadas, solo crearlas
+  (desde el wizard) y consumirlas (el selector).
+
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
 - **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**

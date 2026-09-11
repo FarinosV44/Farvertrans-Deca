@@ -793,6 +793,7 @@ export const gl = {
       carrier: "Buscar ou seleccionar transportista habitual",
       location: "Buscar ou seleccionar lugar habitual",
       vehicle: "Buscar ou seleccionar vehículo",
+      shipment: "Buscar ou seleccionar ruta/envío habitual",
       newOption: "Introducir un novo…",
     },
     fields: {

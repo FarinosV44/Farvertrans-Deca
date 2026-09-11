@@ -811,6 +811,7 @@ export const eu = {
       carrier: "Bilatu edo hautatu ohiko garraiolaria",
       location: "Bilatu edo hautatu ohiko lekua",
       vehicle: "Bilatu edo hautatu ibilgailua",
+      shipment: "Bilatu edo hautatu ohiko ibilbidea/bidalketa",
       newOption: "Sartu berri bat…",
     },
     fields: {

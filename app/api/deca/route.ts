@@ -167,10 +167,16 @@ export async function POST(req: Request) {
       if (usedSaved && typeof usedSaved === "object") {
         const u = usedSaved as Record<string, unknown>;
         const asId = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+        const asIdList = (v: unknown) =>
+          Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && !!x) : [];
         const companyIds = [asId(u.shipperId), asId(u.carrierId)].filter((v): v is string => !!v);
-        const locationIds = [asId(u.loadLocationId), asId(u.unloadLocationId)].filter(
-          (v): v is string => !!v,
-        );
+        // #113: `extraLocationIds` covers envíos beyond the first, which
+        // `loadLocationId`/`unloadLocationId` (shipment 1 only) don't reach.
+        const locationIds = [
+          asId(u.loadLocationId),
+          asId(u.unloadLocationId),
+          ...asIdList(u.extraLocationIds),
+        ].filter((v): v is string => !!v);
         const { touchSavedUsage } = await import("@/lib/data/saved");
         touchSavedUsage(owner.companyId, {
           companyIds,
@@ -179,6 +185,13 @@ export async function POST(req: Request) {
         }).catch(() => {
           // never block or fail generation over a "last used" bookkeeping hiccup
         });
+        const shipmentIds = asIdList(u.shipmentIds);
+        if (shipmentIds.length) {
+          const { touchSavedShipmentUsage } = await import("@/lib/data/saved-shipments");
+          touchSavedShipmentUsage(owner.companyId, shipmentIds).catch(() => {
+            // never block or fail generation over a "last used" bookkeeping hiccup
+          });
+        }
       }
 
       // #84: per-DeCA commercial-share opt-in. A SEPARATE top-level key, never

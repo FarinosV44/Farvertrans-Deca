@@ -1,54 +1,8 @@
 import "server-only";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { templatePayloadSchema, type TemplateRow } from "./template-schema";
 
-/**
- * DeCA templates (UX #25) — recurring, non-date data for a lane. Creating a DeCA
- * from a template always produces a brand-new independent document after review;
- * a template never carries a public token or a transport date.
- */
-const templateLocationSchema = z
-  .object({
-    name: z.string().trim().max(200).default(""),
-    address: z.string().trim().max(300).default(""),
-    postalCode: z.string().trim().max(12).default(""),
-    city: z.string().trim().max(120).default(""),
-    province: z.string().trim().max(120).default(""),
-    country: z.string().trim().max(80).default(""),
-  })
-  .default({});
-
-export const templatePayloadSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  shipper: z
-    .object({
-      name: z.string().trim().max(200).default(""),
-      nif: z.string().trim().max(20).default(""),
-      address: z.string().trim().max(300).default(""),
-      postalCode: z.string().trim().max(12).default(""),
-      city: z.string().trim().max(120).default(""),
-    })
-    .default({}),
-  carrier: z
-    .object({
-      name: z.string().trim().max(200).default(""),
-      nif: z.string().trim().max(20).default(""),
-      address: z.string().trim().max(300).default(""),
-      postalCode: z.string().trim().max(12).default(""),
-      city: z.string().trim().max(120).default(""),
-    })
-    .default({}),
-  loadLocation: templateLocationSchema,
-  unloadLocation: templateLocationSchema,
-  goods: z.string().trim().max(300).default(""),
-  weight: z.string().trim().max(60).default(""),
-  tractorPlate: z.string().trim().max(20).default(""),
-  trailerPlate: z.string().trim().max(20).default(""),
-});
-
-export type TemplateInput = z.infer<typeof templatePayloadSchema>;
-
-export type TemplateRow = TemplateInput & { id: string; favorite: boolean };
+export { templatePayloadSchema, type TemplateInput, type TemplateRow } from "./template-schema";
 
 export async function listTemplates(companyId: string): Promise<TemplateRow[]> {
   const rows = await prisma.decaTemplate.findMany({

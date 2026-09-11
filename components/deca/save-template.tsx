@@ -11,6 +11,10 @@ type Data = {
   weight?: string;
   tractorPlate?: string;
   trailerPlate?: string;
+  /** #113 §5 — shipments BEYOND the first, so a multi-envío DeCA can be saved
+   *  as a whole recurring lane. Passed through verbatim (already validated
+   *  when this DeCA was generated). */
+  shipments?: unknown[];
 };
 
 /**
@@ -42,6 +46,20 @@ export function SaveTemplate({ data }: { data: Data }) {
           weight: data.weight ?? "",
           tractorPlate: data.tractorPlate ?? "",
           trailerPlate: data.trailerPlate ?? "",
+          // "Guardar como plantilla" never carries a transport date (see the
+          // doc comment above) — strip loadDate/unloadDate from every extra
+          // envío the same way the flat fields above never include one.
+          ...(data.shipments && data.shipments.length > 1
+            ? {
+                shipments: data.shipments.slice(1).map((s) => {
+                  if (!s || typeof s !== "object") return s;
+                  const rest = { ...(s as Record<string, unknown>) };
+                  delete rest.loadDate;
+                  delete rest.unloadDate;
+                  return rest;
+                }),
+              }
+            : {}),
         }),
       });
       setState(res.ok ? "saved" : "error");

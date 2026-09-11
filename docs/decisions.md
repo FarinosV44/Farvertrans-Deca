@@ -6848,3 +6848,108 @@ together in isolation at `--workers=1`, matching this project's own contention-f
 the resolved value either way, matching what the PDF shows — this was never promised as a Sprint 1 or 2
 deliverable); no bulk "copy shipment 1 to a new shipment" shortcut in the wizard beyond the existing
 pre-fill-on-add behavior.
+
+## D-207 — I-113 Phase 1: "Ruta/envío habitual" + wizard integration (2026-09-11)
+
+Issue #113 (P1 UX, 18 sections) asks to turn "Datos habituales" into a compact reusable-data agenda
+AND introduce a new "Ruta/envío habitual" concept compatible with #112's multi-shipment model. Per the
+user's explicit plan-mode decision (mirroring #112's own phasing), split into Phase 1 (this slice — the
+new data concept + its wizard integration) and Phase 2 (later session — the page's full visual redesign:
+tabs, global search, empty states, mobile polish across the issue's 8 named breakpoints).
+
+**Investigation findings, resolving the issue's own "answer before implementing" questions (§ at end):**
+1. `SavedCompany`/`SavedVehicle`/`SavedLocation` already exist, company-scoped, `favorite`/`lastUsedAt`
+   already wired end-to-end (CRUD in `lib/data/saved.ts`, UI in `saved-data-manager.tsx`).
+2. `SavedLocation` already unifies load/unload via a `type: load|unload|both` enum — the issue's §12
+   "don't duplicate an address because it's sometimes load, sometimes unload" concern is **already
+   satisfied** by the existing schema; no migration needed for that part.
+3. `SavedShipment` (new, this slice) is the "ruta/envío habitual": a reusable single leg, referencing
+   two existing `SavedLocation` rows by id — **never** a free-text address (issue §12, and the user's
+   explicit choice among 3 options offered). No shipper/carrier on it (those are DeCA-level in #112's
+   model and already separately reusable via `SavedCompany`).
+4. **Plantillas/Datos-habituales boundary (issue §5, explicit ask):** `DecaTemplate` ("Plantillas")
+   keeps owning a whole recurring multi-envío lane ("REPARTO MADRID" — shipper+carrier+N shipments);
+   `templatePayloadSchema` gains an optional `shipments?: ShipmentPayload[]` (reusing #112's own
+   `shipmentSchema` verbatim, never redefined). Datos habituales' new "rutas habituales" own exactly ONE
+   leg. This was the user's chosen option among 3 offered (vs. building a second "combo" concept inside
+   Datos habituales, or deferring the multi-envío case entirely) — avoids a duplicate concept, and
+   reuses the existing Plantillas UI/flow rather than inventing one.
+5. **Migration safety:** purely additive — one new table (`saved_shipment`) + 2 FKs to `saved_location`
+   (`onDelete: Restrict` — deleting a place still referenced by a saved route is blocked with a clear
+   error, never a silent cascade that destroys a route the user relies on). Nothing existing is touched;
+   zero data-loss risk by construction. Migration `20260911200000_saved_shipment` — hand-written (same
+   shadow-DB-bypass workflow as `20260911090000_unique_user_email`), applied via `prisma migrate deploy`
+   directly. Enrolled in the RLS-lockdown posture from `20260910093000_rls_lockdown_public_schema`
+   (`ALTER TABLE saved_shipment ENABLE ROW LEVEL SECURITY` — no policies, deny-all for anything but
+   Prisma's `postgres` role, which bypasses RLS) — a new table must join that posture at creation, not
+   be left as a gap.
+
+**Built:**
+1. **`SavedShipment` model** (`prisma/schema.prisma`) + `lib/data/saved-shipments.ts` (mirrors
+   `lib/data/saved.ts`'s CRUD shape: list/create/update/delete/setFavorite/touchUsage) +
+   `savedShipmentSchema` (`lib/data/saved-schema.ts`) + `POST/GET /api/saved-shipments`,
+   `PATCH/DELETE /api/saved-shipments/[id]`. `createSavedShipment`/`updateSavedShipment` verify both
+   location ids belong to the caller's company before writing (`SavedLocationOwnershipError` → 422
+   `bad_location`) — never trust a client-supplied id blindly (security.md's "authorize every
+   owner-scoped write" rule).
+2. **`POST /api/favorites`** (#78) extended with a `"shipment"` kind — same discriminated-union pattern
+   as company/vehicle/location/template.
+3. **Wizard integration** (`components/deca/wizard.tsx`): a "Usar ruta/envío habitual" picker on
+   shipment 1 (step 1, before the load-location fieldset — fills origin+destination+goods+weight in one
+   action; shipment 1 has no `recipient` field pre-#112, so a route's recipient is dropped there, a
+   known and acceptable Phase 1 limitation) AND on every extra `ENVÍO N` block (which had ZERO
+   saved-data pickers before this — the concrete gap issue §10 names, extra shipments were plain text
+   fields only since #112 shipped). A hand-edit to any location field drops that leg's "picked" credit
+   (`setAndUnpick`/new `setExtraAndUnpick`), so "☆ Guardar como envío habitual" never offers itself for
+   data that's since diverged from the place it was picked from.
+4. **`SaveShipment`** (`components/deca/save-shipment.tsx`, new) — "☆ Guardar como envío habitual"
+   (issue §11), inline during DeCA creation, never checked by default, shown only once both legs are
+   `SavedLocation`-backed. Mirrors `SaveTemplate`'s existing open/confirm/saved-message pattern exactly
+   (same plain-Spanish-strings precedent that component already established, not newly introduced here).
+5. **Template picker** (`wizard.tsx`, step 0) extended: a template's `shipments` (when present) prefills
+   `extraShipments` too — legacy single-shipment templates behave byte-identically to before (no
+   regression). `SaveTemplate`'s own `save()` now forwards `data.shipments.slice(1)` when saving from an
+   already-multi-shipment DeCA, stripping `loadDate`/`unloadDate` from each (a template NEVER carries a
+   transport date — the component's own pre-existing rule, now applied to shipments too, not just the
+   flat fields).
+6. **`lib/data/templates.ts` split**: `templatePayloadSchema`/`TemplateInput`/`TemplateRow` moved to a
+   new `lib/data/template-schema.ts` (no `import "server-only"`) so the pure schema stays unit-testable
+   — mirrors the pre-existing `saved-schema.ts`/`saved.ts` split. `templates.ts` re-exports them so no
+   external import site needed to change.
+7. **Correction page** (`app/panel/deca/[id]/corregir/page.tsx`) — while wiring in `saved.shipments` (a
+   new required `SavedData` field), found it was passing `saved={{ companies: [], vehicles: [],
+   locations: [] }}` (a hardcoded empty object — the correction wizard's saved-data autofill pickers
+   were silently dead for ALL kinds, not just shipments, a pre-existing gap unrelated to #113). Fixed in
+   the same slice since it was the minimal-cost, directly-adjacent fix: now calls `listSaved()` +
+   `listSavedShipments()` for real, same as `/crear`.
+8. **`usedSaved` payload** (`wizard.tsx` → `POST /api/deca` → `touchSavedUsage`/`touchSavedShipmentUsage`)
+   extended with `extraLocationIds`/`shipmentIds` so "last used" bumps correctly for routes/places used
+   on envíos beyond the first — `picked` (the pre-#113 shape) only ever covered shipment 1.
+
+**Out of scope for Phase 1 (deferred to Phase 2, per the user's phasing choice):** the Datos habituales
+page's own visual redesign (tabs, global search, compact summary counts, per-tab empty states, mobile
+polish at the issue's 8 named breakpoints) — Phase 1 ships no UI for BROWSING/managing saved shipments
+at all yet (no "Rutas" tab exists on `/panel/datos`), only creating them (inline, from the wizard) and
+consuming them (the picker). `getDecaForDuplicate`/`FavoriteRoute` multi-shipment awareness — not named
+in #113's acceptance criteria.
+
+**Verified for real:** `tests/unit/saved-shipment-schema.test.ts` (5 tests — schema validation, name
+never uppercased vs. goods/recipient uppercased per #86 p3, missing-id rejection) and
+`tests/unit/template-shipments.test.ts` (4 tests — legacy no-shipments template stays valid, a valid
+multi-shipment template parses, an invalid inner shipment is rejected, empty array accepted). New
+`tests/e2e/saved-shipments.spec.ts` (2 tests, real browser + real DB): picking a saved route fills
+shipment 1 and produces a correct PDF (both saved place names + goods appear, uppercase per #86 p3 —
+caught and fixed a wrong lowercase expectation in the test itself, not a product bug); and a full
+"guardar como habitual" round trip — save from the wizard, confirm the toast, reload `/crear`, confirm
+the new route is now selectable (verified against the real DB directly via the Prisma client to confirm
+the row's actual `companyId`/`loadLocationId`/`unloadLocationId` before diagnosing a second, real test
+bug — the assertion checked for the picker before advancing the wizard to the step it lives on).
+
+**Gate, confirmed complete:** 429/429 unit (+9 new), tsc/eslint/prettier clean. Targeted e2e regression
+sweep (not the full suite, per this slice's scope): `saved-shipments.spec.ts` (2/2, new),
+`deca-multi-shipment.spec.ts` (4/4), `crear.spec.ts` (9/9), `creator-v2.spec.ts` (5/5 — including the
+existing template save/reuse flow, proving the `templates.ts` split + `shipments` extension caused no
+regression), `favorites.spec.ts` (1/1) — 21/21 green, covering every surface this slice touched.
+
+**Next:** #113 Phase 2 (Datos habituales visual redesign) whenever picked back up; then #114, #115 per
+the standing queue (`docs/issues.md`).

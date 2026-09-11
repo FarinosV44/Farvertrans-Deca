@@ -15,6 +15,7 @@ import { getDraft } from "@/lib/deca/draft";
 import { getDecaForDuplicate } from "@/lib/data/history";
 import { getCommercialTreatment } from "@/lib/consent";
 import { listSaved } from "@/lib/data/saved";
+import { listSavedShipments } from "@/lib/data/saved-shipments";
 import { listTemplates } from "@/lib/data/templates";
 import { LEAD_COOKIE } from "@/lib/deca/lead";
 import { getDictionary } from "@/lib/i18n/server";
@@ -103,13 +104,14 @@ export default async function CrearPage({
     | undefined;
 
   if (user?.companyId) {
-    const [s, t, source, treatment] = await Promise.all([
+    const [s, shipments, t, source, treatment] = await Promise.all([
       listSaved(user.companyId),
+      listSavedShipments(user.companyId),
       listTemplates(user.companyId),
       from ? getDecaForDuplicate(user.companyId, from) : Promise.resolve(null),
       getCommercialTreatment(user.companyId),
     ]);
-    saved = s;
+    saved = { ...s, shipments };
     templates = t;
     commercialTreatment = { mode: treatment.mode, channel: treatment.channel };
     // #76: resume the user's saved draft (only when not duplicating).

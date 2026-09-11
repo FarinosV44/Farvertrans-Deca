@@ -4,6 +4,8 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { CrearWizard, type WizardInitial } from "@/components/deca/wizard";
 import { getCurrentUser } from "@/lib/auth";
 import { getDecaDetail } from "@/lib/data/history";
+import { listSaved } from "@/lib/data/saved";
+import { listSavedShipments } from "@/lib/data/saved-shipments";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Corregir DeCA", robots: { index: false } };
@@ -13,7 +15,11 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
   if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const { id } = await params;
-  const deca = await getDecaDetail(user.companyId, id);
+  const [deca, saved, shipments] = await Promise.all([
+    getDecaDetail(user.companyId, id),
+    listSaved(user.companyId),
+    listSavedShipments(user.companyId),
+  ]);
   if (!deca) notFound();
 
   const d = deca.current.data;
@@ -94,11 +100,7 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
     <>
       <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-10 md:px-6">
-        <CrearWizard
-          initial={initial}
-          saved={{ companies: [], vehicles: [], locations: [] }}
-          correctDecaId={deca.id}
-        />
+        <CrearWizard initial={initial} saved={{ ...saved, shipments }} correctDecaId={deca.id} />
       </main>
       <SiteFooter />
     </>

@@ -788,6 +788,7 @@ export const it = {
       carrier: "Cerca o seleziona un vettore abituale",
       location: "Cerca o seleziona un luogo abituale",
       vehicle: "Cerca o seleziona un veicolo",
+      shipment: "Cerca o seleziona una tratta/spedizione abituale",
       newOption: "Inserisci un nuovo…",
     },
     fields: {

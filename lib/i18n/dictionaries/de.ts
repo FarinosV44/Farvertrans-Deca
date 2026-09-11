@@ -806,6 +806,7 @@ export const de = {
       carrier: "Üblichen Frachtführer suchen oder auswählen",
       location: "Üblichen Ort suchen oder auswählen",
       vehicle: "Fahrzeug suchen oder auswählen",
+      shipment: "Übliche Route/Sendung suchen oder auswählen",
       newOption: "Neues eingeben…",
     },
     fields: {

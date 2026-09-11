@@ -804,6 +804,7 @@ export const fr = {
       carrier: "Rechercher ou sélectionner un transporteur habituel",
       location: "Rechercher ou sélectionner un lieu habituel",
       vehicle: "Rechercher ou sélectionner un véhicule",
+      shipment: "Rechercher ou sélectionner une route/expédition habituelle",
       newOption: "Saisir un nouveau…",
     },
     fields: {

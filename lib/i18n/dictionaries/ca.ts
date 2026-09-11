@@ -789,6 +789,7 @@ export const ca = {
       carrier: "Cercar o seleccionar transportista habitual",
       location: "Cercar o seleccionar lloc habitual",
       vehicle: "Cercar o seleccionar vehicle",
+      shipment: "Cercar o seleccionar ruta/enviament habitual",
       newOption: "Introduir-ne un de nou…",
     },
     fields: {

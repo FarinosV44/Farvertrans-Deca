@@ -800,6 +800,7 @@ export const es = {
       carrier: "Buscar o seleccionar transportista habitual",
       location: "Buscar o seleccionar lugar habitual",
       vehicle: "Buscar o seleccionar vehículo",
+      shipment: "Buscar o seleccionar ruta/envío habitual",
       newOption: "Introducir uno nuevo…",
     },
     fields: {

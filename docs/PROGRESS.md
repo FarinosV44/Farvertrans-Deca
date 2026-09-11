@@ -45,6 +45,32 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-207 — I-113 Phase 1: "Ruta/envío habitual" + wizard integration, this session (2026-09-11),
+  immediately after D-205/D-206. Full detail in `docs/decisions.md` D-207.** New `SavedShipment`
+  model (`prisma/schema.prisma`, migration `20260911200000_saved_shipment`, additive-only, RLS
+  enrolled) — a reusable single leg referencing two existing `SavedLocation` rows by id (never a
+  free-text address, per the issue's own §12). `lib/data/saved-shipments.ts` CRUD (mirrors
+  `lib/data/saved.ts`), `POST/GET /api/saved-shipments`, `PATCH/DELETE /api/saved-shipments/[id]`,
+  `POST /api/favorites` gains a `"shipment"` kind. Wizard (`components/deca/wizard.tsx`): a "Usar
+  ruta/envío habitual" picker on shipment 1 AND every extra `ENVÍO N` block (which had ZERO
+  saved-data pickers before this — the concrete gap the issue names), plus inline "☆ Guardar como
+  envío habitual" (`components/deca/save-shipment.tsx`, mirrors `SaveTemplate`'s pattern), gated on
+  both legs already being `SavedLocation`-backed. **Plantillas/Datos-habituales boundary resolved**
+  (issue §5, user's explicit choice): `DecaTemplate` keeps owning a whole multi-envío recurring lane
+  (`templatePayloadSchema` gains optional `shipments[]`, reusing #112's `shipmentSchema` verbatim);
+  `lib/data/templates.ts` split into a schema-only `template-schema.ts` (no `server-only`) + the
+  DB-touching file, mirroring the pre-existing `saved-schema.ts`/`saved.ts` split, so the schema
+  stays unit-testable. **Adjacent pre-existing gap fixed while touching the same file:** the
+  correction page was passing a hardcoded-empty `saved={{...: []}}` — the correction wizard's
+  saved-data autofill was dead for every kind, not just shipments; now calls `listSaved()` +
+  `listSavedShipments()` for real. **Out of scope (Phase 2, later session, per the user's phasing
+  choice):** the Datos habituales page's own visual redesign (tabs/search/empty
+  states/mobile) — no UI to browse/manage saved shipments exists yet, only create (inline, from the
+  wizard) and consume (the picker). **Gate: 429/429 unit (+9 new), tsc/eslint/prettier clean;
+  targeted e2e regression sweep 21/21 green** (`saved-shipments.spec.ts` 2/2 new,
+  `deca-multi-shipment.spec.ts` 4/4, `crear.spec.ts` 9/9, `creator-v2.spec.ts` 5/5, `favorites.spec.ts`
+  1/1 — not the full suite, scoped to every surface this slice touched). Ready to commit/push
+  develop→main. **Queued next:** #113 Phase 2, then #114, #115.
 - **D-205 — I-112 Sprint 1: multiple shipments ("envíos") per DeCA — creation, this session
   (2026-09-11). CODE COMPLETE on `develop`, NOT YET pushed/merged to `main` (pending final full e2e
   gate + commit — see below).** Planned in plan mode with the user first (16 AC issue). Data model

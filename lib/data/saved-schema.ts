@@ -60,3 +60,16 @@ export const savedLocationSchema = z.object({
   country: z.string().trim().min(2).max(80).optional().default("España").transform(upperText),
   type: z.enum(savedLocationTypes).optional().default("both"),
 });
+
+// #113 Phase 1 — "Ruta/envío habitual": one reusable leg, referencing two
+// existing SavedLocation rows by id (never a free-text address, §12).
+// Bounds mirror lib/deca/schema.ts's `shipmentSchema` so a saved route is
+// always usable verbatim once dropped into an ENVÍO N block.
+export const savedShipmentSchema = z.object({
+  name: z.string().trim().max(200).optional().default(""),
+  loadLocationId: z.string().trim().min(1, "Selecciona el lugar de carga."),
+  unloadLocationId: z.string().trim().min(1, "Selecciona el lugar de descarga."),
+  goods: z.string().trim().max(300).optional().default("").transform(upperTextOrEmpty),
+  weight: z.string().trim().max(60).optional().default(""),
+  recipient: z.string().trim().max(200).optional().default("").transform(upperTextOrEmpty),
+});

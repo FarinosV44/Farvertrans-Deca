@@ -774,6 +774,7 @@ export const en = {
       carrier: "Search or select a regular carrier",
       location: "Search or select a regular location",
       vehicle: "Search or select a vehicle",
+      shipment: "Search or select a regular route/shipment",
       newOption: "Enter a new one…",
     },
     fields: {

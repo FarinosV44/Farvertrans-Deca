@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { setSavedFavorite } from "@/lib/data/saved";
+import { setSavedShipmentFavorite } from "@/lib/data/saved-shipments";
 import { setTemplateFavorite } from "@/lib/data/templates";
 import { setRouteFavorite } from "@/lib/data/route-intel";
 
@@ -9,13 +10,13 @@ export const runtime = "nodejs";
 
 /**
  * Toggle a company-scoped favourite (#78) on a saved company / vehicle /
- * location, a template, or a route corridor. Company-scoped so the whole team
- * shares it; authorised against the session's companyId, never the row's own
- * ids. Favouriting never creates or duplicates a record.
+ * location / shipment (#113), a template, or a route corridor. Company-scoped
+ * so the whole team shares it; authorised against the session's companyId,
+ * never the row's own ids. Favouriting never creates or duplicates a record.
  */
 const schema = z.discriminatedUnion("kind", [
   z.object({
-    kind: z.enum(["company", "vehicle", "location", "template"]),
+    kind: z.enum(["company", "vehicle", "location", "template", "shipment"]),
     id: z.string().min(1),
     favorite: z.boolean(),
   }),
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
   }
   if (body.kind === "template") {
     const ok = await setTemplateFavorite(user.companyId, body.id, body.favorite);
+    return ok ? NextResponse.json({ ok: true }) : new NextResponse("Not found", { status: 404 });
+  }
+  if (body.kind === "shipment") {
+    const ok = await setSavedShipmentFavorite(user.companyId, body.id, body.favorite);
     return ok ? NextResponse.json({ ok: true }) : new NextResponse("Not found", { status: 404 });
   }
   const ok = await setSavedFavorite(user.companyId, body.kind, body.id, body.favorite);
