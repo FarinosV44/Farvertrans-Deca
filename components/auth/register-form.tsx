@@ -358,10 +358,18 @@ export function RegisterForm({
           type="submit"
           disabled={busy}
           data-testid="register-submit"
-          className="mt-6 min-h-12 w-full rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)] disabled:opacity-55"
+          className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-5 font-medium text-[var(--color-primary-contrast)] hover:bg-[var(--color-primary-hover)] disabled:opacity-55"
         >
+          {busy && (
+            <span
+              aria-hidden
+              className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
+            />
+          )}
           {busy
-            ? t.auth.submit.busy
+            ? mode === "register"
+              ? t.auth.submit.busyRegister
+              : t.auth.submit.busy
             : mode === "register"
               ? t.auth.submit.register
               : t.auth.submit.login}

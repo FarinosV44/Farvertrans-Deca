@@ -6516,3 +6516,123 @@ foreign businesses; a bad self-reported identifier is still correctable by the s
 **Not yet done:** confirming this actually unblocks the reporting user (no production access from this
 session — see the separate production-log/DB-access request to the user), and no production deploy has
 happened yet — this fix exists on `develop` pending deploy.
+
+## D-203 — registration duplicate-account/company race closed at the DB level (2026-09-11)
+
+User task, alongside D-204: "make sure double-clicking cannot create duplicate accounts or
+companies." Root cause: `signup()`'s duplicate check (`prisma.user.findFirst({where:{email}})`) is a
+classic TOCTOU race — no `@unique` ever existed on `User.email`, so two near-simultaneous requests for
+the same email could both pass the check before either transaction committed, each creating its own
+user + company (`Company`/`User`/`Membership` are created together inside one `$transaction`, so a
+DB-level unique violation rolls back the WHOLE transaction — closing the company-duplication half of
+this for free).
+
+**Fix:**
+- `prisma/schema.prisma`: `User.email` is now `@unique`. Migration
+  `prisma/migrations/20260911090000_unique_user_email/` (hand-written — the local shadow database
+  Prisma's own `migrate dev` needs to diff against is broken by the D-186 RLS-lockdown migration's
+  `_prisma_migrations` RLS enable, an unrelated pre-existing local-tooling issue; applied instead via
+  `prisma migrate deploy` after confirming — by direct connection, see below — that neither the local
+  dev DB nor production carries any pre-existing duplicate email).
+- `lib/auth/index.ts`: all three `signup()` paths (team-invite join, prospect-invite, plain
+  self-register) now catch the P2002 unique violation on `email` (`isUniqueEmailViolation()`) and
+  translate it into the SAME `AuthError("email_taken", …)` the fast-path check already throws — the
+  loser of a race gets a clean 409, never a raw 500.
+- Folded `recordTermsAcceptance()` into the SAME `$transaction` as company/user/membership creation
+  for the prospect-invite and plain self-register paths (it was a separate round trip right after the
+  transaction before this) — a real, independent atomicity gap this closes as a side effect: previously
+  a transaction that committed followed by a terms-acceptance write that then failed left a real
+  account with NO recorded terms acceptance and no rollback.
+
+**Verified for real, not just unit-level:** production connected to directly (read-only queries) —
+zero existing duplicate emails today, so the migration is safe to apply there. New
+`tests/e2e/register-duplicate-race.spec.ts` fires two REAL concurrent `POST /api/auth/register`
+requests with the identical email and asserts exactly one `201` and one clean `409 email_taken` —
+this is the only way to actually exercise the race (a sequential retry, already covered by
+`reliability.spec.ts`'s idempotency-key test, does not). 317/317 e2e green (full suite run once this
+session), 399/399 unit, tsc/prettier/keel-verify clean.
+
+## D-204 — registration latency audit: immediate loading state + non-essential work off the critical path (2026-09-11)
+
+Full task from the user: audit + measure every server-side step of registration, add an immediate
+"Creando tu cuenta…" + spinner loading state, disable the submit button immediately, prevent duplicate
+submissions (D-203, above), move non-essential work off the response's critical path, redirect/confirm
+clearly on success, show a visible error on failure, and check production logs for evidence of
+double-submission.
+
+**Audit findings (`app/api/auth/register/route.ts`, by direct code + schema inspection):** the
+un-optimized happy path chained roughly 8 sequential DB round trips (abuse-check read+write,
+`signup()`'s email findFirst + its `$transaction` + a separate `recordTermsAcceptance`, locale
+persist, `createEmailVerification`'s transaction, attribution write) PLUS one external network call
+— `sendMail()` to Resend, bounded at up to 8000ms by D-192's own timeout — all awaited sequentially
+before the client saw any response. `hashPassword()` (`scryptSync`, Node's own default cost) also
+blocks the event loop synchronously for its duration, a minor but real contributor noted for the
+record; not changed (weakening it is a security regression, and it is not the dominant cost here).
+
+**Fixes:**
+- **Client (`components/auth/register-form.tsx`):** the submit button already disabled itself and
+  swapped text `synchronously`, before the `fetch` — that part of the ask was already correct. What
+  was missing: the busy text was the generic, shared `t.auth.submit.busy` ("Un momento…") with no
+  spinner. Added a register-specific `t.auth.submit.busyRegister` ("Creando tu cuenta…", all 8 locales,
+  tsc-enforced) and a visible spinner (same inline-SVG-free `animate-spin` pattern already used by the
+  DeCA wizard's "Estamos generando tu PDF y QR…" status, reused rather than reinvented). Verified in a
+  REAL browser via a new `tests/e2e/register-loading-state.spec.ts`: intercepts the register call with
+  an artificial delay, asserts the button is disabled + shows the spinner + "Creando tu cuenta" text
+  immediately, that a forced second click during the delay never reaches the server a second time, and
+  that success still redirects to `/verificar-email`. The redirect-on-success and visible-error-on-
+  failure requirements were ALREADY correctly implemented (`router.push` to the confirmation screen;
+  `catch { setError(...) }` on network failure) — verified, not rebuilt.
+- **Server — timing instrumentation:** every step is timed (`performance.now()`) and logged as one
+  structured `register_timing` line (`abuse_check_ms` / `signup_ms` / `verify_token_create_ms` /
+  `attribution_write_ms` / `commercial_opt_in_ms` / `prospect_attach_ms` / `claim_ms` / `totalMs`),
+  plus a separate `register_background_timing` line for the deferred work below — a slow step is now
+  diagnosable from logs alone, in production, without guessing.
+- **Server — moved off the critical path via Next 15's stable `after()`:** ONLY the email SEND (the
+  Resend network call — by far the largest single contributor, up to 8s) and the locale persist. The
+  email verification TOKEN still gets created synchronously (cheap, one transaction, and its content is
+  needed either way) — only the actual `fetch` to Resend is deferred.
+  - **Superseding D-053's exact synchronous honesty guarantee for this ONE step** ("the client must
+    never be told an email was sent when it was not") — user's own explicit call, asked as a direct
+    trade-off (AskUserQuestion) and answered "send it after the response": `emailSent` in the response
+    now reflects whether mail is CONFIGURED (`isMailConfigured()` — synchronous, no I/O: `RESEND_API_KEY`
+    + `FVD_MAIL_FROM` both set), not confirmed delivery. The `/verificar-email` screen already defaulted
+    to the optimistic "sent" state (`initiallySent = true`) and already has an independent, always-
+    available "Reenviar" button — verified as the safety net before making this call, not assumed.
+  - **What was NOT deferred, and why — this was the real finding of the slice:** attribution write,
+    the #84 commercial opt-in, and the GROWTH #28 prospect-attach were ALL initially deferred too (they
+    looked purely best-effort — already wrapped in swallowed try/catch, response never used their
+    result) — and ALL THREE broke real tests when actually run: `tests/e2e/attribution.spec.ts` queries
+    the operator stats endpoint immediately after `register()` returns and expects the acquisition row
+    to already exist; `tests/e2e/commercial-consent.spec.ts` (8 cases) expects `/panel/privacidad` to
+    already reflect the opt-in on the very next navigation. Each has an immediate-consistency
+    requirement its own swallowed try/catch never revealed. Moved back to the synchronous path. This is
+    recorded here specifically so a future session does not re-attempt the same deferral from the same
+    reasonable-looking premise.
+- **Not changed, and why:** `checkAbuse()`'s two round trips (security gate — must block before
+  `signup()` runs, not deferrable); `hashPassword()`'s `scryptSync` cost (weakening it is a security
+  regression); `claimDeca()` (the client's `claimedDecaId` / `anonymous_deca_claimed` tracking needs
+  its real outcome synchronously).
+
+**Production logs — what could and could not be checked:** this session has no SSH/Docker access to
+the Hostinger VPS, so the application's own `console.log`/`console.error` lines (including the new
+`register_timing` ones) are not reachable — that evidence needs either the user pulling `docker logs`
+themselves or the next redeploy plus a monitoring pass. What WAS checked, by direct read-only
+connection to the production Postgres (a temporary credential the user provided in-chat — flagged to
+the user as a repeat of the exact D-158 exposure, rotation recommended): zero duplicate-email `user`
+rows exist today or ever (confirms D-203's race never actually produced bad data in production, even
+before today's fix); 23 real registrations today (as of ~08:37 UTC), each a distinct email, no
+suspicious close-timestamp clustering under different emails; a rough proxy on `abuse_counter` (the
+"auth" policy is shared across register/login/2FA-verify/password-reset/verify-resend, so this is not
+register-specific) showed 2 of 36 one-minute buckets today with more than one attempt from the same
+key, one peaking at 6 in a minute — mild evidence of repeated attempts SOMEWHERE in the shared auth
+surface, not attributable to registration specifically from DB data alone.
+
+**Gate:** 317/317 e2e (full suite run twice this session — once catching two pre-existing tests whose
+assertions assumed the OLD stricter validation rules from D-202, now updated the same way as that
+decision's own test fixes; once fully green after both fixes), 399/399 unit, tsc/prettier/keel-verify
+clean.
+
+**Not yet done:** production deploy (this exists on `develop`/`main` pending the user's next Hostinger
+redeploy, same as D-202); applying the D-203 migration to production itself (confirmed safe — zero
+existing duplicates — but not yet executed, pending the user's go-ahead per this session's own risk
+posture for production schema changes).

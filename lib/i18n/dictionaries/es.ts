@@ -427,6 +427,9 @@ export const es = {
       register: "Crear cuenta gratis",
       login: "Entrar",
       busy: "Un momento…",
+      /** D-204: shown on the register button specifically — more concrete
+       *  than the generic `busy` so a slow response doesn't read as broken. */
+      busyRegister: "Creando tu cuenta…",
     },
     forgotPassword: "¿Has olvidado tu contraseña?",
     switchPrompt: {

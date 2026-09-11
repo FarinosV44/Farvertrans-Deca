@@ -425,6 +425,7 @@ export const ca = {
       register: "Crear compte gratis",
       login: "Entra",
       busy: "Un moment…",
+      busyRegister: "Creant el teu compte…",
     },
     forgotPassword: "Has oblidat la contrasenya?",
     switchPrompt: {

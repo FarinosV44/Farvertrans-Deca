@@ -426,6 +426,7 @@ export const it = {
       register: "Crea account gratuito",
       login: "Accedi",
       busy: "Un momento…",
+      busyRegister: "Creazione del tuo account…",
     },
     forgotPassword: "Hai dimenticato la password?",
     switchPrompt: {

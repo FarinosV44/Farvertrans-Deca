@@ -431,6 +431,7 @@ export const de = {
       register: "Kostenloses Konto erstellen",
       login: "Anmelden",
       busy: "Einen Moment…",
+      busyRegister: "Konto wird erstellt…",
     },
     forgotPassword: "Passwort vergessen?",
     switchPrompt: {

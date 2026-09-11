@@ -1,0 +1,14 @@
+-- D-203: `signup()`'s duplicate-email check (`prisma.user.findFirst`) is a
+-- classic TOCTOU race — two near-simultaneous registration requests for the
+-- same email could both pass the check before either transaction commits,
+-- each creating its own user + company. No unique constraint ever existed on
+-- this column. `email` is always normalized (trim + lowercase, `normEmail()`)
+-- before it is written, on every path that creates or links a User, so a
+-- plain unique index is correct with no extra collation handling needed.
+--
+-- Guarded exactly like the app already checked for duplicates locally before
+-- this migration was written (see the confirmation query in D-203): if
+-- production somehow carries pre-existing duplicate emails, this statement
+-- fails loudly rather than silently corrupting data, and the duplicates must
+-- be resolved by hand (Superadmin) before this migration can apply there.
+ALTER TABLE "user" ADD CONSTRAINT "user_email_key" UNIQUE ("email");

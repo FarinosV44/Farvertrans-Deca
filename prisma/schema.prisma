@@ -320,7 +320,11 @@ model CommercialAlertConfig {
 model User {
   id              String        @id @default(cuid())
   authUserId      String        @unique @map("auth_user_id")
-  email           String
+  /// D-203: unique at the DB level, not just app-checked (`signup()`'s
+  /// findFirst was a TOCTOU race — two near-simultaneous requests for the
+  /// same email could both pass the check and each create a user + company).
+  /// Always normalized (trim+lowercase, `normEmail()`) before it reaches here.
+  email           String        @unique
   passwordHash    String?       @map("password_hash")
   googleId        String?       @unique @map("google_id")
   companyId       String?       @map("company_id")

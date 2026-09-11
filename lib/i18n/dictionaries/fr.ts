@@ -429,6 +429,7 @@ export const fr = {
       register: "Créer un compte gratuit",
       login: "Connexion",
       busy: "Un instant…",
+      busyRegister: "Création de votre compte…",
     },
     forgotPassword: "Mot de passe oublié ?",
     switchPrompt: {

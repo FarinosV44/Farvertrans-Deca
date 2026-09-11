@@ -7,6 +7,17 @@ export type MailResult = { sent: boolean; reason?: "unconfigured" | "error"; pro
 const redact = (to: string) => to.replace(/^(.).*(@.*)$/, "$1***$2");
 
 /**
+ * Synchronous, no-I/O check: will `sendMail()` even attempt a send? Lets a
+ * caller give an honest answer about whether mail is going out at all
+ * WITHOUT waiting for the network call itself — used by registration (D-204)
+ * to decide its immediate `emailSent` response while the actual send runs
+ * after the response, via `after()`.
+ */
+export function isMailConfigured(): boolean {
+  return !!(process.env.RESEND_API_KEY && process.env.FVD_MAIL_FROM);
+}
+
+/**
  * Send a transactional email via Resend. Returns `{ sent: false, reason:
  * "unconfigured" }` when no API key is set — callers fall back to a mailto link.
  *

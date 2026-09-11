@@ -74,10 +74,28 @@ test.describe("#59 — mandatory company ficha at registration", () => {
         password: "Supersecret123!",
         acceptTerms: true,
         ...API_FICHA,
-        companyPostalCode: "99999",
+        // "99999" is now accepted as a plausible FOREIGN postal code
+        // (D-202 — a Spanish-only rule blocked a real Portuguese
+        // self-registration); "sin numero" has no digits at all, so it is
+        // malformed under both rules.
+        companyPostalCode: "sin numero",
       },
     });
     expect(res.status()).not.toBe(201);
+  });
+
+  test("D-202: a foreign (Portuguese) company can self-register", async ({ request }) => {
+    const res = await request.post("/api/auth/register", {
+      data: {
+        email: email(),
+        password: "Supersecret123!",
+        acceptTerms: true,
+        ...API_FICHA,
+        companyNif: "501442600", // PT NIPC, 9 digits
+        companyPostalCode: "1000-001", // PT postal code
+      },
+    });
+    expect(res.status()).toBe(201);
   });
 
   test("the form exposes every mandatory company field, all required", async ({ page }) => {

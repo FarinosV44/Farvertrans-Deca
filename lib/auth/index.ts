@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { Prisma } from "@/prisma/generated/client";
 import { prisma } from "@/lib/prisma";
 import { checkPasswordStrength, hashPassword, verifyPassword } from "./password";
 import { SESSION_COOKIE, SESSION_COOKIE_OPTIONS, signSession, verifySession } from "./session";
@@ -87,6 +88,23 @@ export class AuthError extends Error {
 
 const normEmail = (e: string) => e.trim().toLowerCase();
 
+/**
+ * D-203: the upfront `findFirst` email check below is a fast path, not the
+ * guarantee — it is a classic TOCTOU race (two near-simultaneous signup
+ * requests, e.g. a double-click, can both pass it before either transaction
+ * commits). The DB-level `@unique` on `User.email` is the real guarantee;
+ * this recognises its violation and turns it into the same honest
+ * `AuthError("email_taken", …)` the fast-path check already throws, instead
+ * of a raw 500.
+ */
+function isUniqueEmailViolation(e: unknown): boolean {
+  return (
+    e instanceof Prisma.PrismaClientKnownRequestError &&
+    e.code === "P2002" &&
+    (e.meta?.target as string[] | undefined)?.includes("email") === true
+  );
+}
+
 export type SignupInput = {
   email: string;
   password: string;
@@ -124,21 +142,28 @@ export async function signup(input: SignupInput): Promise<{
       // #102: the user AND their Membership are created together — a brand
       // new account has nothing to overwrite, but this is still the one
       // place that must write both rows, never `companyId` alone.
-      const user = await prisma.$transaction(async (tx) => {
-        const created = await tx.user.create({
-          data: {
-            authUserId: `local:${crypto.randomUUID()}`,
-            email,
-            companyId: inv.companyId,
-            companyRole: inv.role,
-            passwordHash: hashPassword(input.password),
-          },
+      let user;
+      try {
+        user = await prisma.$transaction(async (tx) => {
+          const created = await tx.user.create({
+            data: {
+              authUserId: `local:${crypto.randomUUID()}`,
+              email,
+              companyId: inv.companyId,
+              companyRole: inv.role,
+              passwordHash: hashPassword(input.password),
+            },
+          });
+          await tx.membership.create({
+            data: { userId: created.id, companyId: inv.companyId, role: inv.role },
+          });
+          return created;
         });
-        await tx.membership.create({
-          data: { userId: created.id, companyId: inv.companyId, role: inv.role },
-        });
-        return created;
-      });
+      } catch (e) {
+        if (isUniqueEmailViolation(e))
+          throw new AuthError("email_taken", "Ya existe una cuenta con este email.");
+        throw e;
+      }
       await markInviteAccepted(inv.id);
       const { recordAudit } = await import("@/lib/admin/audit");
       await recordAudit({
@@ -171,24 +196,36 @@ export async function signup(input: SignupInput): Promise<{
       name: input.company.name.trim() || prospect.name,
       nif: input.company.nif.trim() || prospect.nif || "",
     });
-    const r = await prisma.$transaction(async (tx) => {
-      const company = await tx.company.create({ data: companyData });
-      const user = await tx.user.create({
-        data: {
-          authUserId: `local:${crypto.randomUUID()}`,
-          email,
-          companyId: company.id,
-          companyRole: "owner",
-          passwordHash: hashPassword(input.password),
-        },
+    let r;
+    try {
+      r = await prisma.$transaction(async (tx) => {
+        const company = await tx.company.create({ data: companyData });
+        const user = await tx.user.create({
+          data: {
+            authUserId: `local:${crypto.randomUUID()}`,
+            email,
+            companyId: company.id,
+            companyRole: "owner",
+            passwordHash: hashPassword(input.password),
+          },
+        });
+        // #102: founding a company is also a membership in it, from row one.
+        await tx.membership.create({
+          data: { userId: user.id, companyId: company.id, role: "owner" },
+        });
+        // D-203: folded into the same transaction — a terms-acceptance write
+        // that failed AFTER this transaction committed used to leave a real
+        // account with no recorded acceptance and no rollback.
+        await tx.termsAcceptance.create({
+          data: { userId: user.id, companyId: company.id, version: LEGAL_ENTITY.termsVersion },
+        });
+        return { userId: user.id, companyId: company.id };
       });
-      // #102: founding a company is also a membership in it, from row one.
-      await tx.membership.create({
-        data: { userId: user.id, companyId: company.id, role: "owner" },
-      });
-      return { userId: user.id, companyId: company.id };
-    });
-    await recordTermsAcceptance(r.userId, r.companyId);
+    } catch (e) {
+      if (isUniqueEmailViolation(e))
+        throw new AuthError("email_taken", "Ya existe una cuenta con este email.");
+      throw e;
+    }
     return {
       ...r,
       joinedTeam: false,
@@ -213,22 +250,36 @@ export async function signup(input: SignupInput): Promise<{
   // onboarding, sandbox use), so a hard 409 would refuse real signups.
   // Superadmin gets a passive `duplicate_nif` segment tag instead — see D-162.
 
-  const result = await prisma.$transaction(async (tx) => {
-    const company = await tx.company.create({ data: companyData });
-    const user = await tx.user.create({
-      data: {
-        authUserId: `local:${crypto.randomUUID()}`,
-        email,
-        companyId: company.id,
-        companyRole: "owner",
-        passwordHash: hashPassword(input.password),
-      },
+  let result;
+  try {
+    result = await prisma.$transaction(async (tx) => {
+      const company = await tx.company.create({ data: companyData });
+      const user = await tx.user.create({
+        data: {
+          authUserId: `local:${crypto.randomUUID()}`,
+          email,
+          companyId: company.id,
+          companyRole: "owner",
+          passwordHash: hashPassword(input.password),
+        },
+      });
+      // #102: founding a company is also a membership in it, from row one.
+      await tx.membership.create({
+        data: { userId: user.id, companyId: company.id, role: "owner" },
+      });
+      // D-203: folded into the same transaction — see the prospect-invite
+      // branch above for why (an un-rolled-back write after a committed
+      // transaction is a compliance gap, not just an extra round trip).
+      await tx.termsAcceptance.create({
+        data: { userId: user.id, companyId: company.id, version: LEGAL_ENTITY.termsVersion },
+      });
+      return { userId: user.id, companyId: company.id, joinedTeam: false as const };
     });
-    // #102: founding a company is also a membership in it, from row one.
-    await tx.membership.create({ data: { userId: user.id, companyId: company.id, role: "owner" } });
-    return { userId: user.id, companyId: company.id, joinedTeam: false };
-  });
-  await recordTermsAcceptance(result.userId, result.companyId);
+  } catch (e) {
+    if (isUniqueEmailViolation(e))
+      throw new AuthError("email_taken", "Ya existe una cuenta con este email.");
+    throw e;
+  }
   return result;
 }
 

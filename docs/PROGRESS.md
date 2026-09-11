@@ -54,11 +54,39 @@
   bound widened 5→3–12 chars. Same rule now shared by registration, the profile-edit route, and the
   soft-completeness gate. Test-first (red confirmed): `tests/unit/validation-spanish.test.ts` +
   2 pre-existing `validation-company.test.ts` cases updated (requirement change, not a weakened
-  assertion — see D-202). 399/399 unit, tsc, prettier, keel-verify all clean. **NOT YET VERIFIED
-  against the actual reporting user or production** — no prod DB/log access from this session yet
-  (separate ask to the user, in progress). Also this session: user separately asked for a full
-  registration-endpoint latency audit + duplicate-submission hardening — **IN PROGRESS, not yet
-  complete** (see below once written).
+  assertion — see D-202). 399/399 unit, tsc, prettier, keel-verify all clean. **PUSHED to `develop`
+  AND `main` (commit `9490f04`)** — still needs the user's next Hostinger redeploy to reach production.
+- **D-203 + D-204 — registration latency audit + duplicate-submission hardening, same session
+  (2026-09-11), COMPLETE (code-side; production migration + deploy still pending, see below).**
+  `User.email` is now DB-`@unique` (migration `20260911090000_unique_user_email`, hand-written — the
+  local shadow DB is broken by D-186's RLS migration, unrelated pre-existing issue) — `signup()`'s old
+  `findFirst` duplicate check was a TOCTOU race with no DB backstop; all 3 signup paths now catch the
+  P2002 violation into a clean `email_taken` 409. `recordTermsAcceptance()` folded into the same
+  `$transaction` as company/user/membership (closes a real, separate atomicity gap as a side effect).
+  Registration route fully timed (`register_timing` / `register_background_timing` structured logs);
+  ONLY the Resend email send + locale persist moved off the critical path via Next 15's `after()` —
+  attribution write / #84 opt-in / GROWTH #28 prospect-attach were ALSO tried deferred first and
+  reverted after breaking `attribution.spec.ts` + 8 `commercial-consent.spec.ts` cases (immediate-
+  consistency requirements neither's swallowed try/catch had revealed — see D-204 for the detail, kept
+  so this isn't re-attempted). `emailSent` now means "mail is configured" (sync check), not "delivered"
+  — superseding D-053's exact synchronous guarantee for this one step, the user's own explicit call.
+  Client: register-specific "Creando tu cuenta…" + spinner (8 locales), reusing the wizard's existing
+  spinner pattern; button-disable-on-click and the redirect/error handling were already correct.
+  New e2e, both real-browser/real-server, not mocked: `register-duplicate-race.spec.ts` (two real
+  concurrent POSTs, same email → exactly one 201 + one clean 409) and `register-loading-state.spec.ts`
+  (intercepted+delayed request → asserts the disabled button/spinner/text immediately, a forced second
+  click never reaches the server twice, success still redirects). Full suite 317/317 e2e (run twice —
+  once catching the same D-202-vintage test-premise issue in `registro-company-data.spec.ts`, fixed the
+  same way), 399/399 unit, tsc/prettier/keel-verify clean. **Production, read-only, checked directly**
+  (temporary credential the user pasted in-chat — flagged as a repeat of the D-158 exposure, rotation
+  recommended): zero duplicate-email rows ever (D-203's migration is safe to apply), 23 real
+  registrations today with no duplicate/clustering signal, a shared-policy `abuse_counter` proxy (not
+  register-specific) showing mild repeated-attempt activity. **Production app logs (Hostinger
+  docker/console output) were NOT reachable this session** — no SSH/Docker access, DB access only —
+  that specific evidence needs the user's own `docker logs` pull or the next deploy + a monitoring
+  pass. **STILL OPEN: applying the D-203 migration to production itself** (confirmed safe, not yet
+  executed — awaiting the user's go-ahead for a production schema change) and the next Hostinger
+  redeploy (needed for ALL of D-202/D-203/D-204 to take effect live).
 - **`develop` == `main` == `cc82787` (2026-09-10), both pushed. EVERYTHING from this session is on
   `main`:** D-194, #111 (D-195…D-198), D-199, D-200, the D-200 badge-mobile-chip follow-up, and
   **D-201 / D-201b / D-201c (DECA Conecta)**. CI: run 34534080435 (DECA Conecta merge).

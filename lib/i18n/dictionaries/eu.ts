@@ -437,6 +437,7 @@ export const eu = {
       register: "Sortu kontu doakoa",
       login: "Sartu",
       busy: "Momentu bat…",
+      busyRegister: "Zure kontua sortzen…",
     },
     forgotPassword: "Pasahitza ahaztu duzu?",
     switchPrompt: {

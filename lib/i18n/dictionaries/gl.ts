@@ -428,6 +428,7 @@ export const gl = {
       register: "Crear conta gratis",
       login: "Entrar",
       busy: "Un momento…",
+      busyRegister: "Creando a túa conta…",
     },
     forgotPassword: "Esqueciches o contrasinal?",
     switchPrompt: {
