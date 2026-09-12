@@ -8656,7 +8656,10 @@ before pushing, clean.
 the one expected pending migration — `20260912180000_availability_preferred_destination_country`
 (D-240's `DROP COLUMN preferred_destination` / `ADD COLUMN preferred_destination_country`). Applied via
 `prisma migrate deploy`, confirmed "up to date" immediately after. No new table involved, so no RLS
-re-enrollment was needed.
+re-enrollment was needed — verified directly rather than only asserted: a read-only query against
+`pg_class` for `deca_availability_share` on production, post-migration, confirmed
+`relrowsecurity = true` (RLS still enabled, untouched by the column drop/add), per the user's own
+follow-up ("the migration remember with rls").
 
 **Outstanding, unchanged from D-235:** production APP CODE is still not redeployed (a separate
 Hostinger action); the DB password/anon-key rotation is still the most urgent open item — this is
