@@ -8895,3 +8895,32 @@ D-246. `company-logo.spec.ts` 7/7, `panel-company-completeness.spec.ts` 1/1, `pa
 `company-logo-manager.tsx`, already tracked as P3 tech debt). Committed to `develop`. Issue #141 left
 OPEN — remaining scope: `app/panel/datos` + `saved-data-manager.tsx` (~1060 lines, the largest
 remaining piece) and the `deca/[id]` cockpit page + its 5 unlocalized dependents.
+
+## D-248 — #141 continued: `app/panel/datos` + `saved-data-manager.tsx` localized — the largest remaining piece (2026-09-13)
+
+**Fix:** added a full `panel.datos` dictionary section (top-level manager strings, plus
+`company`/`vehicle`/`location`/`shipment` sub-sections and shared `tabs`/`addLabels` maps) to all 9
+locale dictionaries. `DatosHabitualesManager` (the top-level client component) reads `useT().panel.datos`
+once and threads the resolved `DatosMessages` object down to `TabPanel` and each per-kind form
+(`CompanyForm`/`VehicleForm`/`LocationForm`/`ShipmentForm`) as a plain prop — safe here because this
+is prop-passing between sibling functions inside the SAME `"use client"` module, not a Server→Client
+boundary crossing, so the D-246 function-serialization constraint doesn't apply. The shared
+`FormWrap`'s lone leftover string ("Cancelar") reads `useT()` directly instead, since it's the one
+piece invoked from all 4 forms with no natural place to thread a prop through.
+Removed the module-level `ROLE_LABEL`/`LOCATION_TYPE_LABEL` constants and the `label`/`addLabel`
+fields baked into the `TABS` array; both now come from the dictionary. Added a `location.usageOptions`
+map distinct from `location.typeLabel` — the same 3 concepts render as "Carga"/"Descarga"/"Carga y
+descarga" in the secondary list line but as "Solo carga"/"Solo descarga"/"Carga y descarga" in the
+usage `<select>`, so they needed separate keys, not one shared map.
+
+**Verification:** production build (`npm run build`) clean; direct `curl` smoke test against a real
+`next start` server BEFORE running e2e (registered a user, hit `/panel/datos`, confirmed all 4 tab
+labels render translated, no error boundary). `datos-habituales-rutas.spec.ts` +
+`favorites.spec.ts` + `master-data.spec.ts` + `workspace.spec.ts` 16/16 (including the a11y check on
+`/panel/datos` in `workspace.spec.ts`), `panel-nav.spec.ts` 6/6, 501/501 unit unaffected — all
+`--workers=1` against a clean server.
+
+**Gate:** tsc/eslint/prettier clean. Committed to `develop`. **Issue #141 remaining scope after this
+slice: only the `deca/[id]` document cockpit page + its 5 unlocalized dependents
+(`save-template.tsx`, `doc-summary.tsx`, `qr-card.tsx`, `version-timeline.tsx`,
+`availability-notice.tsx`) — everything else originally listed is now done.**

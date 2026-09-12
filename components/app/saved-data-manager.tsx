@@ -13,6 +13,10 @@ import {
   findDuplicateShipment,
   findDuplicateVehicle,
 } from "@/lib/data/saved-dedup";
+import { useT } from "@/lib/i18n/client";
+import type { Messages } from "@/lib/i18n/dictionaries/es";
+
+type DatosMessages = Messages["panel"]["datos"];
 
 type Company = {
   id: string;
@@ -52,17 +56,6 @@ type Shipment = SavedShipmentOption & { favorite: boolean };
 
 type SavedKind = "company" | "vehicle" | "location" | "shipment";
 
-const ROLE_LABEL: Record<Company["role"], string> = {
-  shipper: "Cargador contractual",
-  carrier: "Transportista efectivo",
-  both: "Cargador y transportista",
-};
-const LOCATION_TYPE_LABEL: Record<Location["type"], string> = {
-  load: "Carga",
-  unload: "Descarga",
-  both: "Carga y descarga",
-};
-
 type FieldErrors = Record<string, string[] | undefined>;
 type SaveResult = { ok: boolean; fields?: FieldErrors };
 type Body = Record<string, string>;
@@ -73,31 +66,12 @@ const err1 = (e: FieldErrors | undefined, k: string) => e?.[k]?.[0];
 
 type IconCmp = (props: { width?: number; height?: number }) => React.JSX.Element;
 
-const TABS: { kind: SavedKind; anchor: string; label: string; addLabel: string; Icon: IconCmp }[] =
-  [
-    {
-      kind: "company",
-      anchor: "empresas",
-      label: "Empresas y contactos",
-      addLabel: "empresa",
-      Icon: BuildingIcon,
-    },
-    {
-      kind: "vehicle",
-      anchor: "vehiculos",
-      label: "Vehículos",
-      addLabel: "vehículo",
-      Icon: TruckIcon,
-    },
-    { kind: "location", anchor: "lugares", label: "Lugares", addLabel: "lugar", Icon: MapPinIcon },
-    {
-      kind: "shipment",
-      anchor: "rutas",
-      label: "Rutas / envíos habituales",
-      addLabel: "ruta",
-      Icon: RouteIcon,
-    },
-  ];
+const TABS: { kind: SavedKind; anchor: string; Icon: IconCmp }[] = [
+  { kind: "company", anchor: "empresas", Icon: BuildingIcon },
+  { kind: "vehicle", anchor: "vehiculos", Icon: TruckIcon },
+  { kind: "location", anchor: "lugares", Icon: MapPinIcon },
+  { kind: "shipment", anchor: "rutas", Icon: RouteIcon },
+];
 
 function tabFromHash(): SavedKind {
   const hash = window.location.hash.replace("#", "");
@@ -127,6 +101,7 @@ export function DatosHabitualesManager({
   locations: Location[];
   shipments: Shipment[];
 }) {
+  const t = useT().panel.datos;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +123,7 @@ export function DatosHabitualesManager({
   function selectTab(kind: SavedKind) {
     setTab(kind);
     setAddMenuOpen(false);
-    const anchor = TABS.find((t) => t.kind === kind)!.anchor;
+    const anchor = TABS.find((item) => item.kind === kind)!.anchor;
     if (typeof window !== "undefined") window.history.replaceState(null, "", `#${anchor}`);
   }
 
@@ -169,7 +144,7 @@ export function DatosHabitualesManager({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const fields = data?.error?.fields as FieldErrors | undefined;
-        if (!fields) setError("No se pudo guardar. Revisa los datos.");
+        if (!fields) setError(t.saveError);
         setBusy(false);
         return { ok: false, fields };
       }
@@ -177,7 +152,7 @@ export function DatosHabitualesManager({
       setBusy(false);
       return { ok: true };
     } catch {
-      setError("Sin conexión.");
+      setError(t.offlineError);
       setBusy(false);
       return { ok: false };
     }
@@ -190,12 +165,12 @@ export function DatosHabitualesManager({
       const res = await fetch(apiPath(kind, id), { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data?.error?.message ?? "No se pudo eliminar.");
+        setError(data?.error?.message ?? t.removeError);
       } else {
         router.refresh();
       }
     } catch {
-      setError("Sin conexión.");
+      setError(t.offlineError);
     }
     setBusy(false);
   }
@@ -206,23 +181,20 @@ export function DatosHabitualesManager({
     location: locations.length,
     shipment: shipments.length,
   };
-  const countLabel = `${counts.company} empresas · ${counts.vehicle} vehículos · ${counts.location} lugares · ${counts.shipment} rutas`;
 
   return (
     <div className="mt-6">
-      <p className="text-sm text-[var(--color-text-muted)]">
-        Guarda y reutiliza los datos que utilizas a menudo para crear tus DeCA más rápido.
-      </p>
-      <p className="mt-1 text-xs text-[var(--color-text-muted)]">{countLabel}</p>
+      <p className="text-sm text-[var(--color-text-muted)]">{t.intro}</p>
+      <p className="mt-1 text-xs text-[var(--color-text-muted)]">{t.countLabel(counts)}</p>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <label className="min-w-0 flex-1 text-sm">
-          <span className="sr-only">Buscar en datos habituales</span>
+          <span className="sr-only">{t.searchLabel}</span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar en datos habituales…"
+            placeholder={t.searchPlaceholder}
             data-testid="datos-search"
             className="block min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-base"
           />
@@ -234,23 +206,23 @@ export function DatosHabitualesManager({
             onClick={() => setAddMenuOpen((v) => !v)}
             className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)]"
           >
-            + Añadir dato habitual
+            {t.addMenuTrigger}
           </button>
           {addMenuOpen && (
             <ul className="absolute right-0 z-10 mt-1 w-56 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] py-1 text-sm shadow-[0_8px_24px_rgba(15,23,32,0.12)]">
-              {TABS.map((t) => (
-                <li key={t.kind}>
+              {TABS.map((item) => (
+                <li key={item.kind}>
                   <button
                     type="button"
-                    data-testid={`add-menu-${t.kind}`}
+                    data-testid={`add-menu-${item.kind}`}
                     onClick={() => {
-                      selectTab(t.kind);
+                      selectTab(item.kind);
                       setAddMenuOpen(false);
-                      openCreate(t.kind);
+                      openCreate(item.kind);
                     }}
                     className="block w-full px-3 py-2 text-left hover:bg-[var(--color-surface)]"
                   >
-                    + Añadir {t.addLabel}
+                    {t.addMenuItem(t.addLabels[item.kind])}
                   </button>
                 </li>
               ))}
@@ -267,27 +239,27 @@ export function DatosHabitualesManager({
 
       <div
         role="tablist"
-        aria-label="Categorías de datos habituales"
+        aria-label={t.tabsLabel}
         className="mt-5 flex flex-wrap gap-2 border-b border-[var(--color-border)] pb-2"
       >
-        {TABS.map((t) => (
+        {TABS.map((item) => (
           <button
-            key={t.kind}
+            key={item.kind}
             type="button"
             role="tab"
-            id={`tab-${t.kind}`}
-            aria-selected={tab === t.kind}
-            aria-controls={`panel-${t.kind}`}
-            data-testid={`tab-${t.kind}`}
-            onClick={() => selectTab(t.kind)}
+            id={`tab-${item.kind}`}
+            aria-selected={tab === item.kind}
+            aria-controls={`panel-${item.kind}`}
+            data-testid={`tab-${item.kind}`}
+            onClick={() => selectTab(item.kind)}
             className={`inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-md)] px-3 text-sm font-medium ${
-              tab === t.kind
+              tab === item.kind
                 ? "bg-[var(--color-primary-bg)] text-[var(--color-primary)]"
                 : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
             }`}
           >
-            <t.Icon width={16} height={16} />
-            {t.label} ({counts[t.kind]})
+            <item.Icon width={16} height={16} />
+            {t.tabs[item.kind]} ({counts[item.kind]})
           </button>
         ))}
       </div>
@@ -298,6 +270,7 @@ export function DatosHabitualesManager({
           all times (a conditionally-unmounted panel would leave the OTHER
           tabs' `aria-controls` pointing at nothing, an axe violation). */}
       <TabPanel<Company>
+        t={t}
         kind="company"
         panelId="panel-company"
         tabId="tab-company"
@@ -310,26 +283,27 @@ export function DatosHabitualesManager({
         primary={(c) => c.name}
         secondary={(c) =>
           [
-            ROLE_LABEL[c.role],
+            t.company.roleLabel[c.role],
             c.nif,
             [c.address, [c.postalCode, c.city].filter(Boolean).join(" ")]
               .filter(Boolean)
               .join(", "),
-            c.contactName ? `Contacto: ${c.contactName}` : null,
+            c.contactName ? `${t.company.contactPrefix}${c.contactName}` : null,
           ]
             .filter(Boolean)
             .join(" · ")
         }
-        emptyTitle="Aún no tienes empresas guardadas"
-        emptyBody="Guarda cargadores y transportistas habituales para rellenar tus DeCA en segundos."
-        addLabel="empresa"
+        emptyTitle={t.company.emptyTitle}
+        emptyBody={t.company.emptyBody}
+        addLabel={t.addLabels.company}
         checkDuplicate={(list, body) => findDuplicateCompany(list, body)}
-        renderForm={(props) => <CompanyForm {...props} />}
+        renderForm={(props) => <CompanyForm {...props} t={t} />}
         registerOpenCreate={(fn) => {
           openRefs.current.company = fn;
         }}
       />
       <TabPanel<Vehicle>
+        t={t}
         kind="vehicle"
         panelId="panel-vehicle"
         tabId="tab-vehicle"
@@ -341,20 +315,24 @@ export function DatosHabitualesManager({
         remove={remove}
         primary={(v) => v.alias || v.tractorPlate}
         secondary={(v) =>
-          [v.alias ? v.tractorPlate : null, v.trailerPlate ? `Remolque ${v.trailerPlate}` : null]
+          [
+            v.alias ? v.tractorPlate : null,
+            v.trailerPlate ? `${t.vehicle.trailerPrefix}${v.trailerPlate}` : null,
+          ]
             .filter(Boolean)
             .join(" · ")
         }
-        emptyTitle="Aún no tienes vehículos guardados"
-        emptyBody="Guarda tus tractoras y remolques habituales para no volver a escribir la matrícula."
-        addLabel="vehículo"
+        emptyTitle={t.vehicle.emptyTitle}
+        emptyBody={t.vehicle.emptyBody}
+        addLabel={t.addLabels.vehicle}
         checkDuplicate={(list, body) => findDuplicateVehicle(list, body)}
-        renderForm={(props) => <VehicleForm {...props} />}
+        renderForm={(props) => <VehicleForm {...props} t={t} />}
         registerOpenCreate={(fn) => {
           openRefs.current.vehicle = fn;
         }}
       />
       <TabPanel<Location>
+        t={t}
         kind="location"
         panelId="panel-location"
         tabId="tab-location"
@@ -367,22 +345,23 @@ export function DatosHabitualesManager({
         primary={(l) => l.name}
         secondary={(l) =>
           [
-            LOCATION_TYPE_LABEL[l.type],
+            t.location.typeLabel[l.type],
             [l.address, l.postalCode, l.city, l.province, l.country].filter(Boolean).join(", "),
           ]
             .filter(Boolean)
             .join(" · ")
         }
-        emptyTitle="Aún no tienes lugares guardados"
-        emptyBody="Guarda almacenes, fábricas y destinos habituales para rellenar tus DeCA en segundos."
-        addLabel="lugar"
+        emptyTitle={t.location.emptyTitle}
+        emptyBody={t.location.emptyBody}
+        addLabel={t.addLabels.location}
         checkDuplicate={(list, body) => findDuplicateLocation(list, body)}
-        renderForm={(props) => <LocationForm {...props} />}
+        renderForm={(props) => <LocationForm {...props} t={t} />}
         registerOpenCreate={(fn) => {
           openRefs.current.location = fn;
         }}
       />
       <TabPanel<Shipment>
+        t={t}
         kind="shipment"
         panelId="panel-shipment"
         tabId="tab-shipment"
@@ -394,29 +373,22 @@ export function DatosHabitualesManager({
         remove={remove}
         primary={(s) => savedShipmentLabel(s)}
         secondary={(s) =>
-          [s.goods, s.weight, s.recipient ? `Destinatario: ${s.recipient}` : null]
+          [s.goods, s.weight, s.recipient ? `${t.shipment.recipientPrefix}${s.recipient}` : null]
             .filter(Boolean)
             .join(" · ")
         }
-        emptyTitle="Aún no tienes rutas habituales"
-        emptyBody={
-          locations.length < 2
-            ? "Necesitas al menos 2 lugares guardados (carga y descarga) antes de crear una ruta habitual."
-            : "Guarda los trayectos que repites para añadirlos como envíos con un clic."
-        }
-        addLabel="ruta"
+        emptyTitle={t.shipment.emptyTitle}
+        emptyBody={locations.length < 2 ? t.shipment.needTwoLocations : t.shipment.emptyBody}
+        addLabel={t.addLabels.shipment}
         addDisabled={locations.length < 2}
         checkDuplicate={(list, body) => findDuplicateShipment(list, body)}
-        renderForm={(props) => <ShipmentForm {...props} locations={locations} />}
+        renderForm={(props) => <ShipmentForm {...props} t={t} locations={locations} />}
         registerOpenCreate={(fn) => {
           openRefs.current.shipment = fn;
         }}
       />
 
-      <p className="mt-8 text-xs text-[var(--color-text-muted)]">
-        Editar o borrar un dato habitual no cambia ningún DeCA ya generado: cada documento guarda su
-        propia copia.
-      </p>
+      <p className="mt-8 text-xs text-[var(--color-text-muted)]">{t.footerNote}</p>
     </div>
   );
 
@@ -441,6 +413,7 @@ type FormProps<T> = {
 };
 
 function TabPanel<T extends { id: string; favorite: boolean }>({
+  t,
   kind,
   panelId,
   tabId,
@@ -460,6 +433,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
   renderForm,
   registerOpenCreate,
 }: {
+  t: DatosMessages;
   kind: SavedKind;
   panelId: string;
   tabId: string;
@@ -469,8 +443,8 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
   busy: boolean;
   save: (kind: SavedKind, body: Body, id?: string) => Promise<SaveResult>;
   remove: (kind: SavedKind, id: string) => void;
-  primary: (t: T) => string;
-  secondary: (t: T) => string;
+  primary: (item: T) => string;
+  secondary: (item: T) => string;
   emptyTitle: string;
   emptyBody: string;
   addLabel: string;
@@ -545,7 +519,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
                   </span>
                   <span className="flex shrink-0 flex-wrap justify-end gap-3">
                     <Link href="/crear" className="text-sm text-[var(--color-primary)] underline">
-                      Usar
+                      {t.use}
                     </Link>
                     <button
                       type="button"
@@ -557,7 +531,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
                       }}
                       className="text-sm text-[var(--color-primary)] underline disabled:opacity-55"
                     >
-                      {isEditing ? "Cerrar" : "Editar"}
+                      {isEditing ? t.close : t.edit}
                     </button>
                     <button
                       type="button"
@@ -565,7 +539,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
                       onClick={() => remove(kind, it.id)}
                       className="text-sm text-[var(--color-danger)] underline disabled:opacity-55"
                     >
-                      Borrar
+                      {t.delete}
                     </button>
                   </span>
                 </div>
@@ -573,7 +547,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
                   <div className="mt-3 border-t border-[var(--color-border)] pt-3">
                     {renderForm({
                       initial: it,
-                      submitLabel: "Guardar cambios",
+                      submitLabel: t.saveChanges,
                       fieldErrors: editErrors,
                       busy,
                       onSubmit: doSave(it.id, setEditErrors, () => setEditingId(null)),
@@ -596,14 +570,12 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
               onClick={() => setCreateOpen(true)}
               className="mt-3 min-h-11 rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary)]"
             >
-              + Añadir primer {addLabel}
+              {t.addFirst(addLabel)}
             </button>
           )}
         </div>
       ) : (
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Ningún resultado para esta búsqueda en esta categoría.
-        </p>
+        <p className="text-sm text-[var(--color-text-muted)]">{t.noResults}</p>
       )}
 
       {items.length > 0 && !addDisabled && (
@@ -613,7 +585,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
           onClick={() => setCreateOpen(true)}
           className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-primary)] px-3 py-1.5 text-sm font-medium text-[var(--color-primary)]"
         >
-          + Añadir {addLabel}
+          {t.add(addLabel)}
         </button>
       )}
 
@@ -623,12 +595,13 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
         titleId={`create-${kind}-title`}
       >
         <h2 id={`create-${kind}-title`} className="text-base font-bold">
-          Añadir {addLabel}
+          {t.addTitle(addLabel)}
         </h2>
         {pendingDuplicate ? (
           <div className="mt-3" data-testid={`duplicate-warning-${kind}`}>
             <p className="text-sm">
-              Ya existe un dato parecido: <strong>{primary(pendingDuplicate.match)}</strong>.
+              {t.duplicateFoundPrefix}
+              <strong>{primary(pendingDuplicate.match)}</strong>.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -640,7 +613,7 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
                 }}
                 className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 text-sm font-medium"
               >
-                Usar el existente
+                {t.useExisting}
               </button>
               <button
                 type="button"
@@ -658,14 +631,14 @@ function TabPanel<T extends { id: string; favorite: boolean }>({
                 }}
                 className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
               >
-                Guardar de todas formas
+                {t.saveAnyway}
               </button>
             </div>
           </div>
         ) : (
           <div key={addKey}>
             {renderForm({
-              submitLabel: "Guardar",
+              submitLabel: t.save,
               fieldErrors: addErrors,
               busy,
               onSubmit: doSave(undefined, setAddErrors, () => setCreateOpen(false)),
@@ -691,6 +664,7 @@ function FormWrap({
   busy: boolean;
   submitLabel: string;
 }) {
+  const cancelLabel = useT().panel.datos.cancel;
   const [submitting, setSubmitting] = useState(false);
   return (
     <form
@@ -719,7 +693,7 @@ function FormWrap({
             onClick={onCancel}
             className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 text-sm font-medium"
           >
-            Cancelar
+            {cancelLabel}
           </button>
         )}
       </div>
@@ -734,7 +708,8 @@ function CompanyForm({
   busy,
   onSubmit,
   onCancel,
-}: FormProps<Company>) {
+  t,
+}: FormProps<Company> & { t: DatosMessages }) {
   const [f, setF] = useState<Body>({
     name: initial?.name ?? "",
     nif: initial?.nif ?? "",
@@ -754,70 +729,70 @@ function CompanyForm({
       onSubmit={() => onSubmit(f)}
     >
       <label className="mt-3 block text-sm">
-        <span className="font-medium">Rol habitual</span>
+        <span className="font-medium">{t.company.roleFieldLabel}</span>
         <select
           data-testid="c-role"
           className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
           value={f.role}
           onChange={(e) => setF((s) => ({ ...s, role: e.target.value }))}
         >
-          <option value="both">Cargador y transportista</option>
-          <option value="shipper">Cargador contractual</option>
-          <option value="carrier">Transportista efectivo</option>
+          <option value="both">{t.company.roleLabel.both}</option>
+          <option value="shipper">{t.company.roleLabel.shipper}</option>
+          <option value="carrier">{t.company.roleLabel.carrier}</option>
         </select>
       </label>
       <Field
         id="c-name"
-        label="Nombre o razón social"
+        label={t.company.nameLabel}
         value={f.name}
         error={err1(fieldErrors, "name")}
         onChange={(v) => setF((s) => ({ ...s, name: v }))}
       />
       <Field
         id="c-nif"
-        label="NIF"
+        label={t.company.nifLabel}
         value={f.nif}
         error={err1(fieldErrors, "nif")}
         onChange={(v) => setF((s) => ({ ...s, nif: v }))}
       />
       <Field
         id="c-address"
-        label="Domicilio"
+        label={t.company.addressLabel}
         value={f.address}
         error={err1(fieldErrors, "address")}
         onChange={(v) => setF((s) => ({ ...s, address: v }))}
       />
       <Field
         id="c-postal-code"
-        label="Código postal"
+        label={t.company.postalCodeLabel}
         value={f.postalCode}
         error={err1(fieldErrors, "postalCode")}
         onChange={(v) => setF((s) => ({ ...s, postalCode: v }))}
       />
       <Field
         id="c-city"
-        label="Población / localidad"
+        label={t.company.cityLabel}
         value={f.city}
         error={err1(fieldErrors, "city")}
         onChange={(v) => setF((s) => ({ ...s, city: v }))}
       />
       <Field
         id="c-contact-name"
-        label="Persona de contacto (opcional)"
+        label={t.company.contactNameLabel}
         required={false}
         value={f.contactName}
         onChange={(v) => setF((s) => ({ ...s, contactName: v }))}
       />
       <Field
         id="c-contact-phone"
-        label="Teléfono de contacto (opcional)"
+        label={t.company.contactPhoneLabel}
         required={false}
         value={f.contactPhone}
         onChange={(v) => setF((s) => ({ ...s, contactPhone: v }))}
       />
       <Field
         id="c-contact-email"
-        label="Email de contacto (opcional)"
+        label={t.company.contactEmailLabel}
         required={false}
         type="email"
         value={f.contactEmail}
@@ -834,7 +809,8 @@ function VehicleForm({
   busy,
   onSubmit,
   onCancel,
-}: FormProps<Vehicle>) {
+  t,
+}: FormProps<Vehicle> & { t: DatosMessages }) {
   const [f, setF] = useState({
     tractorPlate: initial?.tractorPlate ?? "",
     trailerPlate: initial?.trailerPlate ?? "",
@@ -849,21 +825,21 @@ function VehicleForm({
     >
       <Field
         id="v-alias"
-        label="Alias (opcional, p. ej. «Camión 1»)"
+        label={t.vehicle.aliasLabel}
         required={false}
         value={f.alias}
         onChange={(v) => setF((s) => ({ ...s, alias: v }))}
       />
       <Field
         id="v-tractor"
-        label="Matrícula tractora"
+        label={t.vehicle.tractorLabel}
         value={f.tractorPlate}
         error={err1(fieldErrors, "tractorPlate")}
         onChange={(v) => setF((s) => ({ ...s, tractorPlate: v }))}
       />
       <Field
         id="v-trailer"
-        label="Matrícula remolque (opcional)"
+        label={t.vehicle.trailerLabel}
         required={false}
         value={f.trailerPlate}
         onChange={(v) => setF((s) => ({ ...s, trailerPlate: v }))}
@@ -879,7 +855,8 @@ function LocationForm({
   busy,
   onSubmit,
   onCancel,
-}: FormProps<Location>) {
+  t,
+}: FormProps<Location> & { t: DatosMessages }) {
   const [f, setF] = useState<Body>({
     name: initial?.name ?? "",
     address: initial?.address ?? "",
@@ -897,56 +874,56 @@ function LocationForm({
       onSubmit={() => onSubmit(f)}
     >
       <label className="mt-3 block text-sm">
-        <span className="font-medium">Uso habitual</span>
+        <span className="font-medium">{t.location.usageFieldLabel}</span>
         <select
           data-testid="l-type"
           className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
           value={f.type}
           onChange={(e) => setF((s) => ({ ...s, type: e.target.value }))}
         >
-          <option value="both">Carga y descarga</option>
-          <option value="load">Solo carga</option>
-          <option value="unload">Solo descarga</option>
+          <option value="both">{t.location.usageOptions.both}</option>
+          <option value="load">{t.location.usageOptions.load}</option>
+          <option value="unload">{t.location.usageOptions.unload}</option>
         </select>
       </label>
       <Field
         id="l-name"
-        label="Empresa / establecimiento"
+        label={t.location.nameLabel}
         value={f.name}
         error={err1(fieldErrors, "name")}
         onChange={(v) => setF((s) => ({ ...s, name: v }))}
       />
       <Field
         id="l-address"
-        label="Dirección"
+        label={t.location.addressLabel}
         value={f.address}
         error={err1(fieldErrors, "address")}
         onChange={(v) => setF((s) => ({ ...s, address: v }))}
       />
       <Field
         id="l-postal-code"
-        label="Código postal"
+        label={t.location.postalCodeLabel}
         value={f.postalCode}
         error={err1(fieldErrors, "postalCode")}
         onChange={(v) => setF((s) => ({ ...s, postalCode: v }))}
       />
       <Field
         id="l-city"
-        label="Localidad"
+        label={t.location.cityLabel}
         value={f.city}
         error={err1(fieldErrors, "city")}
         onChange={(v) => setF((s) => ({ ...s, city: v }))}
       />
       <Field
         id="l-province"
-        label="Provincia"
+        label={t.location.provinceLabel}
         value={f.province}
         onChange={(v) => setF((s) => ({ ...s, province: v }))}
         required={false}
       />
       <Field
         id="l-country"
-        label="País"
+        label={t.location.countryLabel}
         value={f.country}
         onChange={(v) => setF((s) => ({ ...s, country: v }))}
       />
@@ -966,7 +943,8 @@ function ShipmentForm({
   onSubmit,
   onCancel,
   locations,
-}: FormProps<Shipment> & { locations: Location[] }) {
+  t,
+}: FormProps<Shipment> & { locations: Location[]; t: DatosMessages }) {
   const [f, setF] = useState<Body>({
     name: initial?.name ?? "",
     loadLocationId: initial?.loadLocationId ?? "",
@@ -984,20 +962,20 @@ function ShipmentForm({
     >
       <Field
         id="s-name"
-        label="Nombre de la ruta (opcional)"
+        label={t.shipment.nameLabel}
         required={false}
         value={f.name}
         onChange={(v) => setF((s) => ({ ...s, name: v }))}
       />
       <label className="mt-3 block text-sm">
-        <span className="font-medium">Lugar de carga</span>
+        <span className="font-medium">{t.shipment.loadLocationLabel}</span>
         <select
           data-testid="s-load-location"
           className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
           value={f.loadLocationId}
           onChange={(e) => setF((s) => ({ ...s, loadLocationId: e.target.value }))}
         >
-          <option value="">Selecciona un lugar guardado…</option>
+          <option value="">{t.shipment.selectPlaceholder}</option>
           {locations
             .filter((l) => l.type !== "unload")
             .map((l) => (
@@ -1014,14 +992,14 @@ function ShipmentForm({
         )}
       </label>
       <label className="mt-3 block text-sm">
-        <span className="font-medium">Lugar de descarga</span>
+        <span className="font-medium">{t.shipment.unloadLocationLabel}</span>
         <select
           data-testid="s-unload-location"
           className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
           value={f.unloadLocationId}
           onChange={(e) => setF((s) => ({ ...s, unloadLocationId: e.target.value }))}
         >
-          <option value="">Selecciona un lugar guardado…</option>
+          <option value="">{t.shipment.selectPlaceholder}</option>
           {locations
             .filter((l) => l.type !== "load")
             .map((l) => (
@@ -1039,21 +1017,21 @@ function ShipmentForm({
       </label>
       <Field
         id="s-goods"
-        label="Mercancía habitual (opcional)"
+        label={t.shipment.goodsLabel}
         required={false}
         value={f.goods}
         onChange={(v) => setF((s) => ({ ...s, goods: v }))}
       />
       <Field
         id="s-weight"
-        label="Peso habitual (opcional)"
+        label={t.shipment.weightLabel}
         required={false}
         value={f.weight}
         onChange={(v) => setF((s) => ({ ...s, weight: v }))}
       />
       <Field
         id="s-recipient"
-        label="Destinatario (opcional)"
+        label={t.shipment.recipientLabel}
         required={false}
         value={f.recipient}
         onChange={(v) => setF((s) => ({ ...s, recipient: v }))}
