@@ -7923,3 +7923,30 @@ integration-level, no pure-logic surface), `tests/e2e/team.spec.ts` 11/11 (incl.
 test), `tests/e2e/membership.spec.ts` 6/6, `tests/e2e/commercial-consent.spec.ts` (targeted
 per-DeCA-capture cases) all green, `tests/e2e/auth-entrypoints.spec.ts` +
 `tests/e2e/register-duplicate-race.spec.ts` unaffected.
+
+## D-222 — #125: `/d/[token]`'s 404 path now calls the `d_404` abuse policy that was declared but never wired in (2026-09-12)
+
+**Problem (P1, found by the audit):** `lib/abuse/index.ts` declares a `d_404` rate policy specifically
+for this route, but `app/d/[token]/route.ts` never called `checkAbuse` — confirmed by grep before the
+fix, `docs/api/INDEX.md` itself already said so. An unauthenticated caller could probe
+`/d/<random-token>` without limit, contradicting `security.md`'s own rule ("repeated 404s per IP are
+rate-limited (T-2)").
+
+**Fix:** the shared `notFound()` helper (both call sites: malformed-token and unknown-token) now calls
+`checkAbuse("d_404", req.headers)` before returning. Deliberately does NOT show a CAPTCHA/PoW challenge
+on a `"challenge"` verdict — `security.md`/T-3 states "never [challenge] on `/d/` fetches" (there is no
+UI on a raw document-download endpoint to answer one, and a real inspector must always get through) —
+so `"challenge"` falls back to the ordinary 404, and only the hard `"block"` tier returns 429 with
+`Retry-After`. A successful document fetch never reaches `notFound()` at all, so a legitimate,
+repeated, valid inspection is never rate-limited or challenged.
+
+**Test-first (bug fix, UNBREAKABLE):** the e2e suite runs with `FVD_DISABLE_ABUSE_CHECKS=1` for every
+test (a deliberate, documented design so the suite can create dozens of accounts inside one window) —
+it structurally cannot exercise rate-limiting at all. New `tests/unit/d-token-rate-limit.test.ts`
+imports the real route handler directly (mocking only its DB/hash dependencies) instead: 4 cases,
+2 observed red before the fix (`checkAbuse` never called; a `"block"` verdict had no effect).
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 470/470 unit (+4 new), targeted e2e regression
+39/39 (`compliance.spec.ts`, `driver-delivery.spec.ts`, `launch-gate.spec.ts` incl. "public tokens are
+high-entropy and not enumerable" and "no cross-tenant data access", `seo-regression.spec.ts`) — no
+legitimate document open affected.

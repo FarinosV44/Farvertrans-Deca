@@ -44,6 +44,17 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-222 — #125 [P1] fixed: `/d/[token]`'s 404 path now calls the `d_404` abuse policy that was
+  declared but never wired in, this session (2026-09-12). Full detail in `docs/decisions.md`
+  D-222.** `notFound()` now calls `checkAbuse("d_404", ...)` — 429 at the hard tier, never a
+  CAPTCHA (no UI to answer one here, and a real inspector must always get through per
+  security.md/T-3); a successful document fetch is never checked. New
+  `tests/unit/d-token-rate-limit.test.ts` (4 cases, imports the real route handler directly since
+  the e2e suite runs with `FVD_DISABLE_ABUSE_CHECKS=1` and structurally cannot exercise
+  rate-limiting), 2 observed red before the fix. Gate: tsc/eslint/prettier/keel-verify clean,
+  470/470 unit (+4 new), 39/39 targeted e2e regression (`compliance`, `driver-delivery`,
+  `launch-gate` incl. token-entropy + cross-tenant checks, `seo-regression`). Committed to
+  `develop`, not yet pushed.
 - **D-221 — #124 [P1] fixed: team invite tokens now bound to the invited email in all 3
   redemption paths (`signup()`/`completeCompanyForUser()` in `lib/auth/index.ts`, `acceptInvite()`
   in `lib/team.ts`), this session (2026-09-12). Full detail in `docs/decisions.md` D-221.** New

@@ -1148,10 +1148,10 @@ started; no code changed by the audit itself.
   unit, `team.spec.ts` 11/11 + `membership.spec.ts` 6/6 + targeted regression green. Committed to
   `develop`, not yet pushed. Comment + close pending push.
 - **I-125 — #125 [P1 Security] `/d/[token]` public-download rate limiting defined but never wired
-  in.** `lib/abuse/index.ts`'s `d_404` policy is declared but referenced nowhere else;
-  `app/d/[token]/route.ts` never calls `checkAbuse` on its 404 path, contradicting the project's own
-  documented T-2 control. Token entropy (256-bit) means this is an abuse/cost gap, not a data-exposure
-  one. Not started.
+  in.** **FIXED, this session (D-222):** `notFound()` now calls `checkAbuse("d_404", ...)`; 429 at
+  the hard tier, never a CAPTCHA. Gate: 470/470 unit (+4 new, test-first since the e2e suite
+  structurally can't exercise rate-limiting), 39/39 targeted e2e regression. Committed to
+  `develop`, not yet pushed. Comment + close pending push.
 - **I-126 — #126 [P1 Security] CSV history export vulnerable to formula/CSV injection.**
   `csvField()` (`lib/deca/export.ts`) does RFC 4180 quoting only, never neutralizes a leading
   `=`/`+`/`-`/`@` in a free-text field (carrier/shipper name, location, goods). Not started.

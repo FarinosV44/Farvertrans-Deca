@@ -14,7 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
   const { token } = await params;
 
   if (!token || token.length < 16 || token.length > 128) {
-    return notFound();
+    return notFound(req);
   }
 
   const { prisma } = await import("@/lib/prisma");
@@ -22,7 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
     where: { token },
     include: { deca: true },
   });
-  if (!version || !version.pdfPath) return notFound();
+  if (!version || !version.pdfPath) return notFound(req);
 
   if (!isPubliclyAvailable(version.deca.serviceEnd)) {
     return new NextResponse(
@@ -81,7 +81,30 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
   });
 }
 
-function notFound() {
+/**
+ * #125: an unknown/malformed token is exactly the token-enumeration signal
+ * T-2 exists to defend against — `checkAbuse("d_404", ...)` was declared for
+ * this route but never actually called. Never issues a CAPTCHA/PoW challenge
+ * here (T-3/security.md: "never on /d/ fetches" — there is no UI on this raw
+ * document endpoint to answer one, and a real inspector must always get
+ * through); only the hard "block" tier turns into a 429. A legitimate,
+ * successful document open never reaches this function at all, so this can
+ * never rate-limit or challenge a real inspection.
+ */
+async function notFound(req: Request) {
+  const { checkAbuse } = await import("@/lib/abuse");
+  const decision = await checkAbuse("d_404", req.headers);
+  if (decision.verdict === "block") {
+    return NextResponse.json(
+      {
+        error: {
+          code: "rate_limited",
+          message: "Demasiadas solicitudes. Inténtalo de nuevo más tarde.",
+        },
+      },
+      { status: 429, headers: { "retry-after": String(Math.ceil(decision.retryAfterMs / 1000)) } },
+    );
+  }
   return new NextResponse("Documento no encontrado.", {
     status: 404,
     headers: { "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" },
