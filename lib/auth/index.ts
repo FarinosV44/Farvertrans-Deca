@@ -78,7 +78,8 @@ export class AuthError extends Error {
       | "weak_password"
       | "bad_input"
       | "terms_required"
-      | "account_suspended",
+      | "account_suspended"
+      | "invite_email_mismatch",
     message: string,
   ) {
     super(message);
@@ -139,6 +140,14 @@ export async function signup(input: SignupInput): Promise<{
     const { consumeInviteToken, markInviteAccepted } = await import("@/lib/team");
     const inv = await consumeInviteToken(input.inviteToken);
     if (inv) {
+      // #124: the invite is issued FOR a specific email — registering under
+      // a different one must not silently join the target company at the
+      // granted role just because the bearer link was obtained.
+      if (inv.email !== email)
+        throw new AuthError(
+          "invite_email_mismatch",
+          "Esta invitación es para otro correo electrónico.",
+        );
       // #102: the user AND their Membership are created together — a brand
       // new account has nothing to overwrite, but this is still the one
       // place that must write both rows, never `companyId` alone.
@@ -350,6 +359,13 @@ export async function completeCompanyForUser(
     const { consumeInviteToken, markInviteAccepted, joinCompany } = await import("@/lib/team");
     const inv = await consumeInviteToken(input.inviteToken);
     if (inv) {
+      // #124: same binding as signup()/acceptInvite() — an invite is for a
+      // specific email, never redeemable by a different Google account.
+      if (inv.email !== normEmail(user.email))
+        throw new AuthError(
+          "invite_email_mismatch",
+          "Esta invitación es para otro correo electrónico.",
+        );
       // #102: `user.companyId` was already confirmed null above, so this
       // user holds no membership yet — `joinCompany` still runs (rather than
       // a raw update) so this path can never again diverge from the one

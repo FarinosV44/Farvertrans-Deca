@@ -1141,10 +1141,12 @@ started; no code changed by the audit itself.
   `requireHashSecret()` (throws, no fallback) + `instrumentation.ts` boot enforcement, verified
   end-to-end with a real `next start` run. Gate: 466/466 unit (+8 new, test-first), 39/39 targeted
   e2e. Committed to `develop`, not yet pushed. Comment + close pending push.
-- **I-124 — #124 [P1 Security] Team invite token not bound to the invited email.** `acceptInvite`/
-  `signup`'s invite branch/`completeCompanyForUser`'s invite branch never check
-  `session.user.email === invite.email` before `joinCompany()` — a leaked/forwarded invite link can be
-  redeemed by the wrong identity at the granted role, including `owner`. Not started.
+- **I-124 — #124 [P1 Security] Team invite token not bound to the invited email.** **FIXED, this
+  session (D-221):** all 3 redemption paths now reject a mismatched email
+  (`"invite_email_mismatch"`) before any membership write. Found and fixed a real pre-existing
+  test bug along the way (a test was unknowingly relying on the hole this closes). Gate: 466/466
+  unit, `team.spec.ts` 11/11 + `membership.spec.ts` 6/6 + targeted regression green. Committed to
+  `develop`, not yet pushed. Comment + close pending push.
 - **I-125 — #125 [P1 Security] `/d/[token]` public-download rate limiting defined but never wired
   in.** `lib/abuse/index.ts`'s `d_404` policy is declared but referenced nowhere else;
   `app/d/[token]/route.ts` never calls `checkAbuse` on its 404 path, contradicting the project's own

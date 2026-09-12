@@ -7883,3 +7883,43 @@ run). `docs/api/INDEX.md` updated (`requireHashSecret()`, `instrumentation.ts`'s
 points to — do not exist anywhere in the repo (`docs/api/` contains only `INDEX.md`). This predates
 this session and predates the audit; flagged to the user, not fixed as part of #123 (large, unrelated
 reconstruction).
+
+## D-221 — #124: team invite tokens now bound to the invited email in all 3 redemption paths (2026-09-12)
+
+**Problem (P1, found by the audit):** `CompanyInvite.email` was stored and shown in previews, but
+never checked against the email of the account actually redeeming the token, in any of its 3
+redemption paths: `signup()`'s invite branch and `completeCompanyForUser()`'s invite branch
+(`lib/auth/index.ts`), and `acceptInvite()` (`lib/team.ts`, used by an already-logged-in visitor to
+`/registro?invite=<token>` and by `POST /api/auth/login` with an `invite` body field). A leaked or
+forwarded invite link could be redeemed by a different identity than intended, joining the target
+company at the invite's granted role — including `owner`.
+
+**Fix:** each of the 3 paths now compares the redeeming identity's normalized email against
+`inv.email` (already normalized at `createInvite()` time) and throws (`AuthError`/`TeamError`
+`"invite_email_mismatch"`) on a mismatch, before any membership write. New error code added to both
+`AuthError`'s and `TeamError`'s code unions.
+
+**Deliberately unchanged (pre-existing product behavior, not a new gap):** `app/registro/page.tsx`'s
+already-logged-in-visitor branch and `app/api/auth/login/route.ts`'s post-login invite branch both
+already swallow EVERY `acceptInvite` failure silently (expired, invalid, and now also mismatched) and
+just don't join — no error is shown to the user either way. Surfacing a specific "this invite was
+sent to X" message would be a UX enhancement beyond this fix's scope; the security property (never
+silently joins) holds either way.
+
+**Test-first (bug fix, UNBREAKABLE):** two new e2e cases in `tests/e2e/team.spec.ts` — a new signup
+attempting a mismatched email, and an already-logged-in different-account visit — both observed red
+against the pre-fix code (the attacker actually joined the target company in both cases, confirmed by
+DB-backed page content, not just a status code) before the fix, green after.
+
+**Real pre-existing test bug found and fixed along the way:** `team.spec.ts`'s "only an admin sees the
+invite form; a member does not" test invited one random email but registered a *different* random
+email — it was unknowingly relying on the exact hole this fix closes to pass. Fixed by capturing and
+reusing the same `memberEmail` for both steps, matching every other test in the file. `registerOwner()`
+gained an optional `companyName` parameter (default unchanged) so the new tests could use a
+distinguishable company name for the attacker's own account.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 466/466 unit (unchanged — this fix is
+integration-level, no pure-logic surface), `tests/e2e/team.spec.ts` 11/11 (incl. the fixed pre-existing
+test), `tests/e2e/membership.spec.ts` 6/6, `tests/e2e/commercial-consent.spec.ts` (targeted
+per-DeCA-capture cases) all green, `tests/e2e/auth-entrypoints.spec.ts` +
+`tests/e2e/register-duplicate-race.spec.ts` unaffected.

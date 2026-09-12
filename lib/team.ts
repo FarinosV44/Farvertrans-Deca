@@ -35,6 +35,7 @@ export class TeamError extends Error {
       | "bad_input"
       | "already_member"
       | "invite_invalid"
+      | "invite_email_mismatch"
       | "duplicate_company",
     message: string,
   ) {
@@ -275,6 +276,14 @@ export async function acceptInvite(token: string, userId: string): Promise<{ com
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new TeamError("not_found", "Usuario no encontrado.");
+  // #124: the invite is issued FOR a specific email — a bearer link that
+  // leaks (forwarded, shared device, a support ticket) must not let a
+  // different identity join at the granted role just by holding it.
+  if (normEmail(user.email) !== inv.email)
+    throw new TeamError(
+      "invite_email_mismatch",
+      "Esta invitación es para otro correo electrónico.",
+    );
 
   await prisma.$transaction(async (tx) => {
     await joinCompany(tx, userId, inv.companyId, inv.role as CompanyRoleValue);

@@ -44,6 +44,18 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-221 — #124 [P1] fixed: team invite tokens now bound to the invited email in all 3
+  redemption paths (`signup()`/`completeCompanyForUser()` in `lib/auth/index.ts`, `acceptInvite()`
+  in `lib/team.ts`), this session (2026-09-12). Full detail in `docs/decisions.md` D-221.** New
+  `"invite_email_mismatch"` error code (both `AuthError` and `TeamError`); a redemption whose
+  account email doesn't match the invite's is rejected before any membership write. Test-first: 2
+  new e2e cases in `team.spec.ts`, both observed red (attacker actually joined the target company)
+  before the fix. **Real pre-existing test bug found and fixed along the way:** an existing
+  `team.spec.ts` test invited one random email but registered a different one — it was unknowingly
+  relying on the exact hole this fix closes; fixed to reuse the same email for both steps. Gate:
+  tsc/eslint/prettier/keel-verify clean, 466/466 unit (unchanged), `team.spec.ts` 11/11,
+  `membership.spec.ts` 6/6, targeted `commercial-consent.spec.ts` cases, `auth-entrypoints.spec.ts`
+  + `register-duplicate-race.spec.ts` green. Committed to `develop`, not yet pushed.
 - **D-220 — #123 [P0] fixed: removed the `FVD_HASH_SECRET` insecure-fallback pattern from
   `lib/auth/session.ts`/`lib/hash.ts`/`lib/abuse/challenge.ts`/`lib/admin/backup-password.ts`/
   `lib/auth/oauth-state.ts`/`lib/auth/webauthn-challenge.ts`, this session (2026-09-12). Full detail

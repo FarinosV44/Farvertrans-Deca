@@ -4,11 +4,11 @@ function email() {
   return `tm${Date.now()}${Math.floor(Math.random() * 1e5)}@example.com`;
 }
 
-async function registerOwner(page: Page, addr = email()) {
+async function registerOwner(page: Page, addr = email(), companyName = "Agencia Equipo SL") {
   await page.goto("/registro");
   await page.fill("#email", addr);
   await page.fill("#password", "Supersecret123!");
-  await page.fill("#companyName", "Agencia Equipo SL");
+  await page.fill("#companyName", companyName);
   await page.fill("#companyNif", "B12345674");
   await page.fill("#companyContactName", "Ana Ejemplo");
   await page.fill("#companyPhone", "600111222");
@@ -119,14 +119,15 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     const owner = await ownerCtx.newPage();
     await registerOwner(owner);
     await owner.goto("/panel/equipo");
-    await owner.fill('[data-testid="invite-email"]', email());
+    const memberEmail = email();
+    await owner.fill('[data-testid="invite-email"]', memberEmail);
     await owner.getByTestId("invite-submit").click();
     const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
 
     const memberCtx = await browser.newContext();
     const member = await memberCtx.newPage();
     await member.goto(link.replace(/^https?:\/\/[^/]+/, ""));
-    await member.fill("#email", email());
+    await member.fill("#email", memberEmail);
     await member.fill("#password", "Supersecret123!");
     await member.getByTestId("register-submit").click();
     await expect(member).toHaveURL(/\/verificar-email/);
@@ -427,5 +428,82 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await staleCtx.close();
 
     await ownerCtx.close();
+  });
+
+  test("#124 an invite link cannot be redeemed by registering under a different email", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+
+    await owner.goto("/panel/equipo");
+    const inviteEmail = email();
+    await owner.fill('[data-testid="invite-email"]', inviteEmail);
+    await owner.getByTestId("invite-submit").click();
+    await expect(owner.getByTestId("invite-msg")).toContainText(inviteEmail);
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    // An attacker who obtains the link (forwarded, shared device, leaked
+    // support ticket) tries to register under THEIR OWN email instead of the
+    // one the invite was issued for.
+    const attackerCtx = await browser.newContext();
+    const attacker = await attackerCtx.newPage();
+    await attacker.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    const attackerEmail = email();
+    await attacker.fill("#email", attackerEmail);
+    await attacker.fill("#password", "Supersecret123!");
+    const [res] = await Promise.all([
+      attacker.waitForResponse((r) => r.url().includes("/api/auth/register")),
+      attacker.getByTestId("register-submit").click(),
+    ]);
+    expect(res.status()).toBe(409);
+    const body = await res.json();
+    expect(body.error.code).toBe("invite_email_mismatch");
+    // Never silently created an account joined to the target company.
+    await expect(attacker).not.toHaveURL(/\/verificar-email/);
+
+    // The invite is untouched — still pending, still redeemable by its real
+    // recipient — never silently consumed by the mismatched attempt.
+    await owner.goto("/panel/equipo");
+    await expect(owner.getByTestId("pending-invites")).toContainText(inviteEmail);
+
+    await ownerCtx.close();
+    await attackerCtx.close();
+  });
+
+  test("#124 an invite link cannot be redeemed by an already-logged-in different-email account", async ({
+    browser,
+  }) => {
+    const ownerCtx = await browser.newContext();
+    const owner = await ownerCtx.newPage();
+    await registerOwner(owner);
+
+    await owner.goto("/panel/equipo");
+    const inviteEmail = email();
+    await owner.fill('[data-testid="invite-email"]', inviteEmail);
+    await owner.getByTestId("invite-submit").click();
+    await expect(owner.getByTestId("invite-msg")).toContainText(inviteEmail);
+    const link = (await owner.locator("p.font-mono").first().textContent())!.trim();
+
+    // A second, unrelated company/account obtains the link and — already
+    // logged in as themselves — visits it directly.
+    const attackerCtx = await browser.newContext();
+    const attacker = await attackerCtx.newPage();
+    const attackerAddr = await registerOwner(attacker, email(), "Otra Empresa SL");
+    await attacker.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await expect(attacker).toHaveURL("/panel"); // existing no-error-shown redirect, unchanged
+
+    // Never joined the target company: still only a member of their own.
+    await expect(attacker.locator("h1")).toContainText("Otra Empresa SL");
+    await expect(attacker.locator("h1")).not.toContainText("Agencia Equipo SL");
+
+    // The invite is untouched — still pending for its real recipient.
+    await owner.goto("/panel/equipo");
+    await expect(owner.getByTestId("pending-invites")).toContainText(inviteEmail);
+    await expect(owner.getByTestId("member-list")).not.toContainText(attackerAddr);
+
+    await ownerCtx.close();
+    await attackerCtx.close();
   });
 });
