@@ -218,6 +218,70 @@ test.describe("TEAM #27 — company workspaces + invitations", () => {
     await memberCtx.close();
   });
 
+  // #132 — two owners removing each other AT THE SAME TIME must never leave the
+  // workspace with zero owners: the "keep at least one owner" check has to be
+  // race-safe, not just correct for one request at a time.
+  test("#132: two owners removing each other concurrently — exactly one succeeds, one owner always remains", async ({
+    browser,
+  }) => {
+    const ownerACtx = await browser.newContext();
+    const ownerA = await ownerACtx.newPage();
+    await registerOwner(ownerA);
+    await ownerA.goto("/panel/equipo");
+    const memberEmail = email();
+    await ownerA.fill('[data-testid="invite-email"]', memberEmail);
+    await ownerA.getByTestId("invite-submit").click();
+    const link = (await ownerA.locator("p.font-mono").first().textContent())!.trim();
+
+    const ownerBCtx = await browser.newContext();
+    const ownerB = await ownerBCtx.newPage();
+    await ownerB.goto(link.replace(/^https?:\/\/[^/]+/, ""));
+    await ownerB.fill("#email", memberEmail);
+    await ownerB.fill("#password", "Supersecret123!");
+    await ownerB.getByTestId("register-submit").click();
+    await expect(ownerB).toHaveURL(/\/verificar-email/);
+    await ownerB.goto("/panel");
+
+    // promote the new member to owner — now the company has exactly 2 owners
+    await ownerA.goto("/panel/equipo");
+    await Promise.all([
+      ownerA.waitForResponse(
+        (r) =>
+          r.url().includes("/api/team/members/") &&
+          r.request().method() === "PATCH" &&
+          r.status() === 200,
+      ),
+      ownerA.getByTestId(`role-${memberEmail}`).selectOption("owner"),
+    ]);
+
+    // each side's own page renders a role <select> only for the OTHER
+    // member (`isAdmin && m.id !== meId`) — its id attribute is `role-<id>`.
+    await ownerB.goto("/panel/equipo");
+    const idBSeesA = await ownerB.locator('select[id^="role-"]').getAttribute("id");
+    const idOfOwnerA = idBSeesA!.replace(/^role-/, "");
+    const idASeesB = await ownerA.locator('select[id^="role-"]').getAttribute("id");
+    const idOfOwnerB = idASeesB!.replace(/^role-/, "");
+
+    // fire both removals at the same instant: A removes B, B removes A.
+    const [resA, resB] = await Promise.all([
+      ownerA.request.fetch(`/api/team/members/${idOfOwnerB}`, { method: "DELETE" }),
+      ownerB.request.fetch(`/api/team/members/${idOfOwnerA}`, { method: "DELETE" }),
+    ]);
+
+    // exactly one wins (200) and the other is rejected by the last-owner
+    // guard (422) — NEVER both 200 (zero owners) and never both rejected.
+    expect([resA.status(), resB.status()].sort()).toEqual([200, 422]);
+
+    // resA succeeding means A's removal of B went through, so A is the
+    // survivor (and vice versa).
+    const survivor = resA.status() === 200 ? ownerA : ownerB;
+    await survivor.goto("/panel/equipo");
+    await expect(survivor.getByTestId("invite-email")).toBeVisible();
+
+    await ownerACtx.close();
+    await ownerBCtx.close();
+  });
+
   test("PRODUCT #56: a read_only member can view history but cannot create or correct a DeCA", async ({
     browser,
   }) => {

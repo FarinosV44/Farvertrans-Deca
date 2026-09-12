@@ -73,6 +73,24 @@ export async function joinCompany(
 }
 
 /**
+ * #132: counts a company's owners AFTER locking every owner row
+ * (`SELECT ... FOR UPDATE`), inside the caller's write transaction. Without
+ * the lock, two owners removing/demoting each other at the same instant can
+ * both read the pre-change count before either write commits and both pass
+ * the "at least one owner" check — leaving zero owners. The lock forces a
+ * concurrent transaction touching the same company's owner set to wait for
+ * this one to commit (or roll back) first, so the count it sees is always
+ * up to date.
+ */
+async function countOwnersLocked(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  companyId: string,
+): Promise<number> {
+  await tx.$queryRaw`SELECT id FROM membership WHERE company_id = ${companyId} AND role = 'owner' FOR UPDATE`;
+  return tx.membership.count({ where: { companyId, role: "owner" } });
+}
+
+/**
  * Remove `userId`'s membership in `companyId`. If that was their ACTIVE
  * company, fall back to another membership they still hold
  * (`pickFallbackMembership`) rather than the pre-#102 bug's silent
@@ -330,13 +348,14 @@ export async function removeMember(companyId: string, actingUserId: string, targ
   });
   if (!targetMembership) throw new TeamError("not_found", "Miembro no encontrado.");
 
-  if (targetMembership.role === "owner") {
-    const owners = await prisma.membership.count({ where: { companyId, role: "owner" } });
-    if (owners <= 1)
-      throw new TeamError("bad_input", "No puedes quitar al único administrador del equipo.");
-  }
-
-  await prisma.$transaction((tx) => leaveCompany(tx, targetUserId, companyId));
+  await prisma.$transaction(async (tx) => {
+    if (targetMembership.role === "owner") {
+      const owners = await countOwnersLocked(tx, companyId);
+      if (owners <= 1)
+        throw new TeamError("bad_input", "No puedes quitar al único administrador del equipo.");
+    }
+    await leaveCompany(tx, targetUserId, companyId);
+  });
 
   const { recordAudit } = await import("@/lib/admin/audit");
   await recordAudit({
@@ -370,13 +389,12 @@ export async function changeRole(
   if (!targetMembership) throw new TeamError("not_found", "Miembro no encontrado.");
   if (targetMembership.role === role) return;
 
-  if (targetMembership.role === "owner" && role !== "owner") {
-    const owners = await prisma.membership.count({ where: { companyId, role: "owner" } });
-    if (owners <= 1)
-      throw new TeamError("bad_input", "El equipo debe tener al menos un administrador.");
-  }
-
   await prisma.$transaction(async (tx) => {
+    if (targetMembership.role === "owner" && role !== "owner") {
+      const owners = await countOwnersLocked(tx, companyId);
+      if (owners <= 1)
+        throw new TeamError("bad_input", "El equipo debe tener al menos un administrador.");
+    }
     await tx.membership.update({
       where: { userId_companyId: { userId: targetUserId, companyId } },
       data: { role },

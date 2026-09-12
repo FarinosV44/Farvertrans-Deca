@@ -44,6 +44,15 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-232 — #132 [P2 audit finding] fixed: last-owner removal/demotion race in `lib/team.ts`, this
+  session (2026-09-12). Full detail in `docs/decisions.md` D-232.** `removeMember()`/`changeRole()`
+  checked "at least one owner remains" BEFORE the write transaction — two owners removing/demoting
+  each other at the same instant could both pass the check and leave zero owners. New
+  `countOwnersLocked()` moves the check inside the transaction with a `SELECT ... FOR UPDATE` row
+  lock. New e2e test fires both removals concurrently via `Promise.all`, confirmed RED (both 200,
+  0 owners) before the fix, GREEN after (exactly one 200 + one 422). Gate: tsc/eslint/prettier
+  clean, 498/498 unit unaffected, 12/12 `team.spec.ts`. Committed to `develop`, not yet pushed.
+  **First of the P2/P3 audit findings; continuing through the rest.**
 - **D-231 — #131 [mobile UX] fixed: Historial filter grid + mobile card actions, this session
   (2026-09-12). Full detail in `docs/decisions.md` D-231.** Filter `<form>`'s base grid was
   `grid-cols-2` at all 4 widths the user's report named (320-430px, all below Tailwind's `sm:` 640px

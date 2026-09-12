@@ -8283,3 +8283,33 @@ the fix and confirm all 8 new cases pass.
 `panel-nav.spec.ts`/`row-share.spec.ts`/`team.spec.ts`/`master-data.spec.ts`/`driver-delivery.spec.ts`
 — all passing unchanged, confirming the grid/markup change is isolated to Historial's own mobile
 presentation.
+
+## D-232 — #132 [P2 audit finding, correctness]: last-owner removal/demotion race fixed with a row lock (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `lib/team.ts`'s `removeMember()` and `changeRole()`
+both guarded "a workspace must always keep at least one owner" with a `prisma.membership.count(...)`
+check that ran BEFORE the write transaction, not inside it. Two owners removing (or demoting) each
+other at the same instant could both read the pre-change owner count before either write committed,
+both pass the check, and both proceed — leaving the workspace with zero owners and nobody able to
+invite, promote, or manage it.
+
+**Reproduction:** because Node's event loop interleaves two concurrent async request handlers at
+their `await` points, this isn't a rare timing accident — it reproduces deterministically. New e2e
+test `#132: two owners removing each other concurrently` (`tests/e2e/team.spec.ts`) builds a 2-owner
+company, then fires `DELETE /api/team/members/[id]` from both owners at the same instant (A removing
+B, B removing A) via `Promise.all`. Confirmed RED first: both requests returned 200, leaving 0 owners.
+
+**Fix:** new shared `countOwnersLocked(tx, companyId)` — `SELECT id FROM membership WHERE company_id
+= ... AND role = 'owner' FOR UPDATE`, then counts — called from INSIDE each function's write
+transaction instead of the old pre-transaction `prisma.membership.count`. The row lock forces a
+second, concurrent transaction touching the same company's owner set to wait for the first to commit
+(or roll back) before it can read the count, so the check is always accurate. No other caller of the
+shared `leaveCompany()` helper exists, so this is isolated to these two functions.
+
+**Test-first / verification:** the new e2e test now asserts `[resA.status(), resB.status()].sort()
+=== [200, 422]` — exactly one removal succeeds, the other is correctly rejected by the last-owner
+guard — and that the surviving owner still has admin access afterward. Confirmed green after the fix.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 498/498 unit unaffected
+(no unit-tested logic touched — this is DB-transaction behavior, not pure logic), 12/12
+`team.spec.ts` (11 pre-existing + 1 new) green.
