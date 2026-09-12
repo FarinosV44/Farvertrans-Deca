@@ -8089,3 +8089,41 @@ confirmed `checkAbuse` was never called, restored it) before the fix.
 **Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 483/483 unit (+2 new), `tests/e2e/team.spec.ts`
 11/11 + `tests/e2e/membership.spec.ts` 6/6 (the real invite flow itself is unaffected — abuse checks
 are globally disabled for the e2e suite by design).
+
+## D-228 — #130: added the missing `Deca` table indexes (2026-09-12)
+
+**Problem (P1, found by the audit):** the `Deca` model had zero secondary indexes (only its two
+`@unique` columns) despite every hot-path query filtering/sorting on `company_id`/`created_at` —
+Historial (`lib/data/history.ts`), the admin cross-tenant company list's per-company latest-DeCA
+subquery (`lib/admin/records.ts`), and a per-company count run on EVERY single DeCA generation
+(`lib/deca/persist.ts`, to compute "is this the company's first document"). Confirmed this is a real
+omission, not a deliberate choice: several OTHER models in the same schema already carry the identical
+`@@index([companyId, createdAt])` pattern (e.g. `SupportTicket`, `CommercialAlert`) — `Deca`, the
+product's single most-queried table, was simply missed.
+
+**Fix:** `@@index([companyId, createdAt])` + `@@index([createdByUserId])` added to the `Deca` model.
+
+**Migration — hand-written, not `prisma migrate dev` generated:** the local shadow database cannot
+apply D-186's RLS-lockdown migration cleanly (`prisma migrate dev` fails with P3006/P1014) — a
+documented pre-existing environment issue, the same one D-203's migration hit and worked around the
+same way. New `prisma/migrations/20260912140000_deca_query_indexes/migration.sql`, two plain
+`CREATE INDEX` statements (no `CONCURRENTLY` — no precedent for it anywhere in this project's 43
+other migrations, and the current table size makes a brief lock a non-issue), index names matching
+Prisma's own default naming convention so `prisma db pull` stays in sync. Applied to the local dev DB
+via `prisma migrate deploy` (bypasses the broken shadow-DB step) and verified directly (`\d deca` in
+`psql`, both indexes present, `prisma migrate status` reports up to date). CI already uses `migrate
+deploy` (not `migrate dev`), so this migration applies cleanly there and on the next production
+deploy with no special handling needed.
+
+**No automated test added:** this is a pure DB-structure/performance change with no correctness
+behavior to assert — the project has no integration-test tier that connects to a real database (only
+unit tests, which mock `@/lib/prisma`, and e2e/compliance, which don't assert on query plans). Verified
+directly instead (`\d deca` showing both indexes); recorded here as the evidence rather than claiming
+automated coverage that doesn't exist.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, `prisma validate` clean, 483/483 unit
+(unchanged — no logic touched), broader e2e regression (`reliability.spec.ts` 7/7,
+`historico-redesign.spec.ts`, `master-data.spec.ts`, `admin.spec.ts`) — one `master-data.spec.ts`
+failure (`autofill-vehicle` selector timeout, unrelated to `Deca`) reproduced as the documented
+parallel-contention flake class from `docs/lessons-learned.md`, confirmed green in isolation
+(`--workers=1`, 7.2s vs. the 30s timeout under contention).

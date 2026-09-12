@@ -44,6 +44,19 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-228 — #130 [P1] fixed: added the missing `Deca` table indexes, this session (2026-09-12).
+  Full detail in `docs/decisions.md` D-228.** `@@index([companyId, createdAt])` +
+  `@@index([createdByUserId])` — confirmed a real omission (other models in the same schema already
+  carry the identical pattern). New hand-written migration
+  `prisma/migrations/20260912140000_deca_query_indexes/` (the local shadow DB can't apply D-186's
+  RLS migration cleanly, same pre-existing issue D-203 hit — CI uses `migrate deploy`, unaffected).
+  Applied to local dev DB, verified directly via `psql \d deca`. No automated test (pure DB-structure
+  change; this project has no integration tier touching a real DB) — recorded as an honest gap, not
+  claimed as covered. Gate: tsc/eslint/prettier/keel-verify/`prisma validate` clean, 483/483 unit
+  (unchanged), broader e2e regression green (one `master-data.spec.ts` failure reproduced as the
+  documented parallel-contention flake, confirmed clean in isolation, unrelated to `Deca`).
+  Committed to `develop`, not yet pushed. **All P0/P1 findings from the audit (#123–#130) are now
+  fixed** — only P2/P3 findings remain, none started.
 - **D-227 — #129 [P1] fixed: `POST /api/team/invites` is now rate-limited, this session
   (2026-09-12). Full detail in `docs/decisions.md` D-227.** Mirrors `app/api/support/route.ts`'s
   exact pattern — `checkAbuse("share", ...)` + `abuseResponse()` right after the auth check, before

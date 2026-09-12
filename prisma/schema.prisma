@@ -756,6 +756,12 @@ model Deca {
   routeIntel        DecaRouteIntel[]
   availabilityShare DecaAvailabilityShare?
 
+  // #130: every hot-path query (Historial, the admin company list's latest-DeCA
+  // subquery, and the per-company count run on EVERY generation to compute
+  // "first DeCA for this company") filters/sorts on exactly this pair — with no
+  // index, each degrades to a full scan as the table grows past a trivial size.
+  @@index([companyId, createdAt])
+  @@index([createdByUserId])
   @@map("deca")
 }
 

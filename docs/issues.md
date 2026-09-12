@@ -1176,7 +1176,8 @@ started; no code changed by the audit itself.
   483/483 unit (+2 new, test-first), `team.spec.ts` 11/11 + `membership.spec.ts` 6/6. Committed to
   `develop`, not yet pushed. Comment + close pending push.
 - **I-130 — #130 [P1 Performance] `Deca` table has no supporting indexes for its actual query
-  patterns.** No `@@index` at all on the core table despite every hot path
-  (`lib/data/history.ts`, `lib/admin/records.ts`, `lib/deca/persist.ts`'s per-generation count)
-  filtering/sorting on `companyId`/`createdAt` — a real scalability cliff, not a correctness bug
-  today. Not started.
+  patterns.** **FIXED, this session (D-228):** `@@index([companyId, createdAt])` +
+  `@@index([createdByUserId])`; hand-written migration (shadow-DB precedent from D-203), applied
+  and verified via `psql`. Gate: 483/483 unit (unchanged), broader e2e regression green. Committed
+  to `develop`, not yet pushed. Comment + close pending push. **All P0/P1 audit findings
+  (#123–#130) are now fixed.**
