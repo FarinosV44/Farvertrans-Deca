@@ -44,6 +44,18 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-239 — #112 ACLARACIÓN FINAL implemented: reverted the per-field `+` buttons and "Vincular
+  carga y descarga" entirely, this session (2026-09-12), on the user's URGENT mid-session
+  instruction. Full detail in `docs/decisions.md` D-239.** The definitive model is now a single
+  "+ Añadir otro envío dentro de este DeCA" CTA that appends one completely independent envío block
+  — nothing inherited/paired from any other shipment. Removed `shipmentKeepingUnload/Load`,
+  `linkExistingPlaces`, the "Vincular" panel, `distinctPlaces`/`PlaceFields`/`RouteSide`, and
+  `AddPlaceButton` — all D-214/D-229 work now superseded. #128's fix (D-226) remains valid
+  unchanged. `tests/e2e/deca-multi-shipment.spec.ts` fully rewritten; `wizard-distinct-places.test.ts`
+  deleted. Gate: tsc/eslint/prettier clean, 495/495 unit, 9/9 rewritten multi-shipment e2e + 19/19
+  commercial-availability + 12/12 historico-redesign (both updated) + 20-test regression sweep, all
+  green. Committed to `develop`, not yet pushed. **#119's ACLARACIÓN FINAL is next — also urgent,
+  also supersedes this session's own D-230 work.**
 - **D-238 — #136 [P2 audit finding] fixed: templates list "Usar" link now actually applies the
   template, this session (2026-09-12). Full detail in `docs/decisions.md` D-238.** `/crear?template=
   <id>` now applies once on mount via a shared `applyTemplate()` extracted from the dropdown's

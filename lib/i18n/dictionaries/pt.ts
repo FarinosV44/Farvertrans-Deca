@@ -829,8 +829,7 @@ export const pt = {
     },
     // #112 — vários envios (locais de carga/descarga) num mesmo DeCA.
     shipments: {
-      addLoadAria: "Adicionar outro local de carga",
-      addUnloadAria: "Adicionar outro local de descarga",
+      addShipment: "+ Adicionar outro envio dentro deste DeCA",
       duplicate: "Duplicar este envio",
       remove: "Eliminar este envio",
       heading: (n: number) => `Envio ${n}`,
@@ -842,13 +841,6 @@ export const pt = {
         `O Envio ${n} já tem dados introduzidos. Tem a certeza de que quer eliminá-lo?`,
       orderNote:
         "A numeração dos envios é meramente identificativa e não determina a sua ordem de execução.",
-      linkPanelHeading: "Vincular um local de carga e de descarga",
-      linkPanelHint:
-        "Quando há vários locais de carga e de descarga, indique qual combinação forma um envio real.",
-      linkLoadLabel: "Origem",
-      linkUnloadLabel: "Destino",
-      linkPlaceholder: "Selecionar…",
-      linkCreate: "Vincular",
     },
     errorSummaryTitle: "Reveja estes campos:",
     lead: {

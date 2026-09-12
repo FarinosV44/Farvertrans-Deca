@@ -846,8 +846,7 @@ export const eu = {
         "Ez dirudi Espainiako matrikula bat (1234 BCD formatua). Baliozkoa da ibilgailua atzerrikoa bada.",
     },
     shipments: {
-      addLoadAria: "Gehitu beste zama-gune bat",
-      addUnloadAria: "Gehitu beste deskarga-gune bat",
+      addShipment: "+ Gehitu beste bidalketa bat DeCA honetan",
       duplicate: "Bikoiztu bidalketa hau",
       remove: "Kendu bidalketa hau",
       heading: (n: number) => `Bidalketa ${n}`,
@@ -860,13 +859,6 @@ export const eu = {
         `${n}. bidalketak dagoeneko datuak ditu. Ziur ezabatu nahi duzula?`,
       orderNote:
         "Bidalketen zenbaketa identifikaziorako baino ez da, eta ez du exekuzio-ordena zehazten.",
-      linkPanelHeading: "Lotu zama-gune eta deskarga-gune bat",
-      linkPanelHint:
-        "Zama-gune eta deskarga-gune bat baino gehiago daudenean, adierazi zein konbinaziok osatzen duen benetako bidalketa bat.",
-      linkLoadLabel: "Jatorria",
-      linkUnloadLabel: "Helmuga",
-      linkPlaceholder: "Aukeratu…",
-      linkCreate: "Lotu",
     },
     errorSummaryTitle: "Berrikusi eremu hauek:",
     lead: {

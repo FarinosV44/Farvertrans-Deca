@@ -842,8 +842,7 @@ export const de = {
         "Dies sieht nicht wie ein spanisches Kennzeichen aus (Format 1234 BCD). Es ist gültig, wenn das Fahrzeug ausländisch ist.",
     },
     shipments: {
-      addLoadAria: "Weiteren Ladeort hinzufügen",
-      addUnloadAria: "Weiteren Entladeort hinzufügen",
+      addShipment: "+ Weitere Sendung innerhalb dieses DeCA hinzufügen",
       duplicate: "Diese Sendung duplizieren",
       remove: "Diese Sendung entfernen",
       heading: (n: number) => `Sendung ${n}`,
@@ -855,13 +854,6 @@ export const de = {
       removeConfirm: (n: number) => `Sendung ${n} enthält bereits Daten. Wirklich entfernen?`,
       orderNote:
         "Die Nummerierung der Sendungen dient nur der Identifikation und bestimmt nicht die Ausführungsreihenfolge.",
-      linkPanelHeading: "Lade- und Entladeort verknüpfen",
-      linkPanelHint:
-        "Wenn es mehrere Lade- und Entladeorte gibt, geben Sie an, welche Kombination eine echte Sendung bildet.",
-      linkLoadLabel: "Herkunft",
-      linkUnloadLabel: "Ziel",
-      linkPlaceholder: "Auswählen…",
-      linkCreate: "Verknüpfen",
     },
     errorSummaryTitle: "Überprüfen Sie diese Felder:",
     lead: {

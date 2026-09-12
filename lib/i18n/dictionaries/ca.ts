@@ -824,8 +824,7 @@ export const ca = {
         "No sembla una matrícula espanyola (format 1234 BCD). És vàlida si el vehicle és estranger.",
     },
     shipments: {
-      addLoadAria: "Afegeix un altre lloc de càrrega",
-      addUnloadAria: "Afegeix un altre lloc de descàrrega",
+      addShipment: "+ Afegeix un altre enviament dins d'aquest DeCA",
       duplicate: "Duplica aquest enviament",
       remove: "Elimina aquest enviament",
       heading: (n: number) => `Enviament ${n}`,
@@ -839,13 +838,6 @@ export const ca = {
         `L'Enviament ${n} ja té dades introduïdes. Segur que vols eliminar-lo?`,
       orderNote:
         "La numeració dels enviaments és identificativa i no determina l'ordre d'execució.",
-      linkPanelHeading: "Vincula un lloc de càrrega i de descàrrega",
-      linkPanelHint:
-        "Quan hi ha diversos llocs de càrrega i de descàrrega, indica quina combinació forma un enviament real.",
-      linkLoadLabel: "Origen",
-      linkUnloadLabel: "Destinació",
-      linkPlaceholder: "Selecciona…",
-      linkCreate: "Vincula",
     },
     errorSummaryTitle: "Revisa aquests camps:",
     lead: {

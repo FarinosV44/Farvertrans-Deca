@@ -809,8 +809,7 @@ export const en = {
         "This doesn't look like a Spanish plate (format 1234 BCD). It's valid if the vehicle is foreign.",
     },
     shipments: {
-      addLoadAria: "Add another loading place",
-      addUnloadAria: "Add another unloading place",
+      addShipment: "+ Add another shipment within this DeCA",
       duplicate: "Duplicate this shipment",
       remove: "Remove this shipment",
       heading: (n: number) => `Shipment ${n}`,
@@ -821,13 +820,6 @@ export const en = {
       removeConfirm: (n: number) => `Shipment ${n} already has data entered. Remove it anyway?`,
       orderNote:
         "Shipment numbering is for identification only and does not set the execution order.",
-      linkPanelHeading: "Link a loading and unloading place",
-      linkPanelHint:
-        "When there are several loading and unloading places, tell us which pairing forms a real shipment.",
-      linkLoadLabel: "Origin",
-      linkUnloadLabel: "Destination",
-      linkPlaceholder: "Select…",
-      linkCreate: "Link",
     },
     errorSummaryTitle: "Please check these fields:",
     lead: {

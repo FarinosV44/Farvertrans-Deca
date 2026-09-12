@@ -20,7 +20,7 @@ import { looksLikeSpanishPlate } from "@/lib/deca/plate";
 import { upperText } from "@/lib/text/normalize";
 import { clientFingerprint, solveChallenge } from "@/lib/abuse/client";
 import { useT } from "@/lib/i18n/client";
-import { PlusIcon, CopyIcon } from "@/components/panel/icons";
+import { CopyIcon } from "@/components/panel/icons";
 
 type FormState = {
   shipperName: string;
@@ -163,107 +163,18 @@ export type ExtraShipment = {
   unloadLocationId?: string;
 };
 
-/** The 6 load-side / 6 unload-side field names, shared structurally by
- *  `FormState` and `ExtraShipment` — lets the `+` handlers below read "the
- *  other side" from EITHER shipment 1 (`form`) or an `extraShipments[i]`
- *  without caring which one it came from. */
-type RouteSide = {
-  loadLocationName: string;
-  loadLocationAddress: string;
-  loadLocationPostalCode: string;
-  loadLocationCity: string;
-  loadLocationProvince: string;
-  loadLocationCountry: string;
-  unloadLocationName: string;
-  unloadLocationAddress: string;
-  unloadLocationPostalCode: string;
-  unloadLocationCity: string;
-  unloadLocationProvince: string;
-  unloadLocationCountry: string;
-};
-
-/** A single place's 6 fields alone (either side of `RouteSide`) — the unit
- *  the "Vincular carga y descarga" panel (2026 correction to #112) picks
- *  from, instead of the operator retyping an address that already exists
- *  elsewhere in the form. */
-export type PlaceFields = {
-  name: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  province: string;
-  country: string;
-};
-
-const placeKey = (p: PlaceFields) =>
-  `${p.name.trim().toLowerCase()}|${p.city.trim().toLowerCase()}|${p.address.trim().toLowerCase()}`;
-
 /**
- * Every DISTINCT, non-blank place in `places` — exact match on
- * name+city+address (never fuzzy matched: two genuinely different places
- * typed identically is the one accepted false-merge). A row's `+` button
- * already pairs deterministically with that SAME row's other side, so this
- * is only used to decide when the linking panel below should appear: once
- * there are 2+ distinct places on BOTH sides, no single row's `+` can any
- * longer express every relationship the operator might want without
- * retyping an address, per the correction's own "Vincular carga y
- * descarga... para definir qué origen corresponde a qué destino" — this
- * NEVER changes what `+` itself does, and it never proposes or creates a
- * cartesian sweep of its own.
+ * #112 ACLARACIÓN FINAL (reverts the earlier `+` per-field / "Vincular
+ * carga y descarga" mechanisms entirely): "+ Añadir otro envío dentro de
+ * este DeCA" appends ONE completely blank, independent envío — no field is
+ * inherited or paired from shipment 1 or any other envío. Dates are
+ * pre-filled from the DeCA's own dates only because that's "claramente
+ * editable y no genera confusión" (the clarification's own exception);
+ * every other field starts empty so the operator enters this shipment's own
+ * data fresh. Vehicle (tractorPlate/trailerPlate) stays DeCA-level and is
+ * never asked here.
  */
-export function distinctPlaces<T extends PlaceFields>(places: T[]): T[] {
-  const seen = new Set<string>();
-  const out: T[] = [];
-  for (const p of places) {
-    if (!p.name.trim() && !p.city.trim()) continue; // a genuinely blank place is not a real stop
-    const k = placeKey(p);
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(p);
-  }
-  return out;
-}
-
-function loadPlaceOf(s: RouteSide): PlaceFields {
-  return {
-    name: s.loadLocationName,
-    address: s.loadLocationAddress,
-    postalCode: s.loadLocationPostalCode,
-    city: s.loadLocationCity,
-    province: s.loadLocationProvince,
-    country: s.loadLocationCountry,
-  };
-}
-
-function unloadPlaceOf(s: RouteSide): PlaceFields {
-  return {
-    name: s.unloadLocationName,
-    address: s.unloadLocationAddress,
-    postalCode: s.unloadLocationPostalCode,
-    city: s.unloadLocationCity,
-    province: s.unloadLocationProvince,
-    country: s.unloadLocationCountry,
-  };
-}
-
-/** "ORIGIN — CITY" (city dropped when it duplicates the name), for a place picker's `<option>`. */
-function placeLabel(p: PlaceFields): string {
-  return p.city && p.city.toLowerCase() !== p.name.toLowerCase() ? `${p.name} — ${p.city}` : p.name;
-}
-
-/**
- * #112 — the `+` button beside "Lugar de carga": creates a new envío with a
- * BLANK load side and the UNLOAD side copied verbatim from `source` (same
- * physical place, so its saved-location credit travels with it too).
- * `goods` is seeded from `source` (copy/edit, per the issue); `weight` is
- * left EMPTY on purpose — never copied as a "final" value the operator
- * might forget to check. Exactly one new envío is created per press: this
- * is what keeps the operation from ever producing a cartesian product.
- */
-function shipmentKeepingUnload(
-  source: RouteSide & { goods: string; unloadLocationId?: string },
-  deca: FormState,
-): ExtraShipment {
+function blankShipment(deca: FormState): ExtraShipment {
   return {
     loadLocationName: "",
     loadLocationAddress: "",
@@ -271,47 +182,18 @@ function shipmentKeepingUnload(
     loadLocationCity: "",
     loadLocationProvince: "",
     loadLocationCountry: deca.loadLocationCountry || "España",
-    unloadLocationName: source.unloadLocationName,
-    unloadLocationAddress: source.unloadLocationAddress,
-    unloadLocationPostalCode: source.unloadLocationPostalCode,
-    unloadLocationCity: source.unloadLocationCity,
-    unloadLocationProvince: source.unloadLocationProvince,
-    unloadLocationCountry: source.unloadLocationCountry,
-    goods: source.goods,
-    weight: "",
-    recipient: "",
-    loadDate: deca.loadDate,
-    unloadDate: deca.unloadDate,
-    notes: "",
-    unloadLocationId: source.unloadLocationId,
-  };
-}
-
-/** The mirror of `shipmentKeepingUnload` — the `+` beside "Lugar de descarga". */
-function shipmentKeepingLoad(
-  source: RouteSide & { goods: string; loadLocationId?: string },
-  deca: FormState,
-): ExtraShipment {
-  return {
-    loadLocationName: source.loadLocationName,
-    loadLocationAddress: source.loadLocationAddress,
-    loadLocationPostalCode: source.loadLocationPostalCode,
-    loadLocationCity: source.loadLocationCity,
-    loadLocationProvince: source.loadLocationProvince,
-    loadLocationCountry: source.loadLocationCountry,
     unloadLocationName: "",
     unloadLocationAddress: "",
     unloadLocationPostalCode: "",
     unloadLocationCity: "",
     unloadLocationProvince: "",
     unloadLocationCountry: deca.unloadLocationCountry || "España",
-    goods: source.goods,
+    goods: "",
     weight: "",
     recipient: "",
     loadDate: deca.loadDate,
     unloadDate: deca.unloadDate,
     notes: "",
-    loadLocationId: source.loadLocationId,
   };
 }
 
@@ -362,33 +244,6 @@ function shipmentHasData(s: ExtraShipment): boolean {
     !!s.weight ||
     !!s.recipient ||
     !!s.notes
-  );
-}
-
-/** #112 — the small round `+` beside "Lugar de carga"/"Lugar de descarga".
- *  A real `<button>` (valid inside `<legend>`, phrasing content) with its own
- *  accessible name and tooltip — never relies on the icon alone, comfortable
- *  touch target (28px) even next to a compact label. */
-function AddPlaceButton({
-  label,
-  testId,
-  onClick,
-}: {
-  label: string;
-  testId: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      data-testid={testId}
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)]"
-    >
-      <PlusIcon width={16} height={16} />
-    </button>
   );
 }
 
@@ -1041,10 +896,6 @@ export function CrearWizard({
     initial?.extraShipments ?? [],
   );
   const [extraShipmentErrors, setExtraShipmentErrors] = useState<Record<number, string>>({});
-  /** #112 correction — the 2 pending picks in the "Vincular carga y
-   *  descarga" panel, reset after each successful link. */
-  const [linkLoadKey, setLinkLoadKey] = useState("");
-  const [linkUnloadKey, setLinkUnloadKey] = useState("");
   /** #113 — ids of any "ruta/envío habitual" used to fill shipment 1 or an
    *  extra envío, so the server can bump their "last used" timestamp
    *  (mirrors `picked` above, but a DeCA can use several routes at once). */
@@ -1242,22 +1093,14 @@ export function CrearWizard({
     setUsedShipmentIds((ids) => (ids.includes(r.id) ? ids : [...ids, r.id]));
   };
 
-  /** #112 — the `+` beside "Lugar de carga" on shipment 1 or any envío: appends
-   *  exactly one new envío, blank on the load side, keeping `source`'s unload
-   *  side. Never touches any OTHER existing envío — this is what keeps the
-   *  operation from ever producing a cartesian product. */
-  const addLoadFrom = (source: RouteSide & { goods: string; unloadLocationId?: string }) => {
+  /** #112 ACLARACIÓN FINAL — "+ Añadir otro envío dentro de este DeCA":
+   *  appends exactly one completely blank, independent envío. Replaces the
+   *  earlier per-field `+`/"Vincular" mechanisms entirely. */
+  const addBlankShipment = () => {
     const newIndex = extraShipments.length;
-    setExtraShipments((arr) => [...arr, shipmentKeepingUnload(source, form)]);
+    setExtraShipments((arr) => [...arr, blankShipment(form)]);
     setExtraShipmentErrors({});
     requestAnimationFrame(() => document.getElementById(`extraLoadName${newIndex}`)?.focus());
-  };
-  /** The mirror — the `+` beside "Lugar de descarga". */
-  const addUnloadFrom = (source: RouteSide & { goods: string; loadLocationId?: string }) => {
-    const newIndex = extraShipments.length;
-    setExtraShipments((arr) => [...arr, shipmentKeepingLoad(source, form)]);
-    setExtraShipmentErrors({});
-    requestAnimationFrame(() => document.getElementById(`extraUnloadName${newIndex}`)?.focus());
   };
   /** "Duplicar este envío" — appends a full copy at the end. */
   const duplicateExtraShipment = (i: number) => {
@@ -1269,42 +1112,6 @@ export function CrearWizard({
     const s = extraShipments[i];
     if (shipmentHasData(s) && !window.confirm(t.crear.shipments.removeConfirm(i + 2))) return;
     setExtraShipments((arr) => arr.filter((_, j) => j !== i));
-  };
-
-  /**
-   * #112 correction — "Vincular carga y descarga": once 2+ distinct places
-   * exist on BOTH sides, this creates ONE new envío from an EXISTING load
-   * place and an EXISTING unload place — picked, never retyped. Still
-   * exactly one envío per action (never a cartesian sweep of its own);
-   * goods/weight start blank, matching every other `+`-created envío.
-   */
-  const linkExistingPlaces = (load: PlaceFields, unload: PlaceFields) => {
-    const newIndex = extraShipments.length;
-    setExtraShipments((arr) => [
-      ...arr,
-      {
-        loadLocationName: load.name,
-        loadLocationAddress: load.address,
-        loadLocationPostalCode: load.postalCode,
-        loadLocationCity: load.city,
-        loadLocationProvince: load.province,
-        loadLocationCountry: load.country,
-        unloadLocationName: unload.name,
-        unloadLocationAddress: unload.address,
-        unloadLocationPostalCode: unload.postalCode,
-        unloadLocationCity: unload.city,
-        unloadLocationProvince: unload.province,
-        unloadLocationCountry: unload.country,
-        goods: "",
-        weight: "",
-        recipient: "",
-        loadDate: form.loadDate,
-        unloadDate: form.unloadDate,
-        notes: "",
-      },
-    ]);
-    setExtraShipmentErrors({});
-    requestAnimationFrame(() => document.getElementById(`extraGoods${newIndex}`)?.focus());
   };
 
   /**
@@ -1589,16 +1396,6 @@ export function CrearWizard({
 
   const errorList = Object.entries(errors);
   const stepLabel = t.crear.steps[step];
-
-  // #112 correction — every distinct load/unload place currently in use
-  // (shipment 1 + every extra envío). The "Vincular carga y descarga" panel
-  // only appears once BOTH lists have 2+ entries — the one case a row-
-  // specific `+` can't express without retyping an address.
-  const distinctLoads = distinctPlaces([loadPlaceOf(form), ...extraShipments.map(loadPlaceOf)]);
-  const distinctUnloads = distinctPlaces([
-    unloadPlaceOf(form),
-    ...extraShipments.map(unloadPlaceOf),
-  ]);
 
   return (
     <div>
@@ -1988,16 +1785,7 @@ export function CrearWizard({
               </label>
             )}
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-bold">
-                <span>{t.crear.legends.loadLocation}</span>
-                <AddPlaceButton
-                  label={t.crear.shipments.addLoadAria}
-                  testId="add-load-1"
-                  onClick={() =>
-                    addLoadFrom({ ...form, unloadLocationId: picked.unloadLocationId })
-                  }
-                />
-              </legend>
+              <legend className="px-1 text-sm font-bold">{t.crear.legends.loadLocation}</legend>
               <p className="text-xs text-[var(--color-text-muted)]">
                 {t.crear.sectionHints.loadLocation}
               </p>
@@ -2101,14 +1889,7 @@ export function CrearWizard({
             </fieldset>
 
             <fieldset className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-bold">
-                <span>{t.crear.legends.unloadLocation}</span>
-                <AddPlaceButton
-                  label={t.crear.shipments.addUnloadAria}
-                  testId="add-unload-1"
-                  onClick={() => addUnloadFrom({ ...form, loadLocationId: picked.loadLocationId })}
-                />
-              </legend>
+              <legend className="px-1 text-sm font-bold">{t.crear.legends.unloadLocation}</legend>
               <p className="text-xs text-[var(--color-text-muted)]">
                 {t.crear.sectionHints.unloadLocation}
               </p>
@@ -2377,17 +2158,21 @@ export function CrearWizard({
           </fieldset>
         )}
 
-        {/* #112 — envíos adicionales, creados por los `+` de "Lugar de carga"/
-            "Lugar de descarga" (aquí arriba, para el envío 1; y dentro de cada
-            bloque, para los siguientes). No hay selector ni CTA genérico.
-            Disponible también al corregir (Sprint 2): la página de corrección
-            precarga los envíos existentes en `initial.extraShipments`, así
-            que nunca se pierden silenciosamente. */}
-        {step === 1 && extraShipments.length > 0 && (
+        {/* #112 ACLARACIÓN FINAL — envíos adicionales completos e
+            independientes, añadidos con el único CTA "+ Añadir otro envío"
+            al final de esta sección (nunca botones `+` junto a Lugar de
+            carga/descarga, ni un panel de vinculación — ambos revertidos).
+            Disponible también al corregir (Sprint 2): la página de
+            corrección precarga los envíos existentes en
+            `initial.extraShipments`, así que nunca se pierden
+            silenciosamente. */}
+        {step === 1 && (
           <div className="mt-4 space-y-4">
-            <p className="text-xs text-[var(--color-text-muted)]" role="note">
-              {t.crear.shipments.orderNote}
-            </p>
+            {extraShipments.length > 0 && (
+              <p className="text-xs text-[var(--color-text-muted)]" role="note">
+                {t.crear.shipments.orderNote}
+              </p>
+            )}
             {extraShipments.map((s, i) => (
               <div
                 key={i}
@@ -2448,16 +2233,9 @@ export function CrearWizard({
                   </label>
                 )}
 
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold uppercase text-[var(--color-text-muted)]">
-                    {t.crear.legends.loadLocation}
-                  </p>
-                  <AddPlaceButton
-                    label={t.crear.shipments.addLoadAria}
-                    testId={`add-load-${i + 2}`}
-                    onClick={() => addLoadFrom(s)}
-                  />
-                </div>
+                <p className="mt-3 text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                  {t.crear.legends.loadLocation}
+                </p>
                 <Field
                   id={`extraLoadName${i}`}
                   label={t.crear.fields.locationName}
@@ -2500,16 +2278,9 @@ export function CrearWizard({
                   />
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <p className="text-xs font-bold uppercase text-[var(--color-text-muted)]">
-                    {t.crear.legends.unloadLocation}
-                  </p>
-                  <AddPlaceButton
-                    label={t.crear.shipments.addUnloadAria}
-                    testId={`add-unload-${i + 2}`}
-                    onClick={() => addUnloadFrom(s)}
-                  />
-                </div>
+                <p className="mt-3 text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                  {t.crear.legends.unloadLocation}
+                </p>
                 <Field
                   id={`extraUnloadName${i}`}
                   label={t.crear.fields.locationName}
@@ -2613,73 +2384,15 @@ export function CrearWizard({
                 )}
               </div>
             ))}
+            <button
+              type="button"
+              data-testid="add-shipment"
+              onClick={addBlankShipment}
+              className="text-sm font-medium text-[var(--color-primary)] underline"
+            >
+              {t.crear.shipments.addShipment}
+            </button>
           </div>
-        )}
-
-        {/* #112 correction — "Vincular carga y descarga": a lightweight,
-            visual pairing tool, never a separate legal step (the correction's
-            own words). Shown only once BOTH sides have 2+ distinct places —
-            below that, each row's own `+` already pairs unambiguously. */}
-        {step === 1 && distinctLoads.length > 1 && distinctUnloads.length > 1 && (
-          <fieldset
-            data-testid="link-panel"
-            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
-          >
-            <legend className="px-1 text-sm font-bold">{t.crear.shipments.linkPanelHeading}</legend>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              {t.crear.shipments.linkPanelHint}
-            </p>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-              <label className="block text-sm">
-                <span className="font-medium">{t.crear.shipments.linkLoadLabel}</span>
-                <select
-                  data-testid="link-load-select"
-                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
-                  value={linkLoadKey}
-                  onChange={(e) => setLinkLoadKey(e.target.value)}
-                >
-                  <option value="">{t.crear.shipments.linkPlaceholder}</option>
-                  {distinctLoads.map((p, i) => (
-                    <option key={i} value={String(i)}>
-                      {placeLabel(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-sm">
-                <span className="font-medium">{t.crear.shipments.linkUnloadLabel}</span>
-                <select
-                  data-testid="link-unload-select"
-                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
-                  value={linkUnloadKey}
-                  onChange={(e) => setLinkUnloadKey(e.target.value)}
-                >
-                  <option value="">{t.crear.shipments.linkPlaceholder}</option>
-                  {distinctUnloads.map((p, i) => (
-                    <option key={i} value={String(i)}>
-                      {placeLabel(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                data-testid="link-create"
-                disabled={linkLoadKey === "" || linkUnloadKey === ""}
-                onClick={() => {
-                  const load = distinctLoads[Number(linkLoadKey)];
-                  const unload = distinctUnloads[Number(linkUnloadKey)];
-                  if (!load || !unload) return;
-                  linkExistingPlaces(load, unload);
-                  setLinkLoadKey("");
-                  setLinkUnloadKey("");
-                }}
-                className="min-h-11 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-bold text-white disabled:opacity-40"
-              >
-                {t.crear.shipments.linkCreate}
-              </button>
-            </div>
-          </fieldset>
         )}
 
         {step === 2 && showCommercialShare && (

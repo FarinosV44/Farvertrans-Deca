@@ -835,11 +835,11 @@ export const es = {
       plateForeign:
         "No parece una matrícula española (formato 1234 BCD). Es válida si el vehículo es extranjero.",
     },
-    // #112 — varios envíos (lugares de carga/descarga) en un mismo DeCA,
-    // mediante botones "+" junto a Lugar de carga/descarga (sin selector previo).
+    // #112 ACLARACIÓN FINAL — varios envíos completos e independientes en un
+    // mismo DeCA, añadidos con un único CTA "+ Añadir otro envío"; nunca
+    // botones "+" separados junto a Lugar de carga/descarga (revertido).
     shipments: {
-      addLoadAria: "Añadir otro lugar de carga",
-      addUnloadAria: "Añadir otro lugar de descarga",
+      addShipment: "+ Añadir otro envío dentro de este DeCA",
       duplicate: "Duplicar este envío",
       remove: "Eliminar este envío",
       heading: (n: number) => `Envío ${n}`,
@@ -851,13 +851,6 @@ export const es = {
         `El Envío ${n} ya tiene datos introducidos. ¿Seguro que quieres eliminarlo?`,
       orderNote:
         "La numeración de los envíos es identificativa y no determina su orden de ejecución.",
-      linkPanelHeading: "Vincular carga y descarga",
-      linkPanelHint:
-        "Cuando hay varios lugares de carga y de descarga, indica qué relación forma un envío real.",
-      linkLoadLabel: "Origen",
-      linkUnloadLabel: "Destino",
-      linkPlaceholder: "Selecciona…",
-      linkCreate: "Vincular",
     },
     errorSummaryTitle: "Revisa estos campos:",
     lead: {

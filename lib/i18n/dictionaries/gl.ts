@@ -829,8 +829,7 @@ export const gl = {
         "Non parece unha matrícula española (formato 1234 BCD). É válida se o vehículo é estranxeiro.",
     },
     shipments: {
-      addLoadAria: "Engadir outro lugar de carga",
-      addUnloadAria: "Engadir outro lugar de descarga",
+      addShipment: "+ Engadir outro envío dentro deste DeCA",
       duplicate: "Duplicar este envío",
       remove: "Eliminar este envío",
       heading: (n: number) => `Envío ${n}`,
@@ -842,13 +841,6 @@ export const gl = {
         `O Envío ${n} xa ten datos introducidos. Seguro que queres eliminalo?`,
       orderNote:
         "A numeración dos envíos é identificativa e non determina a súa orde de execución.",
-      linkPanelHeading: "Vincular un lugar de carga e de descarga",
-      linkPanelHint:
-        "Cando hai varios lugares de carga e de descarga, indica que combinación forma un envío real.",
-      linkLoadLabel: "Orixe",
-      linkUnloadLabel: "Destino",
-      linkPlaceholder: "Selecciona…",
-      linkCreate: "Vincular",
     },
     errorSummaryTitle: "Revisa estes campos:",
     lead: {

@@ -305,9 +305,12 @@ test.describe("#119 — DECA Conecta expansion", () => {
   }) => {
     await register(page, { commercialOptIn: true });
     await fillStep1(page);
-    // The extra envío is created via #112's `+` button, which lives on the
-    // route step itself — so it's added here, before `fillRoute`'s own
-    // trailing "wizard-next" click moves past that step.
+    // The extra envío is created via #112 ACLARACIÓN FINAL's single
+    // "+ Añadir otro envío" CTA, which lives on the route step itself — so
+    // it's added here, before `fillRoute`'s own trailing "wizard-next" click
+    // moves past that step. It appends a fully blank block: both sides are
+    // filled explicitly (unlike the reverted `+` mechanism, nothing here is
+    // inherited from shipment 1).
     await page.fill("#loadLocationName", "Almacén Turia");
     await page.fill("#loadLocationAddress", "Av. del Puerto 120");
     await page.fill("#loadLocationPostalCode", "46023");
@@ -320,7 +323,11 @@ test.describe("#119 — DECA Conecta expansion", () => {
     await page.fill("#unloadLocationCity", "Madrid");
     await page.fill("#unloadLocationCountry", "España");
     await page.fill("#unloadDate", "2026-10-07");
-    await page.getByTestId("add-unload-1").click();
+    await page.getByTestId("add-shipment").click();
+    await page.fill("#extraLoadName0", "Almacén Turia");
+    await page.fill("#extraLoadAddress0", "Av. del Puerto 120");
+    await page.fill("#extraLoadPostalCode0", "46023");
+    await page.fill("#extraLoadCity0", "Valencia");
     await page.fill("#extraUnloadName0", "Plataforma Sur");
     await page.fill("#extraUnloadAddress0", "Calle Sur 10");
     await page.fill("#extraUnloadPostalCode0", "41001");

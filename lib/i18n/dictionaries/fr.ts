@@ -841,8 +841,7 @@ export const fr = {
         "Cela ne ressemble pas à une immatriculation espagnole (format 1234 BCD). Elle est valide si le véhicule est étranger.",
     },
     shipments: {
-      addLoadAria: "Ajouter un autre lieu de chargement",
-      addUnloadAria: "Ajouter un autre lieu de déchargement",
+      addShipment: "+ Ajouter un autre envoi dans ce DeCA",
       duplicate: "Dupliquer cet envoi",
       remove: "Supprimer cet envoi",
       heading: (n: number) => `Envoi ${n}`,
@@ -856,13 +855,6 @@ export const fr = {
         `L'envoi ${n} contient déjà des données. Voulez-vous vraiment le supprimer ?`,
       orderNote:
         "La numérotation des envois est purement indicative et ne détermine pas leur ordre d'exécution.",
-      linkPanelHeading: "Associer un lieu de chargement et de déchargement",
-      linkPanelHint:
-        "Lorsqu'il y a plusieurs lieux de chargement et de déchargement, indiquez quelle combinaison forme un envoi réel.",
-      linkLoadLabel: "Origine",
-      linkUnloadLabel: "Destination",
-      linkPlaceholder: "Sélectionner…",
-      linkCreate: "Associer",
     },
     errorSummaryTitle: "Vérifiez ces champs :",
     lead: {

@@ -8521,3 +8521,57 @@ documented `admin-2fa.spec.ts` flake in `docs/lessons-learned.md`.
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit unaffected,
 6/6 `creator-v2.spec.ts` with `--workers=1` (the correct read given the flake's root cause is
 concurrency, not this change).
+
+## D-239 — #112 ACLARACIÓN FINAL: reverted the per-field `+` buttons and "Vincular carga y descarga" entirely (2026-09-12)
+
+**User's instruction (URGENT, mid-session):** "Please follow the latest 'ACLARACIÓN FINAL' comments
+in issues #112 and #119. They supersede any previous incompatible specification in those issues. Do
+not preserve the old + loading/unloading UX or duplicate geographic fields in DECA Conecta." Read
+both issues' full comment history in full before touching any code, per the instruction.
+
+**What #112's ACLARACIÓN FINAL says, verbatim in spirit:** the per-field `+` buttons beside "Lugar de
+carga"/"Lugar de descarga" (D-214, #112's original build) and the "Vincular carga y descarga" panel
+(D-229, this session's own earlier correction) are BOTH explicitly reverted — "Ese patrón debe
+eliminarse del flujo porque está creando una UX confusa." The definitive model: the operator builds a
+normal single-shipment DeCA, then a single discreet CTA — "+ Añadir otro envío dentro de este DeCA" —
+appends ONE completely independent envío block (its own load, unload, mercancía, peso, destinatario,
+fechas). Nothing is inherited or auto-paired from any other shipment. Shipper, carrier, and vehicle
+(tractorPlate/trailerPlate) stay DeCA-level, asked once — unaffected by this change, and #128's fix
+(D-226, rejecting a differing per-shipment plate override) remains fully valid under this model.
+
+**What was removed from `components/deca/wizard.tsx`:**
+- `shipmentKeepingUnload()`/`shipmentKeepingLoad()` (the two `+` behaviors) and their `addLoadFrom`/
+  `addUnloadFrom` wrappers.
+- `linkExistingPlaces()`, the entire "Vincular carga y descarga" `<fieldset data-testid="link-panel">`,
+  and its `linkLoadKey`/`linkUnloadKey` state.
+- `distinctPlaces()`, `PlaceFields`, `loadPlaceOf()`/`unloadPlaceOf()`/`placeLabel()`, `RouteSide`, and
+  the `distinctLoads`/`distinctUnloads` computed values — all existed only to support the two features
+  above.
+- The `AddPlaceButton` component and its 4 call sites (shipment 1's two legends, each ENVÍO N block's
+  two mini-legends) and the now-unused `PlusIcon` import.
+
+**What was added:** one `blankShipment(deca)` constructor (every load/unload/goods/weight/recipient
+field blank; dates pre-filled from the DeCA's own dates, the clarification's own named exception for
+"claramente editable y no genera confusión") and one `addBlankShipment()` handler, wired to a single
+`data-testid="add-shipment"` button rendered once, after the last envío block (or right after shipment
+1's own fields when there are none yet) — never per-field, never conditional on place-counting.
+
+**i18n:** removed `addLoadAria`/`addUnloadAria`/`linkPanelHeading`/`linkPanelHint`/`linkLoadLabel`/
+`linkUnloadLabel`/`linkPlaceholder`/`linkCreate` from all 9 locale dictionaries; added `addShipment`
+("+ Añadir otro envío dentro de este DeCA" and translations) to all 9.
+
+**Tests:** `tests/unit/wizard-distinct-places.test.ts` deleted (the function it tested no longer
+exists). `tests/e2e/deca-multi-shipment.spec.ts` fully rewritten — the old auto-pairing/cartesian and
+linking-panel tests are gone (that behavior no longer exists to test); new tests cover: single-shipment
+flow unaffected, the CTA appends a genuinely blank envío (nothing inherited — the direct opposite
+assertion of the old suite), pressing it again appends a 3rd, vehicle-stays-shared + PDF coherence,
+duplicate/remove-with-confirmation, correction preload, responsive, and keyboard access. 2 other spec
+files that exercised the old `+`/link-panel mechanics as setup (`commercial-availability.spec.ts`'s
+"descarga final" test, `historico-redesign.spec.ts`'s `createMultiShipmentDeca()` helper) updated to
+use the new single CTA + explicit both-sides fill, preserving their own actual test intent unchanged.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 495/495 unit (-5, the
+deleted test file), 9/9 rewritten `deca-multi-shipment.spec.ts`, 19/19 `commercial-availability.spec.ts`
++ 12/12 `historico-redesign.spec.ts` (both updated), plus a regression sweep — 6/6 `creator-v2.spec.ts`
+(`--workers=1`), 2/2 `doc-cockpit.spec.ts`, 5/5 `launch-gate.spec.ts`, 7/7 `workspace.spec.ts` incl. its
+a11y scan — all green.

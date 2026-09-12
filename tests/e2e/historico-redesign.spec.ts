@@ -55,13 +55,17 @@ async function createMultiShipmentDeca(page: Page) {
   await page.fill("#unloadLocationCity", "Madrid");
   await page.fill("#unloadDate", "2026-10-06");
 
-  // #112: no toggle — pressing "+" beside "Lugar de carga" adds a second
-  // envío that keeps shipment 1's unload side (Madrid) automatically.
-  await page.getByTestId("add-load-1").click();
+  // #112 ACLARACIÓN FINAL — "+ Añadir otro envío" appends one completely
+  // independent envío block (its own load AND unload, nothing inherited).
+  await page.getByTestId("add-shipment").click();
   await page.fill("#extraLoadName0", "Almacén Castellón");
   await page.fill("#extraLoadAddress0", "Av. del Mar 5");
   await page.fill("#extraLoadPostalCode0", "12003");
   await page.fill("#extraLoadCity0", "Castellón de la Plana");
+  await page.fill("#extraUnloadName0", "Plataforma Norte");
+  await page.fill("#extraUnloadAddress0", "Calle Alcalá 200");
+  await page.fill("#extraUnloadPostalCode0", "28028");
+  await page.fill("#extraUnloadCity0", "Madrid");
   await page.fill("#extraGoods0", "Azulejos");
   await page.fill("#extraWeight0", "8000 kg");
 
