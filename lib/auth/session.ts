@@ -1,13 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { requireHashSecret } from "@/lib/env";
 
 const MAX_AGE_S = 60 * 60 * 24 * 30; // 30 days
 
 /** `tv` = unix seconds of the last successful admin TOTP check this session (SECURITY #53). */
 type Payload = { uid: string; iat: number; sv: number; tv?: number };
-
-function secret(): string {
-  return process.env.FVD_HASH_SECRET ?? "insecure-dev-secret";
-}
 
 function b64url(input: Buffer | string): string {
   return Buffer.from(input).toString("base64url");
@@ -27,7 +24,7 @@ export function signSession(uid: string, sessionVersion: number, totpVerifiedAt?
     ...(totpVerifiedAt ? { tv: totpVerifiedAt } : {}),
   };
   const body = b64url(JSON.stringify(payload));
-  const sig = b64url(createHmac("sha256", secret()).update(body).digest());
+  const sig = b64url(createHmac("sha256", requireHashSecret()).update(body).digest());
   return `${body}.${sig}`;
 }
 
@@ -35,7 +32,7 @@ export function signSession(uid: string, sessionVersion: number, totpVerifiedAt?
 export function verifySession(token: string | undefined): Payload | null {
   if (!token || !token.includes(".")) return null;
   const [body, sig] = token.split(".");
-  const expected = b64url(createHmac("sha256", secret()).update(body).digest());
+  const expected = b64url(createHmac("sha256", requireHashSecret()).update(body).digest());
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;

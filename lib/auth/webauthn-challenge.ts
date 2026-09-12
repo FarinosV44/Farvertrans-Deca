@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { requireHashSecret } from "@/lib/env";
 
 /**
  * Signed, short-lived, stateless carrier for a WebAuthn ceremony's
@@ -13,10 +14,6 @@ const MAX_AGE_S = 5 * 60; // 5 minutes — generous for Face ID/Touch ID prompts
 
 type ChallengePayload = { challenge: string; userId: string; iat: number };
 
-function secret(): string {
-  return process.env.FVD_HASH_SECRET ?? "insecure-dev-secret";
-}
-
 function b64url(input: Buffer | string): string {
   return Buffer.from(input).toString("base64url");
 }
@@ -25,7 +22,7 @@ function b64url(input: Buffer | string): string {
 export function createWebAuthnChallenge(challenge: string, userId: string): string {
   const payload: ChallengePayload = { challenge, userId, iat: Math.floor(Date.now() / 1000) };
   const body = b64url(JSON.stringify(payload));
-  const sig = b64url(createHmac("sha256", secret()).update(body).digest());
+  const sig = b64url(createHmac("sha256", requireHashSecret()).update(body).digest());
   return `${body}.${sig}`;
 }
 
@@ -40,7 +37,7 @@ export function verifyWebAuthnChallenge(
 ): string | null {
   if (!cookieValue || !cookieValue.includes(".")) return null;
   const [body, sig] = cookieValue.split(".");
-  const expected = b64url(createHmac("sha256", secret()).update(body).digest());
+  const expected = b64url(createHmac("sha256", requireHashSecret()).update(body).digest());
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;

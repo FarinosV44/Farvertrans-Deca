@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { requireHashSecret } from "@/lib/env";
 
 /**
  * Super Admin backup password (#91) — an offline recovery path for the
@@ -13,8 +14,7 @@ import { prisma } from "@/lib/prisma";
  * bundle. Comparison is constant-time and length-blind (HMAC both sides).
  */
 
-const secret = () => process.env.FVD_HASH_SECRET ?? "insecure-dev-secret";
-const digest = (s: string) => createHmac("sha256", secret()).update(s).digest();
+const digest = (s: string) => createHmac("sha256", requireHashSecret()).update(s).digest();
 const keyFor = (userId: string) =>
   createHash("sha256").update(`admin_backup:${userId}`).digest("hex");
 

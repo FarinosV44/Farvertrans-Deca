@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { requireHashSecret } from "@/lib/env";
 
 /**
  * Signed, short-lived CSRF state for the Google OAuth redirect round trip
@@ -12,10 +13,6 @@ const MAX_AGE_S = 10 * 60; // 10 minutes — just long enough for a real consent
 
 type StatePayload = { nonce: string; invite?: string; iat: number };
 
-function secret(): string {
-  return process.env.FVD_HASH_SECRET ?? "insecure-dev-secret";
-}
-
 function b64url(input: Buffer | string): string {
   return Buffer.from(input).toString("base64url");
 }
@@ -25,7 +22,7 @@ export function createOAuthState(invite?: string): { cookieValue: string; nonce:
   const nonce = randomBytes(16).toString("base64url");
   const payload: StatePayload = { nonce, invite, iat: Math.floor(Date.now() / 1000) };
   const body = b64url(JSON.stringify(payload));
-  const sig = b64url(createHmac("sha256", secret()).update(body).digest());
+  const sig = b64url(createHmac("sha256", requireHashSecret()).update(body).digest());
   return { cookieValue: `${body}.${sig}`, nonce };
 }
 
@@ -43,7 +40,7 @@ export function verifyOAuthState(
 } {
   if (!cookieValue || !queryState || !cookieValue.includes(".")) return { ok: false };
   const [body, sig] = cookieValue.split(".");
-  const expected = b64url(createHmac("sha256", secret()).update(body).digest());
+  const expected = b64url(createHmac("sha256", requireHashSecret()).update(body).digest());
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return { ok: false };

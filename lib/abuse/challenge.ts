@@ -1,4 +1,5 @@
 import { createHash, createHmac } from "node:crypto";
+import { requireHashSecret } from "@/lib/env";
 
 /**
  * Proof-of-work fallback for when hCaptcha is not configured.
@@ -12,12 +13,11 @@ import { createHash, createHmac } from "node:crypto";
 export const POW_DIFFICULTY = 4; // hex leading zeros
 const PREFIX_TTL_BUCKETS = 2; // accept the current bucket and the previous one
 
-function secret(): string {
-  return process.env.FVD_HASH_SECRET ?? "insecure-dev-secret";
-}
-
 function sign(scope: string, bucket: number): string {
-  return createHmac("sha256", secret()).update(`${scope}:${bucket}`).digest("hex").slice(0, 24);
+  return createHmac("sha256", requireHashSecret())
+    .update(`${scope}:${bucket}`)
+    .digest("hex")
+    .slice(0, 24);
 }
 
 /** A fresh signed challenge prefix for `scope`. */

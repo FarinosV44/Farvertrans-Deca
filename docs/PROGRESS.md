@@ -44,6 +44,25 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-220 — #123 [P0] fixed: removed the `FVD_HASH_SECRET` insecure-fallback pattern from
+  `lib/auth/session.ts`/`lib/hash.ts`/`lib/abuse/challenge.ts`/`lib/admin/backup-password.ts`/
+  `lib/auth/oauth-state.ts`/`lib/auth/webauthn-challenge.ts`, this session (2026-09-12). Full detail
+  in `docs/decisions.md` D-220.** New shared `requireHashSecret()` (`lib/env.ts`, throws if
+  missing/<16 chars, no fallback); new `instrumentation.ts` calls `getEnv()` at boot (nodejs runtime)
+  so a misconfigured deploy now fails closed instead of silently serving with a publicly-known
+  secret — verified end-to-end with a real `next start` run (every request 500s when the var is
+  empty, confirmed by log + curl, not just a unit assertion). New `tests/unit/setup-env.ts`
+  (vitest `setupFiles`) gives unit tests a valid test secret, since Vitest never loaded `.env` and
+  11 existing tests across 4 files were silently depending on the removed fallback. Test-first:
+  `tests/unit/hash-secret-required.test.ts`, 8 cases, observed red (7/8) before the fix, green after.
+  **Gate: tsc/eslint/prettier/keel-verify clean, 466/466 unit (+8 new), production build clean,
+  39/39 targeted e2e regression** (`admin-2fa`, `admin-account-lifecycle`, `admin-passkey`,
+  `auth-ux`, `auth-entrypoints`, `register-duplicate-race`, `register-loading-state` — incl. the
+  previously-flaky recovery-code-replay test, green this run). `docs/api/INDEX.md` updated.
+  **Separate pre-existing gap noticed, not fixed (out of scope):** `docs/reference/lib.md` and
+  `docs/reference/endpoints.md`, which nearly every INDEX.md row points to, do not exist anywhere in
+  the repo — `docs/api/` contains only `INDEX.md`. Predates this session. Committed to `develop`,
+  not yet pushed/merged — next action closes #123 with a comment once pushed.
 - **Full repository code-review / regression audit, this session (2026-09-12), requested by the
   user independently of any single issue.** Scope: architecture/data flow, DB schema/Prisma/
   migrations, auth/authz/tenant isolation, superadmin, all DeCA creation flows (single +

@@ -48,6 +48,25 @@ export function getEnv(): ServerEnv {
   return cached;
 }
 
+/**
+ * The one secret every session/CSRF/challenge-signing helper depends on. Has
+ * NO fallback: a missing or too-short value throws immediately rather than
+ * silently keying off a hardcoded default that is visible in this (public)
+ * repository (#123). Deliberately independent of the full `getEnv()` schema
+ * so every caller — including ones that must not depend on Supabase/DB
+ * config — can enforce just this one requirement.
+ */
+export function requireHashSecret(): string {
+  const value = process.env.FVD_HASH_SECRET;
+  if (!value || value.length < 16) {
+    throw new Error(
+      "FVD_HASH_SECRET is required (>=16 chars) and has no insecure fallback — " +
+        "refusing to sign or hash with a guessable secret.",
+    );
+  }
+  return value;
+}
+
 /** Values safe to read on the client. */
 export const publicEnv = {
   // Normalized here, once: every call site builds URLs as `${baseUrl}/path`,

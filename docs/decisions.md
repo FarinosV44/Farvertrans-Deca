@@ -7829,3 +7829,57 @@ regression — both pre-existing test-authoring gaps exposed by the merge):
 
 **Next:** comment on issues #112 and #119 noting they are merged and live, leaving both OPEN for the
 user's own confirmation, matching the established practice for #118/#122.
+
+## D-219 — Full repository audit; P0/P1 findings opened as forge issues before any fix work (2026-09-12)
+
+The user requested a full code-review/regression audit of the entire project (not one feature), then
+said "go ahead" to opening tracked issues for the findings. Per this project's recorded "Issue
+capture: on" policy, the P0 and P1 findings (8 total) were opened on the forge as issues **#123–#130**
+*before* any fix work started, each in English per the forge-issue language rule, with file/repro/fix
+detail. P2/P3 findings and the full structured report were handed to the user in-conversation rather
+than duplicated into `docs/` — see `docs/issues.md`'s "Full code review / regression audit" entry for
+the summary and issue list. No code was changed by the audit itself.
+
+## D-220 — #123: removed the `FVD_HASH_SECRET` insecure-fallback pattern from 6 files; added boot enforcement (2026-09-12)
+
+**Problem (P0, found by the audit):** `lib/auth/session.ts` (signs the session cookie), `lib/hash.ts`,
+`lib/abuse/challenge.ts`, `lib/admin/backup-password.ts`, `lib/auth/oauth-state.ts`, and
+`lib/auth/webauthn-challenge.ts` each independently fell back to the literal string
+`"insecure-dev-secret"` when `FVD_HASH_SECRET` was unset — and nothing enforced the var's presence at
+boot (`getEnv()`, which validates it, was only ever called lazily inside `lib/supabase/server.ts`'s
+Storage helpers). Since this repo is public, a misconfigured deploy missing that one env var would
+silently start serving traffic with a publicly-known session-signing secret — a full auth-bypass path,
+not just a weakened IP-hash.
+
+**Fix:**
+- New `requireHashSecret()` in `lib/env.ts` — the one shared getter (throws if missing/<16 chars, no
+  fallback); all 6 files now call it instead of each duplicating the same unsafe one-liner.
+- New `instrumentation.ts` (Next.js boot hook) calls `getEnv()` once per server instance (nodejs
+  runtime only), making the module's own long-standing "fail fast on boot" docstring true for the
+  first time — verified end-to-end: with `FVD_HASH_SECRET` forced empty, `next start` now fails to
+  prepare the server and every request 500s (confirmed via a real `next start` run, not just a unit
+  assertion) instead of booting normally with the guessable fallback.
+- New `tests/unit/setup-env.ts` (wired via `vitest.config.ts`'s `setupFiles`) gives unit tests a valid
+  test-only secret — Vitest never loaded `.env`, so every test touching these 6 modules was silently
+  depending on the now-removed fallback; without this, removing it broke 11 previously-green tests
+  across 4 files for the wrong reason (missing test fixture, not a real regression).
+- Test-first (bug fix, UNBREAKABLE): `tests/unit/hash-secret-required.test.ts` — 8 cases (one per
+  affected module + a too-short-secret case + a valid-secret control case), observed red (7/8 failing,
+  "expected to throw" but didn't) against the pre-fix code, green after.
+- `verifyOAuthState()`/`verifyWebAuthnChallenge()` are documented as "never throws" for a
+  tampered/expired *input* — that contract is unaffected: `requireHashSecret()` can only throw for a
+  missing/short *secret*, which the boot hook now guarantees never happens once the server is actually
+  serving requests.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 466/466 unit (+8 new), production build clean,
+targeted e2e regression sweep 39/39 green (`admin-2fa.spec.ts`, `admin-account-lifecycle.spec.ts`,
+`admin-passkey.spec.ts`, `auth-ux.spec.ts`, `auth-entrypoints.spec.ts`, `register-duplicate-race.spec.ts`,
+`register-loading-state.spec.ts` — incl. the previously-flaky recovery-code-replay test, green this
+run). `docs/api/INDEX.md` updated (`requireHashSecret()`, `instrumentation.ts`'s `register()`, and the
+`hashIdentifier()`/`getEnv()` rows amended to note the new behavior).
+
+**Not fixed here (separate, unrelated, pre-existing gap noticed while reading `docs/api/INDEX.md`):**
+`docs/reference/lib.md` and `docs/reference/endpoints.md` — the doc files nearly every INDEX.md row
+points to — do not exist anywhere in the repo (`docs/api/` contains only `INDEX.md`). This predates
+this session and predates the audit; flagged to the user, not fixed as part of #123 (large, unrelated
+reconstruction).

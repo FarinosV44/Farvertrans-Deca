@@ -1137,11 +1137,10 @@ started; no code changed by the audit itself.
 - **I-123 — #123 [P0 Security] `FVD_HASH_SECRET` falls back to a hardcoded public string in 6 files
   (`lib/auth/session.ts` — signs the session cookie itself — plus `lib/hash.ts`,
   `lib/abuse/challenge.ts`, `lib/admin/backup-password.ts`, `lib/auth/oauth-state.ts`,
-  `lib/auth/webauthn-challenge.ts`), unenforced at boot.** `getEnv()` (which validates this var) is
-  never called at startup — confirmed by grep, only invoked lazily inside `lib/supabase/server.ts`'s
-  Storage helpers. Repo is public, so a missing env var (misconfigured redeploy) makes the fallback
-  secret public knowledge → forgeable session cookies for any user id, including superadmin. Not
-  started.
+  `lib/auth/webauthn-challenge.ts`), unenforced at boot.** **FIXED, this session (D-220):** shared
+  `requireHashSecret()` (throws, no fallback) + `instrumentation.ts` boot enforcement, verified
+  end-to-end with a real `next start` run. Gate: 466/466 unit (+8 new, test-first), 39/39 targeted
+  e2e. Committed to `develop`, not yet pushed. Comment + close pending push.
 - **I-124 — #124 [P1 Security] Team invite token not bound to the invited email.** `acceptInvite`/
   `signup`'s invite branch/`completeCompanyForUser`'s invite branch never check
   `session.user.email === invite.email` before `joinCompany()` — a leaked/forwarded invite link can be
