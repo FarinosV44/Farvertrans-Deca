@@ -1153,8 +1153,9 @@ started; no code changed by the audit itself.
   structurally can't exercise rate-limiting), 39/39 targeted e2e regression. Committed to
   `develop`, not yet pushed. Comment + close pending push.
 - **I-126 — #126 [P1 Security] CSV history export vulnerable to formula/CSV injection.**
-  `csvField()` (`lib/deca/export.ts`) does RFC 4180 quoting only, never neutralizes a leading
-  `=`/`+`/`-`/`@` in a free-text field (carrier/shipper name, location, goods). Not started.
+  **FIXED, this session (D-223):** `csvField()` now prefixes a leading `=`/`+`/`-`/`@` with `'`.
+  Gate: 472/472 unit (+2 new, test-first), `export-csv.spec.ts` 3/3. Committed to `develop`, not
+  yet pushed. Comment + close pending push.
 - **I-127 — #127 [P1 Tech debt / Security] No centralized logging/redaction framework.** `pino` is
   not an actual dependency despite being the documented mandatory convention
   (`.claude/rules/code-style.md`, `docs/03-technical-plan.md`); every log call site does ad hoc

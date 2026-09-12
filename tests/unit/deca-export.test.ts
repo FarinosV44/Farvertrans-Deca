@@ -65,4 +65,24 @@ describe("historyToCsv (PRODUCT #34 §3)", () => {
     expect(csv).toContain('"Cargas, ""El Puerto"" SL"');
     expect(csv).toContain('"línea 1\nlínea 2"');
   });
+
+  it("#126 neutralizes formula/CSV-injection characters (=, +, -, @) leading a free-text field", () => {
+    // A carrier/shipper/goods name is free-text a counterparty can type. If it
+    // starts with one of these, Excel/LibreOffice evaluates the cell as a
+    // formula instead of showing it as text when the exported CSV is opened.
+    const csv = historyToCsv([
+      row({ shipper: "=1+1", carrier: "+CMD", loadLocation: "-2+3", goods: "@SUM(A1:A2)" }),
+    ]);
+    const dataLine = csv.trimEnd().split("\r\n")[1];
+    expect(dataLine).not.toMatch(/,=1\+1,/);
+    expect(dataLine).toContain(",'=1+1,");
+    expect(dataLine).toContain(",'+CMD,");
+    expect(dataLine).toContain(",'-2+3,");
+    expect(dataLine).toContain(",'@SUM(A1:A2),");
+  });
+
+  it("#126 leaves an ordinary field (no leading =/+/-/@) completely unmodified", () => {
+    const csv = historyToCsv([row({ shipper: "Cargas SL" })]);
+    expect(csv).toContain(",Cargas SL,");
+  });
 });

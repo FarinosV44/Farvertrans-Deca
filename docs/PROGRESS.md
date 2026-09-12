@@ -44,6 +44,12 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-223 — #126 [P1] fixed: CSV history export now neutralizes formula/CSV-injection characters,
+  this session (2026-09-12). Full detail in `docs/decisions.md` D-223.** `csvField()` prefixes a
+  leading `=`/`+`/`-`/`@` with `'` (the standard "force text" convention) before RFC 4180 quoting.
+  Test-first: 2 new cases in `tests/unit/deca-export.test.ts`, observed red before the fix. Gate:
+  tsc/eslint/prettier/keel-verify clean, 472/472 unit (+2 new), `export-csv.spec.ts` 3/3. Committed
+  to `develop`, not yet pushed.
 - **D-222 — #125 [P1] fixed: `/d/[token]`'s 404 path now calls the `d_404` abuse policy that was
   declared but never wired in, this session (2026-09-12). Full detail in `docs/decisions.md`
   D-222.** `notFound()` now calls `checkAbuse("d_404", ...)` — 429 at the hard tier, never a

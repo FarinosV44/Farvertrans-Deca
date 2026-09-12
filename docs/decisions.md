@@ -7950,3 +7950,23 @@ imports the real route handler directly (mocking only its DB/hash dependencies) 
 39/39 (`compliance.spec.ts`, `driver-delivery.spec.ts`, `launch-gate.spec.ts` incl. "public tokens are
 high-entropy and not enumerable" and "no cross-tenant data access", `seo-regression.spec.ts`) — no
 legitimate document open affected.
+
+## D-223 — #126: CSV history export now neutralizes formula/CSV-injection characters (2026-09-12)
+
+**Problem (P1, found by the audit):** `csvField()` (`lib/deca/export.ts`) implemented RFC 4180 quoting
+only — a leading `=`, `+`, `-`, or `@` in a free-text column (shipper/carrier name, a location, goods —
+all counterparty-typed) is interpreted as a formula by Excel/LibreOffice when the exported CSV is
+opened.
+
+**Fix:** `csvField()` now prefixes any value matching `/^[=+\-@\t\r]/` with a plain apostrophe `'`
+before the existing RFC 4180 quoting — the standard "force text" convention every major spreadsheet
+app (Excel, Google Sheets, LibreOffice) honors, so the value still displays correctly, just never as a
+formula.
+
+**Test-first (bug fix, UNBREAKABLE):** 2 new cases added to `tests/unit/deca-export.test.ts` — one
+proving all four trigger characters are neutralized, one proving an ordinary value is left completely
+unmodified. Observed red against the pre-fix code (the raw `=1+1`/`+CMD`/`-2+3`/`@SUM(...)` values
+appeared unmodified in the CSV output) before the fix.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 472/472 unit (+2 new),
+`tests/e2e/export-csv.spec.ts` 3/3 green.

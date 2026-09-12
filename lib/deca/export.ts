@@ -16,9 +16,18 @@ export function docWorkflowStatus(row: Pick<HistoryRow, "versionNo" | "status">)
   return row.versionNo > 1 ? "Corregida" : "Vigente";
 }
 
-/** RFC 4180 field quoting. */
+/**
+ * RFC 4180 field quoting, PLUS formula/CSV-injection neutralisation (#126):
+ * every column here can carry a counterparty's free-text (shipper/carrier
+ * name, a location, goods) that this app never controls. A leading
+ * `=`/`+`/`-`/`@` is interpreted as a formula by Excel/LibreOffice when the
+ * exported CSV is opened, so it is prefixed with `'` — a plain apostrophe
+ * that Excel/Sheets/LibreOffice all treat as "force text", never rendered as
+ * part of the value in any of them — before the normal RFC 4180 quoting.
+ */
 function csvField(v: string | number): string {
-  const s = String(v ?? "");
+  let s = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
