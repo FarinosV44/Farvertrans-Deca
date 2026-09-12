@@ -8012,3 +8012,15 @@ restoring the fix (`git stash pop`).
 `mailer`), targeted e2e regression (`reliability.spec.ts` 7/7, `register-loading-state.spec.ts` 1/1) —
 `safeErrorSummary`'s existing redaction test (`generation-error.test.ts`) unaffected, confirming the
 extraction preserved behavior exactly.
+
+## D-225 — user's explicit instruction: fast-forward `develop` into `main` after #123–#127 (2026-09-12)
+
+Mid-session, while #128 was being investigated (files read, no code written yet), the user
+interrupted: "push to main since 123 to now and we will continue later." Per Keel's git-flow rule,
+`main` is never merged into on the assistant's own initiative — this was an explicit instruction, so
+it proceeded. Verified `main` (`519ee6f`) was a strict ancestor of `develop` (`b0093e7`) — fast-forward,
+no merge commit, no conflict resolution needed — then `git checkout main && git merge --ff-only
+develop && git push origin main`, followed by switching back to `develop`. `main` now carries D-219
+through D-224 (the audit record and the #123/#124/#125/#126/#127 fixes). Work paused here on the
+user's own instruction; #128, #129, #130 (all P1) and every P2/P3 audit finding remain open, to be
+picked up in a later session.
