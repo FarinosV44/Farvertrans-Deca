@@ -8640,3 +8640,28 @@ preserving each test's original intent.
 **Gate:** tsc/eslint/prettier/keel-verify clean, production build clean, 498/498 unit (+3 net new),
 19/19 `commercial-availability.spec.ts` (rewritten), 23/23 `commercial-consent.spec.ts` (fully
 unaffected), 6/6 `admin-rsc-authz.spec.ts`.
+
+## D-241 — `develop` merged to `main` through D-240; the pending D-240 migration applied to production (2026-09-12)
+
+**User's explicit instruction:** "push to man[in] verify no gap and no new migrations", then a
+temporary production `DATABASE_URL`/`DIRECT_URL` pasted in chat a second time (same pattern as
+D-158/D-203/D-235) after this session reported the one pending migration honestly instead of assuming
+none existed.
+
+**Merge:** `develop` (`fdaaaa0`, through D-240) fast-forwarded into `main` cleanly — `git diff main
+develop` empty after. Full gate (`tsc`/`eslint`/`prettier`/`keel-verify`) re-run on `main` directly
+before pushing, clean.
+
+**Migration:** `prisma migrate status` against production (run BEFORE assuming anything) found exactly
+the one expected pending migration — `20260912180000_availability_preferred_destination_country`
+(D-240's `DROP COLUMN preferred_destination` / `ADD COLUMN preferred_destination_country`). Applied via
+`prisma migrate deploy`, confirmed "up to date" immediately after. No new table involved, so no RLS
+re-enrollment was needed.
+
+**Outstanding, unchanged from D-235:** production APP CODE is still not redeployed (a separate
+Hostinger action); the DB password/anon-key rotation is still the most urgent open item — this is
+ANOTHER live production credential pasted into a chat transcript (same recurring pattern first
+flagged at D-158), making rotation more overdue with each repetition, not less.
+
+**Gate:** no application code changed by this entry — verification only. `prisma migrate status`
+confirms production before and after. `git diff main develop` confirms the merge.
