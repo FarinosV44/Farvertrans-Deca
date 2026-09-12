@@ -133,6 +133,65 @@ test.describe("#113 Phase 2 — Datos habituales redesign", () => {
     await expect(page.getByText("Castellón → Madrid")).toHaveCount(0);
   });
 
+  // #133 — a SavedLocation still referenced by a SavedShipment is DB-level
+  // RESTRICTed; deleting it must surface a clear message, never a silent
+  // no-op or a raw error, and the location must survive the attempt.
+  test("#133: deleting a location still used by a saved route shows a clear error, not a silent failure", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/panel/datos");
+    await page.getByTestId("tab-location").click();
+    await addLocation(page, {
+      name: "Fábrica Castellón",
+      address: "Pol. Ind. 1",
+      postalCode: "12004",
+      city: "Castellón",
+      type: "load",
+    });
+    await addLocation(page, {
+      name: "Nave Sur",
+      address: "Calle Sur 9",
+      postalCode: "28002",
+      city: "Madrid",
+      type: "unload",
+    });
+
+    await page.getByTestId("tab-shipment").click();
+    await page.getByTestId("add-shipment").click();
+    await page.fill("#s-name", "Castellón → Madrid");
+    await page
+      .getByTestId("s-load-location")
+      .selectOption({ label: "FÁBRICA CASTELLÓN — CASTELLÓN" });
+    await page.getByTestId("s-unload-location").selectOption({ label: "NAVE SUR — MADRID" });
+    await page.getByRole("dialog").getByRole("button", { name: "Guardar" }).click();
+    await expect(page.getByText("Castellón → Madrid")).toBeVisible();
+
+    // try to delete a location the route above still points to
+    await page.getByTestId("tab-location").click();
+    await page
+      .locator("li", { hasText: "FÁBRICA CASTELLÓN" })
+      .getByRole("button", { name: "Borrar" })
+      .click();
+
+    await expect(page.locator('p[role="alert"]')).toContainText(/en uso|ruta/i);
+    await expect(page.getByText("FÁBRICA CASTELLÓN")).toBeVisible();
+
+    // the OTHER (unreferenced) location still deletes normally
+    await addLocation(page, {
+      name: "Almacén Libre",
+      address: "Calle Suelta 3",
+      postalCode: "46001",
+      city: "Valencia",
+      type: "both",
+    });
+    await page
+      .locator("li", { hasText: "ALMACÉN LIBRE" })
+      .getByRole("button", { name: "Borrar" })
+      .click();
+    await expect(page.getByText("ALMACÉN LIBRE")).toHaveCount(0);
+  });
+
   test("global search filters the active tab's list", async ({ page }) => {
     await register(page);
     await page.goto("/panel/datos");

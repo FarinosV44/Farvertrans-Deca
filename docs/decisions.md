@@ -8313,3 +8313,30 @@ guard — and that the surviving owner still has admin access afterward. Confirm
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 498/498 unit unaffected
 (no unit-tested logic touched — this is DB-transaction behavior, not pure logic), 12/12
 `team.spec.ts` (11 pre-existing + 1 new) green.
+
+## D-233 — #133 [P2 audit finding, correctness]: deleting a still-referenced SavedLocation now surfaces a clear error (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `SavedShipment` references two `SavedLocation` rows
+with `onDelete: Restrict` — the schema's own doc comment already promised "the API surfaces a clear
+error instead" of a silent cascade, but it didn't: `lib/data/saved.ts`'s `deleteSaved()` never caught
+the resulting Prisma `P2003` foreign-key violation, so it propagated as an unhandled exception. Worse,
+the client's `remove()` (`components/app/saved-data-manager.tsx`) never checked the fetch response at
+all — a failed delete, for ANY reason, showed the user nothing.
+
+**Reproduction:** new e2e test `#133` (`tests/e2e/datos-habituales-rutas.spec.ts`) creates 2 locations,
+saves a route referencing both, then tries to delete one of the referenced locations. Confirmed RED
+first: no error banner appeared (the client silently ignored the failed request) and the server logged
+a raw Prisma error object.
+
+**Fix:** `deleteSaved()` catches `Prisma.PrismaClientKnownRequestError` with `code === "P2003"` and
+throws a new typed `SavedInUseError`; the route handler's `DELETE` now wraps the call in try/catch and
+maps that to a `409` (`{ error: { code: "in_use", message } }`); the client's `remove()` checks
+`res.ok` and surfaces the message via the component's existing `role="alert"` error banner (previously
+only used by the create/edit form) instead of silently calling `router.refresh()` regardless.
+
+**Test-first / verification:** the same test also confirms the OTHER, unreferenced location still
+deletes normally right after — proving the fix doesn't block legitimate deletes, only the
+DB-restricted case.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 498/498 unit unaffected,
+5/5 `datos-habituales-rutas.spec.ts` (4 pre-existing + 1 new).

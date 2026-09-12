@@ -185,8 +185,18 @@ export function DatosHabitualesManager({
 
   async function remove(kind: SavedKind, id: string) {
     setBusy(true);
-    await fetch(apiPath(kind, id), { method: "DELETE" });
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch(apiPath(kind, id), { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error?.message ?? "No se pudo eliminar.");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      setError("Sin conexión.");
+    }
     setBusy(false);
   }
 

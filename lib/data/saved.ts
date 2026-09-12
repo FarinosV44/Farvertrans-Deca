@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@/prisma/generated/client";
 import { prisma } from "@/lib/prisma";
 import {
   savedCompanySchema,
@@ -6,6 +7,18 @@ import {
   savedVehicleSchema,
   type SavedKind,
 } from "./saved-schema";
+
+/**
+ * #133: a `SavedLocation` still referenced by a `SavedShipment` is
+ * DB-level RESTRICTed (see the schema's own comment on `SavedShipment`) —
+ * deleting it must surface a clear message, not a raw Prisma error.
+ */
+export class SavedInUseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SavedInUseError";
+  }
+}
 
 /**
  * Saved-entity CRUD (WORKSPACE #24). Scoped to the COMPANY — a shared team
@@ -170,13 +183,22 @@ export async function deleteSaved(
   id: string,
 ): Promise<boolean> {
   const where = { id, companyId };
-  const res =
-    kind === "company"
-      ? await prisma.savedCompany.deleteMany({ where })
-      : kind === "vehicle"
-        ? await prisma.savedVehicle.deleteMany({ where })
-        : await prisma.savedLocation.deleteMany({ where });
-  return res.count > 0;
+  try {
+    const res =
+      kind === "company"
+        ? await prisma.savedCompany.deleteMany({ where })
+        : kind === "vehicle"
+          ? await prisma.savedVehicle.deleteMany({ where })
+          : await prisma.savedLocation.deleteMany({ where });
+    return res.count > 0;
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+      throw new SavedInUseError(
+        "Este lugar está en uso en una ruta habitual guardada. Elimina o edita esa ruta primero.",
+      );
+    }
+    throw e;
+  }
 }
 
 /**

@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { deleteSaved, savedKinds, updateSaved, type SavedKind } from "@/lib/data/saved";
+import {
+  deleteSaved,
+  SavedInUseError,
+  savedKinds,
+  updateSaved,
+  type SavedKind,
+} from "@/lib/data/saved";
 
 export const runtime = "nodejs";
 
@@ -21,9 +27,16 @@ export async function DELETE(
     return NextResponse.json({ error: { code: "bad_kind" } }, { status: 404 });
   }
 
-  const ok = await deleteSaved(user.companyId, kind as SavedKind, id);
-  // Deleting a saved entity never touches any generated DeCA — those hold copies.
-  return NextResponse.json({ ok }, { status: ok ? 200 : 404 });
+  try {
+    const ok = await deleteSaved(user.companyId, kind as SavedKind, id);
+    // Deleting a saved entity never touches any generated DeCA — those hold copies.
+    return NextResponse.json({ ok }, { status: ok ? 200 : 404 });
+  } catch (e) {
+    if (e instanceof SavedInUseError) {
+      return NextResponse.json({ error: { code: "in_use", message: e.message } }, { status: 409 });
+    }
+    return NextResponse.json({ error: { code: "internal" } }, { status: 500 });
+  }
 }
 
 /** Edit an existing saved entity in place (#86 part 1). Same schema/validation as create. */

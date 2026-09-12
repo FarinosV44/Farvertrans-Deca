@@ -44,6 +44,13 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-233 — #133 [P2 audit finding] fixed: deleting a still-referenced `SavedLocation` now surfaces
+  a clear error instead of failing silently, this session (2026-09-12). Full detail in
+  `docs/decisions.md` D-233.** `deleteSaved()` now catches the Prisma `P2003` FK violation and
+  throws a typed `SavedInUseError`; the route maps it to 409; the client's `remove()` now checks
+  the response and shows the message via the existing error banner (previously ignored the response
+  entirely). Gate: tsc/eslint/prettier clean, 498/498 unit unaffected, 5/5
+  `datos-habituales-rutas.spec.ts` (4 pre-existing + 1 new). Committed to `develop`, not yet pushed.
 - **D-232 — #132 [P2 audit finding] fixed: last-owner removal/demotion race in `lib/team.ts`, this
   session (2026-09-12). Full detail in `docs/decisions.md` D-232.** `removeMember()`/`changeRole()`
   checked "at least one owner remains" BEFORE the write transaction — two owners removing/demoting
