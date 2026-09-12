@@ -44,6 +44,14 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-238 — #136 [P2 audit finding] fixed: templates list "Usar" link now actually applies the
+  template, this session (2026-09-12). Full detail in `docs/decisions.md` D-238.** `/crear?template=
+  <id>` now applies once on mount via a shared `applyTemplate()` extracted from the dropdown's
+  onChange. New e2e case verified red-then-green. **Also found and recorded, NOT fixed (out of
+  scope): a pre-existing flake** — `wizard.tsx`'s draft PUT/DELETE are both fire-and-forget, and can
+  race under parallel-worker load, occasionally restoring a stale draft. Gate: tsc/eslint/prettier
+  clean, 500/500 unit unaffected, 6/6 `creator-v2.spec.ts` with `--workers=1`. Committed to
+  `develop`, not yet pushed.
 - **D-237 — #131 correction: the mobile Historial filter form still collided at 375/390/430px, this
   session (2026-09-12). Full detail in `docs/decisions.md` D-237.** D-231's own fix was wrong for 3
   of its 4 target widths: `app/globals.css` redefines `--breakpoint-sm: 360px` (not Tailwind's stock

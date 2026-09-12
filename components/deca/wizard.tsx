@@ -945,6 +945,7 @@ export function CrearWizard({
   initial,
   saved,
   templates,
+  initialTemplateId,
   company,
   commercialTreatment,
   correctDecaId,
@@ -954,6 +955,10 @@ export function CrearWizard({
   initial?: WizardInitial;
   saved?: SavedData;
   templates?: WizardTemplate[];
+  /** #136: a template id from `/crear?template=<id>` (the templates list's
+   *  "Usar" link) — applied once on mount, same as picking it from
+   *  `template-picker` by hand. */
+  initialTemplateId?: string;
   /** The logged-in company, for "usar mi empresa" (UX #25). */
   company?: WizardCompany;
   /** The company's commercial-treatment preference (#84). Absent → no block. */
@@ -1071,6 +1076,63 @@ export function CrearWizard({
           f.commercialShareChannel || (commercialTreatment.channel ?? "email"),
       }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** Shared by `template-picker`'s onChange AND `initialTemplateId` below —
+   *  ONE place that fills the form from a template, so the two entry points
+   *  can never drift apart. */
+  function applyTemplate(tpl: WizardTemplate) {
+    setForm((f) => ({
+      ...f,
+      shipperName: tpl.shipper?.name || f.shipperName,
+      shipperNif: tpl.shipper?.nif || f.shipperNif,
+      shipperAddress: tpl.shipper?.address || f.shipperAddress,
+      shipperPostalCode: tpl.shipper?.postalCode || f.shipperPostalCode,
+      shipperCity: tpl.shipper?.city || f.shipperCity,
+      carrierName: tpl.carrier?.name || f.carrierName,
+      carrierNif: tpl.carrier?.nif || f.carrierNif,
+      carrierAddress: tpl.carrier?.address || f.carrierAddress,
+      carrierPostalCode: tpl.carrier?.postalCode || f.carrierPostalCode,
+      carrierCity: tpl.carrier?.city || f.carrierCity,
+      loadLocationName: tpl.loadLocation?.name || f.loadLocationName,
+      loadLocationAddress: tpl.loadLocation?.address || f.loadLocationAddress,
+      loadLocationPostalCode: tpl.loadLocation?.postalCode || f.loadLocationPostalCode,
+      loadLocationCity: tpl.loadLocation?.city || f.loadLocationCity,
+      loadLocationProvince: tpl.loadLocation?.province || f.loadLocationProvince,
+      loadLocationCountry: tpl.loadLocation?.country || f.loadLocationCountry,
+      unloadLocationName: tpl.unloadLocation?.name || f.unloadLocationName,
+      unloadLocationAddress: tpl.unloadLocation?.address || f.unloadLocationAddress,
+      unloadLocationPostalCode: tpl.unloadLocation?.postalCode || f.unloadLocationPostalCode,
+      unloadLocationCity: tpl.unloadLocation?.city || f.unloadLocationCity,
+      unloadLocationProvince: tpl.unloadLocation?.province || f.unloadLocationProvince,
+      unloadLocationCountry: tpl.unloadLocation?.country || f.unloadLocationCountry,
+      goods: tpl.goods || f.goods,
+      weight: tpl.weight || f.weight,
+      tractorPlate: tpl.tractorPlate || f.tractorPlate,
+      trailerPlate: tpl.trailerPlate || f.trailerPlate,
+    }));
+    // #113 §5 — a template saved from a multi-envío DeCA carries its extra
+    // shipments too; prefill them the same way a legacy single-shipment
+    // template always has (no regression there).
+    if (tpl.shipments && tpl.shipments.length > 0) {
+      setExtraShipments(tpl.shipments.map((ts) => templateShipmentToExtra(ts)));
+    }
+  }
+
+  // #136: the templates list's "Usar" link used to just navigate to /crear
+  // with no reference to which template was clicked — the wizard would open
+  // blank, forcing the user to find and re-pick the SAME template again from
+  // `template-picker`. Applied once on mount, same effect as picking it by
+  // hand, guarded so a later re-render never re-applies it over the user's
+  // own edits.
+  const initialTemplateRef = useRef(false);
+  useEffect(() => {
+    if (initialTemplateRef.current) return;
+    initialTemplateRef.current = true;
+    if (!initialTemplateId || isCorrection) return;
+    const tpl = templates?.find((x) => x.id === initialTemplateId);
+    if (tpl) applyTemplate(tpl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1614,47 +1676,7 @@ export function CrearWizard({
                   defaultValue=""
                   onChange={(e) => {
                     const tpl = templates.find((x) => x.id === e.target.value);
-                    if (tpl)
-                      setForm((f) => ({
-                        ...f,
-                        shipperName: tpl.shipper?.name || f.shipperName,
-                        shipperNif: tpl.shipper?.nif || f.shipperNif,
-                        shipperAddress: tpl.shipper?.address || f.shipperAddress,
-                        shipperPostalCode: tpl.shipper?.postalCode || f.shipperPostalCode,
-                        shipperCity: tpl.shipper?.city || f.shipperCity,
-                        carrierName: tpl.carrier?.name || f.carrierName,
-                        carrierNif: tpl.carrier?.nif || f.carrierNif,
-                        carrierAddress: tpl.carrier?.address || f.carrierAddress,
-                        carrierPostalCode: tpl.carrier?.postalCode || f.carrierPostalCode,
-                        carrierCity: tpl.carrier?.city || f.carrierCity,
-                        loadLocationName: tpl.loadLocation?.name || f.loadLocationName,
-                        loadLocationAddress: tpl.loadLocation?.address || f.loadLocationAddress,
-                        loadLocationPostalCode:
-                          tpl.loadLocation?.postalCode || f.loadLocationPostalCode,
-                        loadLocationCity: tpl.loadLocation?.city || f.loadLocationCity,
-                        loadLocationProvince: tpl.loadLocation?.province || f.loadLocationProvince,
-                        loadLocationCountry: tpl.loadLocation?.country || f.loadLocationCountry,
-                        unloadLocationName: tpl.unloadLocation?.name || f.unloadLocationName,
-                        unloadLocationAddress:
-                          tpl.unloadLocation?.address || f.unloadLocationAddress,
-                        unloadLocationPostalCode:
-                          tpl.unloadLocation?.postalCode || f.unloadLocationPostalCode,
-                        unloadLocationCity: tpl.unloadLocation?.city || f.unloadLocationCity,
-                        unloadLocationProvince:
-                          tpl.unloadLocation?.province || f.unloadLocationProvince,
-                        unloadLocationCountry:
-                          tpl.unloadLocation?.country || f.unloadLocationCountry,
-                        goods: tpl.goods || f.goods,
-                        weight: tpl.weight || f.weight,
-                        tractorPlate: tpl.tractorPlate || f.tractorPlate,
-                        trailerPlate: tpl.trailerPlate || f.trailerPlate,
-                      }));
-                    // #113 §5 — a template saved from a multi-envío DeCA carries its
-                    // extra shipments too; prefill them the same way a legacy
-                    // single-shipment template always has (no regression there).
-                    if (tpl?.shipments && tpl.shipments.length > 0) {
-                      setExtraShipments(tpl.shipments.map((ts) => templateShipmentToExtra(ts)));
-                    }
+                    if (tpl) applyTemplate(tpl);
                     e.currentTarget.value = "";
                   }}
                 >

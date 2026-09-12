@@ -198,6 +198,39 @@ test.describe("UX #25 — creator V2", () => {
     await expect(page.getByText("2 documentos")).toBeVisible();
   });
 
+  // #136 — the templates list's "Usar" link used to just navigate to /crear
+  // with no reference to which template was clicked, opening a blank
+  // wizard. It must now apply the SAME template directly, with no manual
+  // re-pick from `template-picker` needed.
+  test("#136: templates list 'Usar' link applies the template directly, no manual re-pick needed", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillAndGenerate(page);
+
+    await page.goto("/panel/historico");
+    await page
+      .getByTestId("historico-table")
+      .getByRole("link", { name: "Detalle" })
+      .first()
+      .click();
+    await page.getByTestId("save-template-open").click();
+    await page.fill('[data-testid="template-name"]', "Usar-directo");
+    await page.getByTestId("save-template-confirm").click();
+    await expect(page.getByTestId("template-saved")).toBeVisible();
+
+    await page.goto("/panel/plantillas");
+    await page
+      .locator("li", { hasText: "Usar-directo" })
+      .getByRole("link", { name: "Usar" })
+      .click();
+
+    await expect(page).toHaveURL(/\/crear\?template=/);
+    await expect(page.locator("#carrierName")).toHaveValue(DECA.carrierName);
+    await expect(page.locator("#shipperName")).toHaveValue(DECA.shipperName);
+  });
+
   test("draft autosave: an in-progress form survives an accidental reload", async ({ page }) => {
     await page.goto("/crear"); // anonymous
     await page.fill("#shipperName", "Borrador SL");

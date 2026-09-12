@@ -8486,3 +8486,38 @@ per the UNBREAKABLE bug-fix rule: stashed `page.tsx` only, re-ran the 375px case
 (no unit-tested logic touched), 12/12 `historico-redesign.spec.ts` (9 pre-existing + 3 extended with
 new assertions), plus a 16-test regression sweep (`export-csv.spec.ts`, `workspace.spec.ts` incl. its
 `/panel/historico` a11y scan, `panel-nav.spec.ts`) all passing unchanged.
+
+## D-238 — #136 [P2 audit finding, correctness]: templates list "Usar" link now actually applies the template (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `components/deca/template-list.tsx`'s "Usar" link
+was `<Link href="/crear">Usar</Link>` — identical for every row, no reference to which template was
+clicked. It opened a blank wizard; the user had to find and re-pick the SAME template again from the
+already-working `template-picker` dropdown. Inconsistent with the stronger existing precedent for
+"Duplicar" (`/crear?from=<decaId>`), which fully applies server-side via a URL param.
+
+**Fix:** `/crear` now accepts `?template=<id>`. Extracted the dropdown's inline `onChange` body (a
+~30-line field-by-field merge, unchanged) into a shared `applyTemplate(tpl)` function in
+`components/deca/wizard.tsx`, called from both the dropdown's `onChange` AND a new mount-once
+`useEffect` that applies `initialTemplateId` when present — one function, two entry points, so they
+cannot drift apart. `template-list.tsx`'s "Usar" link now passes `?template=${t.id}`.
+
+**Test-first / verification:** new e2e case in `tests/e2e/creator-v2.spec.ts` clicks "Usar" directly
+from `/panel/plantillas` and asserts the wizard is pre-filled with NO manual dropdown interaction —
+confirmed RED first (`toHaveURL(/\/crear\?template=/)` failed, landed on bare `/crear`), GREEN after.
+
+**Flake observed and root-caused, NOT a regression from this fix:** the full `creator-v2.spec.ts`
+file intermittently failed one PRE-EXISTING, untouched test ("template: save from a DeCA... creates a
+NEW independent document") when run with Playwright's default parallel workers, but passed reliably
+alone and with `--workers=1`. Root cause: `components/deca/wizard.tsx`'s draft PUT
+(`components/deca/wizard.tsx`, typing) and DELETE (`app/api/deca/draft`, on discard) are both
+fire-and-forget (`void fetch(...)`, never awaited) — under higher concurrent load, the DELETE can
+lose a race against a lingering PUT, leaving a stale draft with the old DeCA's `loadDate` to be
+restored on the next `/crear` visit. This is a pre-existing latent race, unrelated to anything this
+fix touched (draft handling wasn't part of the diff) — adding one more test to the file changed
+Playwright's worker scheduling enough to surface it more often. Not fixed here (out of scope for a
+templates-link fix); recorded as a new, real finding for the P2/P3 backlog, same treatment as the
+documented `admin-2fa.spec.ts` flake in `docs/lessons-learned.md`.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit unaffected,
+6/6 `creator-v2.spec.ts` with `--workers=1` (the correct read given the flake's root cause is
+concurrency, not this change).

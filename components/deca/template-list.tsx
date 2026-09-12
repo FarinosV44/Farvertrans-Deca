@@ -80,7 +80,7 @@ export function TemplateList({ templates }: { templates: Row[] }) {
               </div>
             </div>
             <div className="flex shrink-0 gap-3">
-              <Link href="/crear">Usar</Link>
+              <Link href={`/crear?template=${t.id}`}>Usar</Link>
               <button
                 type="button"
                 onClick={() => remove(t.id)}

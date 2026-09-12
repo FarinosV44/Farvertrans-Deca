@@ -37,9 +37,9 @@ export const dynamic = "force-dynamic";
 export default async function CrearPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; template?: string }>;
 }) {
-  const { from } = await searchParams;
+  const { from, template } = await searchParams;
   const user = await getCurrentUser();
 
   // PRODUCT #56: a read_only (Auditor) member can view history/documents but
@@ -172,6 +172,7 @@ export default async function CrearPage({
               initial={initial}
               saved={saved}
               templates={templates}
+              initialTemplateId={template}
               authed={!!user?.companyId}
               emailVerified={!!user?.emailVerifiedAt}
               company={
