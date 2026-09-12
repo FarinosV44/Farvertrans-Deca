@@ -13,9 +13,7 @@ const withdrawSchema = z.object({ action: z.literal("withdraw") });
  *  discipline as the rest of this feature). */
 const updateSchema = z.object({
   action: z.literal("update"),
-  destination: z.string().trim().min(1),
   availabilityDate: z.string().trim().min(1),
-  preferredDestination: z.string().trim().max(200).optional().or(z.literal("")),
   capacityMode: z.enum(["full", "partial"]),
   linearMeters: z.number().positive().optional(),
   maxWeightKg: z.number().positive().optional(),
@@ -25,6 +23,7 @@ const updateSchema = z.object({
   vehicleTypeOther: z.string().trim().max(60).optional().or(z.literal("")),
   availabilityPostalCode: z.string().trim().max(12).optional().or(z.literal("")),
   preferredDestinationPostalCode: z.string().trim().max(12).optional().or(z.literal("")),
+  preferredDestinationCountry: z.string().trim().max(80).optional().or(z.literal("")),
 });
 
 const schema = z.discriminatedUnion("action", [withdrawSchema, updateSchema]);
@@ -57,9 +56,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const data = parsed.data;
   const ok = await updateAvailabilityShare(id, user.companyId, user.id, {
-    destination: data.destination,
     availabilityDate: data.availabilityDate,
-    preferredDestination: data.preferredDestination || undefined,
     capacityMode: data.capacityMode,
     linearMeters: data.linearMeters,
     maxWeightKg: data.maxWeightKg,
@@ -67,6 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     vehicleTypeOther: data.vehicleTypeOther || undefined,
     availabilityPostalCode: data.availabilityPostalCode || undefined,
     preferredDestinationPostalCode: data.preferredDestinationPostalCode || undefined,
+    preferredDestinationCountry: data.preferredDestinationCountry || undefined,
   });
   if (!ok)
     return NextResponse.json(

@@ -28,15 +28,16 @@ import {
  */
 export type AvailabilityPayload = {
   carrierName: string;
-  /** "Zona de disponibilidad" — where the vehicle will be free. */
+  /** #119 ACLARACIÓN FINAL — internal/derived only (never a separate visible
+   *  input alongside `availabilityPostalCode`, which is the canonical,
+   *  user-facing value): the final shipment's own unload city, kept for
+   *  legacy free-text matching and display fallback. */
   destination: string;
   /** ISO date (YYYY-MM-DD). */
   availabilityDate: string;
   channel: CommercialContactChannel;
   contactEmail?: string;
   contactPhone?: string;
-  /** #119 — voluntary, independent of the DeCA's own cargo. */
-  preferredDestination?: string;
   capacityMode: CapacityMode;
   /** Present only when capacityMode === "partial" — never a stale leftover. */
   linearMeters?: number;
@@ -46,19 +47,23 @@ export type AvailabilityPayload = {
    *  correction to #119). */
   vehicleTypeOther?: string;
   /** 2026 correction to #119 — the canonical value for matching; the
-   *  free-text destination stays for display, pre-filled from the final
-   *  shipment's own unload postal code when available. */
+   *  internal/derived destination stays for legacy display, pre-filled from
+   *  the final shipment's own unload postal code when available. */
   availabilityPostalCode?: string;
   preferredDestinationPostalCode?: string;
+  /** ACLARACIÓN FINAL — travels together with `preferredDestinationPostalCode`;
+   *  defaults to "España". Never a bare city/locality — CP+país replace the
+   *  earlier free-text "destino preferente" entirely. */
+  preferredDestinationCountry?: string;
 };
 
 export type PerDecaOverride = {
   enabled: boolean;
-  destination?: string;
+  /** #119 ACLARACIÓN FINAL — no longer settable by the caller: `destination`
+   *  is always derived from the final shipment's own unload city (see
+   *  `buildAvailabilityPayload`), never a separate user-facing input. */
   availabilityDate?: string;
   channel?: CommercialContactChannel;
-  /** #119 */
-  preferredDestination?: string;
   capacityMode?: CapacityMode;
   linearMeters?: number;
   maxWeightKg?: number;
@@ -66,6 +71,7 @@ export type PerDecaOverride = {
   vehicleTypeOther?: string;
   availabilityPostalCode?: string;
   preferredDestinationPostalCode?: string;
+  preferredDestinationCountry?: string;
   /** #119 — which shipment (0-based) of a multi-envío DeCA (#112) supplies the
    *  zona/fecha defaults; out-of-range or absent falls back to shipment 0. */
   finalShipmentIndex?: number;
@@ -103,7 +109,8 @@ export function buildAvailabilityPayload(
 
   const shipment = finalShipment(deca, override?.finalShipmentIndex);
   const carrierName = deca.carrier?.name?.trim() || "";
-  const destination = override?.destination?.trim() || shipment.unloadLocation?.city?.trim() || "";
+  // ACLARACIÓN FINAL — always derived, never a caller-supplied field.
+  const destination = shipment.unloadLocation?.city?.trim() || "";
   const availabilityDate = override?.availabilityDate?.trim() || shipment.unloadDate?.trim() || "";
   // No explicit channel yet (opted in but never opened the settings) → email,
   // the least intrusive option and the wizard's default selection.
@@ -141,12 +148,12 @@ export function buildAvailabilityPayload(
   };
   if (linearMeters !== undefined) payload.linearMeters = linearMeters;
   if (maxWeightKg !== undefined) payload.maxWeightKg = maxWeightKg;
-  if (override?.preferredDestination?.trim()) {
-    payload.preferredDestination = override.preferredDestination.trim();
-  }
   if (availabilityPostalCode) payload.availabilityPostalCode = availabilityPostalCode;
   if (override?.preferredDestinationPostalCode?.trim()) {
     payload.preferredDestinationPostalCode = override.preferredDestinationPostalCode.trim();
+    // A country only means anything alongside a postal code; default to
+    // España (the correction's own default) rather than leaving it unset.
+    payload.preferredDestinationCountry = override.preferredDestinationCountry?.trim() || "España";
   }
   if (isVehicleType(override?.vehicleType)) {
     payload.vehicleType = override.vehicleType;
@@ -192,7 +199,6 @@ export async function recordAvailabilityShare(
         contactPhone: payload.contactPhone ?? null,
         legalVersion: treatment.version ?? COMMERCIAL_CONSENT_VERSION,
         status: "pending",
-        preferredDestination: payload.preferredDestination ?? null,
         capacityMode: payload.capacityMode,
         linearMeters: payload.linearMeters ?? null,
         maxWeightKg: payload.maxWeightKg ?? null,
@@ -200,6 +206,7 @@ export async function recordAvailabilityShare(
         vehicleTypeOther: payload.vehicleTypeOther ?? null,
         availabilityPostalCode: payload.availabilityPostalCode ?? null,
         preferredDestinationPostalCode: payload.preferredDestinationPostalCode ?? null,
+        preferredDestinationCountry: payload.preferredDestinationCountry ?? null,
         finalShipmentIndex: override?.finalShipmentIndex ?? null,
       },
     });
@@ -223,7 +230,6 @@ export type AvailabilityShareState = {
   channel: CommercialContactChannel;
   preparedAt: Date;
   withdrawnAt: Date | null;
-  preferredDestination: string | null;
   capacityMode: CapacityMode;
   linearMeters: number | null;
   maxWeightKg: number | null;
@@ -231,6 +237,7 @@ export type AvailabilityShareState = {
   vehicleTypeOther: string | null;
   availabilityPostalCode: string | null;
   preferredDestinationPostalCode: string | null;
+  preferredDestinationCountry: string | null;
 };
 
 /** #119 — "expired" is NEVER stored: computed at read time from the
@@ -261,7 +268,6 @@ export async function getAvailabilityShare(
       channel: row.channel,
       preparedAt: row.preparedAt,
       withdrawnAt: row.withdrawnAt,
-      preferredDestination: row.preferredDestination,
       capacityMode: row.capacityMode === "partial" ? "partial" : "full",
       linearMeters: row.linearMeters,
       maxWeightKg: row.maxWeightKg,
@@ -269,6 +275,7 @@ export async function getAvailabilityShare(
       vehicleTypeOther: row.vehicleTypeOther,
       availabilityPostalCode: row.availabilityPostalCode,
       preferredDestinationPostalCode: row.preferredDestinationPostalCode,
+      preferredDestinationCountry: row.preferredDestinationCountry,
     };
   } catch {
     return null;
@@ -298,11 +305,11 @@ export async function withdrawAvailabilityShare(
 
 /** #119 — edit inputs for an already-prepared availability record. Never
  *  touches carrierName/channel/contact (those follow the company's own
- *  consent settings, not a per-edit choice) and never the DeCA itself. */
+ *  consent settings, not a per-edit choice), never the DeCA itself, and (ACLARACIÓN
+ *  FINAL) never `destination` — that field is internal/derived only and has
+ *  no visible input to edit any more. */
 export type AvailabilityEditInput = {
-  destination: string;
   availabilityDate: string;
-  preferredDestination?: string;
   capacityMode: CapacityMode;
   linearMeters?: number;
   maxWeightKg?: number;
@@ -310,6 +317,7 @@ export type AvailabilityEditInput = {
   vehicleTypeOther?: string;
   availabilityPostalCode?: string;
   preferredDestinationPostalCode?: string;
+  preferredDestinationCountry?: string;
 };
 
 /**
@@ -332,9 +340,8 @@ export async function updateAvailabilityShare(
   const treatment = await getCommercialTreatment(companyId);
   if (treatment.mode === "none") return false;
 
-  const destination = input.destination.trim();
   const availabilityDate = input.availabilityDate.trim();
-  if (!destination || !availabilityDate) return false;
+  if (!availabilityDate) return false;
 
   const capacityMode: CapacityMode = input.capacityMode === "partial" ? "partial" : "full";
   let linearMeters: number | null = null;
@@ -348,20 +355,24 @@ export async function updateAvailabilityShare(
 
   const vehicleType = isVehicleType(input.vehicleType) ? input.vehicleType : null;
   const vehicleTypeOther = vehicleType === "otro" ? input.vehicleTypeOther?.trim() || null : null;
+  const preferredDestinationPostalCode = input.preferredDestinationPostalCode?.trim() || null;
 
   await prisma.decaAvailabilityShare.update({
     where: { decaId },
     data: {
-      destination,
+      // `destination` deliberately untouched — internal/derived, no visible
+      // input exists to edit it any more (ACLARACIÓN FINAL).
       availabilityDate: new Date(availabilityDate),
-      preferredDestination: input.preferredDestination?.trim() || null,
       capacityMode,
       linearMeters,
       maxWeightKg,
       vehicleType,
       vehicleTypeOther,
       availabilityPostalCode: input.availabilityPostalCode?.trim() || null,
-      preferredDestinationPostalCode: input.preferredDestinationPostalCode?.trim() || null,
+      preferredDestinationPostalCode,
+      preferredDestinationCountry: preferredDestinationPostalCode
+        ? input.preferredDestinationCountry?.trim() || "España"
+        : null,
     },
   });
   await recordCommercialEvent({
@@ -369,7 +380,7 @@ export async function updateAvailabilityShare(
     actorUserId,
     kind: "availability_updated",
     decaId,
-    detail: { destination, availabilityDate, capacityMode, vehicleType },
+    detail: { availabilityDate, capacityMode, vehicleType },
   });
   return true;
 }
@@ -383,8 +394,12 @@ export type AvailabilityCandidate = {
    *  postal code. Matching falls back to `zone`'s free text when absent on
    *  either side being compared. */
   zonePostalCode: string | null;
-  preferredDestination: string | null;
   preferredDestinationPostalCode: string | null;
+  /** ACLARACIÓN FINAL — travels with `preferredDestinationPostalCode`; a
+   *  match is only trusted when this is Spain (no real international postal
+   *  geocoding exists in this project — never invent a match for a foreign
+   *  postal code we can't actually validate). */
+  preferredDestinationCountry: string | null;
   availabilityDate: Date;
   vehicleType: VehicleType | null;
   capacityMode: CapacityMode;
@@ -434,6 +449,24 @@ function zonesMatch(
   return placesMatch(aText, bText);
 }
 
+/**
+ * ACLARACIÓN FINAL — "destino preferente" is now código postal + país only
+ * (the free-text field is gone entirely, so there is no text fallback for
+ * this comparison specifically). Only trusted when the preference's own
+ * country is Spain — this project has no real international postal-code
+ * geocoding, so a foreign preference is stored but never matched against,
+ * per the correction's own "no inventar proximidades incorrectas".
+ */
+function preferredDestinationMatches(
+  postal: string | null,
+  country: string | null,
+  otherPostal: string | null,
+): boolean {
+  if (!postal || !otherPostal) return false;
+  if (country && country.trim().toLowerCase() !== "españa") return false;
+  return postalCodesMatch(postal, otherPostal);
+}
+
 function daysBetween(a: Date, b: Date): number {
   return Math.abs(a.getTime() - b.getTime()) / 86_400_000;
 }
@@ -476,22 +509,16 @@ export function findCompatibleAvailabilities(
     if (daysBetween(mine.availabilityDate, other.availabilityDate) > DATE_WINDOW_DAYS) return false;
     if (!vehicleTypeCompatible(mine.vehicleType, other.vehicleType)) return false;
     if (!capacityCompatible(mine, other)) return false;
-    const zoneToPreferred =
-      !!mine.preferredDestination &&
-      zonesMatch(
-        mine.preferredDestination,
-        mine.preferredDestinationPostalCode,
-        other.zone,
-        other.zonePostalCode,
-      );
-    const preferredToZone =
-      !!other.preferredDestination &&
-      zonesMatch(
-        mine.zone,
-        mine.zonePostalCode,
-        other.preferredDestination,
-        other.preferredDestinationPostalCode,
-      );
+    const zoneToPreferred = preferredDestinationMatches(
+      mine.preferredDestinationPostalCode,
+      mine.preferredDestinationCountry,
+      other.zonePostalCode,
+    );
+    const preferredToZone = preferredDestinationMatches(
+      other.preferredDestinationPostalCode,
+      other.preferredDestinationCountry,
+      mine.zonePostalCode,
+    );
     const zoneToZone = zonesMatch(mine.zone, mine.zonePostalCode, other.zone, other.zonePostalCode);
     return zoneToPreferred || preferredToZone || zoneToZone;
   });

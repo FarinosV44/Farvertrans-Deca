@@ -55,23 +55,24 @@ type FormState = {
   // #84 — per-DeCA commercial-share opt-in. NOT part of the legal payload:
   // sent as a separate body key, never written to `data_json`.
   commercialShareEnabled: string; // "1" | ""
-  /** "Zona de disponibilidad" (renamed from "destino" #119). */
-  commercialShareDestination: string;
   commercialShareDate: string;
   commercialShareChannel: string; // "" | "email" | "phone" | "both"
   // #119 — voluntary next-load preference fields, independent of the DeCA.
   commercialShareFinalShipmentIndex: string; // "0", "1", ... — which shipment's unload seeded the zona/fecha
-  commercialSharePreferredDestination: string;
   commercialShareCapacityMode: string; // "full" | "partial"
   commercialShareLinearMeters: string;
   commercialShareMaxWeightKg: string;
   commercialShareVehicleType: string; // "" | VehicleType
   /** Free-text specify, shown only when commercialShareVehicleType === "otro". */
   commercialShareVehicleTypeOther: string;
-  /** 2026 correction to #119 — the canonical matching value; pre-filled from
-   *  the chosen final envío's own unload postal code when available. */
+  /** #119 ACLARACIÓN FINAL — código postal is the ONLY location input for
+   *  disponibilidad (no more free-text "Zona de disponibilidad" alongside
+   *  it); pre-filled from the chosen final envío's own unload postal code. */
   commercialShareDestinationPostalCode: string;
+  /** ACLARACIÓN FINAL — "Destino preferente" is now CP + país only (the
+   *  free-text field is gone). */
   commercialSharePreferredDestinationPostalCode: string;
+  commercialSharePreferredDestinationCountry: string;
 };
 
 const EMPTY: FormState = {
@@ -105,11 +106,9 @@ const EMPTY: FormState = {
   trailerPlate: "",
   reference: "",
   commercialShareEnabled: "",
-  commercialShareDestination: "",
   commercialShareDate: "",
   commercialShareChannel: "",
   commercialShareFinalShipmentIndex: "0",
-  commercialSharePreferredDestination: "",
   commercialShareCapacityMode: "full",
   commercialShareLinearMeters: "",
   commercialShareMaxWeightKg: "",
@@ -117,6 +116,7 @@ const EMPTY: FormState = {
   commercialShareVehicleTypeOther: "",
   commercialShareDestinationPostalCode: "",
   commercialSharePreferredDestinationPostalCode: "",
+  commercialSharePreferredDestinationCountry: "España",
 };
 
 /**
@@ -571,8 +571,8 @@ function ReviewSummary({
               [
                 r.commercialShare,
                 `${r.commercialShareOn}${
-                  form.commercialShareDestination || form.unloadLocationCity
-                    ? ` · ${form.commercialShareDestination || form.unloadLocationCity}`
+                  form.commercialShareDestinationPostalCode || form.unloadLocationCity
+                    ? ` · ${form.commercialShareDestinationPostalCode || form.unloadLocationCity}`
                     : ""
                 }`,
               ],
@@ -1239,11 +1239,9 @@ export function CrearWizard({
           ? {
               commercialShare: {
                 enabled: true,
-                destination: form.commercialShareDestination.trim() || undefined,
                 availabilityDate: form.commercialShareDate.trim() || undefined,
                 channel: form.commercialShareChannel || commercialTreatment?.channel || "email",
                 finalShipmentIndex: Number(form.commercialShareFinalShipmentIndex || 0) || 0,
-                preferredDestination: form.commercialSharePreferredDestination.trim() || undefined,
                 capacityMode: form.commercialShareCapacityMode === "partial" ? "partial" : "full",
                 linearMeters:
                   form.commercialShareCapacityMode === "partial" && form.commercialShareLinearMeters
@@ -1262,6 +1260,8 @@ export function CrearWizard({
                   form.commercialShareDestinationPostalCode.trim() || undefined,
                 preferredDestinationPostalCode:
                   form.commercialSharePreferredDestinationPostalCode.trim() || undefined,
+                preferredDestinationCountry:
+                  form.commercialSharePreferredDestinationCountry.trim() || undefined,
               },
             }
           : {}),
@@ -2474,18 +2474,29 @@ export function CrearWizard({
                       </label>
                     )}
 
+                    {/* #119 ACLARACIÓN FINAL — exactly 4 geographic/date
+                        fields, never a free-text zone/city ALONGSIDE its own
+                        postal code (that duplication was the correction's own
+                        complaint): CP disponibilidad + fecha, then CP destino
+                        preferente + país. Pre-filled (placeholder only) from
+                        the chosen final envío's own unload postal code. */}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block text-sm">
-                        <span className="font-medium">{t.crear.commercialShare.destination}</span>
+                        <span className="font-medium">
+                          {t.crear.commercialShare.destinationPostalCode}
+                        </span>
                         <input
-                          data-testid="commercial-share-destination"
-                          value={form.commercialShareDestination}
-                          placeholder={finalCity}
-                          onChange={(e) => set("commercialShareDestination")(e.target.value)}
+                          data-testid="commercial-share-destination-postal-code"
+                          value={form.commercialShareDestinationPostalCode}
+                          placeholder={finalPostalCode}
+                          maxLength={12}
+                          onChange={(e) =>
+                            set("commercialShareDestinationPostalCode")(e.target.value)
+                          }
                           className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
                         />
                         <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-                          {t.crear.commercialShare.destinationHint}
+                          {t.crear.commercialShare.destinationPostalCodeHint}
                         </span>
                       </label>
                       <label className="block text-sm">
@@ -2501,59 +2512,38 @@ export function CrearWizard({
                       </label>
                     </div>
 
-                    {/* 2026 correction to #119 — postal code is now the
-                        canonical matching value; destination/preferred stay
-                        for display. Pre-filled (placeholder only, same
-                        pattern as destination above) from the chosen final
-                        envío's own unload postal code. */}
-                    <label className="block text-sm">
-                      <span className="font-medium">
-                        {t.crear.commercialShare.destinationPostalCode}
-                      </span>
-                      <input
-                        data-testid="commercial-share-destination-postal-code"
-                        value={form.commercialShareDestinationPostalCode}
-                        placeholder={finalPostalCode}
-                        maxLength={12}
-                        onChange={(e) =>
-                          set("commercialShareDestinationPostalCode")(e.target.value)
-                        }
-                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-                      />
-                      <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-                        {t.crear.commercialShare.destinationPostalCodeHint}
-                      </span>
-                    </label>
-
-                    <label className="block text-sm">
-                      <span className="font-medium">
-                        {t.crear.commercialShare.preferredDestination}
-                      </span>
-                      <input
-                        data-testid="commercial-share-preferred-destination"
-                        value={form.commercialSharePreferredDestination}
-                        onChange={(e) => set("commercialSharePreferredDestination")(e.target.value)}
-                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-                      />
-                      <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
-                        {t.crear.commercialShare.preferredDestinationHint}
-                      </span>
-                    </label>
-
-                    <label className="block text-sm">
-                      <span className="font-medium">
-                        {t.crear.commercialShare.preferredDestinationPostalCode}
-                      </span>
-                      <input
-                        data-testid="commercial-share-preferred-destination-postal-code"
-                        value={form.commercialSharePreferredDestinationPostalCode}
-                        maxLength={12}
-                        onChange={(e) =>
-                          set("commercialSharePreferredDestinationPostalCode")(e.target.value)
-                        }
-                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-                      />
-                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block text-sm">
+                        <span className="font-medium">
+                          {t.crear.commercialShare.preferredDestinationPostalCode}
+                        </span>
+                        <input
+                          data-testid="commercial-share-preferred-destination-postal-code"
+                          value={form.commercialSharePreferredDestinationPostalCode}
+                          maxLength={12}
+                          onChange={(e) =>
+                            set("commercialSharePreferredDestinationPostalCode")(e.target.value)
+                          }
+                          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                        />
+                        <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                          {t.crear.commercialShare.preferredDestinationHint}
+                        </span>
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-medium">
+                          {t.crear.commercialShare.preferredDestinationCountry}
+                        </span>
+                        <input
+                          data-testid="commercial-share-preferred-destination-country"
+                          value={form.commercialSharePreferredDestinationCountry}
+                          onChange={(e) =>
+                            set("commercialSharePreferredDestinationCountry")(e.target.value)
+                          }
+                          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                        />
+                      </label>
+                    </div>
 
                     <div>
                       <p className="text-sm font-medium">
@@ -2670,7 +2660,7 @@ export function CrearWizard({
                       className="text-xs text-[var(--color-text-muted)]"
                     >
                       {[
-                        form.commercialShareDestination || finalCity,
+                        form.commercialShareDestinationPostalCode || finalCity,
                         form.commercialShareDate,
                         form.commercialShareCapacityMode === "partial"
                           ? t.crear.commercialShare.capacityPartial
@@ -2691,14 +2681,15 @@ export function CrearWizard({
                       ]
                         .filter(Boolean)
                         .join(" · ") +
-                        (form.commercialSharePreferredDestination
-                          ? ` → ${form.commercialSharePreferredDestination}`
+                        (form.commercialSharePreferredDestinationPostalCode
+                          ? ` → ${form.commercialSharePreferredDestinationPostalCode}`
                           : "")}
                     </p>
 
                     <p className="text-xs text-[var(--color-text-muted)]">
                       {t.crear.commercialShare.previewTitle} {t.crear.fields.name},{" "}
-                      {t.crear.commercialShare.destination}, {t.crear.commercialShare.date}
+                      {t.crear.commercialShare.destinationPostalCode},{" "}
+                      {t.crear.commercialShare.date}
                       {channel !== "phone" && `, ${t.panel.privacy.previewFields.contactEmail}`}
                       {channel !== "email" && `, ${t.panel.privacy.previewFields.contactPhone}`}.
                     </p>

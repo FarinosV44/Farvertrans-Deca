@@ -925,11 +925,9 @@ export const es = {
       legend: "DECA Conecta (opcional)",
       hint: "Si quieres, autoriza el envío de los datos mínimos de disponibilidad de este porte para recibir propuestas personalizadas de carga. No autorizarlo no afecta al uso gratuito de DeCA Profesional.",
       enable: "Quiero recibir ofertas personalizadas al finalizar este porte",
-      // #119 — renamed from "Destino o zona de disponibilidad".
-      destination: "Zona de disponibilidad",
-      destinationHint: "Lugar donde el vehículo quedará libre tras la descarga.",
-      // 2026 correction to #119 — postal code is now the canonical matching
-      // value; destination/preferredDestination stay for display.
+      // ACLARACIÓN FINAL a #119 — código postal es el ÚNICO dato de
+      // ubicación (nunca una "Zona de disponibilidad" en texto libre al
+      // lado): esa duplicación era precisamente la queja de la corrección.
       destinationPostalCode: "Código postal de disponibilidad",
       destinationPostalCodeHint:
         "El dato principal para el emparejamiento. No se comparte la dirección exacta.",
@@ -939,10 +937,11 @@ export const es = {
       date: "Fecha estimada de disponibilidad",
       channel: "Canal de contacto",
       channels: { email: "Correo electrónico", phone: "WhatsApp", both: "Correo y WhatsApp" },
-      // #119 — new voluntary fields.
-      preferredDestination: "Destino preferente",
-      preferredDestinationHint: "¿Hacia qué ciudad o zona te interesa recibir ofertas?",
+      // ACLARACIÓN FINAL — "destino preferente" es código postal + país
+      // únicamente (el campo de texto libre desaparece).
+      preferredDestinationHint: "¿Hacia qué código postal te interesa recibir ofertas?",
       preferredDestinationPostalCode: "Código postal de destino preferente",
+      preferredDestinationCountry: "País de destino preferente",
       capacityLegend: "Disponibilidad de carga",
       capacityFull: "Camión completo",
       capacityFullHint: "El vehículo quedará completamente disponible.",

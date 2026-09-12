@@ -222,10 +222,8 @@ export async function POST(req: Request) {
           },
           {
             enabled: c.enabled === true,
-            destination: s(c.destination),
             availabilityDate: s(c.availabilityDate),
             channel: ch === "email" || ch === "phone" || ch === "both" ? ch : undefined,
-            preferredDestination: s(c.preferredDestination),
             capacityMode: c.capacityMode === "partial" ? "partial" : undefined,
             linearMeters: n(c.linearMeters),
             maxWeightKg: n(c.maxWeightKg),
@@ -233,6 +231,7 @@ export async function POST(req: Request) {
             vehicleTypeOther: s(c.vehicleTypeOther),
             availabilityPostalCode: s(c.availabilityPostalCode),
             preferredDestinationPostalCode: s(c.preferredDestinationPostalCode),
+            preferredDestinationCountry: s(c.preferredDestinationCountry),
             finalShipmentIndex: n(c.finalShipmentIndex),
           },
         ).catch(() => {

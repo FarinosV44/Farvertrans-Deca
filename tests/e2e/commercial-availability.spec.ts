@@ -85,7 +85,10 @@ async function generate(page: Page): Promise<string> {
 }
 
 test.describe("#119 — DECA Conecta expansion", () => {
-  test("the field is 'Zona de disponibilidad' and autofills from the single unload, with the privacy notice visible", async ({
+  // ACLARACIÓN FINAL — the free-text "Zona de disponibilidad" field is gone
+  // entirely; código postal is the only visible location-of-availability
+  // input, pre-filled (placeholder) from the single unload's own postal code.
+  test("the field is 'Código postal de disponibilidad' and autofills from the single unload, with the privacy notice visible; no free-text zone field exists", async ({
     page,
   }) => {
     await register(page, { commercialOptIn: true });
@@ -93,27 +96,34 @@ test.describe("#119 — DECA Conecta expansion", () => {
     await fillRoute(page, "Madrid");
     await fillVehicleAndGoods(page);
     const box = page.getByTestId("commercial-share");
-    await expect(box).toContainText("Zona de disponibilidad");
-    await expect(box).not.toContainText("Destino o zona de disponibilidad");
+    await expect(box).toContainText("Código postal de disponibilidad");
+    await expect(box).not.toContainText("Zona de disponibilidad");
     await expect(box).toContainText("Tu información comercial permanece privada.");
-    await expect(page.getByTestId("commercial-share-destination")).toHaveAttribute(
+    await expect(page.getByTestId("commercial-share-destination")).toHaveCount(0);
+    await expect(page.getByTestId("commercial-share-destination-postal-code")).toHaveAttribute(
       "placeholder",
-      "Madrid",
+      "28028",
     );
   });
 
-  test("destino preferente is optional and, when set, is stored and shown in the summary", async ({
+  // ACLARACIÓN FINAL — "destino preferente" is CP + país only (the free-text
+  // field is gone).
+  test("destino preferente (CP + país) is optional and, when set, is stored and shown in the summary", async ({
     page,
   }) => {
     await register(page, { commercialOptIn: true });
     await fillStep1(page);
     await fillRoute(page, "Madrid");
     await fillVehicleAndGoods(page);
-    await page.fill('[data-testid="commercial-share-preferred-destination"]', "Valencia");
-    await expect(page.getByTestId("commercial-share-summary")).toContainText("→ Valencia");
+    await page.fill('[data-testid="commercial-share-preferred-destination-postal-code"]', "46023");
+    await expect(page.getByTestId("commercial-share-preferred-destination-country")).toHaveValue(
+      "España",
+    );
+    await expect(page.getByTestId("commercial-share-summary")).toContainText("→ 46023");
     const decaId = await generate(page);
     const row = await availabilityFor(decaId);
-    expect(row?.preferredDestination).toBe("Valencia");
+    expect(row?.preferredDestinationPostalCode).toBe("46023");
+    expect(row?.preferredDestinationCountry).toBe("España");
   });
 
   test("Camión completo is the default; switching to Grupaje requires metros and kg, and clears on switching back", async ({
@@ -279,7 +289,7 @@ test.describe("#119 — DECA Conecta expansion", () => {
     await fillStep1(page);
     await fillRoute(page);
     await fillVehicleAndGoods(page);
-    await page.fill('[data-testid="commercial-share-preferred-destination"]', "Valencia");
+    await page.fill('[data-testid="commercial-share-preferred-destination-postal-code"]', "46023");
     await page.getByTestId("commercial-share-capacity-partial").click();
     await page.fill('[data-testid="commercial-share-linear-meters"]', "4");
     await page.fill('[data-testid="commercial-share-max-weight"]', "8000");
@@ -339,14 +349,18 @@ test.describe("#119 — DECA Conecta expansion", () => {
 
     await expect(page.getByTestId("commercial-share-final-shipment")).toBeVisible();
     await page.getByTestId("commercial-share-final-shipment").selectOption("1");
-    await expect(page.getByTestId("commercial-share-destination")).toHaveAttribute(
+    await expect(page.getByTestId("commercial-share-destination-postal-code")).toHaveAttribute(
       "placeholder",
-      "Sevilla",
+      "41001",
     );
 
     const decaId = await generate(page);
     const row = await availabilityFor(decaId);
+    // `destination` is internal/derived (ACLARACIÓN FINAL) — still resolves
+    // to the chosen final shipment's own unload city, just no longer a
+    // separate visible/editable input.
     expect(row?.destination).toBe("Sevilla");
+    expect(row?.availabilityPostalCode).toBe("41001");
     expect(row?.finalShipmentIndex).toBe(1);
 
     // the DeCA itself still lists envío 1/2 in the order they were entered —
@@ -372,7 +386,9 @@ test.describe("#119 — DECA Conecta expansion", () => {
     await expect(page.getByTestId("commercial-share-final-shipment")).toHaveCount(0);
   });
 
-  test("the owner can edit an already-prepared record's zona, destino preferente and capacity", async ({
+  // ACLARACIÓN FINAL — `destination` is internal/derived, no longer a
+  // visible/editable input; "destino preferente" is edited as CP + país.
+  test("the owner can edit an already-prepared record's postal codes, país and capacity", async ({
     page,
   }) => {
     await register(page, { commercialOptIn: true });
@@ -384,8 +400,10 @@ test.describe("#119 — DECA Conecta expansion", () => {
 
     await page.goto(`/panel/deca/${decaId}`);
     await page.getByTestId("availability-edit").click();
-    await page.fill('[data-testid="availability-edit-destination"]', "Barcelona");
-    await page.fill('[data-testid="availability-edit-preferred"]', "Zaragoza");
+    await expect(page.getByTestId("availability-edit-destination")).toHaveCount(0);
+    await page.fill('[data-testid="availability-edit-postal-code"]', "28001");
+    await page.fill('[data-testid="availability-edit-preferred-postal-code"]', "50001");
+    await page.fill('[data-testid="availability-edit-preferred-country"]', "España");
     await page.getByTestId("availability-edit-capacity-partial").click();
     await page.fill('[data-testid="availability-edit-meters"]', "6");
     await page.fill('[data-testid="availability-edit-weight"]', "10000");
@@ -393,10 +411,14 @@ test.describe("#119 — DECA Conecta expansion", () => {
       page.waitForResponse((r) => r.url().includes("/availability") && r.ok()),
       page.getByTestId("availability-edit-save").click(),
     ]);
-    await expect(page.getByTestId("availability-notice")).toContainText("Barcelona");
+    // `destination` (the summary's primary text) is internal/derived and
+    // untouched by this edit — the visible confirmation is the preferred
+    // destination, which IS rendered in the summary line.
+    await expect(page.getByTestId("availability-notice")).toContainText("50001");
     const row = await availabilityFor(decaId);
-    expect(row?.destination).toBe("Barcelona");
-    expect(row?.preferredDestination).toBe("Zaragoza");
+    expect(row?.availabilityPostalCode).toBe("28001");
+    expect(row?.preferredDestinationPostalCode).toBe("50001");
+    expect(row?.preferredDestinationCountry).toBe("España");
     expect(row?.capacityMode).toBe("partial");
     expect(row?.linearMeters).toBe(6);
     expect(row?.maxWeightKg).toBe(10000);
@@ -417,7 +439,7 @@ test.describe("#119 — DECA Conecta expansion", () => {
 
     await page.goto(`/panel/deca/${decaId}`);
     await page.getByTestId("availability-edit").click();
-    await page.fill('[data-testid="availability-edit-destination"]', "Barcelona");
+    await page.fill('[data-testid="availability-edit-postal-code"]', "08001");
     await Promise.all([
       page.waitForResponse((r) => r.url().includes("/availability") && r.ok()),
       page.getByTestId("availability-edit-save").click(),

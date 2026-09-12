@@ -187,6 +187,10 @@ model DecaAvailabilityShare {
   decaId                         String                   @unique @map("deca_id")
   companyId                      String                   @map("company_id")
   carrierName                    String                   @map("carrier_name")
+  /// ACLARACIÓN FINAL to #119 — internal/derived only (the final shipment's
+  /// own unload city): NEVER a separate visible input any more (that was the
+  /// "Zona de disponibilidad" field, removed). Kept for legacy free-text
+  /// matching/display fallback when a postal code is absent.
   destination                    String
   availabilityDate               DateTime                 @map("availability_date")
   channel                        CommercialContactChannel
@@ -197,8 +201,6 @@ model DecaAvailabilityShare {
   status                         String                   @default("pending")
   preparedAt                     DateTime                 @default(now()) @map("prepared_at")
   withdrawnAt                    DateTime?                @map("withdrawn_at")
-  /// #119 — voluntary next-load preference, independent of the DeCA's cargo.
-  preferredDestination           String?                  @map("preferred_destination")
   /// #119 — "full" | "partial". Bare string (not an enum), matching `status`'s
   /// own convention, so a future value never needs a migration.
   capacityMode                   String                   @default("full") @map("capacity_mode")
@@ -220,6 +222,10 @@ model DecaAvailabilityShare {
   /// matching (never blocks the record, never a destructive migration).
   availabilityPostalCode         String?                  @map("availability_postal_code")
   preferredDestinationPostalCode String?                  @map("preferred_destination_postal_code")
+  /// ACLARACIÓN FINAL to #119 — travels with preferredDestinationPostalCode;
+  /// replaces the removed free-text `preferredDestination` entirely (never a
+  /// bare city/locality). Defaults to "España", always editable.
+  preferredDestinationCountry    String?                  @map("preferred_destination_country")
   /// #119 — which shipment (0-based) of a multi-envío DeCA supplied the zona/
   /// fecha defaults; null for a single-shipment DeCA (shipment 0, implicitly).
   finalShipmentIndex             Int?                     @map("final_shipment_index")

@@ -61,7 +61,11 @@ export default async function AdminTratamientoComercial() {
                 <Cell>{s.companyName}</Cell>
                 <Cell>{s.destination}</Cell>
                 <Cell mono>{s.availabilityDate.toISOString().slice(0, 10)}</Cell>
-                <Cell>{s.preferredDestination ?? "—"}</Cell>
+                <Cell>
+                  {s.preferredDestinationPostalCode
+                    ? `${s.preferredDestinationPostalCode}${s.preferredDestinationCountry ? ` (${s.preferredDestinationCountry})` : ""}`
+                    : "—"}
+                </Cell>
                 <Cell>
                   {s.capacityMode === "partial"
                     ? `Grupaje${s.linearMeters ? ` · ${s.linearMeters} m` : ""}${s.maxWeightKg ? ` · ${s.maxWeightKg.toLocaleString("es-ES")} kg` : ""}`

@@ -103,7 +103,6 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
               status={availability.status}
               destination={availability.destination}
               availabilityDate={availability.availabilityDate.toISOString().slice(0, 10)}
-              preferredDestination={availability.preferredDestination}
               capacityMode={availability.capacityMode}
               linearMeters={availability.linearMeters}
               maxWeightKg={availability.maxWeightKg}
@@ -111,6 +110,7 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
               vehicleTypeOther={availability.vehicleTypeOther}
               availabilityPostalCode={availability.availabilityPostalCode}
               preferredDestinationPostalCode={availability.preferredDestinationPostalCode}
+              preferredDestinationCountry={availability.preferredDestinationCountry}
               canManage={user.companyRole === "owner"}
             />
           )}

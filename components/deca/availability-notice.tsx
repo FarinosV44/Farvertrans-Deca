@@ -18,7 +18,7 @@ const VEHICLE_TYPE_LABEL: Record<VehicleType, string> = {
   otro: "Otro",
 };
 
-/** "Madrid · 12 sep · Grupaje · 4 m · 8.000 kg · Lona → preferencia Valencia" (#119 §8). */
+/** "Madrid · 12 sep · Grupaje · 4 m · 8.000 kg · Lona → preferencia 46024 (España)" (#119 §8). */
 function summaryLine(v: {
   destination: string;
   availabilityDate: string;
@@ -27,7 +27,8 @@ function summaryLine(v: {
   maxWeightKg: number | null;
   vehicleType: VehicleType | null;
   vehicleTypeOther: string | null;
-  preferredDestination: string | null;
+  preferredDestinationPostalCode: string | null;
+  preferredDestinationCountry: string | null;
 }): string {
   const parts = [v.destination];
   const d = new Date(v.availabilityDate);
@@ -45,7 +46,9 @@ function summaryLine(v: {
     parts.push(VEHICLE_TYPE_LABEL[v.vehicleType]);
   }
   let line = parts.join(" · ");
-  if (v.preferredDestination) line += ` → preferencia ${v.preferredDestination}`;
+  if (v.preferredDestinationPostalCode) {
+    line += ` → preferencia ${v.preferredDestinationPostalCode}${v.preferredDestinationCountry ? ` (${v.preferredDestinationCountry})` : ""}`;
+  }
   return line;
 }
 
@@ -59,7 +62,6 @@ export function AvailabilityNotice({
   status,
   destination,
   availabilityDate,
-  preferredDestination,
   capacityMode,
   linearMeters,
   maxWeightKg,
@@ -67,6 +69,7 @@ export function AvailabilityNotice({
   vehicleTypeOther,
   availabilityPostalCode,
   preferredDestinationPostalCode,
+  preferredDestinationCountry,
   canManage,
 }: {
   decaId: string;
@@ -74,7 +77,6 @@ export function AvailabilityNotice({
   destination: string;
   /** ISO date (YYYY-MM-DD). */
   availabilityDate: string;
-  preferredDestination: string | null;
   capacityMode: CapacityMode;
   linearMeters: number | null;
   maxWeightKg: number | null;
@@ -82,6 +84,7 @@ export function AvailabilityNotice({
   vehicleTypeOther: string | null;
   availabilityPostalCode: string | null;
   preferredDestinationPostalCode: string | null;
+  preferredDestinationCountry: string | null;
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -89,9 +92,7 @@ export function AvailabilityNotice({
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    destination,
     availabilityDate,
-    preferredDestination: preferredDestination ?? "",
     capacityMode,
     linearMeters: linearMeters ? String(linearMeters) : "",
     maxWeightKg: maxWeightKg ? String(maxWeightKg) : "",
@@ -99,6 +100,7 @@ export function AvailabilityNotice({
     vehicleTypeOther: vehicleTypeOther ?? "",
     availabilityPostalCode: availabilityPostalCode ?? "",
     preferredDestinationPostalCode: preferredDestinationPostalCode ?? "",
+    preferredDestinationCountry: preferredDestinationCountry ?? "España",
   });
 
   useEffect(() => {
@@ -138,9 +140,7 @@ export function AvailabilityNotice({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "update",
-          destination: form.destination,
           availabilityDate: form.availabilityDate,
-          preferredDestination: form.preferredDestination || undefined,
           capacityMode: form.capacityMode,
           linearMeters: form.capacityMode === "partial" ? Number(form.linearMeters) : undefined,
           maxWeightKg: form.capacityMode === "partial" ? Number(form.maxWeightKg) : undefined,
@@ -149,6 +149,7 @@ export function AvailabilityNotice({
             form.vehicleType === "otro" ? form.vehicleTypeOther || undefined : undefined,
           availabilityPostalCode: form.availabilityPostalCode || undefined,
           preferredDestinationPostalCode: form.preferredDestinationPostalCode || undefined,
+          preferredDestinationCountry: form.preferredDestinationCountry || undefined,
         }),
       });
       if (!res.ok) {
@@ -196,7 +197,8 @@ export function AvailabilityNotice({
               maxWeightKg,
               vehicleType,
               vehicleTypeOther,
-              preferredDestination,
+              preferredDestinationPostalCode,
+              preferredDestinationCountry,
             })}
             .
           </p>
@@ -224,15 +226,9 @@ export function AvailabilityNotice({
         </div>
       ) : (
         <div className="space-y-3">
-          <label className="block">
-            <span className="text-xs font-medium">Zona de disponibilidad</span>
-            <input
-              data-testid="availability-edit-destination"
-              value={form.destination}
-              onChange={(e) => setForm((f) => ({ ...f, destination: e.target.value }))}
-              className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-            />
-          </label>
+          {/* ACLARACIÓN FINAL a #119 — exactamente 4 campos geográficos/fecha,
+              nunca una zona/localidad libre AL LADO de su propio código
+              postal (esa duplicación era la queja de la corrección). */}
           <label className="block">
             <span className="text-xs font-medium">Código postal de disponibilidad</span>
             <input
@@ -257,15 +253,6 @@ export function AvailabilityNotice({
             />
           </label>
           <label className="block">
-            <span className="text-xs font-medium">Destino preferente (opcional)</span>
-            <input
-              data-testid="availability-edit-preferred"
-              value={form.preferredDestination}
-              onChange={(e) => setForm((f) => ({ ...f, preferredDestination: e.target.value }))}
-              className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-            />
-          </label>
-          <label className="block">
             <span className="text-xs font-medium">Código postal de destino preferente</span>
             <input
               data-testid="availability-edit-preferred-postal-code"
@@ -273,6 +260,17 @@ export function AvailabilityNotice({
               maxLength={12}
               onChange={(e) =>
                 setForm((f) => ({ ...f, preferredDestinationPostalCode: e.target.value }))
+              }
+              className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium">País de destino preferente</span>
+            <input
+              data-testid="availability-edit-preferred-country"
+              value={form.preferredDestinationCountry}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, preferredDestinationCountry: e.target.value }))
               }
               className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
             />

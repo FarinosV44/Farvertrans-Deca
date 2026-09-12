@@ -41,7 +41,6 @@ const ALLOWED = new Set([
   "channel",
   "contactEmail",
   "contactPhone",
-  "preferredDestination",
   "capacityMode",
   "linearMeters",
   "maxWeightKg",
@@ -50,6 +49,8 @@ const ALLOWED = new Set([
   "vehicleTypeOther",
   "availabilityPostalCode",
   "preferredDestinationPostalCode",
+  // ACLARACIÓN FINAL — replaces the removed free-text preferredDestination
+  "preferredDestinationCountry",
 ]);
 
 describe("buildAvailabilityPayload — payload contains ONLY authorised fields (#84/#119)", () => {
@@ -112,14 +113,13 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
     ).toBeNull();
   });
 
-  it("per-DeCA overrides for destination / date / channel take precedence", () => {
+  it("per-DeCA overrides for date / channel take precedence (destination is always derived — ACLARACIÓN FINAL)", () => {
     const p = buildAvailabilityPayload(deca, treatment(), {
       enabled: true,
-      destination: "Zona Levante",
       availabilityDate: "2026-10-08",
       channel: "email",
     });
-    expect(p!.destination).toBe("Zona Levante");
+    expect(p!.destination).toBe("Madrid");
     expect(p!.availabilityDate).toBe("2026-10-08");
     expect(p!.channel).toBe("email");
     expect(p!.contactPhone).toBeUndefined();
@@ -144,7 +144,7 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
       buildAvailabilityPayload(
         { ...deca, shipments: [{ unloadLocation: { city: "Madrid" }, unloadDate: "" }] },
         treatment(),
-        { enabled: true, destination: "Madrid" },
+        { enabled: true },
       ),
     ).toBeNull();
   });
@@ -171,14 +171,30 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
     expect(p!.destination).toBe("Madrid");
   });
 
-  it("preferredDestination is optional and never invents one", () => {
+  // ACLARACIÓN FINAL — "destino preferente" is CP + país only now (the
+  // free-text field is gone entirely).
+  it("preferredDestinationPostalCode/Country are optional and never invented", () => {
     const p1 = buildAvailabilityPayload(deca, treatment(), { enabled: true });
-    expect(p1!.preferredDestination).toBeUndefined();
-    const p2 = buildAvailabilityPayload(deca, treatment(), {
+    expect(p1!.preferredDestinationPostalCode).toBeUndefined();
+    expect(p1!.preferredDestinationCountry).toBeUndefined();
+  });
+
+  it("preferredDestinationCountry defaults to España whenever a postal code is set, even without an explicit country", () => {
+    const p = buildAvailabilityPayload(deca, treatment(), {
       enabled: true,
-      preferredDestination: "Valencia",
+      preferredDestinationPostalCode: "46023",
     });
-    expect(p2!.preferredDestination).toBe("Valencia");
+    expect(p!.preferredDestinationPostalCode).toBe("46023");
+    expect(p!.preferredDestinationCountry).toBe("España");
+  });
+
+  it("an explicit preferredDestinationCountry is respected", () => {
+    const p = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      preferredDestinationPostalCode: "75001",
+      preferredDestinationCountry: "Francia",
+    });
+    expect(p!.preferredDestinationCountry).toBe("Francia");
   });
 
   it("'Grupaje' (partial) REQUIRES positive linearMeters and maxWeightKg, else the payload is rejected", () => {
@@ -300,13 +316,13 @@ describe("sharedFieldKeys", () => {
       "carrierName",
       "destination",
       "availabilityDate",
-      "preferredDestination",
       "capacityMode",
       "linearMeters",
       "maxWeightKg",
       "vehicleType",
       "availabilityPostalCode",
       "preferredDestinationPostalCode",
+      "preferredDestinationCountry",
       "vehicleTypeOther",
     ];
     expect(sharedFieldKeys("email")).toEqual([...base, "contactEmail"]);
@@ -334,8 +350,8 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
   const candidate = (over: Partial<AvailabilityCandidate> = {}): AvailabilityCandidate => ({
     zone: "Madrid",
     zonePostalCode: null,
-    preferredDestination: null,
     preferredDestinationPostalCode: null,
+    preferredDestinationCountry: null,
     availabilityDate: new Date("2026-10-06"),
     vehicleType: null,
     capacityMode: "full",
@@ -350,14 +366,41 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
     expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
   });
 
-  it("matches my zona against their destino preferente, and vice versa", () => {
-    const mine = candidate({ zone: "Madrid", preferredDestination: "Valencia" });
-    const other = candidate({ zone: "Valencia" });
-    expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+  // ACLARACIÓN FINAL — "destino preferente" is CP + país only; there is no
+  // free-text fallback for this specific comparison any more.
+  it("matches my destino preferente (CP) against their zona (CP), and vice versa", () => {
+    const mine = candidate({ zone: "Madrid", zonePostalCode: "28001" });
+    const other = candidate({ zone: "Valencia", zonePostalCode: "46001" });
+    // no match yet — neither declares a preferred destination
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([]);
 
-    const mine2 = candidate({ zone: "Sevilla" });
-    const other2 = candidate({ zone: "Bilbao", preferredDestination: "Sevilla" });
+    const mineWithPreference = candidate({
+      zone: "Madrid",
+      zonePostalCode: "28001",
+      preferredDestinationPostalCode: "46001",
+      preferredDestinationCountry: "España",
+    });
+    expect(findCompatibleAvailabilities(mineWithPreference, [other])).toEqual([other]);
+
+    const other2 = candidate({
+      zone: "Bilbao",
+      zonePostalCode: "48001",
+      preferredDestinationPostalCode: "41001",
+      preferredDestinationCountry: "España",
+    });
+    const mine2 = candidate({ zone: "Sevilla", zonePostalCode: "41001" });
     expect(findCompatibleAvailabilities(mine2, [other2])).toEqual([other2]);
+  });
+
+  it("a preferred destination in a country other than España is stored but never matched — no international postal geocoding exists", () => {
+    const mine = candidate({
+      zone: "Madrid",
+      zonePostalCode: "28001",
+      preferredDestinationPostalCode: "46001",
+      preferredDestinationCountry: "Francia",
+    });
+    const other = candidate({ zone: "Valencia", zonePostalCode: "46001" });
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([]);
   });
 
   it("excludes a candidate outside the date window", () => {
@@ -400,8 +443,8 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
       [
         "zone",
         "zonePostalCode",
-        "preferredDestination",
         "preferredDestinationPostalCode",
+        "preferredDestinationCountry",
         "availabilityDate",
         "vehicleType",
         "capacityMode",
@@ -441,8 +484,8 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
       const mine = candidate({
         zone: "Valencia",
         zonePostalCode: "46001",
-        preferredDestination: "Zona Centro",
         preferredDestinationPostalCode: "28001",
+        preferredDestinationCountry: "España",
       });
       const other = candidate({ zone: "Madrid", zonePostalCode: "28002" });
       expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
@@ -451,8 +494,8 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
       const other2 = candidate({
         zone: "Bilbao",
         zonePostalCode: "48001",
-        preferredDestination: "Sevilla capital",
         preferredDestinationPostalCode: "41010",
+        preferredDestinationCountry: "España",
       });
       expect(findCompatibleAvailabilities(mine2, [other2])).toEqual([other2]);
     });

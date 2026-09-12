@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **`develop` and `main` are BOTH at `99791b3` (2026-09-12, D-235 — user's explicit instruction "yes push to main and apply") — fully in sync.** Carries D-226 (#128 fix) through D-234 (#134 fix): #128/#129/#130 (P1), #112/#119 corrections, #131 mobile UX fix, and #132/#133/#134 (P2 audit fixes). P2 findings #132/#133/#134 done this session; remaining P2 + all P3 audit findings NOT started — that's the next work. `git merge`/`checkout` commands were initially blocked by the Claude Code auto-mode permission classifier ("Modify Shared Resources") this session; the user approved and the merges (both #112 and #119, plus the pending #119 migration, plus this `develop`→`main` merge) proceeded normally. Product version is **0.3.0**; UI supports 9 locales incl. `pt`. No tag requested. **Production DB schema is current through D-235** (verified directly via `prisma migrate status` against production, not just trusted from docs — the prior "current through D-218" claim turned out to be wrong for one migration; see D-235) — **production APP CODE is still NOT redeployed** for any of D-202→D-234; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210). **A third production DB credential was pasted in chat this session (D-235)** — the user said they will rotate it; the long-overdue DB password/anon-key rotation (flagged since D-158) is now the single most urgent outstanding item, not yet done.
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **`main` is at `99791b3` (2026-09-12, D-235); `develop` has since moved ahead** through D-236 (#135 fix), D-237 (#131 correction), D-238 (#136 fix), D-239 (#112 ACLARACIÓN FINAL), D-240 (#119 ACLARACIÓN FINAL) — not yet merged/pushed to `main` (no such instruction given for this later batch). #112 and #119's ACLARACIÓN FINAL corrections REPLACE this session's own earlier D-229/D-230 work on those same issues — read the full issue comment history before ever touching #112/#119 code again, since both have now been substantially rewritten more than once in this session. Remaining P2 + all P3 audit findings NOT started — that's the next work once #112/#119 are confirmed. `git merge`/`checkout` commands were initially blocked by the Claude Code auto-mode permission classifier ("Modify Shared Resources") this session; the user approved and the merges (both #112 and #119, plus the pending #119 migration, plus the `develop`→`main` merge at D-235) proceeded normally. Product version is **0.3.0**; UI supports 9 locales incl. `pt`. No tag requested. **Production DB schema is current through D-235** (verified directly via `prisma migrate status` against production — the D-240 migration is only on local dev, NOT yet applied to production) — **production APP CODE is still NOT redeployed** for any of D-202→D-240; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210). **A third production DB credential was pasted in chat this session (D-235)** — the user said they will rotate it; the long-overdue DB password/anon-key rotation (flagged since D-158) is now the single most urgent outstanding item, not yet done.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -44,6 +44,22 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-240 — #119 ACLARACIÓN FINAL implemented: DECA Conecta down to exactly 4 geographic/date fields,
+  no duplicate zone/CP or destino/CP pairs, this session (2026-09-12), on the user's URGENT
+  mid-session instruction (same message as D-239). Full detail in `docs/decisions.md` D-240.** Fields
+  are now: CP disponibilidad, fecha disponibilidad, CP destino preferente, país destino preferente
+  (default España). Dropped the `preferred_destination` column entirely (new migration
+  `20260912180000_availability_preferred_destination_country`); `destination` ("Zona de
+  disponibilidad") stays in the schema but is now internal/derived only — no visible input. New
+  `preferredDestinationMatches()` requires the preference's own country to be Spain before trusting a
+  postal-code match (no real international geocoding exists — documented limitation, never invents a
+  match). Every consumer updated: `availability.ts`, both API routes, the wizard's commercial-share
+  block, `availability-notice.tsx`'s edit form, the admin cross-tenant table, `SharedFieldKey`, i18n
+  (all 9 locales). Gate: tsc/eslint/prettier/keel-verify clean, production build clean, 498/498 unit
+  (+3 net), 19/19 + 23/23 e2e (commercial-availability rewritten, commercial-consent fully
+  unaffected), 6/6 admin-rsc-authz. Committed to `develop`, not yet pushed. **Both #112 and #119's
+  ACLARACIÓN FINAL corrections are now implemented — this fully addresses the user's urgent
+  instruction. Returning to the P2/P3 audit backlog next.**
 - **D-239 — #112 ACLARACIÓN FINAL implemented: reverted the per-field `+` buttons and "Vincular
   carga y descarga" entirely, this session (2026-09-12), on the user's URGENT mid-session
   instruction. Full detail in `docs/decisions.md` D-239.** The definitive model is now a single

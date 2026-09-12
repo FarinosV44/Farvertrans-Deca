@@ -51,15 +51,17 @@ export type SharedFieldKey =
   | "availabilityDate"
   | "contactEmail"
   | "contactPhone"
-  | "preferredDestination"
   | "capacityMode"
   | "linearMeters"
   | "maxWeightKg"
   | "vehicleType"
   /** 2026 correction to #119 — postal code is now the canonical matching
-   *  value; the free-text destination/preferredDestination stay for display. */
+   *  value; the internal/derived `destination` stays for legacy display. */
   | "availabilityPostalCode"
   | "preferredDestinationPostalCode"
+  /** ACLARACIÓN FINAL — travels with preferredDestinationPostalCode, replaces
+   *  the removed free-text `preferredDestination` entirely. */
+  | "preferredDestinationCountry"
   | "vehicleTypeOther";
 
 export function sharedFieldKeys(channel: CommercialContactChannel | null): SharedFieldKey[] {
@@ -67,13 +69,13 @@ export function sharedFieldKeys(channel: CommercialContactChannel | null): Share
     "carrierName",
     "destination",
     "availabilityDate",
-    "preferredDestination",
     "capacityMode",
     "linearMeters",
     "maxWeightKg",
     "vehicleType",
     "availabilityPostalCode",
     "preferredDestinationPostalCode",
+    "preferredDestinationCountry",
     "vehicleTypeOther",
   ];
   if (channel === "email" || channel === "both") keys.push("contactEmail");

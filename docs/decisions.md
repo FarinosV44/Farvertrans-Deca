@@ -8575,3 +8575,68 @@ deleted test file), 9/9 rewritten `deca-multi-shipment.spec.ts`, 19/19 `commerci
 + 12/12 `historico-redesign.spec.ts` (both updated), plus a regression sweep — 6/6 `creator-v2.spec.ts`
 (`--workers=1`), 2/2 `doc-cockpit.spec.ts`, 5/5 `launch-gate.spec.ts`, 7/7 `workspace.spec.ts` incl. its
 a11y scan — all green.
+
+## D-240 — #119 ACLARACIÓN FINAL: DECA Conecta down to CP disponibilidad + fecha + CP/país destino preferente, no duplicate geographic fields (2026-09-12)
+
+**User's instruction (URGENT, mid-session, same message as D-239):** read #119's full comment
+history, including three successive "sustituye cualquier especificación anterior" comments layered on
+top of this session's own D-230 (#119 correction) and D-217/D-218 (#119 v1) work — "Do not preserve
+... duplicate geographic fields in DECA Conecta."
+
+**What the ACLARACIÓN FINAL says:** DECA Conecta's visible fields become EXACTLY 4 — Código postal de
+disponibilidad, Fecha de disponibilidad, Código postal de destino preferente, País de destino
+preferente (default España, editable) — and the UI must never show a free-text zone/locality field
+ALONGSIDE its own postal code. This eliminates: the "Zona de disponibilidad" free-text input (D-217's
+original #84/#119 field) and the "Destino preferente" free-text input (also D-217), both of which had
+survived D-230's postal-code addition sitting right next to them — exactly the "duplicate geographic
+fields" the instruction named.
+
+**Schema:** `preferred_destination` (free-text, nullable, D-217) dropped entirely — no data-loss
+concern, never required. New `preferred_destination_country` (nullable, defaults to "España" at the
+application layer) added alongside `preferred_destination_postal_code`. `destination` ("Zona de
+disponibilidad", NOT NULL) is UNCHANGED at the schema level but its role changes: it becomes
+internal/derived only — `buildAvailabilityPayload()` already had a fallback to the final shipment's
+own unload city when no override was supplied; that fallback is now the ONLY path (the client-side
+override is removed entirely), so the column keeps working for legacy free-text matching/display
+without ever being a second visible input next to its own postal code. New hand-written migration
+`20260912180000_availability_preferred_destination_country/`.
+
+**`lib/commercial/availability.ts` — every touch point updated:** `AvailabilityPayload`/
+`PerDecaOverride`/`AvailabilityShareState`/`AvailabilityEditInput`/`AvailabilityCandidate` all lose
+`preferredDestination`/`destination`-as-override and gain `preferredDestinationCountry`;
+`buildAvailabilityPayload()` derives `destination` unconditionally now; `updateAvailabilityShare()`
+never touches the internal `destination` column on edit (no input exists to edit it) and defaults
+`preferredDestinationCountry` to "España" whenever a postal code is set. New `preferredDestinationMatches()`
+replaces the old text-fallback cross-match for destino-preferente specifically: postal-code-only (no
+text fallback exists for this comparison any more), and only trusted when the preference's own
+country is Spain — "no real international postal-code geocoding exists in this project, never invent
+a match for a foreign postal code we can't validate," an explicit, documented limitation per the
+correction's own "no inventar proximidades incorrectas."
+
+**UI (`wizard.tsx`'s commercial-share block, `availability-notice.tsx`'s edit form):** removed both
+free-text inputs entirely; added "País de destino preferente" (plain text input, defaults to "España");
+final layout is exactly `CP disponibilidad | Fecha` then `CP destino preferente | País destino
+preferente`, matching the correction's own "Presentación sugerida" line for line.
+
+**i18n:** removed `destination`/`destinationHint`/`preferredDestination` from `crear.commercialShare`
+in all 9 locales; added `preferredDestinationCountry`; reworded `preferredDestinationHint` to ask for
+a postal code, not a city.
+
+**Also updated (found while tracing every consumer, not scope creep — these would otherwise reference
+removed fields):** `app/api/deca/route.ts` and `app/api/deca/[id]/availability/route.ts`'s zod
+schemas/payload construction; `app/panel/deca/[id]/page.tsx`'s prop passthrough;
+`lib/admin/commercial.ts`'s cross-tenant `AvailabilityRow` + the admin `tratamiento-comercial` table
+(now shows CP + país instead of free text); `lib/commercial/types.ts`'s `SharedFieldKey`/
+`sharedFieldKeys()`.
+
+**Tests:** `tests/unit/commercial-availability.test.ts` — `ALLOWED`/`sharedFieldKeys` base sets
+updated; the old `preferredDestination` free-text tests replaced with CP+país equivalents (including a
+new "foreign country is stored but never matched" case); the `destination`-override test now confirms
+destination is *always* derived. `tests/e2e/commercial-availability.spec.ts` — every reference to the
+removed testids (`commercial-share-destination`, `commercial-share-preferred-destination`,
+`availability-edit-destination`, `availability-edit-preferred`) reworked to the CP/país testids,
+preserving each test's original intent.
+
+**Gate:** tsc/eslint/prettier/keel-verify clean, production build clean, 498/498 unit (+3 net new),
+19/19 `commercial-availability.spec.ts` (rewritten), 23/23 `commercial-consent.spec.ts` (fully
+unaffected), 6/6 `admin-rsc-authz.spec.ts`.

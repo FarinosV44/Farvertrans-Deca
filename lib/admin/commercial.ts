@@ -37,7 +37,8 @@ export type AvailabilityRow = {
   /** #119 — "expired" is computed, never stored (see `expiryStatus()`). */
   status: "pending" | "withdrawn" | "expired";
   preparedAt: Date;
-  preferredDestination: string | null;
+  preferredDestinationPostalCode: string | null;
+  preferredDestinationCountry: string | null;
   capacityMode: string;
   linearMeters: number | null;
   maxWeightKg: number | null;
@@ -58,7 +59,8 @@ export async function recentAvailabilityShares(limit = 50): Promise<Availability
     channel: r.channel,
     status: expiryStatus(r),
     preparedAt: r.preparedAt,
-    preferredDestination: r.preferredDestination,
+    preferredDestinationPostalCode: r.preferredDestinationPostalCode,
+    preferredDestinationCountry: r.preferredDestinationCountry,
     capacityMode: r.capacityMode,
     linearMeters: r.linearMeters,
     maxWeightKg: r.maxWeightKg,
