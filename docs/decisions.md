@@ -8234,3 +8234,52 @@ visibility + persistence) — all 15 pre-existing #119 e2e tests confirmed unaff
 **Gate:** `tsc`/`eslint`/`prettier`/`keel-verify`/`prisma-validate` clean, production build clean,
 498/498 unit (+10 new), 19/19 e2e in `commercial-availability.spec.ts` (15 pre-existing confirmed
 unaffected + 4 new) + 38/38 in `commercial-consent.spec.ts` (fully unaffected).
+
+## D-231 — #131: mobile Historial layout — filters/cards no longer overlap at 320-430px; Inspección promoted to a direct action (2026-09-12)
+
+**User's report (verbatim spec):** on mobile the Historial filter row and result cards were cramped
+and could overlap, and "Inspección" — a high-value action already direct on desktop — was hidden
+inside the "···" overflow menu on mobile cards. Requested: no overlap in filters or cards, no
+horizontal scroll, tested at 320/375/390/430px, Ver detalle/Inspección/Compartir direct on mobile
+cards, Corregir/Duplicar/PDF may stay in "···", functionality unchanged (layout-only).
+
+**Root cause (filters):** `app/panel/historico/page.tsx`'s filter `<form>` used a base (unprefixed)
+`grid-cols-2` Tailwind class. Tailwind's `sm:` breakpoint is 640px, so all 4 widths named in the
+report (320-430px) fall below it and were always rendered with the cramped 2-column grid regardless
+of viewport — native date-picker inputs and the carrier `<select>` overflowed their half-width cell.
+Fixed by making the base grid `grid-cols-1` (single column below `sm:`, unchanged 2/3-column behaviour
+at `sm:`/`md:` and above) and adding `min-w-0` to each field's wrapper `<div>` and control so a
+long-content input can shrink instead of forcing its grid track wider than the viewport. The `q`
+field's wrapper lost its `col-span-2` (meaningless once the base grid is 1-column) and its `md:`
+width rule was preserved unchanged. The button row's now-meaningless `col-span-2` was removed too.
+
+**Root cause (Inspección placement):** the desktop `<table>` row already rendered Ver detalle,
+Inspección and Compartir as direct actions with only Corregir/Duplicar/PDF inside `<RowMenu>` — the
+mobile `<li>` card was simply inconsistent with its own desktop counterpart, nesting Inspección inside
+`<RowMenu>` instead. Fixed by moving the Inspección `<Link>` out of `<RowMenu>` to sit directly beside
+Ver detalle and `<RowShare>` in the card's actions `<p>`, mirroring the desktop arrangement exactly.
+No new component, no menu API change — `<RowMenu>` (`components/deca/row-menu.tsx`) and `<RowShare>`
+(`components/deca/row-share.tsx`) are untouched.
+
+**Scope discipline:** this is a layout-only fix. No filter logic, no query params, no data fetching,
+no route, and no `<RowMenu>`/`<RowShare>` behaviour changed — only Tailwind classes on
+`app/panel/historico/page.tsx`'s filter form and mobile card markup.
+
+**Test-first / verification:** added `tests/e2e/historico-redesign.spec.ts` cases for each of
+320/375/390/430px (2 tests per width, 8 total): one asserts Ver detalle/Inspección/`row-share` are
+visible directly on the card, Corregir is hidden until "···" opens, Inspección never appears inside
+the menu, and does a real pairwise bounding-box overlap check across every `a`/`button` in the card;
+the other does the same overlap check across `#q`/`#from`/`#to`/`#carrier`/`#plate`/"Filtrar". Both
+also assert `document.documentElement.scrollWidth - clientWidth <= 1` (no horizontal scroll). Verified
+red-then-green per the UNBREAKABLE bug-fix rule: stashed `page.tsx` only, re-ran the new
+"#131 mobile at 375px" test and observed it fail with exactly the user-reported defect
+(`getByRole('link', { name: 'Inspección' })` not found on the card), then `git stash pop` to restore
+the fix and confirm all 8 new cases pass.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean (2 pre-existing unrelated warnings only),
+498/498 unit unaffected (no unit-tested logic touched), 12/12 in `historico-redesign.spec.ts`
+(4 pre-existing + 8 new) + 3/3 in `export-csv.spec.ts`, plus a broader regression sweep — 7/7 in
+`workspace.spec.ts` (including its `/panel/historico` a11y scan), 23/23 across
+`panel-nav.spec.ts`/`row-share.spec.ts`/`team.spec.ts`/`master-data.spec.ts`/`driver-delivery.spec.ts`
+— all passing unchanged, confirming the grid/markup change is isolated to Historial's own mobile
+presentation.

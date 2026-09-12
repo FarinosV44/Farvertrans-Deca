@@ -98,12 +98,17 @@ export default async function HistoricoPage({
           }}
         />
 
-        {/* #114 §1 — same fields/names/behaviour, only alignment/spacing polished. */}
+        {/* 2026 mobile UX follow-up (#131): the base (mobile-first) layout is a
+            single stacked column — a 2-column grid at 320-430px is exactly
+            what let native date-picker inputs and the carrier <select>
+            overflow their cell and crowd/overlap neighbouring fields. `sm:`
+            and `md:` (≥640px, well above every width this issue asks to be
+            tested at) restore the denser desktop layout unchanged. */}
         <form
-          className="mt-6 grid grid-cols-2 gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:grid-cols-3 sm:items-end md:flex md:flex-wrap"
+          className="mt-6 grid grid-cols-1 gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:grid-cols-3 sm:items-end md:flex md:flex-wrap"
           role="search"
         >
-          <div className="col-span-2 min-w-[200px] sm:col-span-1 md:flex-1">
+          <div className="min-w-0 sm:col-span-1 md:min-w-[200px] md:flex-1">
             <label htmlFor="q" className="block text-sm font-medium">
               {t.historico.search}
             </label>
@@ -115,7 +120,7 @@ export default async function HistoricoPage({
               className="mt-1 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label htmlFor="from" className="block text-sm font-medium">
               {t.historico.from}
             </label>
@@ -124,10 +129,10 @@ export default async function HistoricoPage({
               name="from"
               type="date"
               defaultValue={sp.from ?? ""}
-              className="mt-1 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+              className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label htmlFor="to" className="block text-sm font-medium">
               {t.historico.to}
             </label>
@@ -136,11 +141,11 @@ export default async function HistoricoPage({
               name="to"
               type="date"
               defaultValue={sp.to ?? ""}
-              className="mt-1 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
+              className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3"
             />
           </div>
           {carriers.length > 0 && (
-            <div>
+            <div className="min-w-0">
               <label htmlFor="carrier" className="block text-sm font-medium">
                 {t.historico.carrier}
               </label>
@@ -148,7 +153,7 @@ export default async function HistoricoPage({
                 id="carrier"
                 name="carrier"
                 defaultValue={sp.carrier ?? ""}
-                className="mt-1 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
               >
                 <option value="">{t.historico.carrierAll}</option>
                 {carriers.map((c) => (
@@ -159,7 +164,7 @@ export default async function HistoricoPage({
               </select>
             </div>
           )}
-          <div>
+          <div className="min-w-0">
             <label htmlFor="plate" className="block text-sm font-medium">
               {t.historico.plate}
             </label>
@@ -168,10 +173,10 @@ export default async function HistoricoPage({
               name="plate"
               defaultValue={sp.plate ?? ""}
               placeholder="1234 BCD"
-              className="mt-1 min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 md:w-[120px]"
+              className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 md:w-[120px]"
             />
           </div>
-          <div className="col-span-2 flex items-end gap-3 sm:col-span-1 md:col-auto">
+          <div className="flex items-end gap-3 sm:col-span-1 md:col-auto">
             <button
               type="submit"
               className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)]"
@@ -350,25 +355,27 @@ export default async function HistoricoPage({
                     {r.tractorPlate}
                     {r.trailerPlate ? ` + ${r.trailerPlate}` : ""}
                   </p>
-                  <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {/* 2026 mobile UX follow-up (#131): Inspección shown directly
+                      (it fits and is a high-value action, same as desktop) —
+                      only Corregir/Duplicar/PDF stay in the "···" menu. */}
+                  <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     <Link
                       href={`/panel/deca/${r.id}`}
                       className="font-medium text-[var(--color-primary)] underline"
                     >
                       {t.historico.detail}
                     </Link>
+                    <Link
+                      href={`/panel/deca/${r.id}/inspeccion`}
+                      className="text-[var(--color-text-muted)] underline"
+                    >
+                      {t.historico.inspection}
+                    </Link>
                     <RowShare
                       publicUrl={`${publicEnv.baseUrl.replace(/\/$/, "")}/d/${r.token}`}
                       reference={r.reference}
                     />
                     <RowMenu label={t.historico.moreActions}>
-                      <Link
-                        role="menuitem"
-                        href={`/panel/deca/${r.id}/inspeccion`}
-                        className="rounded-[6px] px-2 py-1.5 no-underline hover:bg-[var(--color-surface)]"
-                      >
-                        {t.historico.inspection}
-                      </Link>
                       <Link
                         role="menuitem"
                         href={`/panel/deca/${r.id}/corregir`}

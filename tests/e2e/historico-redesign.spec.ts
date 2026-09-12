@@ -145,4 +145,109 @@ test.describe("#114 — Historial redesign", () => {
     await cards.getByTestId("row-menu-trigger").first().click();
     await expect(page.getByTestId("row-menu").first()).toContainText("Corregir");
   });
+
+  // #131 — 2026 mobile UX follow-up: Inspección visible directly (not hidden
+  // in "···"), filters/results never overlap, no horizontal scroll at any of
+  // the 4 widths the issue names.
+  for (const width of [320, 375, 390, 430]) {
+    test(`#131 mobile at ${width}px: Inspección is direct, Corregir/Duplicar/PDF stay in "···", no overlap or horizontal scroll`, async ({
+      page,
+    }) => {
+      await register(page);
+      await createMultiShipmentDeca(page);
+
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/panel/historico");
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
+
+      const cards = page.getByTestId("historico-cards");
+      await expect(cards).toBeVisible();
+      const card = cards.locator("li").first();
+
+      // The 3 high-value actions are direct links/buttons on the card itself.
+      await expect(card.getByRole("link", { name: "Ver detalle" })).toBeVisible();
+      await expect(card.getByRole("link", { name: "Inspección" })).toBeVisible();
+      await expect(card.getByTestId("row-share")).toBeVisible();
+
+      // Corregir/Duplicar/PDF are NOT visible until the "···" menu opens.
+      await expect(card.getByRole("link", { name: "Corregir" })).toBeHidden();
+      await card.getByTestId("row-menu-trigger").click();
+      const menu = page.getByTestId("row-menu").first();
+      await expect(menu.getByRole("menuitem", { name: "Corregir" })).toBeVisible();
+      await expect(menu.getByRole("menuitem", { name: "Duplicar" })).toBeVisible();
+      await expect(menu.getByRole("menuitem", { name: "PDF" })).toBeVisible();
+      // Inspección is never duplicated inside the menu.
+      await expect(menu.getByRole("menuitem", { name: "Inspección" })).toHaveCount(0);
+      await page.keyboard.press("Escape");
+
+      // No two action elements in the card visually overlap (a real bounding-
+      // box check, not just "no page-level horizontal scroll").
+      const actionBoxes = await card
+        .locator("a, button")
+        .evaluateAll((els) =>
+          els
+            .map((el) => el.getBoundingClientRect())
+            .map((r) => ({ x: r.x, y: r.y, w: r.width, h: r.height })),
+        );
+      for (let i = 0; i < actionBoxes.length; i++) {
+        for (let j = i + 1; j < actionBoxes.length; j++) {
+          const a = actionBoxes[i];
+          const b = actionBoxes[j];
+          const overlapsX = a.x < b.x + b.w && b.x < a.x + a.w;
+          const overlapsY = a.y < b.y + b.h && b.y < a.y + a.h;
+          expect(overlapsX && overlapsY, `elements ${i} and ${j} overlap at ${width}px`).toBe(
+            false,
+          );
+        }
+      }
+    });
+
+    test(`#131 filter fields at ${width}px: Buscar/Desde/Hasta/Transportista/Matrícula/Filtrar never overlap`, async ({
+      page,
+    }) => {
+      await register(page);
+      await createMultiShipmentDeca(page);
+
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/panel/historico");
+
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(1);
+
+      const fieldIds = ["#q", "#from", "#to", "#carrier", "#plate"];
+      const boxes: { id: string; x: number; y: number; w: number; h: number }[] = [];
+      for (const id of fieldIds) {
+        const locator = page.locator(id);
+        if ((await locator.count()) === 0) continue;
+        const box = await locator.boundingBox();
+        if (box) boxes.push({ id, x: box.x, y: box.y, w: box.width, h: box.height });
+      }
+      const filterBtn = await page.getByRole("button", { name: "Filtrar" }).boundingBox();
+      if (filterBtn) {
+        boxes.push({
+          id: "#filter-btn",
+          x: filterBtn.x,
+          y: filterBtn.y,
+          w: filterBtn.width,
+          h: filterBtn.height,
+        });
+      }
+
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i];
+          const b = boxes[j];
+          const overlapsX = a.x < b.x + b.w && b.x < a.x + a.w;
+          const overlapsY = a.y < b.y + b.h && b.y < a.y + a.h;
+          expect(overlapsX && overlapsY, `${a.id} and ${b.id} overlap at ${width}px`).toBe(false);
+        }
+      }
+    });
+  }
 });

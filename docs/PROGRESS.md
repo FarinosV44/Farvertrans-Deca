@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **`develop` and `main` are BOTH at `b0093e7` (2026-09-12, D-225 — user's explicit instruction to fast-forward `develop` into `main` after #123–#127 landed) — fully in sync.** Carries: D-219 (audit record + issues #123–#130), D-220 (#123 fix), D-221 (#124 fix), D-222 (#125 fix), D-223 (#126 fix), D-224 (#127 fix). #128/#129/#130 (P1) and the P2/P3 audit findings are NOT started — work paused on the user's explicit "push to main since 123 to now and we will continue later," mid-#128 (no code written for #128 yet, only read). `git merge`/`checkout` commands were initially blocked by the Claude Code auto-mode permission classifier ("Modify Shared Resources") this session; the user approved and the merges (both #112 and #119, plus the pending #119 migration) proceeded normally. Product version is **0.3.0**; UI supports 9 locales incl. `pt`. No tag requested. **Production DB schema is current through D-218** (includes the additive `availability_capacity_type` migration, applied and verified) — **production APP CODE is NOT yet redeployed** for any of D-202→D-218; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210).
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **`main` is at `b0093e7` (2026-09-12, D-225 — user's explicit instruction to fast-forward `develop` into `main` after #123–#127 landed); `develop` has since moved ahead** with D-226 (#128 fix), D-227 (#129 fix), D-228 (#130 fix), D-229 (#112 correction), D-230 (#119 correction), D-231 (#131 mobile UX fix) — all committed to `develop`, not yet merged/pushed to `main` (no such instruction given yet for this batch). #128/#129/#130 (P1) and #112/#119's corrections and the mobile Historial fix are now DONE; the P2/P3 audit findings are NOT started — that's the next work. `git merge`/`checkout` commands were initially blocked by the Claude Code auto-mode permission classifier ("Modify Shared Resources") this session; the user approved and the merges (both #112 and #119, plus the pending #119 migration) proceeded normally. Product version is **0.3.0**; UI supports 9 locales incl. `pt`. No tag requested. **Production DB schema is current through D-218** (includes the additive `availability_capacity_type` migration, applied and verified) — **production APP CODE is NOT yet redeployed** for any of D-202→D-231; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210).
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -44,6 +44,21 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-231 — #131 [mobile UX] fixed: Historial filter grid + mobile card actions, this session
+  (2026-09-12). Full detail in `docs/decisions.md` D-231.** Filter `<form>`'s base grid was
+  `grid-cols-2` at all 4 widths the user's report named (320-430px, all below Tailwind's `sm:` 640px
+  breakpoint) — changed to `grid-cols-1` + `min-w-0` on each field wrapper/control, fixing the
+  overlap. Mobile card's "Inspección" link moved out of `<RowMenu>` to sit directly beside Ver
+  detalle/Compartir, mirroring the desktop table (which already had this arrangement) —
+  Corregir/Duplicar/PDF stay inside `<RowMenu>`. Layout-only: no filter logic, query params,
+  `<RowMenu>`/`<RowShare>` behaviour changed. Gate: tsc/eslint/prettier/keel-verify clean (2
+  pre-existing unrelated warnings only), 498/498 unit unaffected, 12/12 `historico-redesign.spec.ts`
+  (4 pre-existing + 8 new, one per width × 2 checks) + 3/3 `export-csv.spec.ts`, plus a 30-test
+  regression sweep (`workspace.spec.ts`'s `/panel/historico` a11y scan, `panel-nav`, `row-share`,
+  `team`, `master-data`, `driver-delivery`) all passing unchanged. Test-first verified red-then-green
+  via `git stash`. Committed to `develop`, not yet pushed. **Issue #112/#119 corrections and this
+  mobile fix are the full "make the corrections, then this fix" request — now complete. Moving to
+  the P2/P3 audit findings next.**
 - **D-230 — #119 correction implemented: postal-code-based matching + 4 new vehicle types for
   DECA Conecta, this session (2026-09-12). Full detail in `docs/decisions.md` D-230.** New additive
   migration (3 nullable columns on `DecaAvailabilityShare`); `VehicleType` expanded to 6 values +
