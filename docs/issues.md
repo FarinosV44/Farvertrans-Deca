@@ -1165,10 +1165,12 @@ started; no code changed by the audit itself.
   exists — accepted, user-chosen risk. Gate: 477/477 unit (+5 new, test-first), targeted e2e green.
   Committed to `develop`, not yet pushed. Comment + close pending push.
 - **I-128 — #128 [P1 Correctness] Multi-shipment PDF can silently omit a per-shipment vehicle-plate
-  override the schema still accepts.** `lib/pdf/deca-document.tsx`'s "Vehículo" block reads only the
-  DeCA-level plate, never `resolveShipment()`; the wizard never sends a per-shipment override
-  (D-214), but a direct API caller still can, and the printed legal document would then not reflect
-  the data it claims to hold. Not started.
+  override the schema still accepts.** **FIXED, this session (D-226):** `canonicalSchema`'s
+  `superRefine` rejects a per-shipment plate override that differs from the DeCA-level default once
+  `shipments.length > 1`. Cross-checked against the user's newest #112/#119 corrections (posted as
+  issue comments) before finishing — both reconfirm vehicle stays DeCA-level, neither touches the
+  schema this fix is in. Gate: 481/481 unit (+4 new, test-first), 23/23 targeted e2e. Committed to
+  `develop`, not yet pushed. Comment + close pending push.
 - **I-129 — #129 [P1 Security] No abuse/rate control on `POST /api/team/invites`.** Any session
   holder can send unlimited invite emails to arbitrary addresses — an email-bombing vector via a
   compromised or throwaway account, unlike every sibling mail-sending route

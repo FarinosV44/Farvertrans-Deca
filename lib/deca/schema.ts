@@ -244,6 +244,30 @@ const canonicalSchema = step1Schema
           path: ["shipments", i, "unloadDate"],
         });
       }
+      // #128: vehicle is a single DeCA-level datum once there is more than one
+      // shipment (D-214) — the printed "Vehículo" summary block always shows
+      // the DeCA-level default, never a per-shipment resolved value, so a
+      // differing per-shipment override would compute a resolved plate
+      // (`resolveShipment()`) that the PDF never actually prints. A single
+      // shipment has no such block — its own plate IS what renders, so no
+      // ambiguity exists there and an override is still allowed.
+      if (d.shipments.length > 1) {
+        if (s.tractorPlate !== undefined && s.tractorPlate !== d.tractorPlate) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La matrícula tractora es única para todo el DeCA; no puede variar por envío.",
+            path: ["shipments", i, "tractorPlate"],
+          });
+        }
+        if (s.trailerPlate && s.trailerPlate !== d.trailerPlate) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "La matrícula del remolque es única para todo el DeCA; no puede variar por envío.",
+            path: ["shipments", i, "trailerPlate"],
+          });
+        }
+      }
     });
   });
 

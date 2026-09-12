@@ -104,6 +104,10 @@ describe("decaPayloadSchema — new shipments[] input", () => {
   });
 
   it("a shipment's override wins over the DeCA-level default; an unset field inherits it", () => {
+    // #128: vehicle plate is deliberately EXCLUDED from this — see the
+    // dedicated "vehicle plate is DeCA-level only" describe block below.
+    // `notes` demonstrates the same override-precedence mechanism for a
+    // field that IS still allowed to vary per shipment.
     const r = decaPayloadSchema.parse({
       ...base,
       shipments: [
@@ -112,15 +116,58 @@ describe("decaPayloadSchema — new shipments[] input", () => {
           ...shipmentB,
           loadDate: "2026-10-07",
           unloadDate: "2026-10-07", // both overridden, so date-order still holds
-          tractorPlate: "9999 ZZZ",
+          notes: "Entrega urgente antes de las 10:00",
         },
       ],
     }) as DecaPayload;
     const resolved = resolveShipments(r);
     expect(resolved[0].loadDate).toBe("2026-10-06"); // inherited default
-    expect(resolved[0].tractorPlate).toBe("1234BCD"); // inherited default
+    expect(resolved[0].notes).toBe(""); // inherited default (none set)
     expect(resolved[1].loadDate).toBe("2026-10-07"); // overridden
-    expect(resolved[1].tractorPlate).toBe("9999ZZZ"); // overridden
+    expect(resolved[1].notes).toBe("Entrega urgente antes de las 10:00"); // overridden
+  });
+
+  describe("#128 — vehicle plate is DeCA-level only once a DeCA has more than one shipment", () => {
+    it("rejects a per-shipment tractorPlate that differs from the DeCA-level default", () => {
+      const r = decaPayloadSchema.safeParse({
+        ...base,
+        shipments: [shipmentA, { ...shipmentB, tractorPlate: "9999 ZZZ" }],
+      });
+      expect(r.success).toBe(false);
+      if (r.success) return;
+      expect(r.error.issues.some((i) => i.path.join(".") === "shipments.1.tractorPlate")).toBe(
+        true,
+      );
+    });
+
+    it("rejects a per-shipment trailerPlate that differs from the DeCA-level default", () => {
+      const r = decaPayloadSchema.safeParse({
+        ...base,
+        trailerPlate: "1111 AAA",
+        shipments: [shipmentA, { ...shipmentB, trailerPlate: "2222 BBB" }],
+      });
+      expect(r.success).toBe(false);
+      if (r.success) return;
+      expect(r.error.issues.some((i) => i.path.join(".") === "shipments.1.trailerPlate")).toBe(
+        true,
+      );
+    });
+
+    it("accepts a per-shipment plate that matches the DeCA-level default (redundant, not a real override)", () => {
+      const r = decaPayloadSchema.safeParse({
+        ...base,
+        shipments: [shipmentA, { ...shipmentB, tractorPlate: base.tractorPlate }],
+      });
+      expect(r.success).toBe(true);
+    });
+
+    it("still accepts a differing plate when there is only ONE shipment (no ambiguity, no PDF/data mismatch possible)", () => {
+      const r = decaPayloadSchema.safeParse({
+        ...base,
+        shipments: [{ ...shipmentA, tractorPlate: "9999 ZZZ" }],
+      });
+      expect(r.success).toBe(true);
+    });
   });
 
   it("rejects a shipment whose OWN resolved unload date precedes its load date", () => {

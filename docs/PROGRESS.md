@@ -44,6 +44,25 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **Mid-#128, the user asked to re-read the newest comments on #112/#119 (2026-09-12) before
+  continuing, since they carry substantial UX corrections to multi-shipment creation and DECA
+  Conecta matching.** Read both in full. **#112's correction** (a "paradas"/stops model with
+  per-side `+` buttons, a linking UI for many-loads×many-unloads, explicit no-cartesian-product
+  requirement) reconfirms "tractora; remolque" stay DeCA-level data — consistent with, not
+  contradicting, D-226 below. **#119's correction** (postal-code-based zone/destination matching,
+  6 new vehicle types incl. `OTRO` with a free-text specify field) doesn't touch the DeCA schema at
+  all. **Neither correction was implemented this session** — both are substantial, separate feature
+  work, out of scope for this audit-fix pass; flagged to the user, not started.
+- **D-226 — #128 [P1] fixed: vehicle plate rejected as a per-shipment override once a DeCA has more
+  than one shipment, this session (2026-09-12). Full detail in `docs/decisions.md` D-226.**
+  `canonicalSchema`'s `superRefine` now rejects a per-shipment `tractorPlate`/`trailerPlate`
+  differing from the DeCA-level default when `shipments.length > 1` (single-shipment unaffected —
+  no ambiguity there). Verified consistent with the #112/#119 corrections above before finishing.
+  Test-first: 4 new cases in `deca-schema-shipments.test.ts`, 2 observed red before the fix; found
+  and adjusted one existing test that had been demonstrating override-precedence using the exact
+  field this fix now restricts (swapped to `notes`). Gate: tsc/eslint/prettier/keel-verify clean,
+  481/481 unit (+4 new), 23/23 targeted e2e (`deca-multi-shipment`, `crear`, `creator-v2`).
+  Committed to `develop`, not yet pushed.
 - **D-224 — #127 [P1] fixed (user-scoped): the one confirmed PII-in-logs leak, this session
   (2026-09-12). Full detail in `docs/decisions.md` D-224.** Asked the user to choose between a
   full `pino` migration and a minimal fix; **user chose minimal.** `lib/mailer.ts`'s provider-error

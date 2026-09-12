@@ -8024,3 +8024,45 @@ develop && git push origin main`, followed by switching back to `develop`. `main
 through D-224 (the audit record and the #123/#124/#125/#126/#127 fixes). Work paused here on the
 user's own instruction; #128, #129, #130 (all P1) and every P2/P3 audit finding remain open, to be
 picked up in a later session.
+
+## D-226 — #128: vehicle plate rejected as a per-shipment override once a DeCA has more than one shipment (2026-09-12)
+
+**Problem (P1, found by the audit):** the multi-shipment PDF's "Vehículo" summary block
+(`lib/pdf/deca-document.tsx` lines 509-519) always prints the DeCA-level `tractorPlate`/`trailerPlate`
+default — by design, since #112's own comment there says vehicle is "a single DeCA-level datum shared
+by every shipment (never a per-shipment selector)." But `shipmentSchema` still accepted an optional
+per-shipment `tractorPlate`/`trailerPlate` override (D-214: the wizard stopped sending one, but the
+schema itself was never closed off). A direct API caller could submit a shipment whose plate override
+differs from the default; `resolveShipments()` would compute that override as the shipment's resolved
+plate (used in `dataJson`, the duplicate-plate warning, `recordAvailabilityShare`) — but the printed
+PDF would never show it. The generated legal document would then not reflect the data it claims to
+hold, for a >1-shipment DeCA.
+
+**Fix:** `canonicalSchema`'s existing `superRefine` (`lib/deca/schema.ts`) now rejects a per-shipment
+`tractorPlate`/`trailerPlate` that differs from the DeCA-level default, but ONLY when
+`shipments.length > 1`. A single-shipment DeCA is unaffected — its own plate override, whether it
+differs from the default or not, IS what renders (the single-shipment path in the PDF uses
+`resolveShipment()`'s value directly, confirmed by reading lines 582-587) — no ambiguity, no
+data/PDF mismatch possible there, so no new restriction. A per-shipment plate that merely *matches*
+the default (redundant, not a real override) is still accepted at any shipment count.
+
+**Confirmed still correct after the user's newest corrections to #112/#119 (posted as issue comments,
+reviewed before finishing this fix):** #112's correction explicitly reconfirms "Datos comunes ...
+Se mantienen a nivel DeCA ... tractora; remolque" — vehicle plate stays DeCA-level exactly as this fix
+enforces. Both corrections (#112's stops/linking UX rewrite, #119's postal-code matching + expanded
+vehicle types) are wizard-UX/DECA-Conecta changes that don't touch `lib/deca/schema.ts`'s per-shipment
+field model — this fix is unaffected by either and remains correctly scoped. Implementing those two
+corrections is separate, substantial feature work, not part of this audit-fix session; not started.
+
+**Test-first (bug fix, UNBREAKABLE):** `tests/unit/deca-schema-shipments.test.ts` — 4 new cases
+(reject a differing `tractorPlate`, reject a differing `trailerPlate`, accept a matching plate,
+accept a differing plate when there's only one shipment), observed red (2 of 4 — the two rejection
+cases) against the pre-fix schema. **Real pre-existing test adjustment along the way:** an existing
+test ("a shipment's override wins over the DeCA-level default") demonstrated override precedence
+using `tractorPlate` as its example field — exactly the scenario this fix now rejects. Swapped to
+`notes` (still freely overridable) for that demonstration; the loadDate/unloadDate override assertions
+in that same test are untouched.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 481/481 unit (+4 new), targeted e2e
+regression 23/23 (`deca-multi-shipment.spec.ts`, `crear.spec.ts`, `creator-v2.spec.ts` — incl. "vehicle
+is a single shared field: no tractor/trailer input inside any envío block, shown once in the PDF").
