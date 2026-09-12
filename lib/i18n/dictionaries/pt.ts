@@ -731,6 +731,8 @@ export const pt = {
     },
     documentsCountOne: "documento",
     documentsCountMany: "documentos",
+    truncatedNotice: (total: number, cap: number) =>
+      `A mostrar os ${cap} documentos mais recentes de um total de ${total}. Use os filtros para restringir a pesquisa; os documentos mais antigos não aparecem aqui.`,
     exportCsv: "Exportar CSV",
     colDate: "Data",
     colRoute: "Carga → Descarga",

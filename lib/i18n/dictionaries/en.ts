@@ -708,6 +708,8 @@ export const en = {
     },
     documentsCountOne: "document",
     documentsCountMany: "documents",
+    truncatedNotice: (total: number, cap: number) =>
+      `Showing the ${cap} most recent documents out of ${total} in total. Use the filters to narrow your search; older documents aren't shown here.`,
     exportCsv: "Export CSV",
     colDate: "Date",
     colRoute: "Load → Unload",

@@ -6,7 +6,13 @@ import { AppNav } from "@/components/app/app-nav";
 import { RowShare } from "@/components/deca/row-share";
 import { RowMenu } from "@/components/deca/row-menu";
 import { getCurrentUser } from "@/lib/auth";
-import { listHistory, listHistoryCarriers } from "@/lib/data/history";
+import {
+  countHistory,
+  historyIsTruncated,
+  HISTORY_ROW_CAP,
+  listHistory,
+  listHistoryCarriers,
+} from "@/lib/data/history";
 import { listViews } from "@/lib/data/saved-views";
 import { filtersFromParams, hasActiveFilters, MAX_HISTORY_VIEWS } from "@/lib/data/history-views";
 import { SavedViews } from "@/components/panel/saved-views";
@@ -49,7 +55,7 @@ export default async function HistoricoPage({
   if (!user?.companyId) redirect("/registro/completar-empresa");
 
   const sp = await searchParams;
-  const [rows, carriers, savedViews] = await Promise.all([
+  const [rows, carriers, savedViews, totalCount] = await Promise.all([
     listHistory(user.companyId, {
       q: sp.q,
       from: sp.from,
@@ -60,7 +66,13 @@ export default async function HistoricoPage({
     listHistoryCarriers(user.companyId),
     // #92 — this user's own saved views; never the company's.
     listViews(user.id),
+    // #137 — the company's REAL total, so a search/filter that only ever
+    // sees `listHistory()`'s capped 500 rows can tell the user when older
+    // documents exist beyond what's shown, instead of looking like "no
+    // results" when it's actually "no results within the visible cap."
+    countHistory(user.companyId),
   ]);
+  const truncated = historyIsTruncated(totalCount);
   const currentFilters = filtersFromParams(sp);
   const t = await getDictionary();
   const active = sp.q || sp.from || sp.to || sp.carrier || sp.plate;
@@ -231,6 +243,19 @@ export default async function HistoricoPage({
             </a>
           )}
         </div>
+
+        {/* #137 — only shown when the 500-row cap is actually in effect,
+            so search/filters/export never look like "no results" when
+            older documents simply aren't in the visible batch at all. */}
+        {truncated && (
+          <p
+            data-testid="history-truncated-notice"
+            role="status"
+            className="mt-2 text-xs text-[var(--color-text-muted)]"
+          >
+            {t.historico.truncatedNotice(totalCount, HISTORY_ROW_CAP)}
+          </p>
+        )}
 
         {rows.length > 0 && (
           <div className="overflow-x-auto">

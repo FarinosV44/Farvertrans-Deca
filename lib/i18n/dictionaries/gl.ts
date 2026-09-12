@@ -728,6 +728,8 @@ export const gl = {
     },
     documentsCountOne: "documento",
     documentsCountMany: "documentos",
+    truncatedNotice: (total: number, cap: number) =>
+      `Amosando os ${cap} documentos máis recentes dun total de ${total}. Usa os filtros para acoutar a busca; os documentos máis antigos non aparecen aquí.`,
     exportCsv: "Exportar CSV",
     colDate: "Data",
     colRoute: "Carga → Descarga",

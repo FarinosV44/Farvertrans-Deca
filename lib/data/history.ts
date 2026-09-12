@@ -54,6 +54,24 @@ type Data = {
 
 export type DecaPayloadData = Data;
 
+/** The hard cap `listHistory()` applies before any filtering — see its own
+ *  doc comment. Exported so callers can detect when it actually bites. */
+export const HISTORY_ROW_CAP = 500;
+
+/** #137: whether the company has more DeCAs than `listHistory()`'s cap can
+ *  return — i.e. whether filtering/search/export might be silently missing
+ *  older documents. Pure so it's trivially unit-testable without a DB. */
+export function historyIsTruncated(totalCount: number, cap = HISTORY_ROW_CAP): boolean {
+  return totalCount > cap;
+}
+
+/** Total DeCA count for a company — cheap, indexed (#130), used only to
+ *  detect whether `listHistory()`'s cap is actually in effect (#137), never
+ *  to replace the capped fetch itself. */
+export async function countHistory(companyId: string): Promise<number> {
+  return prisma.deca.count({ where: { companyId } });
+}
+
 /**
  * Company-scoped DeCA history with in-memory filtering over the stored payload.
  * Volumes per company are low enough for a fetch-then-filter in v1; revisit with
@@ -67,7 +85,7 @@ export async function listHistory(
     where: { companyId },
     include: { currentVersion: true },
     orderBy: { createdAt: "desc" },
-    take: 500,
+    take: HISTORY_ROW_CAP,
   });
 
   const rows: HistoryRow[] = [];

@@ -734,6 +734,10 @@ export const es = {
     },
     documentsCountOne: "documento",
     documentsCountMany: "documentos",
+    // #137 — shown only when the company has more DeCA than the 500-row cap
+    // this list/búsqueda/exportación can ever return in one batch.
+    truncatedNotice: (total: number, cap: number) =>
+      `Mostrando los ${cap} documentos más recientes de ${total} en total. Usa los filtros para acotar la búsqueda; los documentos más antiguos no aparecen aquí.`,
     exportCsv: "Exportar CSV",
     colDate: "Fecha",
     colRoute: "Carga → Descarga",

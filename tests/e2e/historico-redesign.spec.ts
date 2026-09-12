@@ -1,4 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
+import { PrismaClient } from "@/prisma/generated/client";
+
+const prisma = new PrismaClient();
 
 /**
  * #114 — Historial visual redesign: multi-envío route summary, the new "···"
@@ -12,8 +15,9 @@ function email() {
 }
 
 async function register(page: Page) {
+  const addr = email();
   await page.goto("/registro");
-  await page.fill("#email", email());
+  await page.fill("#email", addr);
   await page.fill("#password", "Supersecret123!");
   await page.fill("#companyName", "Historico Redesign SL");
   await page.fill("#companyNif", "B12345674");
@@ -32,6 +36,7 @@ async function register(page: Page) {
   const body = await res.json();
   await page.request.get(`/verificar-email/${body.verifyTestToken}`);
   await page.goto("/panel");
+  return addr;
 }
 
 async function createMultiShipmentDeca(page: Page) {
@@ -283,4 +288,29 @@ test.describe("#114 — Historial redesign", () => {
       }
     });
   }
+
+  // #137 — past the 500-row cap, /panel/historico must say so, never look
+  // like "no results" when older documents simply aren't in the batch.
+  test("#137: a company past 500 documents sees a truncation notice naming the real total", async ({
+    page,
+  }) => {
+    const addr = await register(page);
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: addr },
+      select: { companyId: true },
+    });
+    const companyId = user.companyId!;
+
+    // 501 bare Deca rows (no currentVersion needed — countHistory() counts
+    // the Deca table directly, and the notice's own logic depends only on
+    // the real total, not on how many of those rows actually render).
+    await prisma.deca.createMany({
+      data: Array.from({ length: 501 }, () => ({ companyId })),
+    });
+
+    await page.goto("/panel/historico");
+    await expect(page.getByTestId("history-truncated-notice")).toBeVisible();
+    await expect(page.getByTestId("history-truncated-notice")).toContainText("500");
+    await expect(page.getByTestId("history-truncated-notice")).toContainText("501");
+  });
 });

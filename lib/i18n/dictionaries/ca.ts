@@ -723,6 +723,8 @@ export const ca = {
     },
     documentsCountOne: "document",
     documentsCountMany: "documents",
+    truncatedNotice: (total: number, cap: number) =>
+      `Es mostren els ${cap} documents més recents d'un total de ${total}. Fes servir els filtres per acotar la cerca; els documents més antics no apareixen aquí.`,
     exportCsv: "Exportar CSV",
     colDate: "Data",
     colRoute: "Càrrega → Descàrrega",

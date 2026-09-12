@@ -746,6 +746,8 @@ export const eu = {
     },
     documentsCountOne: "dokumentu",
     documentsCountMany: "dokumentu",
+    truncatedNotice: (total: number, cap: number) =>
+      `Guztira ${total} dokumenturen artean, ${cap} berrienak erakusten ari dira. Erabili iragazkiak bilaketa zehazteko; dokumentu zaharrak ez dira hemen agertzen.`,
     exportCsv: "Esportatu CSV",
     colDate: "Data",
     colRoute: "Karga → Deskarga",

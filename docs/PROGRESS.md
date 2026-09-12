@@ -44,6 +44,14 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-242 — #137 [P2 audit finding] fixed: Historial's 500-row cap now shows a notice when it
+  actually bites, this session (2026-09-12). Full detail in `docs/decisions.md` D-242.** New
+  `countHistory()` + pure `historyIsTruncated()`; `/panel/historico` shows a notice naming the real
+  total vs. the 500 cap only when a company actually exceeds it. New e2e test seeds 501 bare `Deca`
+  rows directly via Prisma (no version needed) and confirms the notice; verified red-then-green via
+  `git stash`. Gate: tsc/eslint/prettier clean, 501/501 unit (+3 new), 13/13
+  `historico-redesign.spec.ts`, 4/4 `export-csv.spec.ts`, 7/7 `workspace.spec.ts`. Committed to
+  `develop`, not yet pushed.
 - **D-241 — `develop` merged to `main` through D-240, pending migration applied to production, this
   session (2026-09-12), on the user's explicit instruction. Full detail in `docs/decisions.md`
   D-241.** `main` and `develop` are now BOTH at `fdaaaa0` — fully in sync, `git diff` confirmed

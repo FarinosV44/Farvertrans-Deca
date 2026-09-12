@@ -8668,3 +8668,32 @@ flagged at D-158), making rotation more overdue with each repetition, not less.
 
 **Gate:** no application code changed by this entry — verification only. `prisma migrate status`
 confirms production before and after. `git diff main develop` confirms the merge.
+
+## D-242 — #137 [P2 audit finding, correctness]: Historial's 500-row cap now shows a notice when it actually bites (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `lib/data/history.ts`'s `listHistory()` caps at 500
+rows and filters IN-MEMORY over that already-capped batch — used by `/panel/historico`, CSV export,
+global search, and the panel dashboard. Once a company passes 500 documents, older records become
+invisible to search/filters/export with no signal that anything was left out — a filter matching zero
+visible results looks identical to "no such document," which it may not be.
+
+**Fix:** new `countHistory()` (a cheap, indexed — #130 — `prisma.deca.count()`) and a pure
+`historyIsTruncated(totalCount, cap = HISTORY_ROW_CAP)` decision function. `/panel/historico` fetches
+the real total alongside the capped list and shows a notice naming both numbers ("Mostrando los 500
+documentos más recientes de N en total...") only when the cap is actually in effect — never for the
+common case of a company with fewer than 500 documents.
+
+**Test-first / verification:** `historyIsTruncated()` is pure logic (D-014) — 3 new unit cases,
+written directly (a genuinely new capability, not a pre-existing bug with observable wrong behavior,
+so no red/green cycle applies to the pure function itself). The end-to-end behavior DOES get a real
+red/green cycle: a new e2e test seeds 501 bare `Deca` rows directly via Prisma (no `DecaVersion`
+needed — `countHistory()` counts the `Deca` table directly, and the notice depends only on the real
+total, not on how many rows actually render) for a freshly registered company, then asserts the
+notice is visible and names both "500" and "501". Verified red-then-green via `git stash`: confirmed
+the notice was absent before the fix, present and correctly worded after.
+
+**i18n:** new `historico.truncatedNotice(total, cap)` key added to all 9 locale dictionaries.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 501/501 unit (+3 new),
+13/13 `historico-redesign.spec.ts` (12 pre-existing + 1 new), plus a regression sweep — 4/4
+`export-csv.spec.ts`, 7/7 `workspace.spec.ts` incl. its `/panel/historico` a11y scan — all green.
