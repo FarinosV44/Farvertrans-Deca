@@ -51,6 +51,26 @@ describe("sendMail — resilient to a slow/unreachable provider", () => {
     });
   });
 
+  it("#127 redacts a recipient email the provider echoes back in its error body before logging", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            '{"statusCode":422,"message":"Invalid `to` field: chofer@empresa.es is not a verified address"}',
+            { status: 422 },
+          ),
+      ),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { sendMail } = await import("@/lib/mailer");
+    await sendMail({ to: "chofer@empresa.es", subject: "s", text: "t" });
+    const logged = errorSpy.mock.calls.map((c) => String(c[0])).join("\n");
+    expect(logged).not.toContain("chofer@empresa.es");
+    expect(logged).toContain("[redacted]");
+    errorSpy.mockRestore();
+  });
+
   it("still reports success with the provider id", async () => {
     vi.stubGlobal(
       "fetch",

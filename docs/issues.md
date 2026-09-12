@@ -1156,11 +1156,14 @@ started; no code changed by the audit itself.
   **FIXED, this session (D-223):** `csvField()` now prefixes a leading `=`/`+`/`-`/`@` with `'`.
   Gate: 472/472 unit (+2 new, test-first), `export-csv.spec.ts` 3/3. Committed to `develop`, not
   yet pushed. Comment + close pending push.
-- **I-127 — #127 [P1 Tech debt / Security] No centralized logging/redaction framework.** `pino` is
-  not an actual dependency despite being the documented mandatory convention
-  (`.claude/rules/code-style.md`, `docs/03-technical-plan.md`); every log call site does ad hoc
-  per-site redaction. One confirmed instance of a potential PII leak: `lib/mailer.ts` logs the raw
-  provider error body (only length-capped, not redacted) on send failure. Not started.
+- **I-127 — #127 [P1 Tech debt / Security] No centralized logging/redaction framework.** **Scoped
+  with the user, this session (D-224):** asked full `pino` migration vs. minimal fix — user chose
+  minimal. **FIXED:** the one confirmed leak (`lib/mailer.ts`'s provider-error body) is now
+  redacted via a new shared `redactPii()` (`lib/text/redact.ts`), extracted from
+  `lib/deca/generation.ts`. **Recorded, not fixed:** the actual convention (console + per-site
+  redaction, not `pino`) needs the rule docs corrected separately; no centralized enforcement
+  exists — accepted, user-chosen risk. Gate: 477/477 unit (+5 new, test-first), targeted e2e green.
+  Committed to `develop`, not yet pushed. Comment + close pending push.
 - **I-128 — #128 [P1 Correctness] Multi-shipment PDF can silently omit a per-shipment vehicle-plate
   override the schema still accepts.** `lib/pdf/deca-document.tsx`'s "Vehículo" block reads only the
   DeCA-level plate, never `resolveShipment()`; the wizard never sends a per-shipment override

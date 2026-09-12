@@ -44,6 +44,20 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-224 — #127 [P1] fixed (user-scoped): the one confirmed PII-in-logs leak, this session
+  (2026-09-12). Full detail in `docs/decisions.md` D-224.** Asked the user to choose between a
+  full `pino` migration and a minimal fix; **user chose minimal.** `lib/mailer.ts`'s provider-error
+  log no longer leaks a raw recipient email echoed back by Resend — redacted via new
+  `redactPii()` (`lib/text/redact.ts`), extracted (not duplicated) from the already-tested regex in
+  `lib/deca/generation.ts`'s `safeErrorSummary()`, which now calls the shared helper too. **Recorded,
+  not fixed:** this project's actual logging convention is console + per-site redaction, not
+  `pino` as `.claude/rules/code-style.md`/`docs/03-technical-plan.md` claim — those files still need
+  correcting (flagged, not done in this slice); no centralized redaction enforcement exists, a new
+  log call site must remember to apply `redactPii()` itself (accepted risk, user's explicit choice).
+  Test-first: 4 new `text-redact` cases (extraction, verified byte-identical) + 1 new `mailer` case,
+  observed red by temporarily stashing the fix. Gate: tsc/eslint/prettier/keel-verify clean,
+  477/477 unit (+5 new), `reliability.spec.ts` 7/7 + `register-loading-state.spec.ts` 1/1. Committed
+  to `develop`, not yet pushed.
 - **D-223 — #126 [P1] fixed: CSV history export now neutralizes formula/CSV-injection characters,
   this session (2026-09-12). Full detail in `docs/decisions.md` D-223.** `csvField()` prefixes a
   leading `=`/`+`/`-`/`@` with `'` (the standard "force text" convention) before RFC 4180 quoting.

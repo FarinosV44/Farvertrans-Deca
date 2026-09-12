@@ -1,5 +1,6 @@
 import "server-only";
 import { BRAND } from "@/lib/brand";
+import { redactPii } from "@/lib/text/redact";
 
 export type MailResult = { sent: boolean; reason?: "unconfigured" | "error"; providerId?: string };
 
@@ -82,11 +83,14 @@ export async function sendMail(opts: {
     if (!res.ok) {
       // SECURITY #53 P0: never swallow the provider's own error — this is
       // what makes "why didn't the email arrive" diagnosable in production.
+      // #127: the provider's response body is logged verbatim except for
+      // PII redaction — a validation error commonly echoes the rejected
+      // recipient's address back in its message text.
       console.error(
         JSON.stringify({
           event: "mail_provider_error",
           status: res.status,
-          body: body.slice(0, 2000),
+          body: redactPii(body).slice(0, 2000),
           to: redact(opts.to),
         }),
       );

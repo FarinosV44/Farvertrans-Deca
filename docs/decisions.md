@@ -7970,3 +7970,45 @@ appeared unmodified in the CSV output) before the fix.
 
 **Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 472/472 unit (+2 new),
 `tests/e2e/export-csv.spec.ts` 3/3 green.
+
+## D-224 — #127: fixed the one confirmed PII-in-logs leak; recorded that this project's actual logging convention is console + per-site redaction, not `pino` (2026-09-12)
+
+**User decision (asked, not assumed):** the audit's #127 finding offered two paths — a full `pino`
+migration matching the originally-documented intent (large, invasive, real regression risk for a
+bug-fix session) vs. a minimal fix (redact the one confirmed leak, extract a shared redaction helper,
+record the actual convention). **The user chose the minimal fix.**
+
+**What was fixed:** `lib/mailer.ts`'s `mail_provider_error` log logged the provider's raw response
+`body` (only length-capped, not redacted) — if Resend echoes the rejected recipient's address in its
+error text (common for validation errors), that leaked PII into logs despite the adjacent `to` field
+already being redacted.
+
+**What was extracted (reuse, not duplication):** the email/long-digit-run redaction regex already
+existed, tested, in `lib/deca/generation.ts`'s `safeErrorSummary()` — duplicating it in `mailer.ts`
+would have been exactly the "near-duplicate logic" class of defect this project's own conventions flag.
+Extracted to a new pure module, `lib/text/redact.ts` (`redactPii()`), byte-identical behavior (including
+its existing corner case: an email regex greedily consuming a trailing comma — confirmed via the
+extraction test, not "fixed," since changing it would be an unrelated behavior change). `generation.ts`
+now calls the shared helper instead of its own inline regex chain; `mailer.ts` applies it to the
+provider error body before logging.
+
+**Recorded (the actual decision, not a code change):** this project's logging convention is
+`console.log`/`console.error` with per-call-site redaction via shared pure helpers like `redactPii()` —
+**not** `pino`, despite `.claude/rules/code-style.md` and `docs/03-technical-plan.md` stating "logging:
+`pino`". Those two files should be corrected to describe the convention actually in force (flagged to
+the user; not corrected in this slice, since editing the recorded rule files themselves is a separate,
+deliberate act, not implied by fixing the leak). No centralized redaction enforcement exists — a new
+log call site must remember to apply `redactPii()` itself; this is accepted, recorded risk, not fixed
+by this slice (the user chose the smaller of the two remedies knowing this).
+
+**Test-first (bug fix, UNBREAKABLE):** new `tests/unit/text-redact.test.ts` (4 cases, extraction —
+verified byte-identical to the pre-existing tested behavior, not new unverified logic) and one new
+case in `tests/unit/mailer.test.ts` asserting the logged body never contains a raw recipient email.
+The mailer case was observed red by temporarily stashing the fix (`git stash push -- lib/mailer.ts
+lib/deca/generation.ts`), confirming the raw email appeared in the mocked `console.error` call, then
+restoring the fix (`git stash pop`).
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 477/477 unit (+5 new: 4 `text-redact` + 1
+`mailer`), targeted e2e regression (`reliability.spec.ts` 7/7, `register-loading-state.spec.ts` 1/1) —
+`safeErrorSummary`'s existing redaction test (`generation-error.test.ts`) unaffected, confirming the
+extraction preserved behavior exactly.

@@ -1,5 +1,6 @@
 import { DecaValidationError } from "./validate";
 import { StorageError } from "@/lib/storage/errors";
+import { redactPii } from "@/lib/text/redact";
 
 /**
  * Stage-aware DeCA generation failures (P0 FIX #29).
@@ -101,9 +102,7 @@ const MAX_SUMMARY = 200;
 export function safeErrorSummary(e: unknown): { errorClass: string; message: string } {
   const errorClass =
     e instanceof Error ? e.name || e.constructor.name : e === null ? "unknown" : typeof e;
-  let message = messageOf(e)
-    .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, "[redacted]")
-    .replace(/\b[A-Za-z]?\d{7,}[A-Za-z]?\b/g, "[redacted]");
+  let message = redactPii(messageOf(e));
   if (message.length > MAX_SUMMARY) message = `${message.slice(0, MAX_SUMMARY - 1)}…`;
   return { errorClass: errorClass || "unknown", message };
 }
