@@ -33,14 +33,18 @@ const schema = z.discriminatedUnion("kind", [
   }),
 ]);
 
+const notFound = () => NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
+
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user?.companyId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!user?.companyId)
+    return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
   // A read_only member can view but not curate the shared workspace.
-  if (user.companyRole === "read_only") return new NextResponse("Forbidden", { status: 403 });
+  if (user.companyRole === "read_only")
+    return NextResponse.json({ error: { code: "forbidden" } }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return new NextResponse("Bad request", { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: { code: "bad_input" } }, { status: 400 });
   const body = parsed.data;
 
   if (body.kind === "route") {
@@ -49,12 +53,12 @@ export async function POST(req: Request) {
   }
   if (body.kind === "template") {
     const ok = await setTemplateFavorite(user.companyId, body.id, body.favorite);
-    return ok ? NextResponse.json({ ok: true }) : new NextResponse("Not found", { status: 404 });
+    return ok ? NextResponse.json({ ok: true }) : notFound();
   }
   if (body.kind === "shipment") {
     const ok = await setSavedShipmentFavorite(user.companyId, body.id, body.favorite);
-    return ok ? NextResponse.json({ ok: true }) : new NextResponse("Not found", { status: 404 });
+    return ok ? NextResponse.json({ ok: true }) : notFound();
   }
   const ok = await setSavedFavorite(user.companyId, body.kind, body.id, body.favorite);
-  return ok ? NextResponse.json({ ok: true }) : new NextResponse("Not found", { status: 404 });
+  return ok ? NextResponse.json({ ok: true }) : notFound();
 }

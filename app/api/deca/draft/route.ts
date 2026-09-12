@@ -12,20 +12,23 @@ export const runtime = "nodejs";
  */
 export async function PUT(req: Request) {
   const user = await getCurrentUser();
-  if (!user?.companyId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!user?.companyId)
+    return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
   const body = await req.json().catch(() => null);
-  if (!body || typeof body !== "object") return new NextResponse("Bad request", { status: 400 });
+  if (!body || typeof body !== "object")
+    return NextResponse.json({ error: { code: "bad_input" } }, { status: 400 });
   try {
     await saveDraft(user.id, user.companyId, body);
   } catch {
-    return new NextResponse("Bad request", { status: 400 });
+    return NextResponse.json({ error: { code: "bad_input" } }, { status: 400 });
   }
   return NextResponse.json({ ok: true });
 }
 
 export async function DELETE() {
   const user = await getCurrentUser();
-  if (!user?.companyId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!user?.companyId)
+    return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
   await discardDraft(user.id);
   return NextResponse.json({ ok: true });
 }

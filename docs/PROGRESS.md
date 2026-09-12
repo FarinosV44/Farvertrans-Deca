@@ -44,6 +44,13 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-236 — #135 [P2 audit finding] fixed: 3 routes standardized on the `{ error: { code, message
+  } }` shape, this session (2026-09-12). Full detail in `docs/decisions.md` D-236.**
+  `app/api/deca/draft`, `app/api/favorites`, `app/api/integraciones` returned plain-text error
+  bodies against this project's own documented convention. Checked every client caller first — none
+  depend on the old shape (consistency fix, not a live-bug fix, so no test-first red/green cycle
+  applies). Gate: tsc/eslint/prettier clean, 500/500 unit unaffected, 5/5
+  `favorites.spec.ts`+`deca-draft.spec.ts`. Committed to `develop`, not yet pushed.
 - **D-235 — production migrations applied + `develop` merged to `main` through #134, this session
   (2026-09-12), on the user's explicit instruction. Full detail in `docs/decisions.md` D-235.**
   `prisma migrate status` run directly against production (temporary credential the user pasted in

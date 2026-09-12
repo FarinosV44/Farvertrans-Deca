@@ -8405,3 +8405,31 @@ transcript.
 
 **Gate:** no code changed by this entry — verification only. `prisma migrate status` confirms
 production. `git diff main develop` confirms the merge. Full static gate green on `main`.
+
+## D-236 — #135 [P2 audit finding, consistency]: 3 routes standardized on the { error: { code, message } } shape (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `app/api/deca/draft/route.ts`, `app/api/favorites/
+route.ts`, and `app/api/integraciones/route.ts` returned plain-text error bodies (`new
+NextResponse("Unauthorized", { status: 401 })`) instead of this project's own documented convention
+(`.claude/rules/code-style.md`: "Route Handlers catch and return `{ error: { code, message } }`" —
+ONE strategy, never mixed). `integraciones` even mixed both shapes in the same file.
+
+**Impact assessed before fixing:** checked every client caller of all 3 routes
+(`draft-banner.tsx`, `favorite-star.tsx`, `wizard.tsx`'s draft calls, `integration-request-form.tsx`).
+None crash or show a wrong message today — they either ignore the body entirely (`draft`,
+`favorite-star` only checks `res.ok`) or already have a generic fallback when `res.json()` fails to
+parse plain text (`integration-request-form.tsx`). This is a consistency/tech-debt fix, not a
+live-bug fix — no red/green test-first cycle applies (nothing was observably broken to reproduce);
+the fix is a straightforward mechanical standardization.
+
+**Fix:** all error paths in the 3 routes now return `NextResponse.json({ error: { code, ... } },
+{ status })` with codes matching this project's existing vocabulary (`unauthorized`, `forbidden`,
+`bad_input`, `not_found`). `favorites/route.ts` also deduplicated its 3 repeated `"Not found"`
+branches into one `notFound()` helper while touching this file.
+
+**Verification:** `favorites.spec.ts` (3/3) and `deca-draft.spec.ts` (2/2) confirmed unaffected — both
+already only assert on `res.ok`/UI state, never the error body shape, consistent with the "no live
+caller depends on the old shape" finding above.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit unaffected,
+5/5 across `favorites.spec.ts` + `deca-draft.spec.ts`.
