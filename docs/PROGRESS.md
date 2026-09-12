@@ -44,6 +44,19 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-243 — #138 [P1, live production report] fixed: superadmin step-up "Verificar" link bounces to
+  /admin instead of re-challenging — same D-184/D-194 defect class, this session (2026-09-12), on a
+  mid-turn user bug report, THEN swept for the same pattern and found a 3rd instance. Full detail in
+  `docs/decisions.md` D-243.** `company-edit-form.tsx`'s link was bare (`/admin/2fa/verify`, no
+  `next`/`stepup=1`) — the one the user hit; `security-screen.tsx`'s `StepUpNotice` (4 actions) had
+  `next` but no `stepup=1`; `membership-reassign.tsx` had no step-up handling AT ALL (a bare error
+  message, no link — the original pre-D-184 `MarkTest` shape). All three now match
+  `AccountActions`/`MarkTest`'s correct pattern. 3 new e2e tests mirroring the existing D-184 test
+  style, all verified red-then-green via `git stash`. Gate: tsc/eslint/prettier/keel-verify clean,
+  501/501 unit unaffected, 13/13 `admin-account-lifecycle.spec.ts`, 13/14 `admin-2fa.spec.ts` (1
+  pre-existing documented flake, unrelated), 22/22 `admin-company-edit.spec.ts`. Committed to
+  `develop`, not yet pushed. This is the third time this exact bug class has appeared (D-184, D-194,
+  this one) — worth keeping in mind for any FUTURE step-up-gated component too.
 - **D-242 — #137 [P2 audit finding] fixed: Historial's 500-row cap now shows a notice when it
   actually bites, this session (2026-09-12). Full detail in `docs/decisions.md` D-242.** New
   `countHistory()` + pure `historyIsTruncated()`; `/panel/historico` shows a notice naming the real

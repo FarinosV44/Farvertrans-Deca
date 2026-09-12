@@ -248,6 +248,35 @@ test.describe("SECURITY #53 — mandatory admin TOTP 2FA", () => {
     await close();
   });
 
+  // Same D-184/D-194 defect class as `admin-account-lifecycle.spec.ts`'s
+  // "#62 correction" test, reintroduced in `SecurityScreen`'s `StepUpNotice`
+  // (shared by 4 step-up actions on /admin/seguridad): its "Verificar ahora"
+  // link carried `next` but not `stepup=1`, so it used the 12h admin-freshness
+  // check instead of the 10-minute step-up window and could bounce the admin
+  // back without ever re-challenging.
+  test("SecurityScreen's step-up notice (regenerate codes) links with next AND stepup=1", async ({
+    browser,
+  }) => {
+    const { page, close } = await internalPage(browser);
+    try {
+      await page.route("**/api/admin/2fa/regenerate-codes", async (route) => {
+        await route.fulfill({ status: 403, contentType: "application/json", body: "{}" });
+      });
+      await page.goto("/admin/seguridad");
+      await page.getByTestId("regenerate-codes-button").click();
+
+      const verificar = page.getByTestId("step-up-notice").getByRole("link");
+      await expect(verificar).toHaveAttribute(
+        "href",
+        "/admin/2fa/verify?next=/admin/seguridad&stepup=1",
+      );
+      await verificar.click();
+      await page.waitForURL(/\/admin\/seguridad$/);
+    } finally {
+      await close();
+    }
+  });
+
   test("a recovery code works once and is then rejected on replay", async ({ page, request }) => {
     // generate a fresh set of codes via step-up, consume one via a NEW session's challenge
     await loginAdminApi(request);

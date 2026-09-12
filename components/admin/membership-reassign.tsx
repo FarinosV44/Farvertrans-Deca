@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 type Role = "owner" | "member" | "read_only";
 
@@ -13,18 +14,21 @@ type Role = "owner" | "member" | "read_only";
  */
 export function MembershipReassign({ userId }: { userId: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [companyId, setCompanyId] = useState("");
   const [role, setRole] = useState<Role>("owner");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [stepUp, setStepUp] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy || !companyId.trim() || !reason.trim()) return;
     setBusy(true);
     setMsg(null);
+    setStepUp(false);
     try {
       const res = await fetch(`/api/admin/usuarios/${userId}`, {
         method: "PATCH",
@@ -33,7 +37,13 @@ export function MembershipReassign({ userId }: { userId: string }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMsg(data?.error?.message ?? "No se pudo reasignar.");
+        // #138 — same D-184/D-194 defect class: a bare error message with no
+        // link left the admin stuck, unable to re-verify from here at all.
+        if (data?.error?.code === "step_up_required") {
+          setStepUp(true);
+        } else {
+          setMsg(data?.error?.message ?? "No se pudo reasignar.");
+        }
       } else {
         setMsg("Membresía creada/activada.");
         setCompanyId("");
@@ -115,6 +125,17 @@ export function MembershipReassign({ userId }: { userId: string }) {
       {msg && (
         <p className="mt-2 text-sm" data-testid="reassign-msg">
           {msg}
+        </p>
+      )}
+      {stepUp && (
+        <p className="mt-2 text-sm text-[var(--color-danger)]">
+          Verifica tu identidad de nuevo para esta acción.{" "}
+          <Link
+            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}&stepup=1`}
+            className="underline"
+          >
+            Verificar
+          </Link>
         </p>
       )}
     </details>

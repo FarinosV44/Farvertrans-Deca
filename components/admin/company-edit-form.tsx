@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 
@@ -46,6 +46,7 @@ const ORDER: (keyof Values)[] = [
  */
 export function CompanyEditForm({ id, initial }: { id: string; initial: Partial<Values> }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [v, setV] = useState<Values>({
     name: initial.name ?? "",
     nif: initial.nif ?? "",
@@ -128,7 +129,10 @@ export function CompanyEditForm({ id, initial }: { id: string; initial: Partial<
       {stepUp && (
         <p className="mt-3 text-sm text-[var(--color-danger)]">
           Verifica tu identidad de nuevo para esta acción.{" "}
-          <Link href="/admin/2fa/verify" className="underline">
+          <Link
+            href={`/admin/2fa/verify?next=${encodeURIComponent(pathname)}&stepup=1`}
+            className="underline"
+          >
             Verificar
           </Link>
         </p>

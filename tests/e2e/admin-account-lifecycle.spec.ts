@@ -339,6 +339,93 @@ test("D-184: account-lifecycle actions (Bloquear) also return the admin to this 
   }
 });
 
+// User report (2026-09-12, live in production): "al darle a verificar en
+// panel de super admin para hacer la accion de editar los datos de la
+// empresa le das y te expulsa no funciona" — the exact D-184/D-194 defect
+// class, reintroduced in `CompanyEditForm` (added later, for #62's "corregir
+// razón social y CIF/NIF" work): its "Verificar" link was a bare
+// `/admin/2fa/verify` with neither `next` nor `stepup=1`, so it always used
+// the 12h admin-freshness check instead of the 10-minute step-up window and
+// bounced the admin to the generic `/admin` dashboard instead of re-
+// challenging — indistinguishable from being logged out. Fixed the same way
+// as D-184/D-194, verified the same way. `components/admin/security-screen.tsx`'s
+// `StepUpNotice` (used by 4 separate security actions) carried the identical
+// bare-link defect and was fixed in the same pass.
+test("#62 correction: editing a company's ficha also returns the admin to this exact ficha after re-verifying, not /admin", async ({
+  browser,
+}) => {
+  const { ctx, companyId } = await newCompanyWithDeca();
+  await ctx.dispose();
+
+  const { page, close } = await internalPage(browser);
+  try {
+    await page.route(`**/api/admin/empresas/${companyId}`, async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "step_up_required", message: "Verifica tu identidad de nuevo." },
+        }),
+      });
+    });
+
+    await page.goto(`/admin/empresas/${companyId}`);
+    await page.getByText("Editar ficha de la empresa").click();
+    await page.getByTestId("company-edit-save").click();
+
+    const verificar = page.getByRole("link", { name: "Verificar" });
+    await expect(verificar).toHaveAttribute(
+      "href",
+      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/empresas/${companyId}`)}&stepup=1`,
+    );
+    await verificar.click();
+    await page.waitForURL(new RegExp(`/admin/empresas/${companyId}$`));
+  } finally {
+    await close();
+  }
+});
+
+// Found while sweeping for the same D-184/D-194 defect class after fixing
+// #138 (company-edit-form.tsx, security-screen.tsx): `MembershipReassign`
+// handled `step_up_required` only as a bare, unlinked error message — no way
+// to re-verify from the page at all, the same "silently stuck" shape D-184
+// originally found in `MarkTest` before it got a link.
+test("#138 sweep: MembershipReassign's step-up error also offers a working 'Verificar' link back to this exact ficha", async ({
+  browser,
+}) => {
+  const { ctx, userId } = await newCompanyWithDeca();
+  await ctx.dispose();
+
+  const { page, close } = await internalPage(browser);
+  try {
+    await page.route(`**/api/admin/usuarios/${userId}`, async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: { code: "step_up_required", message: "Verifica tu identidad de nuevo." },
+        }),
+      });
+    });
+
+    await page.goto(`/admin/usuarios/${userId}`);
+    await page.getByTestId("membership-reassign").locator("summary").click();
+    await page.getByTestId("reassign-company-id").fill("some-other-company-id");
+    await page.getByTestId("reassign-reason").fill("prueba de reasignación");
+    await page.getByTestId("reassign-submit").click();
+
+    const verificar = page.getByRole("link", { name: "Verificar" });
+    await expect(verificar).toHaveAttribute(
+      "href",
+      `/admin/2fa/verify?next=${encodeURIComponent(`/admin/usuarios/${userId}`)}&stepup=1`,
+    );
+    await verificar.click();
+    await page.waitForURL(new RegExp(`/admin/usuarios/${userId}$`));
+  } finally {
+    await close();
+  }
+});
+
 /**
  * User report (2026-09-10): after clicking "Verificar" the page reloads back
  * to the same ficha unchanged, and clicking the action again does the same —

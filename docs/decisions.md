@@ -8697,3 +8697,60 @@ the notice was absent before the fix, present and correctly worded after.
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 501/501 unit (+3 new),
 13/13 `historico-redesign.spec.ts` (12 pre-existing + 1 new), plus a regression sweep — 4/4
 `export-csv.spec.ts`, 7/7 `workspace.spec.ts` incl. its `/panel/historico` a11y scan — all green.
+
+## D-243 — #138 [P1 correctness, live production report]: superadmin step-up "Verificar" link fixed in 3 more components (same D-184/D-194 defect class) (2026-09-12)
+
+**User's report, live in production, mid-session interrupt:** "al darle a verificar en panel de super
+admin para hacer la accion de editar los datos de la empresa le das y te expulsa no funciona creo que
+es el mismo error que uno que tuvimos anteriormente" — clicking "Verificar" after a step-up challenge
+on the company-edit action bounces the admin away, functionally indistinguishable from being logged
+out. Process note (an honest deviation, same as I-122's own): the issue was opened AFTER the fix was
+already investigated and applied, not before — the report arrived mid-turn while other work was in
+flight and diagnosis/fix happened in the same continuous investigation.
+
+**Root cause — confirmed as the exact D-184/D-194 defect class, reintroduced in 2 places D-184/D-194
+never touched:** `/admin/2fa/verify` (`app/admin/2fa/verify/page.tsx`) deliberately checks TWO
+different freshness windows depending on a `stepup=1` query param: the 12h general admin-session
+window (`isAdmin2faFresh()`) for a normal login-time challenge, or the 10-minute step-up window
+(`isAdminStepUpFresh()`) for a re-verification after a `step_up_required` action response — this
+distinction is D-194's own fix, and its own code comment already names the failure mode exactly:
+"skipping on the 12h window sends the admin back to an action that still answers `step_up_required` —
+an unbreakable loop." `AccountActions` and `MarkTest` (the two components D-184/D-194 originally
+fixed) correctly link with `?next=<path>&stepup=1`. THREE other components carried the same defect —
+2 found while investigating the user's report, a 3rd found by then sweeping every OTHER
+`step_up_required` consumer in the app for the same pattern before calling this done:
+- `components/admin/company-edit-form.tsx` (superadmin "Editar ficha de la empresa" — the one the
+  user actually hit; added later, for #62's "corregir razón social y CIF/NIF" work, evidently after
+  the D-184/D-194 fix pattern had already been established but not applied here): `href="/admin/2fa/
+  verify"` — no `next`, no `stepup=1` at all.
+- `components/admin/security-screen.tsx`'s `StepUpNotice` (shared by 4 separate step-up actions on
+  `/admin/seguridad`: remove passkey, reset TOTP, regenerate recovery codes, revoke trusted device):
+  had `next` but was missing `stepup=1` — the more subtle half of the same mistake.
+- `components/admin/membership-reassign.tsx` (the #102 superadmin "reasignar a una empresa existente"
+  recovery tool) — found by the sweep, not the user's report: it didn't even reach the "wrong
+  freshness window" bug, because it never handled `step_up_required` as anything but a generic error
+  message with NO link at all — the exact "silently stuck" shape D-184 originally found in
+  `MarkTest` before that one got fixed.
+
+**Fix:** all three now link exactly like `AccountActions`/`MarkTest`:
+`/admin/2fa/verify?next=<encoded current path>&stepup=1`. `company-edit-form.tsx` and
+`membership-reassign.tsx` both needed `usePathname()` added (neither previously imported it);
+`security-screen.tsx`'s fix was a one-line addition to its existing hardcoded
+`next=/admin/seguridad`; `membership-reassign.tsx` needed a new `stepUp` state + notice block, since
+none existed before.
+
+**Test-first / verification:** 3 new e2e tests, mirroring the exact style of the existing D-184 tests
+(mock the same-shaped `step_up_required`/`403` response via `page.route`, assert the link's `href`
+directly, then follow it and confirm it returns to the SAME page rather than the generic `/admin`
+dashboard) — two in `tests/e2e/admin-account-lifecycle.spec.ts` (company-edit, membership-reassign),
+one in `tests/e2e/admin-2fa.spec.ts` (security-screen's regenerate-codes action, representative of
+all 4). All three confirmed RED first via `git stash` (company-edit and security-screen: received
+hrefs exactly matched the pre-fix bare/incomplete values; membership-reassign: no link element found
+at all), GREEN after.
+
+**Gate:** tsc/eslint/prettier/keel-verify clean (2 pre-existing unrelated warnings only), 501/501 unit
+unaffected, 13/13 `admin-account-lifecycle.spec.ts` (11 pre-existing + 2 new, including both original
+D-184 tests and the D-194 test still green), 13/14 `admin-2fa.spec.ts` (13 pre-existing + 1 new; the
+1 failure is the ALREADY-documented pre-existing recovery-code-replay flake —
+`docs/lessons-learned.md` — confirmed unrelated, not a regression), 22/22 `admin-company-edit.spec.ts`
+— all green.

@@ -34,7 +34,7 @@ function StepUpNotice() {
       className="mt-2 text-sm text-[var(--color-danger)]"
     >
       {STEP_UP_MESSAGE}{" "}
-      <Link href="/admin/2fa/verify?next=/admin/seguridad" className="underline">
+      <Link href="/admin/2fa/verify?next=/admin/seguridad&stepup=1" className="underline">
         Verificar ahora
       </Link>
     </p>
