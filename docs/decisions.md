@@ -8340,3 +8340,25 @@ DB-restricted case.
 
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 498/498 unit unaffected,
 5/5 `datos-habituales-rutas.spec.ts` (4 pre-existing + 1 new).
+
+## D-234 — #134 [P2 audit finding, correctness]: diffVersions() now covers the notes field (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `notes` ("Información especial") is a real,
+editable, DeCA-level field with the same per-shipment override pattern as `tractorPlate`/
+`trailerPlate` (`resolveShipment`/`legacyMirrorFields` in `lib/deca/schema.ts`), and IS written into
+`dataJson` at both the top level and per-shipment. But `lib/data/history.ts`'s `Data` type never
+declared it, and `lib/deca/detail.ts`'s `diffVersions()` (`FIELDS` + `SHIPMENT_FIELDS`) never read it
+— a correction that changed only the notes (DeCA-level or a shipment 2+ override) showed as "no
+changes" in the cockpit's version-history diff, even though `deca_version` correctly stored the new
+value.
+
+**Fix:** added `notes?: string` to `Data`; added a `notes` entry to `FIELDS` (label "Información
+especial", same label used in `SHIPMENT_FIELDS`) and to `SHIPMENT_FIELDS`/`ShipmentLike` for the
+per-shipment override case.
+
+**Test-first / verification:** 2 new unit cases in `tests/unit/deca-diff.test.ts` (top-level notes
+change; a shipment-2 notes override) — pure logic, test written and confirmed RED before the fix per
+D-014. `doc-cockpit.spec.ts`'s existing "what changed" diff e2e test confirmed unaffected.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit (+2 new),
+2/2 `doc-cockpit.spec.ts`.

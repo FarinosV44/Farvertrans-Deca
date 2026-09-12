@@ -46,6 +46,7 @@ type Data = {
   weight?: string;
   tractorPlate?: string;
   trailerPlate?: string;
+  notes?: string;
   shipper?: { name?: string; nif?: string; address?: string; postalCode?: string; city?: string };
   carrier?: { name?: string; nif?: string; address?: string; postalCode?: string; city?: string };
   shipments?: unknown[];

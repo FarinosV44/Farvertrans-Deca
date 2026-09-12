@@ -139,6 +139,7 @@ const FIELDS: { key: string; label: string; get: (d: DecaPayloadData) => string 
   { key: "weight", label: "Peso o medida", get: (d) => d.weight ?? "" },
   { key: "tractorPlate", label: "Matrícula tractora", get: (d) => d.tractorPlate ?? "" },
   { key: "trailerPlate", label: "Matrícula remolque", get: (d) => d.trailerPlate ?? "" },
+  { key: "notes", label: "Información especial", get: (d) => d.notes ?? "" },
   { key: "reference", label: "Referencia", get: (d) => d.reference ?? "" },
   // #112: shipment 1's own fields are already covered above via the flat
   // top-level mirror (`legacyMirrorFields`) — `recipient` is the one
@@ -157,12 +158,14 @@ type ShipmentLike = {
   goods?: string;
   weight?: string;
   recipient?: string;
+  notes?: string;
 };
 
-const SHIPMENT_FIELDS: { key: "goods" | "weight" | "recipient"; label: string }[] = [
+const SHIPMENT_FIELDS: { key: "goods" | "weight" | "recipient" | "notes"; label: string }[] = [
   { key: "goods", label: "Mercancía" },
   { key: "weight", label: "Peso o medida" },
   { key: "recipient", label: "Destinatario" },
+  { key: "notes", label: "Información especial" },
 ];
 
 function routeSummary(s: ShipmentLike): string {

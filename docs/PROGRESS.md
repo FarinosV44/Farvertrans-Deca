@@ -44,6 +44,12 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-234 — #134 [P2 audit finding] fixed: `diffVersions()` now covers the `notes` field, this
+  session (2026-09-12). Full detail in `docs/decisions.md` D-234.** `notes` had the same
+  per-shipment override pattern as `tractorPlate`/`trailerPlate` and was written into `dataJson`,
+  but the diff type/FIELDS/SHIPMENT_FIELDS never covered it — a notes-only correction showed as "no
+  changes." Added the field to all 3 places. Gate: tsc/eslint/prettier clean, 500/500 unit (+2 new,
+  test-first), 2/2 `doc-cockpit.spec.ts`. Committed to `develop`, not yet pushed.
 - **D-233 — #133 [P2 audit finding] fixed: deleting a still-referenced `SavedLocation` now surfaces
   a clear error instead of failing silently, this session (2026-09-12). Full detail in
   `docs/decisions.md` D-233.** `deleteSaved()` now catches the Prisma `P2003` FK violation and

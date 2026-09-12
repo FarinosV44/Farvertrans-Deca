@@ -36,6 +36,19 @@ describe("diffVersions — 'Qué ha cambiado' (PRODUCT #36 §6)", () => {
     ]);
   });
 
+  // #134 — notes ("Información especial") is a real, editable DeCA-level
+  // field (same override pattern as tractorPlate/trailerPlate) and IS
+  // written into dataJson, but was never covered by the diff at all.
+  it("#134: reports a change to the DeCA-level notes field", () => {
+    const changed = diffVersions(
+      { ...base, notes: "" },
+      { ...base, notes: "Entrega solo en horario de mañana" },
+    );
+    expect(changed).toEqual([
+      { label: "Información especial", from: "—", to: "Entrega solo en horario de mañana" },
+    ]);
+  });
+
   it("renders an empty value as a dash", () => {
     const changed = diffVersions(base, { ...base, reference: "REF-9" });
     expect(changed).toEqual([{ label: "Referencia", from: "—", to: "REF-9" }]);
@@ -99,6 +112,21 @@ describe("diffVersions — 'Qué ha cambiado' (PRODUCT #36 §6)", () => {
       const to = { ...base, shipments: [{ ...base, recipient: "Logística Madrid SL" }] };
       expect(diffVersions(from, to)).toEqual([
         { label: "Destinatario (envío 1)", from: "—", to: "Logística Madrid SL" },
+      ]);
+    });
+
+    it("#134: diffs a per-shipment notes override on shipment 2", () => {
+      const from = { ...base, shipments: [base, shipment2] };
+      const to = {
+        ...base,
+        shipments: [base, { ...shipment2, notes: "Aviso 1h antes de llegar" }],
+      };
+      expect(diffVersions(from, to)).toEqual([
+        {
+          label: "Envío 2 — Información especial",
+          from: "—",
+          to: "Aviso 1h antes de llegar",
+        },
       ]);
     });
 
