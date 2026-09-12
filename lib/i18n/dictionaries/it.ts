@@ -502,6 +502,7 @@ export const it = {
       cta: "Conferma ora",
     },
     myCompanyFallback: "La mia azienda",
+    thisCompanyFallback: "questa azienda",
     newDeca: "Nuovo DeCA",
     duplicateLast: "Ripeti / duplica ultimo DeCA",
     lastDocuments: "Ultimi documenti",
@@ -689,6 +690,79 @@ export const it = {
         `${actor} ha cambiato il ruolo di ${target} in ${role}`,
       removed: (actor: string, target: string) => `${actor} ha rimosso ${target} dal team`,
       roleLabel: { owner: "Amministratore", member: "Operatore", read_only: "Sola lettura" },
+    },
+    team: {
+      membersHeading: "Membri",
+      you: " (tu)",
+      activeSince: (date: string) => `Attivo · dal ${date}`,
+      roleOfLabel: (email: string) => `Ruolo di ${email}`,
+      removeAccess: "Rimuovi accesso",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} perderà l'accesso a ${companyName}, ma il suo account e le altre aziende non verranno eliminati.`,
+      inviteHeading: "Invita un collega",
+      emailLabel: "Email",
+      roleFieldLabel: "Ruolo",
+      createInvite: "Crea invito",
+      creating: "Creazione…",
+      inviteError: "Impossibile inviare l'invito.",
+      offlineError: "Nessuna connessione.",
+      roleChangeError: "Impossibile cambiare il ruolo.",
+      resendError: "Impossibile reinviare l'invito.",
+      delivered: (email: string) => `Invito inviato a ${email}.`,
+      notDelivered: (email: string) =>
+        `L'invito è stato creato, ma non siamo riusciti a inviare l'email a ${email}. Puoi copiare il link o riprovare:`,
+      resendDelivered: (email: string) =>
+        `Invito reinviato a ${email}. Il link precedente non è più valido.`,
+      resendNotDelivered: (email: string) =>
+        `L'invito è stato creato, ma non siamo riusciti a inviare l'email a ${email}. Puoi copiare il link o riprovare (quello precedente non è più valido):`,
+      sendWhatsapp: "Invia via WhatsApp",
+      copyLink: "Copia link",
+      copied: "Copiato",
+      pendingInvites: "Inviti in sospeso",
+      pendingExpires: (date: string) => `· in sospeso · scade il ${date}`,
+      resend: "Reinvia",
+      revoke: "Revoca",
+      footerNote:
+        "Tutti i membri condividono i DeCA, i dati abituali, i veicoli e i modelli dell'azienda. Ogni documento registra chi lo ha generato o corretto.",
+    },
+    templates: {
+      intro:
+        "Salva i percorsi che ripeti. Creare un DeCA da un modello compila tutto tranne la data; rivedi sempre i dati e generi un documento nuovo e indipendente.",
+      emptyTitle: "Crea il tuo primo modello",
+      emptyBody:
+        "Salva percorsi e dati che ripeti per generare nuovi DeCA più velocemente. I modelli compilano i tuoi dati abituali e generano sempre un documento nuovo e indipendente.",
+      emptyHint: "Ideale per percorsi frequenti, clienti abituali e operazioni ripetitive.",
+      generateCta: "Genera un DeCA",
+      fromHistoryCta: "Crea da un DeCA",
+      use: "Usa",
+      delete: "Elimina",
+    },
+    integrations: {
+      title: "API / Integrazioni ERP",
+      intro:
+        "Collega il tuo TMS o ERP a DeCA Profesional quando ne hai bisogno. Durante la fase di lancio misuriamo la domanda per decidere quale integrazione costruire prima.",
+      existing: (date: string, system: string) =>
+        `Ci hai già inviato una richiesta il ${date} per ${system}. La stiamo revisionando; ti contatteremo.`,
+      formIntro: "Stiamo aprendo le integrazioni gradualmente. Dicci quale sistema utilizzi.",
+      systemLabel: "Sistema / TMS / ERP",
+      needLabel: "Esigenza principale",
+      needOptions: {
+        crear_deca: "Creare DeCA automaticamente",
+        consultar_estado: "Consultare lo stato",
+        descargar_pdf: "Scaricare PDF / QR",
+        importar_datos: "Importare dati",
+        otra: "Altro",
+      },
+      contactLabel: "Contatto",
+      contactEmailLabel: "Email di contatto",
+      volumeLabel: "Volume approssimativo di DeCA/mese (opzionale)",
+      submit: "Richiedi integrazione",
+      submitError: "Impossibile inviare la richiesta.",
+      offlineError: "Nessuna connessione. Riprova.",
+      footerNote:
+        "Non chiediamo credenziali né dettagli tecnici. Senza impegno né data di disponibilità.",
+      done: (companyName: string) =>
+        `Richiesta ricevuta per ${companyName}. Esamineremo le tue esigenze di integrazione e ti contatteremo. Le integrazioni sono un servizio aggiuntivo preventivato in base al progetto.`,
     },
   },
   historico: {

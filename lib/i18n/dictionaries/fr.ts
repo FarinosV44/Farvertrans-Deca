@@ -506,6 +506,7 @@ export const fr = {
       cta: "Confirmer maintenant",
     },
     myCompanyFallback: "Mon entreprise",
+    thisCompanyFallback: "cette entreprise",
     newDeca: "Nouveau DeCA",
     duplicateLast: "Répéter / dupliquer le dernier DeCA",
     lastDocuments: "Derniers documents",
@@ -701,6 +702,81 @@ export const fr = {
         `${actor} a changé le rôle de ${target} en ${role}`,
       removed: (actor: string, target: string) => `${actor} a retiré ${target} de l'équipe`,
       roleLabel: { owner: "Administrateur", member: "Opérateur", read_only: "Lecture seule" },
+    },
+    team: {
+      membersHeading: "Membres",
+      you: " (vous)",
+      activeSince: (date: string) => `Actif · depuis le ${date}`,
+      roleOfLabel: (email: string) => `Rôle de ${email}`,
+      removeAccess: "Retirer l'accès",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} perdra l'accès à ${companyName}, mais son compte et ses autres entreprises ne seront pas supprimés.`,
+      inviteHeading: "Inviter un collègue",
+      emailLabel: "Email",
+      roleFieldLabel: "Rôle",
+      createInvite: "Créer l'invitation",
+      creating: "Création…",
+      inviteError: "Impossible d'inviter.",
+      offlineError: "Pas de connexion.",
+      roleChangeError: "Impossible de changer le rôle.",
+      resendError: "Impossible de renvoyer l'invitation.",
+      delivered: (email: string) => `Invitation envoyée à ${email}.`,
+      notDelivered: (email: string) =>
+        `L'invitation a été créée, mais nous n'avons pas pu envoyer l'email à ${email}. Vous pouvez copier le lien ou réessayer :`,
+      resendDelivered: (email: string) =>
+        `Invitation renvoyée à ${email}. L'ancien lien n'est plus valide.`,
+      resendNotDelivered: (email: string) =>
+        `L'invitation a été créée, mais nous n'avons pas pu envoyer l'email à ${email}. Vous pouvez copier le lien ou réessayer (l'ancien n'est plus valide) :`,
+      sendWhatsapp: "Envoyer par WhatsApp",
+      copyLink: "Copier le lien",
+      copied: "Copié",
+      pendingInvites: "Invitations en attente",
+      pendingExpires: (date: string) => `· en attente · expire le ${date}`,
+      resend: "Renvoyer",
+      revoke: "Révoquer",
+      footerNote:
+        "Tous les membres partagent les DeCA, les données habituelles, les véhicules et les modèles de l'entreprise. Chaque document conserve qui l'a généré ou corrigé.",
+    },
+    templates: {
+      intro:
+        "Enregistrez les trajets que vous répétez. Créer un DeCA à partir d'un modèle remplit tout sauf la date ; vous vérifiez toujours les données et générez un document nouveau et indépendant.",
+      emptyTitle: "Créez votre premier modèle",
+      emptyBody:
+        "Enregistrez les trajets et données que vous répétez pour générer de nouveaux DeCA plus rapidement. Les modèles remplissent vos données habituelles et génèrent toujours un document nouveau et indépendant.",
+      emptyHint:
+        "Idéal pour les trajets fréquents, les clients habituels et les opérations répétitives.",
+      generateCta: "Générer un DeCA",
+      fromHistoryCta: "Créer à partir d'un DeCA",
+      use: "Utiliser",
+      delete: "Supprimer",
+    },
+    integrations: {
+      title: "API / Intégrations ERP",
+      intro:
+        "Connectez votre TMS ou ERP à DeCA Profesional quand vous en aurez besoin. Pendant la phase de lancement, nous mesurons la demande pour décider quelle intégration développer en premier.",
+      existing: (date: string, system: string) =>
+        `Vous nous avez déjà envoyé une demande le ${date} pour ${system}. Nous l'examinons ; nous vous contacterons.`,
+      formIntro:
+        "Nous ouvrons les intégrations progressivement. Dites-nous quel système vous utilisez.",
+      systemLabel: "Système / TMS / ERP",
+      needLabel: "Besoin principal",
+      needOptions: {
+        crear_deca: "Créer un DeCA automatiquement",
+        consultar_estado: "Consulter le statut",
+        descargar_pdf: "Télécharger le PDF / QR",
+        importar_datos: "Importer des données",
+        otra: "Autre",
+      },
+      contactLabel: "Contact",
+      contactEmailLabel: "Email de contact",
+      volumeLabel: "Volume approximatif de DeCA/mois (facultatif)",
+      submit: "Demander une intégration",
+      submitError: "Impossible d'envoyer la demande.",
+      offlineError: "Pas de connexion. Réessayez.",
+      footerNote:
+        "Nous ne demandons ni identifiants ni détails techniques. Sans engagement ni date de disponibilité.",
+      done: (companyName: string) =>
+        `Demande reçue pour ${companyName}. Nous examinerons vos besoins d'intégration et vous contacterons. Les intégrations sont un service additionnel facturé selon le projet.`,
     },
   },
   historico: {

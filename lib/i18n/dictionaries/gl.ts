@@ -503,6 +503,7 @@ export const gl = {
       cta: "Confirmar agora",
     },
     myCompanyFallback: "A miña empresa",
+    thisCompanyFallback: "esta empresa",
     newDeca: "Novo DeCA",
     duplicateLast: "Repetir / duplicar último DeCA",
     lastDocuments: "Últimos documentos",
@@ -691,6 +692,79 @@ export const gl = {
         `${actor} cambiou o rol de ${target} a ${role}`,
       removed: (actor: string, target: string) => `${actor} eliminou a ${target} do equipo`,
       roleLabel: { owner: "Administrador", member: "Operador", read_only: "Só lectura" },
+    },
+    team: {
+      membersHeading: "Membros",
+      you: " (ti)",
+      activeSince: (date: string) => `Activo · desde o ${date}`,
+      roleOfLabel: (email: string) => `Rol de ${email}`,
+      removeAccess: "Eliminar acceso",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} perderá o acceso a ${companyName}, pero a súa conta e outras empresas non se eliminarán.`,
+      inviteHeading: "Convidar a un compañeiro",
+      emailLabel: "Correo electrónico",
+      roleFieldLabel: "Rol",
+      createInvite: "Crear convite",
+      creating: "Creando…",
+      inviteError: "Non se puido convidar.",
+      offlineError: "Sen conexión.",
+      roleChangeError: "Non se puido cambiar o rol.",
+      resendError: "Non se puido reenviar o convite.",
+      delivered: (email: string) => `Convite enviado a ${email}.`,
+      notDelivered: (email: string) =>
+        `O convite creouse, pero non puidemos enviar o correo a ${email}. Podes copiar a ligazón ou tentalo de novo:`,
+      resendDelivered: (email: string) =>
+        `Convite reenviado a ${email}. A ligazón anterior xa non é válida.`,
+      resendNotDelivered: (email: string) =>
+        `O convite creouse, pero non puidemos enviar o correo a ${email}. Podes copiar a ligazón ou tentalo de novo (a anterior xa non é válida):`,
+      sendWhatsapp: "Enviar por WhatsApp",
+      copyLink: "Copiar ligazón",
+      copied: "Copiado",
+      pendingInvites: "Convites pendentes",
+      pendingExpires: (date: string) => `· pendente · caduca o ${date}`,
+      resend: "Reenviar",
+      revoke: "Revogar",
+      footerNote:
+        "Todos os membros comparten os DeCA, os datos habituais, os vehículos e os modelos da empresa. Cada documento garda quen o xerou ou corrixiu.",
+    },
+    templates: {
+      intro:
+        "Garda as rutas que repites. Crear un DeCA a partir dun modelo enche todo menos a data; sempre revisas os datos e xeras un documento novo e independente.",
+      emptyTitle: "Crea o teu primeiro modelo",
+      emptyBody:
+        "Garda rutas e datos que repites para xerar novos DeCA máis rápido. Os modelos enchen os teus datos habituais e sempre xeran un documento novo e independente.",
+      emptyHint: "Ideal para rutas frecuentes, clientes habituais e operacións repetitivas.",
+      generateCta: "Xerar un DeCA",
+      fromHistoryCta: "Crear a partir dun DeCA",
+      use: "Usar",
+      delete: "Eliminar",
+    },
+    integrations: {
+      title: "API / Integracións ERP",
+      intro:
+        "Conecta o teu TMS ou ERP con DeCA Profesional cando o necesites. Durante a fase de lanzamento medimos a demanda para decidir que integración construír primeiro.",
+      existing: (date: string, system: string) =>
+        `Xa nos enviaches unha solicitude o ${date} para ${system}. Estámola revisando; contactaremos contigo.`,
+      formIntro: "Estamos abrindo integracións de forma progresiva. Dinos que sistema usas.",
+      systemLabel: "Sistema / TMS / ERP",
+      needLabel: "Necesidade principal",
+      needOptions: {
+        crear_deca: "Crear DeCA automaticamente",
+        consultar_estado: "Consultar estado",
+        descargar_pdf: "Descargar PDF / QR",
+        importar_datos: "Importar datos",
+        otra: "Outra",
+      },
+      contactLabel: "Contacto",
+      contactEmailLabel: "Correo de contacto",
+      volumeLabel: "Volume aproximado de DeCA/mes (opcional)",
+      submit: "Solicitar integración",
+      submitError: "Non se puido enviar a solicitude.",
+      offlineError: "Sen conexión. Téntao de novo.",
+      footerNote:
+        "Non pedimos credenciais nin datos técnicos. Sen compromiso nin data de dispoñibilidade.",
+      done: (companyName: string) =>
+        `Solicitude recibida para ${companyName}. Revisaremos as túas necesidades de integración e contactaremos contigo. As integracións son un servizo adicional presupostado segundo o proxecto.`,
     },
   },
   historico: {

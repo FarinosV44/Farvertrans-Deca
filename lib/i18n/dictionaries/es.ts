@@ -507,6 +507,7 @@ export const es = {
       cta: "Confirmar ahora",
     },
     myCompanyFallback: "Mi empresa",
+    thisCompanyFallback: "esta empresa",
     newDeca: "Nuevo DeCA",
     duplicateLast: "Repetir / duplicar último DeCA",
     lastDocuments: "Últimos documentos",
@@ -697,6 +698,83 @@ export const es = {
         `${actor} cambió el rol de ${target} a ${role}`,
       removed: (actor: string, target: string) => `${actor} eliminó a ${target} del equipo`,
       roleLabel: { owner: "Administrador", member: "Operador", read_only: "Solo lectura" },
+    },
+    /** #113 audit sweep (D-246) — `TeamManager`. */
+    team: {
+      membersHeading: "Miembros",
+      you: " (tú)",
+      activeSince: (date: string) => `Activo · desde ${date}`,
+      roleOfLabel: (email: string) => `Rol de ${email}`,
+      removeAccess: "Eliminar acceso",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} perderá acceso a ${companyName}, pero su cuenta y otras empresas no se eliminarán.`,
+      inviteHeading: "Invitar a un compañero",
+      emailLabel: "Email",
+      roleFieldLabel: "Rol",
+      createInvite: "Crear invitación",
+      creating: "Creando…",
+      inviteError: "No se pudo invitar.",
+      offlineError: "Sin conexión.",
+      roleChangeError: "No se pudo cambiar el rol.",
+      resendError: "No se pudo reenviar la invitación.",
+      delivered: (email: string) => `Invitación enviada a ${email}.`,
+      notDelivered: (email: string) =>
+        `La invitación se ha creado, pero no hemos podido enviar el correo a ${email}. Puedes copiar el enlace o reintentar:`,
+      resendDelivered: (email: string) =>
+        `Invitación reenviada a ${email}. El enlace anterior ya no es válido.`,
+      resendNotDelivered: (email: string) =>
+        `La invitación se ha creado, pero no hemos podido enviar el correo a ${email}. Puedes copiar el enlace o reintentar (el anterior ya no es válido):`,
+      sendWhatsapp: "Enviar por WhatsApp",
+      copyLink: "Copiar enlace",
+      copied: "Copiado",
+      pendingInvites: "Invitaciones pendientes",
+      pendingExpires: (date: string) => `· pendiente · caduca ${date}`,
+      resend: "Reenviar",
+      revoke: "Revocar",
+      footerNote:
+        "Todos los miembros comparten los DeCA, los datos habituales, los vehículos y las plantillas de la empresa. Cada documento guarda quién lo generó o corrigió.",
+    },
+    /** #113 audit sweep (D-246) — `app/panel/plantillas` + `TemplateList`. */
+    templates: {
+      intro:
+        "Guarda las rutas que repites. Al crear un DeCA desde una plantilla se rellena todo menos la fecha; siempre revisas los datos y generas un documento nuevo e independiente.",
+      emptyTitle: "Crea tu primera plantilla",
+      emptyBody:
+        "Guarda rutas y datos que repites para generar nuevos DeCA más rápido. Las plantillas rellenan tus datos habituales y siempre generan un documento nuevo e independiente.",
+      emptyHint: "Ideal para rutas frecuentes, clientes habituales y operaciones repetitivas.",
+      generateCta: "Generar un DeCA",
+      fromHistoryCta: "Crear desde un DeCA",
+      use: "Usar",
+      delete: "Borrar",
+    },
+    /** #74 audit sweep (D-246) — `app/panel/integraciones` + `IntegrationRequestForm`. */
+    integrations: {
+      title: "API / Integraciones ERP",
+      intro:
+        "Conecta tu TMS o ERP con DeCA Profesional cuando lo necesites. Durante la fase de lanzamiento medimos la demanda para decidir qué integración construir primero.",
+      existing: (date: string, system: string) =>
+        `Ya nos enviaste una solicitud el ${date} para ${system}. La estamos revisando; te contactaremos.`,
+      formIntro:
+        "Estamos abriendo integraciones de forma progresiva. Cuéntanos qué sistema utilizas.",
+      systemLabel: "Sistema / TMS / ERP",
+      needLabel: "Necesidad principal",
+      needOptions: {
+        crear_deca: "Crear DeCA automáticamente",
+        consultar_estado: "Consultar estado",
+        descargar_pdf: "Descargar PDF / QR",
+        importar_datos: "Importar datos",
+        otra: "Otra",
+      },
+      contactLabel: "Contacto",
+      contactEmailLabel: "Email de contacto",
+      volumeLabel: "Volumen aproximado de DeCA/mes (opcional)",
+      submit: "Solicitar integración",
+      submitError: "No se pudo enviar la solicitud.",
+      offlineError: "Sin conexión. Inténtalo de nuevo.",
+      footerNote:
+        "No pedimos credenciales ni datos técnicos. Sin compromiso ni fecha de disponibilidad.",
+      done: (companyName: string) =>
+        `Solicitud recibida para ${companyName}. Revisaremos tus necesidades de integración y nos pondremos en contacto contigo. Las integraciones son un servicio adicional que se presupuesta según el proyecto.`,
     },
   },
   historico: {

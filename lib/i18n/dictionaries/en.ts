@@ -487,6 +487,7 @@ export const en = {
       cta: "Confirm now",
     },
     myCompanyFallback: "My company",
+    thisCompanyFallback: "this company",
     newDeca: "New DeCA",
     duplicateLast: "Repeat / duplicate last DeCA",
     lastDocuments: "Latest documents",
@@ -671,6 +672,79 @@ export const en = {
         `${actor} changed ${target}'s role to ${role}`,
       removed: (actor: string, target: string) => `${actor} removed ${target} from the team`,
       roleLabel: { owner: "Admin", member: "Operator", read_only: "Read-only" },
+    },
+    team: {
+      membersHeading: "Members",
+      you: " (you)",
+      activeSince: (date: string) => `Active · since ${date}`,
+      roleOfLabel: (email: string) => `Role of ${email}`,
+      removeAccess: "Remove access",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} will lose access to ${companyName}, but their account and other companies won't be deleted.`,
+      inviteHeading: "Invite a colleague",
+      emailLabel: "Email",
+      roleFieldLabel: "Role",
+      createInvite: "Create invitation",
+      creating: "Creating…",
+      inviteError: "Couldn't send the invitation.",
+      offlineError: "No connection.",
+      roleChangeError: "Couldn't change the role.",
+      resendError: "Couldn't resend the invitation.",
+      delivered: (email: string) => `Invitation sent to ${email}.`,
+      notDelivered: (email: string) =>
+        `The invitation was created, but we couldn't send the email to ${email}. You can copy the link or retry:`,
+      resendDelivered: (email: string) =>
+        `Invitation resent to ${email}. The previous link is no longer valid.`,
+      resendNotDelivered: (email: string) =>
+        `The invitation was created, but we couldn't send the email to ${email}. You can copy the link or retry (the previous one is no longer valid):`,
+      sendWhatsapp: "Send via WhatsApp",
+      copyLink: "Copy link",
+      copied: "Copied",
+      pendingInvites: "Pending invitations",
+      pendingExpires: (date: string) => `· pending · expires ${date}`,
+      resend: "Resend",
+      revoke: "Revoke",
+      footerNote:
+        "All members share the company's DeCA documents, saved data, vehicles and templates. Every document records who generated or corrected it.",
+    },
+    templates: {
+      intro:
+        "Save the routes you repeat. Creating a DeCA from a template fills in everything except the date; you always review the data and generate a new, independent document.",
+      emptyTitle: "Create your first template",
+      emptyBody:
+        "Save routes and data you repeat to generate new DeCA documents faster. Templates fill in your saved data and always generate a new, independent document.",
+      emptyHint: "Ideal for frequent routes, regular clients and repetitive operations.",
+      generateCta: "Generate a DeCA",
+      fromHistoryCta: "Create from a DeCA",
+      use: "Use",
+      delete: "Delete",
+    },
+    integrations: {
+      title: "API / ERP Integrations",
+      intro:
+        "Connect your TMS or ERP to DeCA Profesional whenever you need to. During launch we're measuring demand to decide which integration to build first.",
+      existing: (date: string, system: string) =>
+        `You already sent a request on ${date} for ${system}. We're reviewing it; we'll get in touch.`,
+      formIntro: "We're opening up integrations gradually. Tell us which system you use.",
+      systemLabel: "System / TMS / ERP",
+      needLabel: "Main need",
+      needOptions: {
+        crear_deca: "Create DeCA automatically",
+        consultar_estado: "Check status",
+        descargar_pdf: "Download PDF / QR",
+        importar_datos: "Import data",
+        otra: "Other",
+      },
+      contactLabel: "Contact",
+      contactEmailLabel: "Contact email",
+      volumeLabel: "Approximate DeCA volume/month (optional)",
+      submit: "Request integration",
+      submitError: "Couldn't send the request.",
+      offlineError: "No connection. Try again.",
+      footerNote:
+        "We don't ask for credentials or technical details. No commitment or availability date.",
+      done: (companyName: string) =>
+        `Request received for ${companyName}. We'll review your integration needs and get in touch. Integrations are an additional service quoted per project.`,
     },
   },
   historico: {

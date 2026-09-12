@@ -500,6 +500,7 @@ export const ca = {
       cta: "Confirmar ara",
     },
     myCompanyFallback: "La meva empresa",
+    thisCompanyFallback: "aquesta empresa",
     newDeca: "Nou DeCA",
     duplicateLast: "Repetir / duplicar últim DeCA",
     lastDocuments: "Últims documents",
@@ -686,6 +687,80 @@ export const ca = {
         `${actor} ha canviat el rol de ${target} a ${role}`,
       removed: (actor: string, target: string) => `${actor} ha eliminat ${target} de l'equip`,
       roleLabel: { owner: "Administrador", member: "Operador", read_only: "Només lectura" },
+    },
+    team: {
+      membersHeading: "Membres",
+      you: " (tu)",
+      activeSince: (date: string) => `Actiu · des de ${date}`,
+      roleOfLabel: (email: string) => `Rol de ${email}`,
+      removeAccess: "Eliminar accés",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} perdrà l'accés a ${companyName}, però el seu compte i altres empreses no s'eliminaran.`,
+      inviteHeading: "Convidar un membre de l'equip",
+      emailLabel: "Correu electrònic",
+      roleFieldLabel: "Rol",
+      createInvite: "Crear invitació",
+      creating: "Creant…",
+      inviteError: "No s'ha pogut convidar.",
+      offlineError: "Sense connexió.",
+      roleChangeError: "No s'ha pogut canviar el rol.",
+      resendError: "No s'ha pogut reenviar la invitació.",
+      delivered: (email: string) => `Invitació enviada a ${email}.`,
+      notDelivered: (email: string) =>
+        `La invitació s'ha creat, però no hem pogut enviar el correu a ${email}. Pots copiar l'enllaç o tornar-ho a intentar:`,
+      resendDelivered: (email: string) =>
+        `Invitació reenviada a ${email}. L'enllaç anterior ja no és vàlid.`,
+      resendNotDelivered: (email: string) =>
+        `La invitació s'ha creat, però no hem pogut enviar el correu a ${email}. Pots copiar l'enllaç o tornar-ho a intentar (l'anterior ja no és vàlid):`,
+      sendWhatsapp: "Enviar per WhatsApp",
+      copyLink: "Copiar enllaç",
+      copied: "Copiat",
+      pendingInvites: "Invitacions pendents",
+      pendingExpires: (date: string) => `· pendent · caduca el ${date}`,
+      resend: "Reenviar",
+      revoke: "Revocar",
+      footerNote:
+        "Tots els membres comparteixen els DeCA, les dades habituals, els vehicles i les plantilles de l'empresa. Cada document desa qui l'ha generat o corregit.",
+    },
+    templates: {
+      intro:
+        "Desa les rutes que repeteixes. Crear un DeCA des d'una plantilla omple tot excepte la data; sempre revises les dades i generes un document nou i independent.",
+      emptyTitle: "Crea la teva primera plantilla",
+      emptyBody:
+        "Desa rutes i dades que repeteixes per generar nous DeCA més ràpid. Les plantilles omplen les teves dades habituals i sempre generen un document nou i independent.",
+      emptyHint: "Ideal per a rutes freqüents, clients habituals i operacions repetitives.",
+      generateCta: "Generar un DeCA",
+      fromHistoryCta: "Crear des d'un DeCA",
+      use: "Utilitzar",
+      delete: "Esborrar",
+    },
+    integrations: {
+      title: "API / Integracions ERP",
+      intro:
+        "Connecta el teu TMS o ERP amb DeCA Profesional quan ho necessitis. Durant la fase de llançament mesurem la demanda per decidir quina integració construir primer.",
+      existing: (date: string, system: string) =>
+        `Ja ens vas enviar una sol·licitud el ${date} per a ${system}. L'estem revisant; et contactarem.`,
+      formIntro:
+        "Estem obrint integracions de manera progressiva. Digues-nos quin sistema utilitzes.",
+      systemLabel: "Sistema / TMS / ERP",
+      needLabel: "Necessitat principal",
+      needOptions: {
+        crear_deca: "Crear DeCA automàticament",
+        consultar_estado: "Consultar estat",
+        descargar_pdf: "Descarregar PDF / QR",
+        importar_datos: "Importar dades",
+        otra: "Altra",
+      },
+      contactLabel: "Contacte",
+      contactEmailLabel: "Correu de contacte",
+      volumeLabel: "Volum aproximat de DeCA/mes (opcional)",
+      submit: "Sol·licitar integració",
+      submitError: "No s'ha pogut enviar la sol·licitud.",
+      offlineError: "Sense connexió. Torna-ho a intentar.",
+      footerNote:
+        "No demanem credencials ni dades tècniques. Sense compromís ni data de disponibilitat.",
+      done: (companyName: string) =>
+        `Sol·licitud rebuda per a ${companyName}. Revisarem les teves necessitats d'integració i et contactarem. Les integracions són un servei addicional pressupostat segons el projecte.`,
     },
   },
   historico: {

@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { NEEDS, NEED_LABEL } from "@/lib/integrations/constants";
+import { NEEDS } from "@/lib/integrations/constants";
+import { useT } from "@/lib/i18n/client";
 
 /**
  * #74 — "Solicitar integración". Company + contact autofill from the session;
@@ -17,6 +18,10 @@ export function IntegrationRequestForm({
   contactName?: string;
   contactEmail?: string;
 }) {
+  // D-246 fix: `t.done` is a function, so it must be read via `useT()` here
+  // rather than passed as a prop from the Server Component that renders this
+  // — functions cannot cross the RSC server→client boundary.
+  const t = useT().panel.integrations;
   const router = useRouter();
   const [f, setF] = useState({
     system: "",
@@ -41,9 +46,9 @@ export function IntegrationRequestForm({
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) setDone(true);
-      else setError(data?.error?.message ?? "No se pudo enviar la solicitud.");
+      else setError(data?.error?.message ?? t.submitError);
     } catch {
-      setError("Sin conexión. Inténtalo de nuevo.");
+      setError(t.offlineError);
     } finally {
       setBusy(false);
       router.refresh();
@@ -57,20 +62,16 @@ export function IntegrationRequestForm({
         data-testid="integration-done"
         className="rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[var(--color-success-bg)] p-4 text-sm"
       >
-        Solicitud recibida para <strong>{companyName}</strong>. Revisaremos tus necesidades de
-        integración y nos pondremos en contacto contigo. Las integraciones son un servicio adicional
-        que se presupuesta según el proyecto.
+        {t.done(companyName)}
       </p>
     );
   }
 
   return (
     <form onSubmit={submit} className="space-y-3" data-testid="integration-form">
-      <p className="text-sm text-[var(--color-text-muted)]">
-        Estamos abriendo integraciones de forma progresiva. Cuéntanos qué sistema utilizas.
-      </p>
+      <p className="text-sm text-[var(--color-text-muted)]">{t.formIntro}</p>
       <label className="block text-sm">
-        <span className="font-medium">Sistema / TMS / ERP</span>
+        <span className="font-medium">{t.systemLabel}</span>
         <input
           value={f.system}
           onChange={(e) => setF((s) => ({ ...s, system: e.target.value }))}
@@ -80,7 +81,7 @@ export function IntegrationRequestForm({
         />
       </label>
       <label className="block text-sm">
-        <span className="font-medium">Necesidad principal</span>
+        <span className="font-medium">{t.needLabel}</span>
         <select
           value={f.need}
           onChange={(e) => setF((s) => ({ ...s, need: e.target.value as (typeof NEEDS)[number] }))}
@@ -88,14 +89,14 @@ export function IntegrationRequestForm({
         >
           {NEEDS.map((n) => (
             <option key={n} value={n}>
-              {NEED_LABEL[n]}
+              {t.needOptions[n]}
             </option>
           ))}
         </select>
       </label>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
-          <span className="font-medium">Contacto</span>
+          <span className="font-medium">{t.contactLabel}</span>
           <input
             value={f.contactName}
             onChange={(e) => setF((s) => ({ ...s, contactName: e.target.value }))}
@@ -103,7 +104,7 @@ export function IntegrationRequestForm({
           />
         </label>
         <label className="block text-sm">
-          <span className="font-medium">Email de contacto</span>
+          <span className="font-medium">{t.contactEmailLabel}</span>
           <input
             type="email"
             value={f.contactEmail}
@@ -113,7 +114,7 @@ export function IntegrationRequestForm({
         </label>
       </div>
       <label className="block text-sm">
-        <span className="font-medium">Volumen aproximado de DeCA/mes (opcional)</span>
+        <span className="font-medium">{t.volumeLabel}</span>
         <input
           value={f.volumeNote}
           onChange={(e) => setF((s) => ({ ...s, volumeNote: e.target.value }))}
@@ -131,11 +132,9 @@ export function IntegrationRequestForm({
         data-testid="integration-submit"
         className="inline-flex min-h-11 items-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
       >
-        Solicitar integración
+        {t.submit}
       </button>
-      <p className="text-xs text-[var(--color-text-muted)]">
-        No pedimos credenciales ni datos técnicos. Sin compromiso ni fecha de disponibilidad.
-      </p>
+      <p className="text-xs text-[var(--color-text-muted)]">{t.footerNote}</p>
     </form>
   );
 }

@@ -513,6 +513,7 @@ export const eu = {
       cta: "Berretsi orain",
     },
     myCompanyFallback: "Nire enpresa",
+    thisCompanyFallback: "enpresa hau",
     newDeca: "DeCA berria",
     duplicateLast: "Errepikatu / bikoiztu azken DeCA",
     lastDocuments: "Azken dokumentuak",
@@ -709,6 +710,81 @@ export const eu = {
         member: "Operadorea",
         read_only: "Irakurtzeko soilik",
       },
+    },
+    team: {
+      membersHeading: "Kideak",
+      you: " (zu)",
+      activeSince: (date: string) => `Aktibo · ${date}(e)tik`,
+      roleOfLabel: (email: string) => `${email}(r)en rola`,
+      removeAccess: "Sarbidea kendu",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email}(e)k ${companyName} enpresarako sarbidea galduko du, baina bere kontua eta beste enpresak ez dira ezabatuko.`,
+      inviteHeading: "Gonbidatu lankide bat",
+      emailLabel: "Emaila",
+      roleFieldLabel: "Rola",
+      createInvite: "Sortu gonbidapena",
+      creating: "Sortzen…",
+      inviteError: "Ezin izan da gonbidatu.",
+      offlineError: "Konexiorik gabe.",
+      roleChangeError: "Ezin izan da rola aldatu.",
+      resendError: "Ezin izan da gonbidapena berriz bidali.",
+      delivered: (email: string) => `Gonbidapena ${email} helbidera bidali da.`,
+      notDelivered: (email: string) =>
+        `Gonbidapena sortu da, baina ezin izan dugu emaila ${email} helbidera bidali. Esteka kopiatu edo berriz saiatu dezakezu:`,
+      resendDelivered: (email: string) =>
+        `Gonbidapena berriz bidali da ${email} helbidera. Aurreko esteka ez da jada baliozkoa.`,
+      resendNotDelivered: (email: string) =>
+        `Gonbidapena sortu da, baina ezin izan dugu emaila ${email} helbidera bidali. Esteka kopiatu edo berriz saiatu dezakezu (aurrekoa ez da jada baliozkoa):`,
+      sendWhatsapp: "Bidali WhatsAppez",
+      copyLink: "Kopiatu esteka",
+      copied: "Kopiatuta",
+      pendingInvites: "Zain dauden gonbidapenak",
+      pendingExpires: (date: string) => `· zain · ${date}(e)an iraungitzen da`,
+      resend: "Berriz bidali",
+      revoke: "Baliogabetu",
+      footerNote:
+        "Kide guztiek partekatzen dituzte enpresaren DeCAak, ohiko datuak, ibilgailuak eta txantiloiak. Dokumentu bakoitzak nork sortu edo zuzendu duen gordetzen du.",
+    },
+    templates: {
+      intro:
+        "Errepikatzen dituzun ibilbideak gorde. Txantiloi batetik DeCA bat sortzean data izan ezik guztia betetzen da; datuak beti berrikusten dituzu eta dokumentu berri eta independente bat sortzen duzu.",
+      emptyTitle: "Sortu zure lehen txantiloia",
+      emptyBody:
+        "Errepikatzen dituzun ibilbideak eta datuak gorde DeCA berriak azkarrago sortzeko. Txantiloiek zure ohiko datuak betetzen dituzte eta beti dokumentu berri eta independente bat sortzen dute.",
+      emptyHint:
+        "Ibilbide maiztuentzat, bezero ohikoentzat eta eragiketa errepikakorretarako aproposa.",
+      generateCta: "Sortu DeCA bat",
+      fromHistoryCta: "Sortu DeCA batetik",
+      use: "Erabili",
+      delete: "Ezabatu",
+    },
+    integrations: {
+      title: "API / ERP integrazioak",
+      intro:
+        "Konektatu zure TMS edo ERP DeCA Profesional-ekin behar duzunean. Abiarazte fasean eskaria neurtzen dugu lehenengo zein integrazio eraiki erabakitzeko.",
+      existing: (date: string, system: string) =>
+        `Jadanik ${date}(e)an eskaera bidali zeniguten ${system}(r)entzat. Berrikusten ari gara; harremanetan jarriko gara.`,
+      formIntro:
+        "Integrazioak pixkanaka irekitzen ari gara. Esan iezaguzu zein sistema erabiltzen duzun.",
+      systemLabel: "Sistema / TMS / ERP",
+      needLabel: "Behar nagusia",
+      needOptions: {
+        crear_deca: "Sortu DeCA automatikoki",
+        consultar_estado: "Egoera kontsultatu",
+        descargar_pdf: "Deskargatu PDF / QR",
+        importar_datos: "Datuak inportatu",
+        otra: "Beste bat",
+      },
+      contactLabel: "Kontaktua",
+      contactEmailLabel: "Kontaktu-emaila",
+      volumeLabel: "DeCA kopuru gutxi gorabeherakoa/hilabetea (aukerakoa)",
+      submit: "Eskatu integrazioa",
+      submitError: "Ezin izan da eskaera bidali.",
+      offlineError: "Konexiorik gabe. Saiatu berriro.",
+      footerNote:
+        "Ez dugu kredentzialik ez daturik teknikorik eskatzen. Konpromisorik eta erabilgarritasun-daterik gabe.",
+      done: (companyName: string) =>
+        `${companyName}(r)entzako eskaera jaso da. Zure integrazio-beharrak berrikusiko ditugu eta harremanetan jarriko gara. Integrazioak proiektuaren arabera aurrekontatzen den zerbitzu gehigarria dira.`,
     },
   },
   historico: {

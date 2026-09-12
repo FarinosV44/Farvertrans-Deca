@@ -5,6 +5,7 @@ import { AppNav } from "@/components/app/app-nav";
 import { IntegrationRequestForm } from "@/components/app/integration-request-form";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Integraciones", robots: { index: false } };
@@ -14,28 +15,32 @@ export default async function IntegracionesPage() {
   const user = await getCurrentUser();
   if (!user?.companyId || !user.company) redirect("/registro/completar-empresa");
 
-  const existing = await prisma.integrationRequest.findFirst({
-    where: { companyId: user.companyId },
-    orderBy: { createdAt: "desc" },
-  });
+  const [existing, t] = await Promise.all([
+    prisma.integrationRequest.findFirst({
+      where: { companyId: user.companyId },
+      orderBy: { createdAt: "desc" },
+    }),
+    getDictionary(),
+  ]);
 
   return (
     <>
       <SiteHeader authed companyName={user.company.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
-        <h1 className="text-2xl font-bold">API / Integraciones ERP</h1>
+        <h1 className="text-2xl font-bold">{t.panel.integrations.title}</h1>
         <AppNav current="empresa" />
 
         <p className="mt-4 max-w-prose text-sm text-[var(--color-text-muted)]">
-          Conecta tu TMS o ERP con DeCA Profesional cuando lo necesites. Durante la fase de
-          lanzamiento medimos la demanda para decidir qué integración construir primero.
+          {t.panel.integrations.intro}
         </p>
 
         <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
           {existing ? (
             <p role="status" className="text-sm">
-              Ya nos enviaste una solicitud el {existing.createdAt.toISOString().slice(0, 10)} para{" "}
-              <strong>{existing.system}</strong>. La estamos revisando; te contactaremos.
+              {t.panel.integrations.existing(
+                existing.createdAt.toISOString().slice(0, 10),
+                existing.system,
+              )}
             </p>
           ) : (
             <IntegrationRequestForm

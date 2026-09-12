@@ -8810,3 +8810,67 @@ focus), GREEN after.
 
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 501/501 unit unaffected,
 6/6 `datos-habituales-rutas.spec.ts` (5 pre-existing + 1 new).
+
+## D-246 — #141 [P2 audit finding, i18n]: `equipo`/`plantillas`/`integraciones` converted to the dictionary system; a real RSC serialization bug found and fixed along the way (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** the app supports 9 UI locales (`lib/i18n/locale.ts`),
+and most panel pages already route text through `getDictionary()`/`useT()`, but `app/panel/equipo`
+(`TeamManager`), `app/panel/plantillas` (`TemplateList`), and `app/panel/integraciones`
+(`IntegrationRequestForm`) were fully Spanish-hardcoded — a real, user-visible gap for any of the 8
+non-Spanish locales. Opened as issue #141 before starting work.
+
+**Scope correction found while investigating:** two items on the original suspect list are NOT gaps
+and are excluded — `app/panel/deca/[id]/corregir` renders `CrearWizard`, which already localizes
+fully via `useT()` (confirmed: of 19 Spanish-looking string-literal hits in the 2820-line
+`wizard.tsx`, every one is either a code comment or a legitimate DeCA-field data default like
+`"España"`, never UI chrome); `app/panel/deca/[id]/inspeccion` is INTENTIONALLY Spanish-only by
+existing design — its own code comment says so, since it's shown to a road inspector regardless of
+the operator's UI locale, same as the PDF itself. Corrected the tracked scope on the issue.
+
+**Fix:** added `panel.team`, `panel.templates`, `panel.integrations` sections (plus
+`panel.thisCompanyFallback`) to all 9 locale dictionaries (`es`/`ca`/`eu`/`gl`/`en`/`fr`/`de`/`it`/`pt`),
+`satisfies Messages` enforcing structural parity. `TemplateList` takes translated strings as a plain
+prop from its server-component caller (`app/panel/plantillas/page.tsx`) — safe, since none of its
+messages are functions. Also removed the direct `NEED_LABEL` import from
+`lib/integrations/constants.ts` in favor of a locale-driven `needOptions` map.
+
+**Real bug found and fixed in the same slice — functions cannot cross the RSC server→client boundary:**
+`TeamManager` and `IntegrationRequestForm` initially received `t` as a prop passed down from their
+Server Component pages, the same way `TemplateList` does — but several of their messages are
+FUNCTIONS (e.g. `activeSince: (date) => ...`, `removeConfirm: (email, companyName) => ...`,
+`done: (companyName) => ...`), and Next.js's App Router refuses to serialize a function prop from a
+Server Component into a Client Component; the whole page render fails. Caught only because the actual
+Playwright regression suite (`webServer.command` in `playwright.config.ts` runs `npm run build && npm
+run start`, a REAL production build+serve, not `next dev`) started failing broadly across
+`team.spec.ts`/`panel-nav.spec.ts`/`admin-growth.spec.ts` with generic 30s "waiting for locator"
+timeouts on totally unrelated tests — every one of them navigates through `/panel/equipo` or
+`/panel/plantillas`/`/panel/integraciones` at some point (`panel-nav.spec.ts`'s `PANEL_PAGES` list
+visits all panel pages; `team.spec.ts` always hits the invite form on `/panel/equipo`), and a crashed
+render on one of those pages stalls the whole test. Root cause confirmed by direct `curl` smoke-testing
+a manually-started production server (registered a real user, hit all 5 touched pages, got clean 200s
+with real rendered content) — RED before the fix (200 status but an error boundary / crash server-side
+for `equipo`/`integraciones` specifically), GREEN after. **Fixed by switching both components to
+`useT()`** (`lib/i18n/client.tsx`'s existing client-side dictionary hook — the same pattern
+`components/deca/wizard.tsx` already uses 3×) instead of receiving a resolved dictionary object as a
+prop; this is the correct, established pattern in this codebase for a `"use client"` component that
+needs function-valued translated messages, since `useT()`'s `LocaleProvider` only ever passes a plain
+`Locale` STRING across the server→client boundary and resolves the actual dictionary (including its
+functions) from a client-side static import.
+
+**Also found: a `reuseExistingServer: true`-related contamination in THIS session's own manual
+verification** — killing a manually-started `next start` mid-run (to add a missing env var) while a
+concurrent `playwright test` command had already attached to it produced a batch of misleading
+"failures" that were purely the server disappearing underneath the run, not a real regression;
+discarded that run rather than trusting it. Also hit real background-task memory pressure from
+accumulated orphaned `next build`/`next start`/headless Chromium processes across several aborted
+manual runs — cleared explicitly (`taskkill` on the stray PIDs/`headless_shell.exe`) before the final,
+trusted, `--workers=1` verification runs.
+
+**Gate:** tsc/eslint/prettier clean; 501/501 unit unaffected (pure UI/i18n-routing change, no new
+pure-logic); production build (`npm run build`) clean; `team.spec.ts` 12/12,
+`panel-nav.spec.ts` + `membership.spec.ts` + `admin-growth.spec.ts` 16/16 (both runs `--workers=1`
+against a clean server after clearing the orphaned-process contamination above — the mail-provider-401
+lines in the log are the pre-existing test-env placeholder Resend key, unrelated). Committed to
+`develop`. Issue #141 left OPEN — remaining scope (`app/panel/empresa` + its 2 components,
+`app/panel/datos` + `saved-data-manager.tsx` ~1060 lines, and the `deca/[id]` cockpit page + 5
+dependent components) still to do.

@@ -510,6 +510,7 @@ export const de = {
       cta: "Jetzt bestätigen",
     },
     myCompanyFallback: "Mein Unternehmen",
+    thisCompanyFallback: "dieses Unternehmen",
     newDeca: "Neues DeCA",
     duplicateLast: "Letztes DeCA wiederholen / duplizieren",
     lastDocuments: "Letzte Dokumente",
@@ -703,6 +704,80 @@ export const de = {
         `${actor} hat die Rolle von ${target} zu ${role} geändert`,
       removed: (actor: string, target: string) => `${actor} hat ${target} aus dem Team entfernt`,
       roleLabel: { owner: "Administrator", member: "Bearbeiter", read_only: "Nur lesen" },
+    },
+    team: {
+      membersHeading: "Mitglieder",
+      you: " (Sie)",
+      activeSince: (date: string) => `Aktiv · seit ${date}`,
+      roleOfLabel: (email: string) => `Rolle von ${email}`,
+      removeAccess: "Zugriff entfernen",
+      removeConfirm: (email: string, companyName: string) =>
+        `${email} verliert den Zugriff auf ${companyName}, aber das Konto und andere Unternehmen werden nicht gelöscht.`,
+      inviteHeading: "Einen Kollegen einladen",
+      emailLabel: "E-Mail",
+      roleFieldLabel: "Rolle",
+      createInvite: "Einladung erstellen",
+      creating: "Wird erstellt…",
+      inviteError: "Einladung konnte nicht gesendet werden.",
+      offlineError: "Keine Verbindung.",
+      roleChangeError: "Rolle konnte nicht geändert werden.",
+      resendError: "Einladung konnte nicht erneut gesendet werden.",
+      delivered: (email: string) => `Einladung an ${email} gesendet.`,
+      notDelivered: (email: string) =>
+        `Die Einladung wurde erstellt, aber wir konnten die E-Mail nicht an ${email} senden. Sie können den Link kopieren oder es erneut versuchen:`,
+      resendDelivered: (email: string) =>
+        `Einladung erneut an ${email} gesendet. Der vorherige Link ist nicht mehr gültig.`,
+      resendNotDelivered: (email: string) =>
+        `Die Einladung wurde erstellt, aber wir konnten die E-Mail nicht an ${email} senden. Sie können den Link kopieren oder es erneut versuchen (der vorherige ist nicht mehr gültig):`,
+      sendWhatsapp: "Per WhatsApp senden",
+      copyLink: "Link kopieren",
+      copied: "Kopiert",
+      pendingInvites: "Ausstehende Einladungen",
+      pendingExpires: (date: string) => `· ausstehend · läuft ab am ${date}`,
+      resend: "Erneut senden",
+      revoke: "Widerrufen",
+      footerNote:
+        "Alle Mitglieder teilen sich die DeCA-Dokumente, gespeicherten Daten, Fahrzeuge und Vorlagen des Unternehmens. Jedes Dokument speichert, wer es erstellt oder korrigiert hat.",
+    },
+    templates: {
+      intro:
+        "Speichern Sie die Routen, die Sie wiederholen. Beim Erstellen eines DeCA aus einer Vorlage wird alles außer dem Datum ausgefüllt; Sie prüfen die Daten immer und erstellen ein neues, eigenständiges Dokument.",
+      emptyTitle: "Erstellen Sie Ihre erste Vorlage",
+      emptyBody:
+        "Speichern Sie Routen und Daten, die Sie wiederholen, um neue DeCA-Dokumente schneller zu erstellen. Vorlagen füllen Ihre gespeicherten Daten aus und erstellen immer ein neues, eigenständiges Dokument.",
+      emptyHint: "Ideal für häufige Routen, Stammkunden und wiederkehrende Abläufe.",
+      generateCta: "DeCA erstellen",
+      fromHistoryCta: "Aus einem DeCA erstellen",
+      use: "Verwenden",
+      delete: "Löschen",
+    },
+    integrations: {
+      title: "API / ERP-Integrationen",
+      intro:
+        "Verbinden Sie Ihr TMS oder ERP bei Bedarf mit DeCA Profesional. Während der Startphase messen wir die Nachfrage, um zu entscheiden, welche Integration zuerst gebaut wird.",
+      existing: (date: string, system: string) =>
+        `Sie haben uns bereits am ${date} eine Anfrage für ${system} gesendet. Wir prüfen sie und melden uns bei Ihnen.`,
+      formIntro:
+        "Wir öffnen Integrationen schrittweise. Sagen Sie uns, welches System Sie verwenden.",
+      systemLabel: "System / TMS / ERP",
+      needLabel: "Hauptbedarf",
+      needOptions: {
+        crear_deca: "DeCA automatisch erstellen",
+        consultar_estado: "Status abfragen",
+        descargar_pdf: "PDF / QR herunterladen",
+        importar_datos: "Daten importieren",
+        otra: "Andere",
+      },
+      contactLabel: "Kontakt",
+      contactEmailLabel: "Kontakt-E-Mail",
+      volumeLabel: "Ungefähres DeCA-Volumen/Monat (optional)",
+      submit: "Integration anfragen",
+      submitError: "Anfrage konnte nicht gesendet werden.",
+      offlineError: "Keine Verbindung. Versuchen Sie es erneut.",
+      footerNote:
+        "Wir fragen weder nach Zugangsdaten noch nach technischen Details. Ohne Verpflichtung oder Verfügbarkeitsdatum.",
+      done: (companyName: string) =>
+        `Anfrage für ${companyName} erhalten. Wir prüfen Ihren Integrationsbedarf und melden uns bei Ihnen. Integrationen sind ein zusätzlicher Service, der projektabhängig kalkuliert wird.`,
     },
   },
   historico: {

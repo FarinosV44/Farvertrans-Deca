@@ -13,8 +13,18 @@ type Row = {
   carrier?: { name?: string };
 };
 
+export type TemplateListMessages = {
+  emptyTitle: string;
+  emptyBody: string;
+  emptyHint: string;
+  generateCta: string;
+  fromHistoryCta: string;
+  use: string;
+  delete: string;
+};
+
 /** Manage saved DeCA templates (UX #25). */
-export function TemplateList({ templates }: { templates: Row[] }) {
+export function TemplateList({ templates, t }: { templates: Row[]; t: TemplateListMessages }) {
   const router = useRouter();
 
   async function remove(id: string) {
@@ -25,26 +35,21 @@ export function TemplateList({ templates }: { templates: Row[] }) {
   if (templates.length === 0) {
     return (
       <div className="mt-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-        <p className="text-base font-bold">Crea tu primera plantilla</p>
-        <p className="mt-2 max-w-prose text-sm text-[var(--color-text-muted)]">
-          Guarda rutas y datos que repites para generar nuevos DeCA más rápido. Las plantillas
-          rellenan tus datos habituales y siempre generan un documento nuevo e independiente.
-        </p>
-        <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-          Ideal para rutas frecuentes, clientes habituales y operaciones repetitivas.
-        </p>
+        <p className="text-base font-bold">{t.emptyTitle}</p>
+        <p className="mt-2 max-w-prose text-sm text-[var(--color-text-muted)]">{t.emptyBody}</p>
+        <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">{t.emptyHint}</p>
         <div className="mt-4 flex flex-col gap-2 md:flex-row">
           <Link
             href="/crear"
             className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary-contrast)] no-underline hover:bg-[var(--color-primary-hover)] md:w-auto"
           >
-            Generar un DeCA
+            {t.generateCta}
           </Link>
           <Link
             href="/panel/historico"
             className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-primary)] px-4 text-sm font-medium text-[var(--color-primary)] no-underline hover:bg-[var(--color-primary-bg)] md:w-auto"
           >
-            Crear desde un DeCA
+            {t.fromHistoryCta}
           </Link>
         </div>
       </div>
@@ -56,23 +61,23 @@ export function TemplateList({ templates }: { templates: Row[] }) {
       className="mt-3 divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]"
       data-testid="template-list"
     >
-      {templates.map((t) => {
-        const loadShort = formatLocationShort(t.loadLocation);
-        const unloadShort = formatLocationShort(t.unloadLocation);
+      {templates.map((tpl) => {
+        const loadShort = formatLocationShort(tpl.loadLocation);
+        const unloadShort = formatLocationShort(tpl.unloadLocation);
         return (
-          <li key={t.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+          <li key={tpl.id} className="flex items-center justify-between gap-3 py-3 text-sm">
             <div className="flex min-w-0 items-start gap-2">
               <FavoriteStar
-                favorite={!!t.favorite}
-                payload={{ kind: "template", id: t.id }}
-                label={t.name}
+                favorite={!!tpl.favorite}
+                payload={{ kind: "template", id: tpl.id }}
+                label={tpl.name}
               />
               <div className="min-w-0">
-                <p className="font-medium">{t.name}</p>
+                <p className="font-medium">{tpl.name}</p>
                 <p className="text-xs text-[var(--color-text-muted)]">
                   {[
                     loadShort && unloadShort ? `${loadShort} → ${unloadShort}` : null,
-                    t.carrier?.name,
+                    tpl.carrier?.name,
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -80,13 +85,13 @@ export function TemplateList({ templates }: { templates: Row[] }) {
               </div>
             </div>
             <div className="flex shrink-0 gap-3">
-              <Link href={`/crear?template=${t.id}`}>Usar</Link>
+              <Link href={`/crear?template=${tpl.id}`}>{t.use}</Link>
               <button
                 type="button"
-                onClick={() => remove(t.id)}
+                onClick={() => remove(tpl.id)}
                 className="text-[var(--color-danger)] underline"
               >
-                Borrar
+                {t.delete}
               </button>
             </div>
           </li>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 type CompanyRoleValue = "owner" | "member" | "read_only";
 
@@ -12,11 +13,6 @@ type Member = {
   joinedAt: string;
 };
 
-const ROLE_LABEL: Record<CompanyRoleValue, string> = {
-  owner: "Administrador",
-  member: "Operador",
-  read_only: "Solo lectura",
-};
 type Invite = { id: string; email: string; role: string; expiresAt: string };
 
 export function TeamManager({
@@ -34,6 +30,12 @@ export function TeamManager({
    *  that only THIS workspace's access is being revoked. */
   companyName: string;
 }) {
+  // D-246 fix: translated messages are read via `useT()`, not a prop from a
+  // Server Component — several of these are functions, and functions cannot
+  // cross the RSC server→client boundary (this is a "use client" component).
+  const dict = useT();
+  const t = dict.panel.team;
+  const roleLabel = dict.panel.teamActivity.roleLabel;
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<CompanyRoleValue>("member");
@@ -57,7 +59,7 @@ export function TeamManager({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMsg(data?.error?.message ?? "No se pudo invitar.");
+        setMsg(data?.error?.message ?? t.inviteError);
       } else {
         setLink(data.link);
         setDelivered(!!data.delivered);
@@ -66,15 +68,13 @@ export function TeamManager({
           // #102: whether the recipient already has an account or not, a
           // failed send must never be the end of the road — the admin
           // always gets a link they can hand over themselves.
-          data.delivered
-            ? `Invitación enviada a ${data.email}.`
-            : `La invitación se ha creado, pero no hemos podido enviar el correo a ${data.email}. Puedes copiar el enlace o reintentar:`,
+          data.delivered ? t.delivered(data.email) : t.notDelivered(data.email),
         );
         setEmail("");
         router.refresh();
       }
     } catch {
-      setMsg("Sin conexión.");
+      setMsg(t.offlineError);
     }
     setBusy(false);
   }
@@ -93,7 +93,7 @@ export function TeamManager({
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setMsg(data?.error?.message ?? "No se pudo cambiar el rol.");
+      setMsg(data?.error?.message ?? t.roleChangeError);
       return;
     }
     router.refresh();
@@ -119,20 +119,16 @@ export function TeamManager({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMsg(data?.error?.message ?? "No se pudo reenviar la invitación.");
+        setMsg(data?.error?.message ?? t.resendError);
       } else {
         setLink(data.link);
         setDelivered(!!data.delivered);
         setCopied(false);
-        setMsg(
-          data.delivered
-            ? `Invitación reenviada a ${data.email}. El enlace anterior ya no es válido.`
-            : `La invitación se ha creado, pero no hemos podido enviar el correo a ${data.email}. Puedes copiar el enlace o reintentar (el anterior ya no es válido):`,
-        );
+        setMsg(data.delivered ? t.resendDelivered(data.email) : t.resendNotDelivered(data.email));
         router.refresh();
       }
     } catch {
-      setMsg("Sin conexión.");
+      setMsg(t.offlineError);
     }
     setBusy(false);
   }
@@ -141,7 +137,7 @@ export function TeamManager({
     <div className="mt-6 space-y-8">
       <section aria-labelledby="miembros">
         <h2 id="miembros" className="text-lg font-bold">
-          Miembros
+          {t.membersHeading}
         </h2>
         <ul
           className="mt-2 divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]"
@@ -154,18 +150,18 @@ export function TeamManager({
             >
               <span className="min-w-0">
                 <span className="font-medium">{m.email}</span>
-                {m.id === meId && <span className="text-[var(--color-text-muted)]"> (tú)</span>}
+                {m.id === meId && <span className="text-[var(--color-text-muted)]">{t.you}</span>}
                 <span className="ml-2 rounded-[4px] bg-[var(--color-surface)] px-1.5 py-0.5 text-xs">
-                  {ROLE_LABEL[m.companyRole]}
+                  {roleLabel[m.companyRole]}
                 </span>
                 <span className="ml-2 text-xs text-[var(--color-text-muted)]">
-                  Activo · desde {m.joinedAt.slice(0, 10)}
+                  {t.activeSince(m.joinedAt.slice(0, 10))}
                 </span>
               </span>
               {isAdmin && m.id !== meId && (
                 <span className="flex items-center gap-3">
                   <label className="sr-only" htmlFor={`role-${m.id}`}>
-                    Rol de {m.email}
+                    {t.roleOfLabel(m.email)}
                   </label>
                   <select
                     id={`role-${m.id}`}
@@ -174,9 +170,9 @@ export function TeamManager({
                     onChange={(e) => setRole(m.id, e.target.value as CompanyRoleValue)}
                     className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-xs"
                   >
-                    <option value="member">Operador</option>
-                    <option value="read_only">Solo lectura</option>
-                    <option value="owner">Administrador</option>
+                    <option value="member">{roleLabel.member}</option>
+                    <option value="read_only">{roleLabel.read_only}</option>
+                    <option value="owner">{roleLabel.owner}</option>
                   </select>
                   <button
                     type="button"
@@ -186,17 +182,13 @@ export function TeamManager({
                       // OTHER company it belongs to are unaffected, and the
                       // confirm text says so explicitly rather than reading
                       // like account deletion.
-                      if (
-                        window.confirm(
-                          `${m.email} perderá acceso a ${companyName}, pero su cuenta y otras empresas no se eliminarán.`,
-                        )
-                      ) {
+                      if (window.confirm(t.removeConfirm(m.email, companyName))) {
                         del(`/api/team/members/${m.id}`);
                       }
                     }}
                     className="text-[var(--color-danger)] underline"
                   >
-                    Eliminar acceso
+                    {t.removeAccess}
                   </button>
                 </span>
               )}
@@ -208,11 +200,11 @@ export function TeamManager({
       {isAdmin && (
         <section aria-labelledby="invitar">
           <h2 id="invitar" className="text-lg font-bold">
-            Invitar a un compañero
+            {t.inviteHeading}
           </h2>
           <form onSubmit={invite} className="mt-2 flex flex-wrap items-end gap-2" noValidate>
             <label className="flex-1">
-              <span className="block text-sm font-medium">Email</span>
+              <span className="block text-sm font-medium">{t.emailLabel}</span>
               <input
                 type="email"
                 value={email}
@@ -222,16 +214,16 @@ export function TeamManager({
               />
             </label>
             <label>
-              <span className="block text-sm font-medium">Rol</span>
+              <span className="block text-sm font-medium">{t.roleFieldLabel}</span>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as CompanyRoleValue)}
                 data-testid="invite-role"
                 className="mt-1 min-h-11 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
               >
-                <option value="member">Operador</option>
-                <option value="read_only">Solo lectura</option>
-                <option value="owner">Administrador</option>
+                <option value="member">{roleLabel.member}</option>
+                <option value="read_only">{roleLabel.read_only}</option>
+                <option value="owner">{roleLabel.owner}</option>
               </select>
             </label>
             <button
@@ -240,7 +232,7 @@ export function TeamManager({
               data-testid="invite-submit"
               className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
             >
-              {busy ? "Creando…" : "Crear invitación"}
+              {busy ? t.creating : t.createInvite}
             </button>
           </form>
           {msg && (
@@ -269,7 +261,7 @@ export function TeamManager({
                   rel="noopener noreferrer"
                   className="font-medium text-[var(--color-primary)] underline"
                 >
-                  Enviar por WhatsApp
+                  {t.sendWhatsapp}
                 </a>
                 <button
                   type="button"
@@ -284,7 +276,7 @@ export function TeamManager({
                   }}
                   className="font-medium text-[var(--color-primary)] underline"
                 >
-                  {copied ? "Copiado" : "Copiar enlace"}
+                  {copied ? t.copied : t.copyLink}
                 </button>
               </div>
             </div>
@@ -292,7 +284,7 @@ export function TeamManager({
 
           {invites.length > 0 && (
             <>
-              <h3 className="mt-6 text-sm font-bold">Invitaciones pendientes</h3>
+              <h3 className="mt-6 text-sm font-bold">{t.pendingInvites}</h3>
               <ul
                 className="mt-2 divide-y divide-[var(--color-border)] border-y border-[var(--color-border)]"
                 data-testid="pending-invites"
@@ -302,7 +294,7 @@ export function TeamManager({
                     <span>
                       {i.email}{" "}
                       <span className="text-xs text-[var(--color-text-muted)]">
-                        · pendiente · caduca {i.expiresAt.slice(0, 10)}
+                        {t.pendingExpires(i.expiresAt.slice(0, 10))}
                       </span>
                     </span>
                     <span className="flex items-center gap-3">
@@ -313,7 +305,7 @@ export function TeamManager({
                         disabled={busy}
                         className="underline disabled:opacity-55"
                       >
-                        Reenviar
+                        {t.resend}
                       </button>
                       <button
                         type="button"
@@ -321,7 +313,7 @@ export function TeamManager({
                         disabled={busy}
                         className="text-[var(--color-danger)] underline disabled:opacity-55"
                       >
-                        Revocar
+                        {t.revoke}
                       </button>
                     </span>
                   </li>
@@ -332,10 +324,7 @@ export function TeamManager({
         </section>
       )}
 
-      <p className="text-xs text-[var(--color-text-muted)]">
-        Todos los miembros comparten los DeCA, los datos habituales, los vehículos y las plantillas
-        de la empresa. Cada documento guarda quién lo generó o corrigió.
-      </p>
+      <p className="text-xs text-[var(--color-text-muted)]">{t.footerNote}</p>
     </div>
   );
 }

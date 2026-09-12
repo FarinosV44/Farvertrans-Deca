@@ -5,6 +5,7 @@ import { AppNav } from "@/components/app/app-nav";
 import { TeamManager } from "@/components/app/team-manager";
 import { getCurrentUser } from "@/lib/auth";
 import { listMembers, listPendingInvites } from "@/lib/team";
+import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Equipo", robots: { index: false } };
@@ -13,16 +14,19 @@ export default async function EquipoPage() {
   const user = await getCurrentUser();
   if (!user?.companyId) redirect("/registro/completar-empresa");
 
-  const [members, invites] = await Promise.all([
+  const [members, invites, t] = await Promise.all([
     listMembers(user.companyId),
     user.companyRole === "owner" ? listPendingInvites(user.companyId) : Promise.resolve([]),
+    getDictionary(),
   ]);
 
   return (
     <>
       <SiteHeader authed companyName={user.company?.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
-        <h1 className="text-2xl font-bold">Equipo · {user.company?.name}</h1>
+        <h1 className="text-2xl font-bold">
+          {t.panel.nav.equipo} · {user.company?.name}
+        </h1>
         <AppNav current="equipo" />
         <TeamManager
           members={members.map((m) => ({
@@ -35,7 +39,7 @@ export default async function EquipoPage() {
           invites={invites.map((i) => ({ ...i, expiresAt: i.expiresAt.toISOString() }))}
           isAdmin={user.companyRole === "owner"}
           meId={user.id}
-          companyName={user.company?.name ?? "esta empresa"}
+          companyName={user.company?.name ?? t.panel.thisCompanyFallback}
         />
       </main>
       <SiteFooter />
