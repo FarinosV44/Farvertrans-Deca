@@ -44,7 +44,33 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
-- Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **Full repository code-review / regression audit, this session (2026-09-12), requested by the
+  user independently of any single issue.** Scope: architecture/data flow, DB schema/Prisma/
+  migrations, auth/authz/tenant isolation, superadmin, all DeCA creation flows (single +
+  multi-shipment), PDF/QR/public URL/inspection mode, versioning, history/search/CSV/templates/
+  habitual data, team/company/support/errors, responsive/a11y/i18n, API routes/validation,
+  security, dead code/performance. Full validation suite run and clean: `tsc`/`eslint`/`prettier`/
+  `keel-verify`, **458/458 unit**, production build, **366/368 e2e** (the 1 failure is the
+  pre-existing documented `admin-2fa.spec.ts` recovery-code-replay flake, confirmed against
+  `docs/lessons-learned.md` — not a regression); `npm audit` found 4 known transitive-dependency
+  vulnerabilities (2 low/1 moderate/1 high, `@supabase/auth-js` + `postcss` via `next`, both fixes
+  are breaking-change bumps — tracked as technical debt, not opened as issues). Executed as 7
+  parallel independent read-only review passes; cross-checked against `docs/lessons-learned.md`/
+  `docs/decisions.md` for regressions on past incidents (#94 RSC-IDOR, D-163 membership, D-205/
+  D-206 multi-shipment mirroring, D-187 QR overlap — all confirmed still correctly fixed).
+  **Per "Issue capture: on", the P0/P1 findings were opened as forge issues #123–#130 before any
+  fix work** — full detail per issue in `docs/issues.md`'s new "Full code review / regression
+  audit" section: #123 (P0, `FVD_HASH_SECRET` fallback to a hardcoded public string, unenforced at
+  boot — session-forgery risk), #124 (P1, team invite not bound to the invited email), #125 (P1,
+  `/d/[token]` rate-limiting declared but never wired in), #126 (P1, CSV export formula-injection),
+  #127 (P1, no centralized logging/redaction framework — `pino` is documented but not actually a
+  dependency), #128 (P1, multi-shipment PDF can omit a per-shipment plate override the schema still
+  accepts), #129 (P1, no abuse control on `POST /api/team/invites`), #130 (P1, `Deca` table has no
+  supporting indexes for its actual query patterns). The full structured report (P0–P3 findings,
+  security findings, data-integrity risks, missing tests, UX/responsive regressions, technical
+  debt, areas reviewed with no issues found, prioritized fix plan) was delivered to the user
+  in-conversation, not duplicated into `docs/`. **No code changed by the audit itself — none of
+  #123–#130 started yet.**
 - **D-216 — I-122: Superadmin can correct a company's razón social/CIF-NIF safely, this session
   (2026-09-12). Full detail in `docs/decisions.md` D-216.** Extended the existing #62 ficha editor
   rather than building a new tool: added a pre-save duplicate-CIF/NIF warning (never a hard block,

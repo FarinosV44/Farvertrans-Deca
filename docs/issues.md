@@ -1107,3 +1107,69 @@ anonymize-in-place (no hard delete, D-067).
 - Gate: tsc/eslint/prettier limpios, 444/444 unitarios, 9/9 e2e nuevos
   (`admin-company-edit.spec.ts`) + 11/11 + 19/19 de regresión en verde. **I-122 completo, comentado
   en el issue, dejado ABIERTO para confirmación del usuario.**
+
+## Full code review / regression audit (2026-09-12) — I-123 through I-130 opened
+
+Full-repository review requested by the user (not a single feature/issue) — architecture, DB/Prisma
+schema, auth/authz/tenant isolation, superadmin, all DeCA creation flows (single + multi-shipment),
+PDF/QR/public URL, versioning, history/search/CSV/templates/habitual data, team/company/support/
+errors, responsive/a11y/i18n, API routes/validation, security, dead code/performance. Full validation
+suite run: `tsc`/`eslint`/`prettier`/`keel-verify` clean; **458/458 unit tests green**; production
+build clean; **366/368 e2e green** (the 1 failure is the pre-existing documented `admin-2fa.spec.ts`
+recovery-code-replay flake — confirmed byte-for-byte against `docs/lessons-learned.md`, not a
+regression); `npm audit` found 4 known transitive-dependency vulnerabilities (2 low/1 moderate/1
+high in `@supabase/auth-js` and `postcss` via `next`, both requiring a breaking-change bump to fix —
+tracked as technical debt, no issue opened per-vuln since the fix is a single coordinated dependency
+upgrade, not 4 separate code changes).
+
+Executed as 7 parallel independent read-only review passes (data/DB integrity; auth/authz/tenant
+isolation/superadmin; DeCA core + PDF/QR/versioning; history/CSV/templates/habitual data; team/
+company/support/errors/i18n/a11y; API-routes/validation/logging/dead-code; a dedicated security audit
+against `docs/threat-model.md`), cross-checked against `docs/lessons-learned.md`/`docs/decisions.md`
+for regressions on past incidents (#94 RSC-IDOR, D-163 membership, D-205/D-206 multi-shipment
+mirroring, D-187 QR overlap — all confirmed still correctly fixed, no regression). Per this project's
+"Issue capture: on" policy, the P0 and P1 findings were opened as forge issues before any fix work
+started; P2/P3 findings and the full structured report (all findings, "areas reviewed no issues
+found", prioritized fix plan, recommended new tests) were handed to the user in-conversation rather
+than duplicated here — see the conversation transcript for the complete report if needed. Not yet
+started; no code changed by the audit itself.
+
+- **I-123 — #123 [P0 Security] `FVD_HASH_SECRET` falls back to a hardcoded public string in 6 files
+  (`lib/auth/session.ts` — signs the session cookie itself — plus `lib/hash.ts`,
+  `lib/abuse/challenge.ts`, `lib/admin/backup-password.ts`, `lib/auth/oauth-state.ts`,
+  `lib/auth/webauthn-challenge.ts`), unenforced at boot.** `getEnv()` (which validates this var) is
+  never called at startup — confirmed by grep, only invoked lazily inside `lib/supabase/server.ts`'s
+  Storage helpers. Repo is public, so a missing env var (misconfigured redeploy) makes the fallback
+  secret public knowledge → forgeable session cookies for any user id, including superadmin. Not
+  started.
+- **I-124 — #124 [P1 Security] Team invite token not bound to the invited email.** `acceptInvite`/
+  `signup`'s invite branch/`completeCompanyForUser`'s invite branch never check
+  `session.user.email === invite.email` before `joinCompany()` — a leaked/forwarded invite link can be
+  redeemed by the wrong identity at the granted role, including `owner`. Not started.
+- **I-125 — #125 [P1 Security] `/d/[token]` public-download rate limiting defined but never wired
+  in.** `lib/abuse/index.ts`'s `d_404` policy is declared but referenced nowhere else;
+  `app/d/[token]/route.ts` never calls `checkAbuse` on its 404 path, contradicting the project's own
+  documented T-2 control. Token entropy (256-bit) means this is an abuse/cost gap, not a data-exposure
+  one. Not started.
+- **I-126 — #126 [P1 Security] CSV history export vulnerable to formula/CSV injection.**
+  `csvField()` (`lib/deca/export.ts`) does RFC 4180 quoting only, never neutralizes a leading
+  `=`/`+`/`-`/`@` in a free-text field (carrier/shipper name, location, goods). Not started.
+- **I-127 — #127 [P1 Tech debt / Security] No centralized logging/redaction framework.** `pino` is
+  not an actual dependency despite being the documented mandatory convention
+  (`.claude/rules/code-style.md`, `docs/03-technical-plan.md`); every log call site does ad hoc
+  per-site redaction. One confirmed instance of a potential PII leak: `lib/mailer.ts` logs the raw
+  provider error body (only length-capped, not redacted) on send failure. Not started.
+- **I-128 — #128 [P1 Correctness] Multi-shipment PDF can silently omit a per-shipment vehicle-plate
+  override the schema still accepts.** `lib/pdf/deca-document.tsx`'s "Vehículo" block reads only the
+  DeCA-level plate, never `resolveShipment()`; the wizard never sends a per-shipment override
+  (D-214), but a direct API caller still can, and the printed legal document would then not reflect
+  the data it claims to hold. Not started.
+- **I-129 — #129 [P1 Security] No abuse/rate control on `POST /api/team/invites`.** Any session
+  holder can send unlimited invite emails to arbitrary addresses — an email-bombing vector via a
+  compromised or throwaway account, unlike every sibling mail-sending route
+  (`register`/`support`/`share`), which all gate on `checkAbuse`. Not started.
+- **I-130 — #130 [P1 Performance] `Deca` table has no supporting indexes for its actual query
+  patterns.** No `@@index` at all on the core table despite every hot path
+  (`lib/data/history.ts`, `lib/admin/records.ts`, `lib/deca/persist.ts`'s per-generation count)
+  filtering/sorting on `companyId`/`createdAt` — a real scalability cliff, not a correctness bug
+  today. Not started.
