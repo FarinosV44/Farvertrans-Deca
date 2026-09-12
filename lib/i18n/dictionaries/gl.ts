@@ -766,6 +766,50 @@ export const gl = {
       done: (companyName: string) =>
         `Solicitude recibida para ${companyName}. Revisaremos as túas necesidades de integración e contactaremos contigo. As integracións son un servizo adicional presupostado segundo o proxecto.`,
     },
+    empresa: {
+      incompleteTitle: "Completa os datos da túa empresa",
+      incompleteBody: "para poder xerar novos DeCA.",
+      missingEditable: "Falta ou non é válido, embaixo: ",
+      missingAskAdmin: "Pídelle ao responsable que o complete: ",
+      identifierIssue:
+        "A razón social ou o NIF da empresa non son correctos; escríbenos a soporte para corrixilos.",
+      companyDataHeading: "Datos da empresa",
+      nameLabel: "Nome ou razón social",
+      nifLabel: "NIF",
+      contactDataHeading: "Datos de contacto",
+      contactDataIntro:
+        "Correo, teléfono, enderezo e persoa de contacto da empresa — visible só dentro do teu espazo de traballo.",
+      logoHeading: "Logo no PDF",
+      logoIntro:
+        "Aparecerá na cabeceira dos DeCA que xeres a partir de agora. Os documentos xa xerados non cambian.",
+      offlineError: "Sen conexión. Téntao de novo.",
+      profile: {
+        emailLabel: "Correo de contacto",
+        phoneLabel: "Teléfono",
+        addressLabel: "Enderezo",
+        postalCodeLabel: "Código postal",
+        cityLabel: "Poboación",
+        contactNameLabel: "Persoa de contacto",
+        saveError: "Non se puideron gardar os datos.",
+        saving: "Gardando…",
+        save: "Gardar cambios",
+        saved: "Gardado.",
+      },
+      logo: {
+        altText: "Logo da empresa",
+        noneConfigured: "Sen logo configurado. Só un administrador pode engadilo.",
+        invalidFormat:
+          "O logo debe ser unha imaxe PNG ou JPEG. Non se admite SVG nin outros formatos.",
+        tooLarge: (kb: number) => `O logo debe pesar como máximo ${kb} KB.`,
+        saveError: "Non se puido gardar o logo.",
+        removeError: "Non se puido quitar o logo.",
+        replace: "Cambiar",
+        remove: "Quitar logo",
+        uploading: "Subindo…",
+        upload: "Subir logo",
+        hint: (kb: number) => `PNG ou JPEG, máximo ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "Historial",

@@ -786,6 +786,50 @@ export const eu = {
       done: (companyName: string) =>
         `${companyName}(r)entzako eskaera jaso da. Zure integrazio-beharrak berrikusiko ditugu eta harremanetan jarriko gara. Integrazioak proiektuaren arabera aurrekontatzen den zerbitzu gehigarria dira.`,
     },
+    empresa: {
+      incompleteTitle: "Osatu zure enpresaren datuak",
+      incompleteBody: "DeCA berriak sortu ahal izateko.",
+      missingEditable: "Falta da edo ez da baliozkoa, behean: ",
+      missingAskAdmin: "Eskatu arduradunari osa dezala: ",
+      identifierIssue:
+        "Enpresaren izen soziala edo IFZ ez da zuzena; idatzi laguntzara zuzentzeko.",
+      companyDataHeading: "Enpresaren datuak",
+      nameLabel: "Izena edo izen soziala",
+      nifLabel: "IFZ",
+      contactDataHeading: "Kontaktu-datuak",
+      contactDataIntro:
+        "Enpresaren emaila, telefonoa, helbidea eta kontaktu-pertsona — zure laneko esparruan bakarrik ikusgai.",
+      logoHeading: "Logoa PDFean",
+      logoIntro:
+        "Hemendik aurrera sortuko dituzun DeCAen goiburuan agertuko da. Jada sortutako dokumentuak ez dira aldatzen.",
+      offlineError: "Konexiorik gabe. Saiatu berriro.",
+      profile: {
+        emailLabel: "Kontaktu-emaila",
+        phoneLabel: "Telefonoa",
+        addressLabel: "Helbidea",
+        postalCodeLabel: "Posta-kodea",
+        cityLabel: "Herria",
+        contactNameLabel: "Kontaktu-pertsona",
+        saveError: "Ezin izan dira datuak gorde.",
+        saving: "Gordetzen…",
+        save: "Gorde aldaketak",
+        saved: "Gordeta.",
+      },
+      logo: {
+        altText: "Enpresaren logoa",
+        noneConfigured: "Ez dago logorik konfiguratuta. Administratzaile batek soilik gehi dezake.",
+        invalidFormat:
+          "Logoak PNG edo JPEG irudia izan behar du. SVG eta beste formatuak ez dira onartzen.",
+        tooLarge: (kb: number) => `Logoak gehienez ${kb} KB izan behar ditu.`,
+        saveError: "Ezin izan da logoa gorde.",
+        removeError: "Ezin izan da logoa kendu.",
+        replace: "Aldatu",
+        remove: "Kendu logoa",
+        uploading: "Igotzen…",
+        upload: "Igo logoa",
+        hint: (kb: number) => `PNG edo JPEG, gehienez ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "Historiala",

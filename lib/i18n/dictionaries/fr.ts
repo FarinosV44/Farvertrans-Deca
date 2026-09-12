@@ -778,6 +778,50 @@ export const fr = {
       done: (companyName: string) =>
         `Demande reçue pour ${companyName}. Nous examinerons vos besoins d'intégration et vous contacterons. Les intégrations sont un service additionnel facturé selon le projet.`,
     },
+    empresa: {
+      incompleteTitle: "Complétez les données de votre entreprise",
+      incompleteBody: "pour pouvoir générer de nouveaux DeCA.",
+      missingEditable: "Manquant ou invalide, ci-dessous : ",
+      missingAskAdmin: "Demandez au responsable de compléter : ",
+      identifierIssue:
+        "La raison sociale ou le NIF de l'entreprise n'est pas correct ; contactez le support pour le corriger.",
+      companyDataHeading: "Données de l'entreprise",
+      nameLabel: "Nom ou raison sociale",
+      nifLabel: "NIF",
+      contactDataHeading: "Coordonnées",
+      contactDataIntro:
+        "Email, téléphone, adresse et personne de contact de l'entreprise — visible uniquement dans votre espace de travail.",
+      logoHeading: "Logo sur le PDF",
+      logoIntro:
+        "Il apparaîtra dans l'en-tête des DeCA que vous générerez à partir de maintenant. Les documents déjà générés ne changent pas.",
+      offlineError: "Pas de connexion. Réessayez.",
+      profile: {
+        emailLabel: "Email de contact",
+        phoneLabel: "Téléphone",
+        addressLabel: "Adresse",
+        postalCodeLabel: "Code postal",
+        cityLabel: "Ville",
+        contactNameLabel: "Personne de contact",
+        saveError: "Impossible d'enregistrer les données.",
+        saving: "Enregistrement…",
+        save: "Enregistrer les modifications",
+        saved: "Enregistré.",
+      },
+      logo: {
+        altText: "Logo de l'entreprise",
+        noneConfigured: "Aucun logo défini. Seul un administrateur peut en ajouter un.",
+        invalidFormat:
+          "Le logo doit être une image PNG ou JPEG. Le SVG et les autres formats ne sont pas pris en charge.",
+        tooLarge: (kb: number) => `Le logo doit peser au maximum ${kb} Ko.`,
+        saveError: "Impossible d'enregistrer le logo.",
+        removeError: "Impossible de supprimer le logo.",
+        replace: "Changer",
+        remove: "Supprimer le logo",
+        uploading: "Envoi…",
+        upload: "Envoyer un logo",
+        hint: (kb: number) => `PNG ou JPEG, ${kb} Ko maximum.`,
+      },
+    },
   },
   historico: {
     title: "Historique",

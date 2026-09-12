@@ -11,6 +11,7 @@ import {
   describeMissingFields,
 } from "@/lib/company/completeness";
 import { Alert } from "@/components/ui";
+import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Mi empresa", robots: { index: false } };
@@ -19,6 +20,8 @@ export default async function EmpresaPage() {
   const user = await getCurrentUser();
   if (!user?.companyId || !user.company) redirect("/registro/completar-empresa");
 
+  const dict = await getDictionary();
+  const t = dict.panel.empresa;
   const dataComplete = companyDataComplete(user.company, false);
   const canEdit = user.companyRole === "owner";
   const missing = missingCompanyFields(user.company, false);
@@ -30,48 +33,38 @@ export default async function EmpresaPage() {
     <>
       <SiteHeader authed companyName={user.company.name} />
       <main id="contenido" className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
-        <h1 className="text-2xl font-bold">Mi empresa</h1>
+        <h1 className="text-2xl font-bold">{dict.panel.myCompanyFallback}</h1>
         <AppNav current="empresa" />
 
         {!dataComplete && (
           <div className="mt-4">
             <Alert tone="warn" data-testid="company-data-incomplete">
-              <strong>Completa los datos de tu empresa</strong> para poder generar nuevos DeCA.
+              <strong>{t.incompleteTitle}</strong> {t.incompleteBody}
               {editableMissing.length > 0 && (
                 <>
                   {" "}
-                  {canEdit
-                    ? "Falta o no es válido, más abajo: "
-                    : "Pídele al responsable que complete: "}
+                  {canEdit ? t.missingEditable : t.missingAskAdmin}
                   {describeMissingFields(editableMissing)}.
                 </>
               )}
-              {identifierMissing && (
-                <>
-                  {" "}
-                  La razón social o el CIF/NIF de la empresa no son correctos; escríbenos a soporte
-                  para corregirlos.
-                </>
-              )}
+              {identifierMissing && <> {t.identifierIssue}</>}
             </Alert>
           </div>
         )}
 
         <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-          <h2 className="text-lg font-bold">Datos de la empresa</h2>
+          <h2 className="text-lg font-bold">{t.companyDataHeading}</h2>
           {/* Two-up only from `md` (768px) — this theme's `sm` breakpoint is
               360px, so `sm:grid-cols-2` crowds these on every phone. */}
           <dl className="mt-3 grid gap-x-6 gap-y-4 md:grid-cols-2">
             <div className="min-w-0">
-              <dt className="text-xs font-medium text-[var(--color-text-muted)]">
-                Nombre o razón social
-              </dt>
+              <dt className="text-xs font-medium text-[var(--color-text-muted)]">{t.nameLabel}</dt>
               <dd className="mt-0.5 text-sm break-words [overflow-wrap:anywhere]">
                 {user.company.name}
               </dd>
             </div>
             <div className="min-w-0">
-              <dt className="text-xs font-medium text-[var(--color-text-muted)]">NIF</dt>
+              <dt className="text-xs font-medium text-[var(--color-text-muted)]">{t.nifLabel}</dt>
               <dd className="mt-0.5 text-sm break-words [overflow-wrap:anywhere]">
                 {user.company.nif ?? "—"}
               </dd>
@@ -80,11 +73,8 @@ export default async function EmpresaPage() {
         </section>
 
         <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-          <h2 className="text-lg font-bold">Datos de contacto</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Email, teléfono, dirección y persona de contacto de la empresa — visible solo dentro de
-            tu espacio de trabajo.
-          </p>
+          <h2 className="text-lg font-bold">{t.contactDataHeading}</h2>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">{t.contactDataIntro}</p>
           <CompanyProfileForm
             initial={{
               email: user.company.email,
@@ -99,11 +89,8 @@ export default async function EmpresaPage() {
         </section>
 
         <section className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-5">
-          <h2 className="text-lg font-bold">Logo en el PDF</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-            Aparecerá en la cabecera de los DeCA que generes a partir de ahora. Los documentos ya
-            generados no cambian.
-          </p>
+          <h2 className="text-lg font-bold">{t.logoHeading}</h2>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">{t.logoIntro}</p>
           <CompanyLogoManager
             initialLogoDataUri={user.company.logoDataUri}
             canChange={user.companyRole === "owner"}

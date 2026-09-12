@@ -762,6 +762,50 @@ export const ca = {
       done: (companyName: string) =>
         `Sol·licitud rebuda per a ${companyName}. Revisarem les teves necessitats d'integració i et contactarem. Les integracions són un servei addicional pressupostat segons el projecte.`,
     },
+    empresa: {
+      incompleteTitle: "Completa les dades de la teva empresa",
+      incompleteBody: "per poder generar nous DeCA.",
+      missingEditable: "Falta o no és vàlid, a sota: ",
+      missingAskAdmin: "Demana al responsable que ho completi: ",
+      identifierIssue:
+        "La raó social o el CIF/NIF de l'empresa no són correctes; escriu a suport per corregir-los.",
+      companyDataHeading: "Dades de l'empresa",
+      nameLabel: "Nom o raó social",
+      nifLabel: "NIF",
+      contactDataHeading: "Dades de contacte",
+      contactDataIntro:
+        "Correu, telèfon, adreça i persona de contacte de l'empresa — visible només dins del teu espai de treball.",
+      logoHeading: "Logotip al PDF",
+      logoIntro:
+        "Apareixerà a la capçalera dels DeCA que generis a partir d'ara. Els documents ja generats no canvien.",
+      offlineError: "Sense connexió. Torna-ho a intentar.",
+      profile: {
+        emailLabel: "Correu de contacte",
+        phoneLabel: "Telèfon",
+        addressLabel: "Adreça",
+        postalCodeLabel: "Codi postal",
+        cityLabel: "Població",
+        contactNameLabel: "Persona de contacte",
+        saveError: "No s'han pogut desar les dades.",
+        saving: "Desant…",
+        save: "Desar els canvis",
+        saved: "Desat.",
+      },
+      logo: {
+        altText: "Logotip de l'empresa",
+        noneConfigured: "Sense logotip configurat. Només un administrador el pot afegir.",
+        invalidFormat:
+          "El logotip ha de ser una imatge PNG o JPEG. No s'admet SVG ni altres formats.",
+        tooLarge: (kb: number) => `El logotip ha de pesar com a màxim ${kb} KB.`,
+        saveError: "No s'ha pogut desar el logotip.",
+        removeError: "No s'ha pogut eliminar el logotip.",
+        replace: "Canviar",
+        remove: "Eliminar logotip",
+        uploading: "Pujant…",
+        upload: "Pujar logotip",
+        hint: (kb: number) => `PNG o JPEG, màxim ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "Historial",

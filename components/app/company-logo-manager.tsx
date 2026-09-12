@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/client";
 
 const MAX_BYTES = 512 * 1024;
 
@@ -21,6 +22,8 @@ export function CompanyLogoManager({
   initialLogoDataUri: string | null;
   canChange: boolean;
 }) {
+  const empresa = useT().panel.empresa;
+  const t = empresa.logo;
   const router = useRouter();
   const [logo, setLogo] = useState(initialLogoDataUri);
   const [busy, setBusy] = useState(false);
@@ -33,11 +36,11 @@ export function CompanyLogoManager({
     if (!file) return;
     setError(null);
     if (!["image/png", "image/jpeg"].includes(file.type)) {
-      setError("El logo debe ser una imagen PNG o JPEG. No se admite SVG ni otros formatos.");
+      setError(t.invalidFormat);
       return;
     }
     if (file.size > MAX_BYTES) {
-      setError(`El logo debe pesar como máximo ${Math.round(MAX_BYTES / 1024)} KB.`);
+      setError(t.tooLarge(Math.round(MAX_BYTES / 1024)));
       return;
     }
     setBusy(true);
@@ -50,14 +53,14 @@ export function CompanyLogoManager({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error?.message ?? "No se pudo guardar el logo.");
+        setError(data?.error?.message ?? t.saveError);
         setBusy(false);
         return;
       }
       setLogo(data.logoDataUri);
       router.refresh();
     } catch {
-      setError("Sin conexión. Inténtalo de nuevo.");
+      setError(empresa.offlineError);
     }
     setBusy(false);
   }
@@ -68,14 +71,14 @@ export function CompanyLogoManager({
     try {
       const res = await fetch("/api/company/logo", { method: "DELETE" });
       if (!res.ok) {
-        setError("No se pudo quitar el logo.");
+        setError(t.removeError);
         setBusy(false);
         return;
       }
       setLogo(null);
       router.refresh();
     } catch {
-      setError("Sin conexión. Inténtalo de nuevo.");
+      setError(empresa.offlineError);
     }
     setBusy(false);
   }
@@ -86,14 +89,12 @@ export function CompanyLogoManager({
         {logo ? (
           <img
             src={logo}
-            alt="Logo de la empresa"
+            alt={t.altText}
             data-testid="company-logo-preview"
             className="max-h-20 max-w-[240px] rounded-[var(--radius-sm)] border border-[var(--color-border)] object-contain p-2"
           />
         ) : (
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Sin logo configurado. Solo un administrador puede añadirlo.
-          </p>
+          <p className="text-sm text-[var(--color-text-muted)]">{t.noneConfigured}</p>
         )}
       </div>
     );
@@ -110,7 +111,7 @@ export function CompanyLogoManager({
         <div className="flex flex-wrap items-center gap-4">
           <img
             src={logo}
-            alt="Logo de la empresa"
+            alt={t.altText}
             data-testid="company-logo-preview"
             className="max-h-20 max-w-[240px] rounded-[var(--radius-sm)] border border-[var(--color-border)] object-contain p-2"
           />
@@ -122,7 +123,7 @@ export function CompanyLogoManager({
               onClick={() => inputRef.current?.click()}
               className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 font-medium disabled:opacity-55"
             >
-              Cambiar
+              {t.replace}
             </button>
             <button
               type="button"
@@ -131,7 +132,7 @@ export function CompanyLogoManager({
               onClick={() => void remove()}
               className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-danger)] px-4 font-medium text-[var(--color-danger)] disabled:opacity-55"
             >
-              Quitar logo
+              {t.remove}
             </button>
           </div>
         </div>
@@ -143,7 +144,7 @@ export function CompanyLogoManager({
           onClick={() => inputRef.current?.click()}
           className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)] disabled:opacity-55"
         >
-          {busy ? "Subiendo…" : "Subir logo"}
+          {busy ? t.uploading : t.upload}
         </button>
       )}
       <input
@@ -155,7 +156,7 @@ export function CompanyLogoManager({
         onChange={(e) => void onFileChange(e)}
       />
       <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-        PNG o JPEG, máximo {Math.round(MAX_BYTES / 1024)} KB.
+        {t.hint(Math.round(MAX_BYTES / 1024))}
       </p>
     </div>
   );

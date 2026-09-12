@@ -746,6 +746,50 @@ export const en = {
       done: (companyName: string) =>
         `Request received for ${companyName}. We'll review your integration needs and get in touch. Integrations are an additional service quoted per project.`,
     },
+    empresa: {
+      incompleteTitle: "Complete your company details",
+      incompleteBody: "to be able to generate new DeCA documents.",
+      missingEditable: "Missing or invalid, below: ",
+      missingAskAdmin: "Ask the account owner to complete: ",
+      identifierIssue:
+        "Your company's legal name or tax ID isn't correct; contact support to fix it.",
+      companyDataHeading: "Company details",
+      nameLabel: "Legal name",
+      nifLabel: "Tax ID",
+      contactDataHeading: "Contact details",
+      contactDataIntro:
+        "Email, phone, address and contact person for the company — visible only inside your workspace.",
+      logoHeading: "Logo on the PDF",
+      logoIntro:
+        "It will appear in the header of the DeCA documents you generate from now on. Already-generated documents don't change.",
+      offlineError: "No connection. Try again.",
+      profile: {
+        emailLabel: "Contact email",
+        phoneLabel: "Phone",
+        addressLabel: "Address",
+        postalCodeLabel: "Postal code",
+        cityLabel: "City",
+        contactNameLabel: "Contact person",
+        saveError: "Couldn't save the data.",
+        saving: "Saving…",
+        save: "Save changes",
+        saved: "Saved.",
+      },
+      logo: {
+        altText: "Company logo",
+        noneConfigured: "No logo set. Only an owner can add one.",
+        invalidFormat:
+          "The logo must be a PNG or JPEG image. SVG and other formats aren't supported.",
+        tooLarge: (kb: number) => `The logo must be at most ${kb} KB.`,
+        saveError: "Couldn't save the logo.",
+        removeError: "Couldn't remove the logo.",
+        replace: "Change",
+        remove: "Remove logo",
+        uploading: "Uploading…",
+        upload: "Upload logo",
+        hint: (kb: number) => `PNG or JPEG, up to ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "History",

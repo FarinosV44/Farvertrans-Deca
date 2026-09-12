@@ -8874,3 +8874,24 @@ lines in the log are the pre-existing test-env placeholder Resend key, unrelated
 `develop`. Issue #141 left OPEN — remaining scope (`app/panel/empresa` + its 2 components,
 `app/panel/datos` + `saved-data-manager.tsx` ~1060 lines, and the `deca/[id]` cockpit page + 5
 dependent components) still to do.
+
+## D-247 — #141 continued: `app/panel/empresa` + `CompanyProfileForm` + `CompanyLogoManager` localized (2026-09-13)
+
+**Fix:** added a `panel.empresa` section (with `profile` and `logo` sub-sections) to all 9 locale
+dictionaries. `CompanyProfileForm` and `CompanyLogoManager` both use `useT()` directly (the
+`lib/i18n/client.tsx` hook) rather than receiving a resolved dictionary as a prop from their server
+page — applying the D-246 lesson proactively, since `CompanyLogoManager`'s `tooLarge`/`hint` messages
+are functions and would hit the same RSC serialization crash if passed as a prop. `app/panel/empresa`
+itself reuses the existing `panel.myCompanyFallback` key for its H1 (identical text, avoids a
+duplicate key).
+
+**Verification:** production build (`npm run build`) clean; direct `curl` smoke test against a real
+`next start` server (registered a user, hit `/panel/empresa`, confirmed real translated content, no
+error boundary) — done proactively this time, before running the e2e suite, per the lesson from
+D-246. `company-logo.spec.ts` 7/7, `panel-company-completeness.spec.ts` 1/1, `panel-nav.spec.ts` 6/6
+(all `--workers=1` against a clean server). 501/501 unit unaffected.
+
+**Gate:** tsc/eslint/prettier clean (same 2 pre-existing `<img>` warnings in
+`company-logo-manager.tsx`, already tracked as P3 tech debt). Committed to `develop`. Issue #141 left
+OPEN — remaining scope: `app/panel/datos` + `saved-data-manager.tsx` (~1060 lines, the largest
+remaining piece) and the `deca/[id]` cockpit page + its 5 unlocalized dependents.

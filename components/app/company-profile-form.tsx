@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
+import { useT } from "@/lib/i18n/client";
 
 export type CompanyContact = {
   email: string | null;
@@ -20,6 +21,7 @@ export function CompanyProfileForm({
   initial: CompanyContact;
   canChange: boolean;
 }) {
+  const t = useT().panel.empresa;
   const router = useRouter();
   const [f, setF] = useState({
     email: initial.email ?? "",
@@ -50,14 +52,14 @@ export function CompanyProfileForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error?.message ?? "No se pudieron guardar los datos.");
+        setError(data?.error?.message ?? t.profile.saveError);
         setBusy(false);
         return;
       }
       setSaved(true);
       router.refresh();
     } catch {
-      setError("Sin conexión. Inténtalo de nuevo.");
+      setError(t.offlineError);
     }
     setBusy(false);
   }
@@ -70,12 +72,12 @@ export function CompanyProfileForm({
     // Field keeps a long value inside its own cell.
     return (
       <dl className="mt-4 grid gap-x-6 gap-y-4 md:grid-cols-2">
-        <Field label="Email de contacto" value={initial.email} />
-        <Field label="Teléfono" value={initial.phone} />
-        <Field label="Dirección" value={initial.address} />
-        <Field label="Código postal" value={initial.postalCode} />
-        <Field label="Población" value={initial.city} />
-        <Field label="Persona de contacto" value={initial.contactName} />
+        <Field label={t.profile.emailLabel} value={initial.email} />
+        <Field label={t.profile.phoneLabel} value={initial.phone} />
+        <Field label={t.profile.addressLabel} value={initial.address} />
+        <Field label={t.profile.postalCodeLabel} value={initial.postalCode} />
+        <Field label={t.profile.cityLabel} value={initial.city} />
+        <Field label={t.profile.contactNameLabel} value={initial.contactName} />
       </dl>
     );
   }
@@ -89,7 +91,7 @@ export function CompanyProfileForm({
       )}
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block min-w-0 text-sm">
-          <span className="font-medium">Email de contacto</span>
+          <span className="font-medium">{t.profile.emailLabel}</span>
           <input
             type="email"
             data-testid="company-email"
@@ -99,7 +101,7 @@ export function CompanyProfileForm({
           />
         </label>
         <label className="block min-w-0 text-sm">
-          <span className="font-medium">Teléfono</span>
+          <span className="font-medium">{t.profile.phoneLabel}</span>
           <input
             type="tel"
             data-testid="company-phone"
@@ -109,7 +111,7 @@ export function CompanyProfileForm({
           />
         </label>
         <label className="block min-w-0 text-sm md:col-span-2">
-          <span className="font-medium">Dirección</span>
+          <span className="font-medium">{t.profile.addressLabel}</span>
           <input
             type="text"
             data-testid="company-address"
@@ -119,7 +121,7 @@ export function CompanyProfileForm({
           />
         </label>
         <label className="block min-w-0 text-sm">
-          <span className="font-medium">Código postal</span>
+          <span className="font-medium">{t.profile.postalCodeLabel}</span>
           <input
             type="text"
             inputMode="numeric"
@@ -130,7 +132,7 @@ export function CompanyProfileForm({
           />
         </label>
         <label className="block min-w-0 text-sm">
-          <span className="font-medium">Población</span>
+          <span className="font-medium">{t.profile.cityLabel}</span>
           <input
             type="text"
             data-testid="company-city"
@@ -140,7 +142,7 @@ export function CompanyProfileForm({
           />
         </label>
         <label className="block min-w-0 text-sm md:col-span-2">
-          <span className="font-medium">Persona de contacto</span>
+          <span className="font-medium">{t.profile.contactNameLabel}</span>
           <input
             type="text"
             data-testid="company-contact-name"
@@ -152,11 +154,11 @@ export function CompanyProfileForm({
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" tier="primary" data-testid="company-profile-save" disabled={busy}>
-          {busy ? "Guardando…" : "Guardar cambios"}
+          {busy ? t.profile.saving : t.profile.save}
         </Button>
         {saved && (
           <span role="status" className="text-sm font-semibold text-[var(--color-success)]">
-            Guardado.
+            {t.profile.saved}
           </span>
         )}
       </div>

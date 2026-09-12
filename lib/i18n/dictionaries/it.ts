@@ -764,6 +764,50 @@ export const it = {
       done: (companyName: string) =>
         `Richiesta ricevuta per ${companyName}. Esamineremo le tue esigenze di integrazione e ti contatteremo. Le integrazioni sono un servizio aggiuntivo preventivato in base al progetto.`,
     },
+    empresa: {
+      incompleteTitle: "Completa i dati della tua azienda",
+      incompleteBody: "per poter generare nuovi DeCA.",
+      missingEditable: "Mancante o non valido, qui sotto: ",
+      missingAskAdmin: "Chiedi al responsabile di completare: ",
+      identifierIssue:
+        "La ragione sociale o la partita IVA dell'azienda non sono corrette; scrivi al supporto per correggerle.",
+      companyDataHeading: "Dati dell'azienda",
+      nameLabel: "Nome o ragione sociale",
+      nifLabel: "Partita IVA",
+      contactDataHeading: "Dati di contatto",
+      contactDataIntro:
+        "Email, telefono, indirizzo e persona di contatto dell'azienda — visibile solo all'interno del tuo spazio di lavoro.",
+      logoHeading: "Logo sul PDF",
+      logoIntro:
+        "Comparirà nell'intestazione dei DeCA che genererai da ora in poi. I documenti già generati non cambiano.",
+      offlineError: "Nessuna connessione. Riprova.",
+      profile: {
+        emailLabel: "Email di contatto",
+        phoneLabel: "Telefono",
+        addressLabel: "Indirizzo",
+        postalCodeLabel: "Codice postale",
+        cityLabel: "Città",
+        contactNameLabel: "Persona di contatto",
+        saveError: "Impossibile salvare i dati.",
+        saving: "Salvataggio…",
+        save: "Salva modifiche",
+        saved: "Salvato.",
+      },
+      logo: {
+        altText: "Logo dell'azienda",
+        noneConfigured: "Nessun logo configurato. Solo un amministratore può aggiungerne uno.",
+        invalidFormat:
+          "Il logo deve essere un'immagine PNG o JPEG. SVG e altri formati non sono supportati.",
+        tooLarge: (kb: number) => `Il logo deve pesare al massimo ${kb} KB.`,
+        saveError: "Impossibile salvare il logo.",
+        removeError: "Impossibile rimuovere il logo.",
+        replace: "Cambia",
+        remove: "Rimuovi logo",
+        uploading: "Caricamento…",
+        upload: "Carica logo",
+        hint: (kb: number) => `PNG o JPEG, massimo ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "Cronologia",

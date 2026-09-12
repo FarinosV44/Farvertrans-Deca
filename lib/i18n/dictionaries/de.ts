@@ -779,6 +779,50 @@ export const de = {
       done: (companyName: string) =>
         `Anfrage für ${companyName} erhalten. Wir prüfen Ihren Integrationsbedarf und melden uns bei Ihnen. Integrationen sind ein zusätzlicher Service, der projektabhängig kalkuliert wird.`,
     },
+    empresa: {
+      incompleteTitle: "Vervollständigen Sie die Angaben Ihres Unternehmens",
+      incompleteBody: "um neue DeCA-Dokumente erstellen zu können.",
+      missingEditable: "Fehlt oder ungültig, unten: ",
+      missingAskAdmin: "Bitten Sie den Verantwortlichen, dies zu vervollständigen: ",
+      identifierIssue:
+        "Der Firmenname oder die Steuernummer des Unternehmens ist nicht korrekt; wenden Sie sich an den Support, um dies zu korrigieren.",
+      companyDataHeading: "Unternehmensdaten",
+      nameLabel: "Name oder Firmenbezeichnung",
+      nifLabel: "Steuernummer",
+      contactDataHeading: "Kontaktdaten",
+      contactDataIntro:
+        "E-Mail, Telefon, Adresse und Ansprechpartner des Unternehmens — nur innerhalb Ihres Arbeitsbereichs sichtbar.",
+      logoHeading: "Logo auf dem PDF",
+      logoIntro:
+        "Es erscheint ab sofort im Kopfbereich der von Ihnen erstellten DeCA-Dokumente. Bereits erstellte Dokumente ändern sich nicht.",
+      offlineError: "Keine Verbindung. Versuchen Sie es erneut.",
+      profile: {
+        emailLabel: "Kontakt-E-Mail",
+        phoneLabel: "Telefon",
+        addressLabel: "Adresse",
+        postalCodeLabel: "Postleitzahl",
+        cityLabel: "Ort",
+        contactNameLabel: "Ansprechpartner",
+        saveError: "Die Daten konnten nicht gespeichert werden.",
+        saving: "Wird gespeichert…",
+        save: "Änderungen speichern",
+        saved: "Gespeichert.",
+      },
+      logo: {
+        altText: "Firmenlogo",
+        noneConfigured: "Kein Logo eingerichtet. Nur ein Administrator kann eines hinzufügen.",
+        invalidFormat:
+          "Das Logo muss ein PNG- oder JPEG-Bild sein. SVG und andere Formate werden nicht unterstützt.",
+        tooLarge: (kb: number) => `Das Logo darf höchstens ${kb} KB groß sein.`,
+        saveError: "Das Logo konnte nicht gespeichert werden.",
+        removeError: "Das Logo konnte nicht entfernt werden.",
+        replace: "Ändern",
+        remove: "Logo entfernen",
+        uploading: "Wird hochgeladen…",
+        upload: "Logo hochladen",
+        hint: (kb: number) => `PNG oder JPEG, maximal ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "Verlauf",

@@ -769,6 +769,50 @@ export const pt = {
       done: (companyName: string) =>
         `Pedido recebido para ${companyName}. Analisaremos as suas necessidades de integração e entraremos em contacto. As integrações são um serviço adicional orçamentado por projeto.`,
     },
+    empresa: {
+      incompleteTitle: "Complete os dados da sua empresa",
+      incompleteBody: "para poder gerar novos DeCA.",
+      missingEditable: "Em falta ou inválido, abaixo: ",
+      missingAskAdmin: "Peça ao responsável para completar: ",
+      identifierIssue:
+        "A razão social ou o NIF da empresa não estão corretos; escreva ao suporte para os corrigir.",
+      companyDataHeading: "Dados da empresa",
+      nameLabel: "Nome ou razão social",
+      nifLabel: "NIF",
+      contactDataHeading: "Dados de contacto",
+      contactDataIntro:
+        "Email, telefone, morada e pessoa de contacto da empresa — visível apenas dentro do seu espaço de trabalho.",
+      logoHeading: "Logótipo no PDF",
+      logoIntro:
+        "Aparecerá no cabeçalho dos DeCA que gerar a partir de agora. Os documentos já gerados não mudam.",
+      offlineError: "Sem ligação. Tente novamente.",
+      profile: {
+        emailLabel: "Email de contacto",
+        phoneLabel: "Telefone",
+        addressLabel: "Morada",
+        postalCodeLabel: "Código postal",
+        cityLabel: "Localidade",
+        contactNameLabel: "Pessoa de contacto",
+        saveError: "Não foi possível guardar os dados.",
+        saving: "A guardar…",
+        save: "Guardar alterações",
+        saved: "Guardado.",
+      },
+      logo: {
+        altText: "Logótipo da empresa",
+        noneConfigured: "Sem logótipo configurado. Só um administrador pode adicioná-lo.",
+        invalidFormat:
+          "O logótipo deve ser uma imagem PNG ou JPEG. SVG e outros formatos não são suportados.",
+        tooLarge: (kb: number) => `O logótipo deve pesar no máximo ${kb} KB.`,
+        saveError: "Não foi possível guardar o logótipo.",
+        removeError: "Não foi possível remover o logótipo.",
+        replace: "Alterar",
+        remove: "Remover logótipo",
+        uploading: "A enviar…",
+        upload: "Enviar logótipo",
+        hint: (kb: number) => `PNG ou JPEG, máximo ${kb} KB.`,
+      },
+    },
   },
   historico: {
     title: "Histórico",
