@@ -8066,3 +8066,26 @@ in that same test are untouched.
 **Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 481/481 unit (+4 new), targeted e2e
 regression 23/23 (`deca-multi-shipment.spec.ts`, `crear.spec.ts`, `creator-v2.spec.ts` — incl. "vehicle
 is a single shared field: no tractor/trailer input inside any envío block, shown once in the PDF").
+
+## D-227 — #129: `POST /api/team/invites` is now rate-limited (2026-09-12)
+
+**Problem (P1, found by the audit):** any authenticated company member could send an unbounded number
+of invite emails to arbitrary addresses — `app/api/team/invites/route.ts` had no `checkAbuse` call at
+all, unlike every sibling mail-sending route (`/api/auth/register`, `/api/support`, `/api/share`). A
+compromised or throwaway account (email verification isn't required to invite, only to do most other
+things) could use it as an email-bombing vector via this project's legitimate sending domain.
+
+**Fix:** mirrors `app/api/support/route.ts`'s exact pattern — authenticate first, then
+`checkAbuse("share", req.headers, {...})` + `abuseResponse()` before any DB write, using the existing
+`"share"` policy rather than adding a near-duplicate new one (a legitimate admin inviting a handful of
+new hires never approaches its `soft: 10 / hard: 40` per-hour thresholds).
+
+**Test-first (bug fix, UNBREAKABLE):** same structural constraint as #125 — the e2e suite runs with
+`FVD_DISABLE_ABUSE_CHECKS=1` and cannot exercise rate-limiting. New
+`tests/unit/team-invites-rate-limit.test.ts` imports the real route handler directly (mocking
+auth/team/mail dependencies): 2 cases, the blocking case observed red (stashed the route fix,
+confirmed `checkAbuse` was never called, restored it) before the fix.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 483/483 unit (+2 new), `tests/e2e/team.spec.ts`
+11/11 + `tests/e2e/membership.spec.ts` 6/6 (the real invite flow itself is unaffected — abuse checks
+are globally disabled for the e2e suite by design).

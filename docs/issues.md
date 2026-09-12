@@ -1171,10 +1171,10 @@ started; no code changed by the audit itself.
   issue comments) before finishing — both reconfirm vehicle stays DeCA-level, neither touches the
   schema this fix is in. Gate: 481/481 unit (+4 new, test-first), 23/23 targeted e2e. Committed to
   `develop`, not yet pushed. Comment + close pending push.
-- **I-129 — #129 [P1 Security] No abuse/rate control on `POST /api/team/invites`.** Any session
-  holder can send unlimited invite emails to arbitrary addresses — an email-bombing vector via a
-  compromised or throwaway account, unlike every sibling mail-sending route
-  (`register`/`support`/`share`), which all gate on `checkAbuse`. Not started.
+- **I-129 — #129 [P1 Security] No abuse/rate control on `POST /api/team/invites`.** **FIXED, this
+  session (D-227):** mirrors `/api/support`'s exact `checkAbuse("share", ...)` pattern. Gate:
+  483/483 unit (+2 new, test-first), `team.spec.ts` 11/11 + `membership.spec.ts` 6/6. Committed to
+  `develop`, not yet pushed. Comment + close pending push.
 - **I-130 — #130 [P1 Performance] `Deca` table has no supporting indexes for its actual query
   patterns.** No `@@index` at all on the core table despite every hot path
   (`lib/data/history.ts`, `lib/admin/records.ts`, `lib/deca/persist.ts`'s per-generation count)

@@ -5,6 +5,8 @@ import { createInvite, TeamError } from "@/lib/team";
 import { publicEnv } from "@/lib/env";
 import { BRAND } from "@/lib/brand";
 import { buildInviteEmail } from "@/lib/team-invite-email";
+import { checkAbuse } from "@/lib/abuse";
+import { abuseResponse } from "@/lib/abuse/response";
 
 export const runtime = "nodejs";
 
@@ -18,6 +20,16 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user?.companyId)
     return NextResponse.json({ error: { code: "unauthorized" } }, { status: 401 });
+
+  // #129: an authenticated member could otherwise send unlimited invite
+  // emails to arbitrary addresses — an email-bombing vector via a
+  // compromised or throwaway account. Same policy/pattern as /api/support.
+  const decision = await checkAbuse("share", req.headers, {
+    fingerprint: req.headers.get("x-fvd-fp"),
+    challengeToken: req.headers.get("x-fvd-challenge"),
+  });
+  const blocked = abuseResponse(decision);
+  if (blocked) return blocked;
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success)

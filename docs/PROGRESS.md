@@ -44,6 +44,14 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-227 — #129 [P1] fixed: `POST /api/team/invites` is now rate-limited, this session
+  (2026-09-12). Full detail in `docs/decisions.md` D-227.** Mirrors `app/api/support/route.ts`'s
+  exact pattern — `checkAbuse("share", ...)` + `abuseResponse()` right after the auth check, before
+  any DB write. Test-first: new `tests/unit/team-invites-rate-limit.test.ts` (2 cases, imports the
+  real route handler directly since the e2e suite structurally can't exercise rate-limiting),
+  blocking case observed red before the fix. Gate: tsc/eslint/prettier/keel-verify clean, 483/483
+  unit (+2 new), `team.spec.ts` 11/11 + `membership.spec.ts` 6/6. Committed to `develop`, not yet
+  pushed.
 - **Mid-#128, the user asked to re-read the newest comments on #112/#119 (2026-09-12) before
   continuing, since they carry substantial UX corrections to multi-shipment creation and DECA
   Conecta matching.** Read both in full. **#112's correction** (a "paradas"/stops model with
