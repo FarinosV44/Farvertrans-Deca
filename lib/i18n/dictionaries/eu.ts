@@ -860,6 +860,13 @@ export const eu = {
         `${n}. bidalketak dagoeneko datuak ditu. Ziur ezabatu nahi duzula?`,
       orderNote:
         "Bidalketen zenbaketa identifikaziorako baino ez da, eta ez du exekuzio-ordena zehazten.",
+      linkPanelHeading: "Lotu zama-gune eta deskarga-gune bat",
+      linkPanelHint:
+        "Zama-gune eta deskarga-gune bat baino gehiago daudenean, adierazi zein konbinaziok osatzen duen benetako bidalketa bat.",
+      linkLoadLabel: "Jatorria",
+      linkUnloadLabel: "Helmuga",
+      linkPlaceholder: "Aukeratu…",
+      linkCreate: "Lotu",
     },
     errorSummaryTitle: "Berrikusi eremu hauek:",
     lead: {

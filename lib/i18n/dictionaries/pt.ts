@@ -842,6 +842,13 @@ export const pt = {
         `O Envio ${n} já tem dados introduzidos. Tem a certeza de que quer eliminá-lo?`,
       orderNote:
         "A numeração dos envios é meramente identificativa e não determina a sua ordem de execução.",
+      linkPanelHeading: "Vincular um local de carga e de descarga",
+      linkPanelHint:
+        "Quando há vários locais de carga e de descarga, indique qual combinação forma um envio real.",
+      linkLoadLabel: "Origem",
+      linkUnloadLabel: "Destino",
+      linkPlaceholder: "Selecionar…",
+      linkCreate: "Vincular",
     },
     errorSummaryTitle: "Reveja estes campos:",
     lead: {

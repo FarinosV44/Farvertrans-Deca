@@ -180,6 +180,172 @@ test.describe("#112 — multiple loads/unloads via + buttons", () => {
     await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(2);
   });
 
+  test("2026 correction — 1 carga + 2 descargas resolves to 2 envíos sharing the same origin", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page); // Envío 1: Valencia → Madrid
+
+    // `+` on Lugar de descarga (envío 1's own row): a second destino for the
+    // SAME origin — never touches Lugar de carga.
+    await page.getByTestId("add-unload-1").click();
+    await expect(page.locator("#extraLoadName0")).toHaveValue(DECA.loadLocationName);
+    await expect(page.locator("#extraUnloadName0")).toHaveValue("");
+    await page.fill("#extraUnloadName0", SHIPMENT_3.unloadName);
+    await page.fill("#extraUnloadAddress0", SHIPMENT_3.unloadAddress);
+    await page.fill("#extraUnloadPostalCode0", SHIPMENT_3.unloadPostalCode);
+    await page.fill("#extraUnloadCity0", SHIPMENT_3.unloadCity);
+    await page.fill("#extraGoods0", "Azulejos adicionales");
+    await page.fill("#extraWeight0", SHIPMENT_3.weight);
+
+    // Exactly 2 envíos total, both starting at Valencia — never a 3rd.
+    await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(1);
+    await expect(page.locator("#loadLocationName")).toHaveValue(DECA.loadLocationName);
+    await expect(page.locator("#extraLoadName0")).toHaveValue(DECA.loadLocationName);
+  });
+
+  test("2026 correction — 2 cargas + 1 descarga resolves to 2 envíos sharing the same destination", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page); // Envío 1: Valencia → Madrid
+
+    // `+` on Lugar de carga (envío 1's own row): a second origen for the
+    // SAME destino — never touches Lugar de descarga.
+    await page.getByTestId("add-load-1").click();
+    await expect(page.locator("#extraUnloadName0")).toHaveValue(DECA.unloadLocationName);
+    await expect(page.locator("#extraLoadName0")).toHaveValue("");
+    await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
+    await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
+    await page.fill("#extraLoadPostalCode0", SHIPMENT_2.loadPostalCode);
+    await page.fill("#extraLoadCity0", SHIPMENT_2.loadCity);
+    await page.fill("#extraGoods0", SHIPMENT_2.goods);
+    await page.fill("#extraWeight0", SHIPMENT_2.weight);
+
+    // Exactly 2 envíos total, both ending at Madrid — never a 3rd.
+    await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(1);
+    await expect(page.locator("#unloadLocationName")).toHaveValue(DECA.unloadLocationName);
+    await expect(page.locator("#extraUnloadName0")).toHaveValue(DECA.unloadLocationName);
+  });
+
+  test("2026 correction — 'Vincular carga y descarga' appears only once both sides have 2+ places, and links an existing pair without retyping", async ({
+    page,
+    request,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page); // Envío 1: Valencia → Madrid
+
+    // Only 1 distinct place per side so far — the panel stays hidden; a
+    // single row's `+` is already unambiguous.
+    await expect(page.getByTestId("link-panel")).toHaveCount(0);
+
+    // A second, independent load (Castellón), inheriting Madrid as usual.
+    await page.getByTestId("add-load-1").click();
+    await page.fill("#extraLoadName0", SHIPMENT_2.loadName);
+    await page.fill("#extraLoadAddress0", SHIPMENT_2.loadAddress);
+    await page.fill("#extraLoadPostalCode0", SHIPMENT_2.loadPostalCode);
+    await page.fill("#extraLoadCity0", SHIPMENT_2.loadCity);
+    await page.fill("#extraGoods0", SHIPMENT_2.goods);
+    await page.fill("#extraWeight0", SHIPMENT_2.weight);
+
+    // Still only 1 distinct unload (Madrid) in play — panel still hidden.
+    await expect(page.getByTestId("link-panel")).toHaveCount(0);
+
+    // A second, independent unload (Illescas), off envío 2's own row.
+    await page.getByTestId("add-unload-2").click();
+    await page.fill("#extraUnloadName1", SHIPMENT_3.unloadName);
+    await page.fill("#extraUnloadAddress1", SHIPMENT_3.unloadAddress);
+    await page.fill("#extraUnloadPostalCode1", SHIPMENT_3.unloadPostalCode);
+    await page.fill("#extraUnloadCity1", SHIPMENT_3.unloadCity);
+    await page.fill("#extraWeight1", SHIPMENT_3.weight);
+
+    // NOW there are 2 distinct loads (Valencia, Castellón) AND 2 distinct
+    // unloads (Madrid, Illescas) — the panel appears.
+    await expect(page.getByTestId("link-panel")).toBeVisible();
+
+    // Link Valencia → Illescas — an entirely NEW pairing neither existing
+    // row expresses — by PICKING both places, never retyping either address.
+    await page
+      .getByTestId("link-load-select")
+      .selectOption({ label: `${DECA.loadLocationName} — ${DECA.loadLocationCity}` });
+    await page
+      .getByTestId("link-unload-select")
+      .selectOption({ label: `${SHIPMENT_3.unloadName} — ${SHIPMENT_3.unloadCity}` });
+    await page.getByTestId("link-create").click();
+
+    // A 3rd envío now exists, never a cartesian sweep of all 2×2=4 combos.
+    await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(3);
+    const linked = page.getByTestId("extra-shipment-3");
+    await expect(linked.locator("#extraLoadName2")).toHaveValue(DECA.loadLocationName);
+    await expect(linked.locator("#extraUnloadName2")).toHaveValue(SHIPMENT_3.unloadName);
+    // Goods/weight are the resulting envío's OWN — never copied — start blank.
+    await expect(linked.locator("#extraGoods2")).toHaveValue("");
+    await expect(linked.locator("#extraWeight2")).toHaveValue("");
+    await page.fill("#extraGoods2", "Cerámica adicional");
+    await page.fill("#extraWeight2", "3000 kg");
+
+    await page.getByTestId("wizard-next").click();
+    await fillVehicleAndGoods(page);
+    const [genRes] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes("/api/deca") && r.request().method() === "POST"),
+      page.getByTestId("wizard-generate").click(),
+    ]);
+    expect(genRes.status()).toBe(201);
+    const body = await genRes.json();
+    const pdf = await request.get(`/d/${body.token}`);
+    const doc = await getDocument({ data: new Uint8Array(await pdf.body()) }).promise;
+    let out = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const c = await (await doc.getPage(i)).getTextContent();
+      out += " " + c.items.map((it) => ("str" in it ? it.str : "")).join(" ");
+    }
+    const upper = out.replace(/\s+/g, " ").toUpperCase();
+    // The linked envío's real route + goods appear, PDF coherent with the
+    // relationship actually defined via the panel — this is the 4th envío
+    // overall (envío 2 = Castellón→Madrid, envío 3 = Castellón→Illescas via
+    // add-unload-2, envío 4 = the newly-linked Valencia→Illescas).
+    expect(upper).toContain("ENVÍO 4");
+    expect(upper).toContain(SHIPMENT_3.unloadName.toUpperCase());
+    expect(upper).toContain("CERÁMICA ADICIONAL");
+    // pdfjs's thousands-separator glyph extraction is not reliably the
+    // literal "." (same documented workaround as the sibling test above).
+    expect(upper).toMatch(/3\.?000 KG/);
+  });
+
+  test("2026 correction — `+` beside Lugar de carga never creates a descarga, and vice versa", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/crear");
+    await fillStep1(page);
+    await page.getByTestId("wizard-next").click();
+    await fillRoute(page);
+
+    await page.getByTestId("add-load-1").click();
+    // Only the LOAD side of the new envío is blank — its unload arrived
+    // already filled (inherited), never a second, independently-blank
+    // descarga waiting to be paired.
+    await expect(page.locator("#extraLoadName0")).toHaveValue("");
+    await expect(page.locator("#extraUnloadName0")).not.toHaveValue("");
+    await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(1);
+
+    await page.getByTestId("add-unload-1").click();
+    await expect(page.locator("#extraUnloadName1")).toHaveValue("");
+    await expect(page.locator("#extraLoadName1")).not.toHaveValue("");
+    // Still exactly 2 envíos total (1 from each `+`) — neither press created
+    // an extra, unrelated entry on the other side.
+    await expect(page.getByTestId(/^extra-shipment-\d+$/)).toHaveCount(2);
+  });
+
   test("vehicle is a single shared field: no tractor/trailer input inside any envío block, shown once in the PDF", async ({
     page,
     request,

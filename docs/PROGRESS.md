@@ -44,6 +44,18 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-229 — #112 correction implemented: "Vincular carga y descarga" linking panel, this session
+  (2026-09-12). Full detail in `docs/decisions.md` D-229.** Traced the existing per-row `+` handlers
+  first and confirmed no cartesian-product risk and 1×N/N×1 auto-pairing already worked correctly
+  (verified against the pre-existing, already-green e2e test) — so this was scoped as a small,
+  additive feature rather than a wizard data-model rewrite, avoiding the largest risk for a feature
+  this close to legal-document generation. New pure `distinctPlaces()` + a new linking panel
+  (appears only once both load/unload sides have 2+ distinct places), new i18n keys in all 9
+  locales. Zero changes to the payload builder, schema, PDF renderer, templates, or correction
+  preload. Gate: tsc/eslint/prettier/keel-verify clean, 488/488 unit (+5 new), 27/27 e2e (13
+  pre-existing multi-shipment tests confirmed unaffected + 5 new + the creator suite). Committed to
+  `develop`, not yet pushed. **#119's correction (postal-code matching + expanded vehicle types)
+  queued next; not started.**
 - **D-228 — #130 [P1] fixed: added the missing `Deca` table indexes, this session (2026-09-12).
   Full detail in `docs/decisions.md` D-228.** `@@index([companyId, createdAt])` +
   `@@index([createdByUserId])` — confirmed a real omission (other models in the same schema already

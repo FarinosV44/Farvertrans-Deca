@@ -821,6 +821,13 @@ export const en = {
       removeConfirm: (n: number) => `Shipment ${n} already has data entered. Remove it anyway?`,
       orderNote:
         "Shipment numbering is for identification only and does not set the execution order.",
+      linkPanelHeading: "Link a loading and unloading place",
+      linkPanelHint:
+        "When there are several loading and unloading places, tell us which pairing forms a real shipment.",
+      linkLoadLabel: "Origin",
+      linkUnloadLabel: "Destination",
+      linkPlaceholder: "Select…",
+      linkCreate: "Link",
     },
     errorSummaryTitle: "Please check these fields:",
     lead: {

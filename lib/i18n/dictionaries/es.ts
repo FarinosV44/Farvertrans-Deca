@@ -851,6 +851,13 @@ export const es = {
         `El Envío ${n} ya tiene datos introducidos. ¿Seguro que quieres eliminarlo?`,
       orderNote:
         "La numeración de los envíos es identificativa y no determina su orden de ejecución.",
+      linkPanelHeading: "Vincular carga y descarga",
+      linkPanelHint:
+        "Cuando hay varios lugares de carga y de descarga, indica qué relación forma un envío real.",
+      linkLoadLabel: "Origen",
+      linkUnloadLabel: "Destino",
+      linkPlaceholder: "Selecciona…",
+      linkCreate: "Vincular",
     },
     errorSummaryTitle: "Revisa estos campos:",
     lead: {

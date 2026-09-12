@@ -855,6 +855,13 @@ export const de = {
       removeConfirm: (n: number) => `Sendung ${n} enthält bereits Daten. Wirklich entfernen?`,
       orderNote:
         "Die Nummerierung der Sendungen dient nur der Identifikation und bestimmt nicht die Ausführungsreihenfolge.",
+      linkPanelHeading: "Lade- und Entladeort verknüpfen",
+      linkPanelHint:
+        "Wenn es mehrere Lade- und Entladeorte gibt, geben Sie an, welche Kombination eine echte Sendung bildet.",
+      linkLoadLabel: "Herkunft",
+      linkUnloadLabel: "Ziel",
+      linkPlaceholder: "Auswählen…",
+      linkCreate: "Verknüpfen",
     },
     errorSummaryTitle: "Überprüfen Sie diese Felder:",
     lead: {

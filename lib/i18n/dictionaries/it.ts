@@ -837,6 +837,13 @@ export const it = {
         `La Spedizione ${n} contiene già dei dati. Vuoi eliminarla comunque?`,
       orderNote:
         "La numerazione delle spedizioni è solo identificativa e non determina l'ordine di esecuzione.",
+      linkPanelHeading: "Collega un luogo di carico e di scarico",
+      linkPanelHint:
+        "Quando ci sono più luoghi di carico e di scarico, indica quale combinazione forma una spedizione reale.",
+      linkLoadLabel: "Origine",
+      linkUnloadLabel: "Destinazione",
+      linkPlaceholder: "Seleziona…",
+      linkCreate: "Collega",
     },
     errorSummaryTitle: "Controlla questi campi:",
     lead: {

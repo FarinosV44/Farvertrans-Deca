@@ -8127,3 +8127,56 @@ automated coverage that doesn't exist.
 failure (`autofill-vehicle` selector timeout, unrelated to `Deca`) reproduced as the documented
 parallel-contention flake class from `docs/lessons-learned.md`, confirmed green in isolation
 (`--workers=1`, 7.2s vs. the 30s timeout under contention).
+
+## D-229 — #112 correction: "Vincular carga y descarga" — a lightweight linking panel for the M×N case (2026-09-12)
+
+**The correction (posted as an issue comment on #112 after D-214/D-218 shipped):** the user reported
+the `+`-button UX was still too rigid — "cada pulsación de + termina creando otro bloque completo
+origen→destino" — and asked for: `+` beside "Lugar de carga" to add ONLY a load place (never touch
+descarga) and vice versa (already true — verified, not a regression); the "obvious" pairing proposed
+automatically when one side has exactly one place (already true by construction — a row's `+` always
+pairs deterministically with that SAME row's other side, so 1-carga+N-descargas and N-cargas+1-descarga
+were already correctly reachable); a NEW lightweight "Vincular carga y descarga" UI when BOTH sides
+have 2+ places, to define an arbitrary pairing "sencilla y visual, no un paso jurídico complejo";
+explicit new tests for 1×2, 2×1, 2×2-with-linking, `+carga` never creating a descarga (and vice versa),
+no cartesian product, goods/weight tied to the resulting envío, PDF coherence. **Reconfirmed:**
+shipper/carrier/tractora/remolque stay DeCA-level — unchanged, and the correction's own "Regla
+crítica: no cambiar la validez jurídica del modelo final `DeCA 1 → N envíos`" is satisfied by
+construction, since nothing about `ExtraShipment[]`/the submitted payload shape changed at all.
+
+**Analysis before implementing (important — avoided an unnecessary rewrite):** traced the existing
+`shipmentKeepingUnload`/`shipmentKeepingLoad` handlers (`components/deca/wizard.tsx`) and confirmed
+every `+` button is already ROW-SPECIFIC — pressing `+` on a given envío's row deterministically pairs
+with THAT row's other side, never a global/ambiguous guess. This means "no cartesian product" already
+held by construction (exactly one envío created per press, always), and 1×N/N×1 auto-pairing already
+worked (confirmed against the existing, already-green "`+` on carga inherits the destino... never a
+cartesian product" e2e test, which already builds a Valencia→Madrid / Castellón→Madrid / Castellón→
+Illescas 3-envío DeCA this exact way). The ONLY genuinely missing capability was: creating a pairing
+between two EXISTING, already-entered places that don't share a row (e.g. Valencia + a place typed
+while adding a DIFFERENT row's descarga) without retyping either address — which is exactly what
+"Vincular carga y descarga" describes. This meant the fix could be a small, additive feature rather
+than a rewrite of the wizard's data model or the payload builder — avoiding the largest source of risk
+for a feature this close to legal-document generation.
+
+**Fix:** new pure `distinctPlaces()` (`components/deca/wizard.tsx`, exported) — exact-match dedup
+(name+city+address, case/whitespace-insensitive) over every load/unload place currently in use across
+shipment 1 + every extra envío. A new fieldset (`data-testid="link-panel"`) appears on step 1 only
+once `distinctPlaces` finds 2+ entries on BOTH sides: two `<select>`s (populated with the distinct
+existing places, never free text) + a "Vincular" button. Clicking it creates ONE new envío
+(`linkExistingPlaces()`) from the two PICKED places — never retyped — with blank goods/weight/
+recipient, identical in shape to every other `+`-created envío. New i18n keys
+(`linkPanelHeading`/`linkPanelHint`/`linkLoadLabel`/`linkUnloadLabel`/`linkPlaceholder`/`linkCreate`)
+added to all 9 locale dictionaries. Zero changes to `toPayload()`, `ExtraShipment`, the schema, the
+PDF renderer, templates, correction preload, or the saved-shipment picker — all completely unaffected.
+
+**Test-first / verification:** new `tests/unit/wizard-distinct-places.test.ts` (5 cases) for the pure
+dedup logic. 5 new e2e cases in `tests/e2e/deca-multi-shipment.spec.ts`: dedicated 1×2 and 2×1 tests
+(both were already passing behavior — added as the explicit regression tests the correction asked
+for, not because either was broken), the new "Vincular" panel end-to-end (visibility gating + picking
+two existing places + PDF-coherence check — a real 4-envío DeCA generated and its PDF text-extracted
+to confirm "ENVÍO 4", the linked route, and the linked envío's own goods/weight all appear correctly),
+and an explicit "+carga never creates a descarga, and vice versa" regression test.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 488/488 unit (+5 new), 27/27 e2e in
+`deca-multi-shipment.spec.ts` + `crear.spec.ts` + `creator-v2.spec.ts` (13 pre-existing multi-shipment
+tests unaffected, confirming zero regression, + 5 new + the pre-existing creator suite).

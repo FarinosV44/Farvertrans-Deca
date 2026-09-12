@@ -172,6 +172,75 @@ type RouteSide = {
   unloadLocationCountry: string;
 };
 
+/** A single place's 6 fields alone (either side of `RouteSide`) — the unit
+ *  the "Vincular carga y descarga" panel (2026 correction to #112) picks
+ *  from, instead of the operator retyping an address that already exists
+ *  elsewhere in the form. */
+export type PlaceFields = {
+  name: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  province: string;
+  country: string;
+};
+
+const placeKey = (p: PlaceFields) =>
+  `${p.name.trim().toLowerCase()}|${p.city.trim().toLowerCase()}|${p.address.trim().toLowerCase()}`;
+
+/**
+ * Every DISTINCT, non-blank place in `places` — exact match on
+ * name+city+address (never fuzzy matched: two genuinely different places
+ * typed identically is the one accepted false-merge). A row's `+` button
+ * already pairs deterministically with that SAME row's other side, so this
+ * is only used to decide when the linking panel below should appear: once
+ * there are 2+ distinct places on BOTH sides, no single row's `+` can any
+ * longer express every relationship the operator might want without
+ * retyping an address, per the correction's own "Vincular carga y
+ * descarga... para definir qué origen corresponde a qué destino" — this
+ * NEVER changes what `+` itself does, and it never proposes or creates a
+ * cartesian sweep of its own.
+ */
+export function distinctPlaces<T extends PlaceFields>(places: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const p of places) {
+    if (!p.name.trim() && !p.city.trim()) continue; // a genuinely blank place is not a real stop
+    const k = placeKey(p);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(p);
+  }
+  return out;
+}
+
+function loadPlaceOf(s: RouteSide): PlaceFields {
+  return {
+    name: s.loadLocationName,
+    address: s.loadLocationAddress,
+    postalCode: s.loadLocationPostalCode,
+    city: s.loadLocationCity,
+    province: s.loadLocationProvince,
+    country: s.loadLocationCountry,
+  };
+}
+
+function unloadPlaceOf(s: RouteSide): PlaceFields {
+  return {
+    name: s.unloadLocationName,
+    address: s.unloadLocationAddress,
+    postalCode: s.unloadLocationPostalCode,
+    city: s.unloadLocationCity,
+    province: s.unloadLocationProvince,
+    country: s.unloadLocationCountry,
+  };
+}
+
+/** "ORIGIN — CITY" (city dropped when it duplicates the name), for a place picker's `<option>`. */
+function placeLabel(p: PlaceFields): string {
+  return p.city && p.city.toLowerCase() !== p.name.toLowerCase() ? `${p.name} — ${p.city}` : p.name;
+}
+
 /**
  * #112 — the `+` button beside "Lugar de carga": creates a new envío with a
  * BLANK load side and the UNLOAD side copied verbatim from `source` (same
@@ -957,6 +1026,10 @@ export function CrearWizard({
     initial?.extraShipments ?? [],
   );
   const [extraShipmentErrors, setExtraShipmentErrors] = useState<Record<number, string>>({});
+  /** #112 correction — the 2 pending picks in the "Vincular carga y
+   *  descarga" panel, reset after each successful link. */
+  const [linkLoadKey, setLinkLoadKey] = useState("");
+  const [linkUnloadKey, setLinkUnloadKey] = useState("");
   /** #113 — ids of any "ruta/envío habitual" used to fill shipment 1 or an
    *  extra envío, so the server can bump their "last used" timestamp
    *  (mirrors `picked` above, but a DeCA can use several routes at once). */
@@ -1124,6 +1197,42 @@ export function CrearWizard({
     const s = extraShipments[i];
     if (shipmentHasData(s) && !window.confirm(t.crear.shipments.removeConfirm(i + 2))) return;
     setExtraShipments((arr) => arr.filter((_, j) => j !== i));
+  };
+
+  /**
+   * #112 correction — "Vincular carga y descarga": once 2+ distinct places
+   * exist on BOTH sides, this creates ONE new envío from an EXISTING load
+   * place and an EXISTING unload place — picked, never retyped. Still
+   * exactly one envío per action (never a cartesian sweep of its own);
+   * goods/weight start blank, matching every other `+`-created envío.
+   */
+  const linkExistingPlaces = (load: PlaceFields, unload: PlaceFields) => {
+    const newIndex = extraShipments.length;
+    setExtraShipments((arr) => [
+      ...arr,
+      {
+        loadLocationName: load.name,
+        loadLocationAddress: load.address,
+        loadLocationPostalCode: load.postalCode,
+        loadLocationCity: load.city,
+        loadLocationProvince: load.province,
+        loadLocationCountry: load.country,
+        unloadLocationName: unload.name,
+        unloadLocationAddress: unload.address,
+        unloadLocationPostalCode: unload.postalCode,
+        unloadLocationCity: unload.city,
+        unloadLocationProvince: unload.province,
+        unloadLocationCountry: unload.country,
+        goods: "",
+        weight: "",
+        recipient: "",
+        loadDate: form.loadDate,
+        unloadDate: form.unloadDate,
+        notes: "",
+      },
+    ]);
+    setExtraShipmentErrors({});
+    requestAnimationFrame(() => document.getElementById(`extraGoods${newIndex}`)?.focus());
   };
 
   /**
@@ -1400,6 +1509,16 @@ export function CrearWizard({
 
   const errorList = Object.entries(errors);
   const stepLabel = t.crear.steps[step];
+
+  // #112 correction — every distinct load/unload place currently in use
+  // (shipment 1 + every extra envío). The "Vincular carga y descarga" panel
+  // only appears once BOTH lists have 2+ entries — the one case a row-
+  // specific `+` can't express without retyping an address.
+  const distinctLoads = distinctPlaces([loadPlaceOf(form), ...extraShipments.map(loadPlaceOf)]);
+  const distinctUnloads = distinctPlaces([
+    unloadPlaceOf(form),
+    ...extraShipments.map(unloadPlaceOf),
+  ]);
 
   return (
     <div>
@@ -2455,6 +2574,72 @@ export function CrearWizard({
               </div>
             ))}
           </div>
+        )}
+
+        {/* #112 correction — "Vincular carga y descarga": a lightweight,
+            visual pairing tool, never a separate legal step (the correction's
+            own words). Shown only once BOTH sides have 2+ distinct places —
+            below that, each row's own `+` already pairs unambiguously. */}
+        {step === 1 && distinctLoads.length > 1 && distinctUnloads.length > 1 && (
+          <fieldset
+            data-testid="link-panel"
+            className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+          >
+            <legend className="px-1 text-sm font-bold">{t.crear.shipments.linkPanelHeading}</legend>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              {t.crear.shipments.linkPanelHint}
+            </p>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+              <label className="block text-sm">
+                <span className="font-medium">{t.crear.shipments.linkLoadLabel}</span>
+                <select
+                  data-testid="link-load-select"
+                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                  value={linkLoadKey}
+                  onChange={(e) => setLinkLoadKey(e.target.value)}
+                >
+                  <option value="">{t.crear.shipments.linkPlaceholder}</option>
+                  {distinctLoads.map((p, i) => (
+                    <option key={i} value={String(i)}>
+                      {placeLabel(p)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium">{t.crear.shipments.linkUnloadLabel}</span>
+                <select
+                  data-testid="link-unload-select"
+                  className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
+                  value={linkUnloadKey}
+                  onChange={(e) => setLinkUnloadKey(e.target.value)}
+                >
+                  <option value="">{t.crear.shipments.linkPlaceholder}</option>
+                  {distinctUnloads.map((p, i) => (
+                    <option key={i} value={String(i)}>
+                      {placeLabel(p)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                data-testid="link-create"
+                disabled={linkLoadKey === "" || linkUnloadKey === ""}
+                onClick={() => {
+                  const load = distinctLoads[Number(linkLoadKey)];
+                  const unload = distinctUnloads[Number(linkUnloadKey)];
+                  if (!load || !unload) return;
+                  linkExistingPlaces(load, unload);
+                  setLinkLoadKey("");
+                  setLinkUnloadKey("");
+                }}
+                className="min-h-11 rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-4 text-sm font-bold text-white disabled:opacity-40"
+              >
+                {t.crear.shipments.linkCreate}
+              </button>
+            </div>
+          </fieldset>
         )}
 
         {step === 2 && showCommercialShare && (
