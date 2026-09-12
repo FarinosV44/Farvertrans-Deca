@@ -44,13 +44,36 @@ export default async function AdminTratamientoComercial() {
           <Empty>Ninguna ficha preparada.</Empty>
         ) : (
           <Table
-            head={["Empresa", "Destino", "Disponibilidad", "Canal", "Estado", "Preparada (UTC)"]}
+            head={[
+              "Empresa",
+              "Zona",
+              "Disponibilidad",
+              "Destino preferente",
+              "Capacidad",
+              "Tipo",
+              "Canal",
+              "Estado",
+              "Preparada (UTC)",
+            ]}
           >
             {shares.map((s) => (
               <Row key={s.decaId}>
                 <Cell>{s.companyName}</Cell>
                 <Cell>{s.destination}</Cell>
                 <Cell mono>{s.availabilityDate.toISOString().slice(0, 10)}</Cell>
+                <Cell>{s.preferredDestination ?? "—"}</Cell>
+                <Cell>
+                  {s.capacityMode === "partial"
+                    ? `Grupaje${s.linearMeters ? ` · ${s.linearMeters} m` : ""}${s.maxWeightKg ? ` · ${s.maxWeightKg.toLocaleString("es-ES")} kg` : ""}`
+                    : "Camión completo"}
+                </Cell>
+                <Cell>
+                  {s.vehicleType === "lona"
+                    ? "Lona"
+                    : s.vehicleType === "frigorifico"
+                      ? "Frigorífico"
+                      : "—"}
+                </Cell>
                 <Cell>{commercialChannelLabelEs(s.channel)}</Cell>
                 <Cell>{s.status}</Cell>
                 <Cell mono>{t(s.preparedAt)}</Cell>

@@ -218,3 +218,36 @@ export function ScaleIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** A single package — "Grupaje" (#119): only part of the trailer is occupied,
+ *  as opposed to `TruckIcon`'s whole vehicle for "Camión completo". */
+export function BoxIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 3 3.5 7.5 12 12l8.5-4.5L12 3Z" />
+      <path d="M3.5 7.5v9L12 21l8.5-4.5v-9" />
+      <path d="M12 12v9" />
+    </svg>
+  );
+}
+
+/** LONA (curtain-side) trailer body — a rectangle with a visible curtain
+ *  seam, distinct from `TruckIcon`'s plain box (#119). */
+export function TarpIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="6" width="18" height="12" rx="1.5" />
+      <path d="M8 6v12M13 6v12" />
+    </svg>
+  );
+}
+
+/** FRIGORÍFICO body — a snowflake, the universal refrigeration glyph (#119). */
+export function SnowflakeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 2v20M4.9 6.5l14.2 11M4.9 17.5l14.2-11" />
+      <path d="M8 4.5 12 7l4-2.5M8 19.5 12 17l4 2.5M4 9l1 3.5L2 14M20 9l-1 3.5L22 14M4 15l1-3.5L2 10M20 15l-1-3.5L22 10" />
+    </svg>
+  );
+}

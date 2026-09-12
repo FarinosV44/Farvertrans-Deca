@@ -991,6 +991,33 @@ anonymize-in-place (no hard delete, D-067).
   (`error-pages.spec.ts`) + 30/30 de regresión (`workspace.spec.ts` + `seo-regression.spec.ts`) en
   verde. **I-118 completo, comentado en el issue, dejado ABIERTO para confirmación del usuario.**
 
+## I-119 — [P1 Producto] Mejorar DECA Conecta: disponibilidad, destino preferente, capacidad, tipo y privacidad
+- 2026-09-12. Issue ya existente en el backlog del usuario. Trabajado esta sesión (D-215) en rama
+  propia `feat/119-conecta-availability` (fuera de `develop`, sin fusionar), según la instrucción
+  explícita del usuario de un PR independiente por issue. Comentario previo publicado en el issue
+  con modelo actual, datos que salen del DeCA, garantías de privacidad, propuesta de matching,
+  migración y componentes reutilizables, según lo pedido.
+- **HECHA, PR independiente contra `develop`, sin fusionar.** Migración aditiva (6 columnas nuevas,
+  todas opcionales o con valor por defecto, en `deca_availability_share`). `lib/commercial/
+  availability.ts` reescrito: ahora recibe TODOS los envíos del DeCA (no solo el primero), para que
+  un DeCA con varios envíos (#112) pueda indicar cuál es la "descarga final" solo a efectos de
+  Conecta — verificado que el orden real de los envíos en el documento no se altera. "Grupaje"
+  exige metros y kg positivos o el registro entero se rechaza (nunca un dato a medias). Nueva
+  `expiryStatus()` — "caducada" se calcula al leer, nunca se guarda — y `updateAvailabilityShare()`
+  (antes solo existía "retirar", ahora también "editar"). Nueva `findCompatibleAvailabilities()` —
+  propuesta v1 de matching, ya que no existe ningún inventario de ofertas: cruza zona/destino
+  preferente/fecha/tipo/capacidad contra las disponibilidades `pending` de OTRAS empresas, siempre
+  de forma anónima (nunca nombre de empresa ni contacto).
+- Wizard: "Zona de disponibilidad" (renombrado), selector de "descarga final" solo con varios
+  envíos, "Destino preferente", selección visual Camión completo/Grupaje y LONA/FRIGORÍFICO
+  (componente compartido con la edición, 3 iconos nuevos), resumen en vivo, aviso de privacidad.
+  `AvailabilityNotice` gana "Editar" (antes solo "Retirar") y un estado "caducado" propio. Panel de
+  superadmin ampliado con las columnas nuevas, solo lectura.
+- Gate: tsc/eslint/prettier limpios, 458/458 unitarios, 15/15 e2e nuevos
+  (`commercial-availability.spec.ts`) + 23/23 de regresión (`commercial-consent.spec.ts`) + 13/13
+  de barrido más amplio en verde. **I-119 completo, comentado en el issue, dejado ABIERTO para
+  confirmación del usuario.**
+
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.
 - **Parte 1 — Guía de uso (D-195): HECHA en `develop`, sin fusionar a `main`.**

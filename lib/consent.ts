@@ -118,7 +118,8 @@ export async function recordCommercialEvent(e: {
     | "per_deca_disabled"
     | "global_revoked"
     | "availability_prepared"
-    | "availability_withdrawn";
+    | "availability_withdrawn"
+    | "availability_updated";
   decaId?: string | null;
   mode?: CommercialConsentMode | null;
   channel?: CommercialContactChannel | null;

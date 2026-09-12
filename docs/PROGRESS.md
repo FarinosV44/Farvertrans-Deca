@@ -45,6 +45,23 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-215 — I-119: DECA Conecta expanded (zona/destino preferente, capacidad, tipo, edit, v1
+  matching), this session (2026-09-12). Full detail in `docs/decisions.md` D-215. Worked on its OWN
+  branch `feat/119-conecta-availability` (off `develop`), per the same "separate branch/PR per
+  issue, don't merge" instruction as #112 — NOT pushed to `develop`.** Additive-only Prisma
+  migration (6 nullable/defaulted columns on `DecaAvailabilityShare`). `lib/commercial/availability.ts`
+  rewritten: `DecaFacts` now carries every shipment so a multi-envío DeCA (#112) can name its
+  "descarga final" for Conecta purposes only; "Grupaje" requires positive metros+kg or the whole
+  record is rejected; new `expiryStatus()` (computed at read time, never stored) and
+  `updateAvailabilityShare()` (first real edit capability); new `findCompatibleAvailabilities()` —
+  a v1 matching proposal since no demand-side inventory exists yet, cross-matching against other
+  companies' own pending availability records, anonymised. Wizard section redesigned (zona rename,
+  destino preferente, camión completo/grupaje + LONA/FRIGORÍFICO accessible card pickers — shared
+  between the wizard and the new edit UI — 3 new icons, live summary line, privacy copy).
+  **Gate: tsc/eslint/prettier clean, 458/458 unit, 15/15 new e2e + 23/23 `commercial-consent`
+  regression + 13/13 broader sweep green.** Pre-implementation comment posted on #119 per its own
+  requirement. **Next: commit, push the branch, open a PR into `develop` (not merged). #112 and
+  #119 are both now complete on their own branches.**
 - **D-213 — I-118: branded incident page for 5xx / server-render errors, this session
   (2026-09-12), immediately after D-212. Full detail in `docs/decisions.md` D-213.** New
   `components/errors/incident-page.tsx` (shared branded screen, reuses the existing `Wordmark`/

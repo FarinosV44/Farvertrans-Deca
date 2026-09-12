@@ -3,14 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 
-import { buildAvailabilityPayload } from "@/lib/commercial/availability";
+import {
+  buildAvailabilityPayload,
+  findCompatibleAvailabilities,
+  type AvailabilityCandidate,
+} from "@/lib/commercial/availability";
 import { sharedFieldKeys, type CommercialTreatmentState } from "@/lib/consent";
 import { commercialChannelLabelEs } from "@/lib/commercial/types";
 
 const deca = {
   carrier: { name: "Transportes Pérez SL" },
-  unloadLocation: { city: "Madrid" },
-  unloadDate: "2026-10-06",
+  shipments: [{ unloadLocation: { city: "Madrid" }, unloadDate: "2026-10-06" }],
   // things that must NEVER leak:
   shipper: { name: "Cargas del Turia SL", nif: "B96789011" },
   loadLocation: { city: "Valencia", address: "Av. del Puerto 120" },
@@ -38,9 +41,14 @@ const ALLOWED = new Set([
   "channel",
   "contactEmail",
   "contactPhone",
+  "preferredDestination",
+  "capacityMode",
+  "linearMeters",
+  "maxWeightKg",
+  "vehicleType",
 ]);
 
-describe("buildAvailabilityPayload — payload contains ONLY authorised fields (#84)", () => {
+describe("buildAvailabilityPayload — payload contains ONLY authorised fields (#84/#119)", () => {
   it("shares exactly carrier / destination / date / channel + the selected contact, nothing else", () => {
     const p = buildAvailabilityPayload(deca, treatment(), { enabled: true });
     expect(p).not.toBeNull();
@@ -48,6 +56,7 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
     expect(p!.carrierName).toBe("Transportes Pérez SL");
     expect(p!.destination).toBe("Madrid");
     expect(p!.availabilityDate).toBe("2026-10-06");
+    expect(p!.capacityMode).toBe("full");
     // explicitly assert the excluded data never appears anywhere in the payload
     const serialised = JSON.stringify(p);
     for (const forbidden of [
@@ -122,37 +131,116 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
   it("returns null when destination or date cannot be resolved", () => {
     expect(
       buildAvailabilityPayload(
-        { ...deca, unloadLocation: { city: "" }, unloadDate: "2026-10-06" },
+        { ...deca, shipments: [{ unloadLocation: { city: "" }, unloadDate: "2026-10-06" }] },
         treatment(),
         { enabled: true },
       ),
     ).toBeNull();
     expect(
-      buildAvailabilityPayload({ ...deca, unloadDate: "" }, treatment(), {
+      buildAvailabilityPayload(
+        { ...deca, shipments: [{ unloadLocation: { city: "Madrid" }, unloadDate: "" }] },
+        treatment(),
+        { enabled: true, destination: "Madrid" },
+      ),
+    ).toBeNull();
+  });
+
+  // #119
+  it("picks the shipment named by finalShipmentIndex for a multi-envío DeCA, never shipment 0 blindly", () => {
+    const multi = {
+      ...deca,
+      shipments: [
+        { unloadLocation: { city: "Madrid" }, unloadDate: "2026-10-06" },
+        { unloadLocation: { city: "Toledo" }, unloadDate: "2026-10-07" },
+      ],
+    };
+    const p = buildAvailabilityPayload(multi, treatment(), {
+      enabled: true,
+      finalShipmentIndex: 1,
+    });
+    expect(p!.destination).toBe("Toledo");
+    expect(p!.availabilityDate).toBe("2026-10-07");
+  });
+
+  it("an out-of-range finalShipmentIndex falls back to shipment 0, never throws", () => {
+    const p = buildAvailabilityPayload(deca, treatment(), { enabled: true, finalShipmentIndex: 9 });
+    expect(p!.destination).toBe("Madrid");
+  });
+
+  it("preferredDestination is optional and never invents one", () => {
+    const p1 = buildAvailabilityPayload(deca, treatment(), { enabled: true });
+    expect(p1!.preferredDestination).toBeUndefined();
+    const p2 = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      preferredDestination: "Valencia",
+    });
+    expect(p2!.preferredDestination).toBe("Valencia");
+  });
+
+  it("'Grupaje' (partial) REQUIRES positive linearMeters and maxWeightKg, else the payload is rejected", () => {
+    expect(
+      buildAvailabilityPayload(deca, treatment(), { enabled: true, capacityMode: "partial" }),
+    ).toBeNull();
+    expect(
+      buildAvailabilityPayload(deca, treatment(), {
         enabled: true,
-        destination: "Madrid",
+        capacityMode: "partial",
+        linearMeters: 4,
+        maxWeightKg: 0,
       }),
     ).toBeNull();
+    const p = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      capacityMode: "partial",
+      linearMeters: 4,
+      maxWeightKg: 8000,
+    });
+    expect(p!.capacityMode).toBe("partial");
+    expect(p!.linearMeters).toBe(4);
+    expect(p!.maxWeightKg).toBe(8000);
+  });
+
+  it("'Camión completo' (full, the default) never carries linearMeters/maxWeightKg even if stray values are passed", () => {
+    const p = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      capacityMode: "full",
+      linearMeters: 4,
+      maxWeightKg: 8000,
+    });
+    expect(p!.capacityMode).toBe("full");
+    expect(p!.linearMeters).toBeUndefined();
+    expect(p!.maxWeightKg).toBeUndefined();
+  });
+
+  it("vehicleType only accepts the two known values, silently drops anything else", () => {
+    const p1 = buildAvailabilityPayload(deca, treatment(), { enabled: true, vehicleType: "lona" });
+    expect(p1!.vehicleType).toBe("lona");
+    const p2 = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      // @ts-expect-error — deliberately invalid, must be dropped not thrown
+      vehicleType: "granel",
+    });
+    expect(p2!.vehicleType).toBeUndefined();
   });
 });
 
 describe("sharedFieldKeys", () => {
-  it("lists only the base fields plus the channel-appropriate contact", () => {
-    expect(sharedFieldKeys("email")).toEqual([
+  it("lists the base fields + the #119 voluntary fields + the channel-appropriate contact", () => {
+    const base = [
       "carrierName",
       "destination",
       "availabilityDate",
-      "contactEmail",
-    ]);
-    expect(sharedFieldKeys("phone")).toEqual([
-      "carrierName",
-      "destination",
-      "availabilityDate",
-      "contactPhone",
-    ]);
+      "preferredDestination",
+      "capacityMode",
+      "linearMeters",
+      "maxWeightKg",
+      "vehicleType",
+    ];
+    expect(sharedFieldKeys("email")).toEqual([...base, "contactEmail"]);
+    expect(sharedFieldKeys("phone")).toEqual([...base, "contactPhone"]);
     expect(sharedFieldKeys("both")).toContain("contactEmail");
     expect(sharedFieldKeys("both")).toContain("contactPhone");
-    expect(sharedFieldKeys(null)).toEqual(["carrierName", "destination", "availabilityDate"]);
+    expect(sharedFieldKeys(null)).toEqual(base);
   });
 });
 
@@ -164,6 +252,85 @@ describe("commercialChannelLabelEs (#85 — WhatsApp replaces the 'Teléfono' la
     expect(commercialChannelLabelEs(null)).toBe("—");
     expect(["phone", "both", "email"].map(commercialChannelLabelEs).join(" ")).not.toMatch(
       /tel[eé]fono/i,
+    );
+  });
+});
+
+// #119 — the matching proposal
+describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
+  const candidate = (over: Partial<AvailabilityCandidate> = {}): AvailabilityCandidate => ({
+    zone: "Madrid",
+    preferredDestination: null,
+    availabilityDate: new Date("2026-10-06"),
+    vehicleType: null,
+    capacityMode: "full",
+    linearMeters: null,
+    maxWeightKg: null,
+    ...over,
+  });
+
+  it("matches when my zona equals another's zona (same-city fallback)", () => {
+    const mine = candidate({ zone: "Madrid" });
+    const other = candidate({ zone: "Madrid" });
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+  });
+
+  it("matches my zona against their destino preferente, and vice versa", () => {
+    const mine = candidate({ zone: "Madrid", preferredDestination: "Valencia" });
+    const other = candidate({ zone: "Valencia" });
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+
+    const mine2 = candidate({ zone: "Sevilla" });
+    const other2 = candidate({ zone: "Bilbao", preferredDestination: "Sevilla" });
+    expect(findCompatibleAvailabilities(mine2, [other2])).toEqual([other2]);
+  });
+
+  it("excludes a candidate outside the date window", () => {
+    const mine = candidate({ availabilityDate: new Date("2026-10-06") });
+    const far = candidate({ availabilityDate: new Date("2026-10-20") });
+    expect(findCompatibleAvailabilities(mine, [far])).toEqual([]);
+  });
+
+  it("excludes a candidate with an incompatible vehicle type", () => {
+    const mine = candidate({ vehicleType: "lona" });
+    const other = candidate({ vehicleType: "frigorifico" });
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([]);
+  });
+
+  it("an unspecified vehicle type is compatible with any type", () => {
+    const mine = candidate({ vehicleType: "lona" });
+    const other = candidate({ vehicleType: null });
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+  });
+
+  it("'full' capacity is always compatible either way", () => {
+    const mine = candidate({ capacityMode: "full" });
+    const other = candidate({ capacityMode: "partial", linearMeters: 4, maxWeightKg: 8000 });
+    expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+  });
+
+  it("'partial' vs 'partial' requires both sides to have declared real capacity", () => {
+    const mine = candidate({ capacityMode: "partial", linearMeters: 4, maxWeightKg: 8000 });
+    const missingData = candidate({ capacityMode: "partial", linearMeters: 0, maxWeightKg: 0 });
+    expect(findCompatibleAvailabilities(mine, [missingData])).toEqual([]);
+    const complete = candidate({ capacityMode: "partial", linearMeters: 2, maxWeightKg: 3000 });
+    expect(findCompatibleAvailabilities(mine, [complete])).toEqual([complete]);
+  });
+
+  it("never returns anything beyond the anonymised candidate shape — no identity fields exist to leak", () => {
+    const mine = candidate({ zone: "Madrid" });
+    const other = candidate({ zone: "Madrid" });
+    const [match] = findCompatibleAvailabilities(mine, [other]);
+    expect(Object.keys(match).sort()).toEqual(
+      [
+        "zone",
+        "preferredDestination",
+        "availabilityDate",
+        "vehicleType",
+        "capacityMode",
+        "linearMeters",
+        "maxWeightKg",
+      ].sort(),
     );
   });
 });

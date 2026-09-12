@@ -52,6 +52,15 @@ export const EVENT_NAMES = [
   "inspection_pdf_opened",
   "inspection_shared",
   "inspection_link_copied",
+  // DECA Conecta availability (#119) — no "offer sent/accepted" events: no
+  // real offer-sending flow exists yet to instrument honestly.
+  "availability_started",
+  "availability_published",
+  "availability_full_truck",
+  "availability_partial_load",
+  "availability_vehicle_type_set",
+  "availability_cancelled",
+  "availability_expired_viewed",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

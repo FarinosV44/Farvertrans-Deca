@@ -1,17 +1,33 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { withdrawAvailabilityShare } from "@/lib/commercial/availability";
+import { withdrawAvailabilityShare, updateAvailabilityShare } from "@/lib/commercial/availability";
 
 export const runtime = "nodejs";
 
-const schema = z.object({ action: z.literal("withdraw") });
+const withdrawSchema = z.object({ action: z.literal("withdraw") });
+
+/** #119 — edit an already-prepared record. Capacity fields are required
+ *  together only when `capacityMode` is "partial" (checked in
+ *  `updateAvailabilityShare`, not here — the same "never a fabricated value"
+ *  discipline as the rest of this feature). */
+const updateSchema = z.object({
+  action: z.literal("update"),
+  destination: z.string().trim().min(1),
+  availabilityDate: z.string().trim().min(1),
+  preferredDestination: z.string().trim().max(200).optional().or(z.literal("")),
+  capacityMode: z.enum(["full", "partial"]),
+  linearMeters: z.number().positive().optional(),
+  maxWeightKg: z.number().positive().optional(),
+  vehicleType: z.enum(["lona", "frigorifico"]).optional(),
+});
+
+const schema = z.discriminatedUnion("action", [withdrawSchema, updateSchema]);
 
 /**
- * Withdraw the commercial availability record prepared for this DeCA (#84).
- * Owner-only, company-scoped. Never deletes the record and never touches the
- * DeCA — it only flips the record's status so nothing further would be
- * communicated.
+ * Manage the commercial availability record prepared for this DeCA (#84,
+ * expanded #119 with "update"). Owner-only, company-scoped. Never deletes
+ * the record and never touches the DeCA itself.
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -24,11 +40,35 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: { code: "validation" } }, { status: 422 });
 
-  const ok = await withdrawAvailabilityShare(id, user.companyId, user.id);
+  if (parsed.data.action === "withdraw") {
+    const ok = await withdrawAvailabilityShare(id, user.companyId, user.id);
+    if (!ok)
+      return NextResponse.json(
+        { error: { code: "not_found", message: "No hay una ficha de disponibilidad pendiente." } },
+        { status: 404 },
+      );
+    return NextResponse.json({ ok: true });
+  }
+
+  const data = parsed.data;
+  const ok = await updateAvailabilityShare(id, user.companyId, user.id, {
+    destination: data.destination,
+    availabilityDate: data.availabilityDate,
+    preferredDestination: data.preferredDestination || undefined,
+    capacityMode: data.capacityMode,
+    linearMeters: data.linearMeters,
+    maxWeightKg: data.maxWeightKg,
+    vehicleType: data.vehicleType,
+  });
   if (!ok)
     return NextResponse.json(
-      { error: { code: "not_found", message: "No hay una ficha de disponibilidad pendiente." } },
-      { status: 404 },
+      {
+        error: {
+          code: "validation",
+          message: "No se pudo actualizar la disponibilidad. Revisa los datos.",
+        },
+      },
+      { status: 422 },
     );
   return NextResponse.json({ ok: true });
 }

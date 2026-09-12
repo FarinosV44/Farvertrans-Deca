@@ -7501,3 +7501,109 @@ change per trigger: `branches: [main]` → `branches: [main, develop]` for both 
 `pull_request`. No other CI behavior changes — same jobs, same gates, just also armed for the
 integration branch. Committed directly to `develop` (a repo-config change, not feature work bound
 for either PR) so both open/future PRs into `develop` get real CI.
+
+## D-215 — I-119: DECA Conecta expanded — zona/destino preferente, capacidad, tipo, edit, v1 matching (2026-09-12)
+
+**Investigation before touching code (posted as the issue's own required pre-implementation
+comment):** DECA Conecta (#84) today is a deliberately minimal `DecaAvailabilityShare` — one row
+per DeCA, carrying only carrier name, a free-text destination (defaulting to shipment 1's unload
+city), an availability date, and the authorised contact channel. `lib/admin/commercial.ts`'s own
+comment already says "No matching, no export" — confirming no matching engine or demand-side
+inventory exists anywhere in the codebase yet. This issue turns it into a richer, still
+privacy-first signal without inventing infrastructure the issue didn't ask for.
+
+**Prisma (additive only):** `DecaAvailabilityShare` gains 6 nullable/defaulted columns —
+`preferred_destination`, `capacity_mode` (default `"full"`), `linear_meters`, `max_weight_kg`,
+`vehicle_type`, `final_shipment_index` — one hand-written migration
+(`20260912120000_availability_capacity_type`), applied directly to the dev DB. `capacity_mode`/
+`vehicle_type` are bare strings, not Prisma enums (matching the existing `status` column's own
+convention), so a future value never needs a migration — issue §4's own "dejar el modelo
+ampliable" requirement, satisfied for free.
+
+**`lib/commercial/availability.ts` — the core rewrite:**
+- `DecaFacts.unloadLocation`/`unloadDate` (a single shipment) became `shipments: {...}[]` — the
+  caller (`app/api/deca/route.ts`) now passes EVERY resolved shipment, and a new
+  `finalShipmentIndex` override picks which one seeds the zona/fecha defaults (out-of-range or
+  absent safely falls back to shipment 0 — never throws). This is what lets a multi-envío DeCA
+  (#112) name its "descarga final" for Conecta purposes ONLY, never touching the DeCA's own
+  shipment order or numbering — verified end to end (a 2-shipment DeCA, picking shipment 2, then
+  reading `dataJson.shipments` straight from the DB to confirm the original order survived).
+- `buildAvailabilityPayload()` extended with the 5 new voluntary fields, all optional except
+  `capacityMode` (defaults `"full"`). `"partial"` (Grupaje) REQUIRES both `linearMeters` and
+  `maxWeightKg` to be positive numbers, else the whole payload is rejected (`null`) — same
+  never-fabricate discipline as `sumWeights()` elsewhere in this codebase. `"full"` never carries
+  either field even if stray values are passed in.
+- New `expiryStatus()` (now exported, reused by `lib/admin/commercial.ts` too): `"expired"` is
+  computed at READ time from `availabilityDate < today`, NEVER stored — no scheduled job invented
+  for a requirement the issue explicitly didn't ask for. A `withdrawn` record stays `withdrawn`
+  regardless of date (a stronger, explicit signal).
+- New `updateAvailabilityShare()` — the first real "editar" capability (before this issue, only
+  "retirar" existed). Same validation discipline as creation; re-checks live consent; audits via
+  a new `CommercialConsentEvent.kind = "availability_updated"`.
+- New `findCompatibleAvailabilities()` — the issue's requested "propuesta de matching": since no
+  demand-side/loads inventory exists, this cross-matches one carrier's zona/destino-preferente/
+  fecha/tipo/capacidad against OTHER companies' own pending, non-expired availability records, in
+  both directions (my zona ↔ their destino preferente). Pure, dependency-free string matching (no
+  geocoding — explicitly out of scope), a ±3-day date window, and a documented, real limitation for
+  "partial ↔ partial" pairing (neither side states an explicit REQUIRED capacity in this v1, so a
+  pairing only succeeds when both sides have actually declared usable capacity). Returns an
+  anonymised candidate shape ONLY — zone/preferredDestination/date/type/capacity, never identity —
+  asserted directly by a unit test enumerating the exact key set.
+
+**Wizard (`components/deca/wizard.tsx`) — `commercial-share` section redesign:** renamed
+"Destino o zona de disponibilidad" → "Zona de disponibilidad" with its helper text; a new
+"¿Cuál es la descarga final?" `<select>` appears ONLY when the DeCA has more than one shipment;
+new "Destino preferente" free-text field; new `CapacityModePicker`/`VehicleTypePicker` — extracted
+into a shared `components/deca/capacity-vehicle-picker.tsx` component (used by both the wizard and
+`AvailabilityNotice`'s edit form, so the visual language never drifts between creation and edit) —
+accessible card-based radiogroups per the issue's own "no un select genérico" instruction, backed
+by 3 new icons in `components/panel/icons.tsx` (`BoxIcon` for Grupaje, `TarpIcon` for LONA,
+`SnowflakeIcon` for FRIGORÍFICO — nothing suitable existed). A live summary line renders the
+issue's own suggested format ("Madrid · 12 sep · Grupaje · 4 m · 8.000 kg · Lona → preferencia
+Valencia"). The two required privacy paragraphs (issue's own suggested wording) show right under
+the enable checkbox.
+
+**`AvailabilityNotice` (`components/deca/availability-notice.tsx`):** gained inline "Editar" (the
+same field set, never the DeCA's own legal fields) alongside the existing "Retirar"; a distinct
+neutral "caducado" state (via `expiryStatus()`) that shows no actions, since an expired record
+still exists but nothing more should happen to it automatically.
+
+**Admin (`app/admin/(protected)/tratamiento-comercial/page.tsx` +
+`lib/admin/commercial.ts`):** the read-only listing gained the new columns (destino preferente,
+capacidad, tipo) and now shows the COMPUTED `"expired"` status via the same `expiryStatus()` — no
+new write path, no export, matching the issue's own access-control caution.
+
+**Analytics (`lib/analytics/events.ts`):** 7 new events wired into the actual UI paths
+(`availability_started`/`_full_truck`/`_partial_load`/`_vehicle_type_set`/`_published`/
+`_cancelled`/`_expired_viewed`). Deliberately did NOT add "offer sent/accepted" events from the
+issue's own §9 list — no real offer-sending flow exists yet to instrument honestly.
+
+**i18n:** all new `commercialShare.*` keys (zona/destino preferente/capacity/vehicle-type labels
+and hints, the two privacy paragraphs) added across all 9 dictionaries, same mechanical
+`Messages = typeof es`/`satisfies Messages` pattern as D-213/D-214.
+
+**Real bug found and fixed while writing the e2e coverage:** every multi-envío test initially
+failed generation with "Indica la matrícula de la tractora" on the extra envío — `emptyExtraShipment(form)`
+captures the DeCA-level tractor-plate default at the MOMENT the toggle is checked, and the test
+originally checked the toggle before filling the vehicle/goods step. Fixed by reordering the test
+to fill vehicle/goods first (matching the one other spec in this codebase that already exercises
+the multi-shipment toggle, `historico-redesign.spec.ts`) — not a product bug, a test-authoring one,
+but worth recording since it is exactly the kind of ordering trap the next multi-envío test in this
+codebase will hit again otherwise.
+
+**Tests:** `tests/unit/commercial-availability.test.ts` extended (25 tests: the existing #84
+key-set/mode coverage plus #119's finalShipmentIndex resolution, capacity validation, and a full
+`findCompatibleAvailabilities` suite). New `tests/e2e/commercial-availability.spec.ts` (15 tests:
+zona rename/autofill + privacy copy, destino preferente, capacity toggle + validation + field
+clearing, vehicle type, no-excluded-data, multi-envío final-shipment selection with a DB-level
+order-preservation check, edit, PDF/version untouched by an edit, expiry display, cross-company
+isolation, responsive 320–1440). The pre-existing `commercial-consent.spec.ts` (23 tests, the #84
+foundation) re-run in full and confirmed unaffected.
+
+**Gate:** `npx tsc --noEmit` clean throughout, eslint/prettier clean, 458/458 unit, 15/15 new +
+23/23 `commercial-consent` regression + 13/13 broader sweep (`workspace.spec.ts` incl. the a11y
+scan, `admin.spec.ts`) e2e green.
+
+**Next:** commit to `feat/119-conecta-availability`, push, open a PR into `develop` (screenshots +
+PR body), per the same "separate branch/PR per issue, don't merge" instruction as #112. Both #112
+and #119 are now complete on their own branches — nothing else queued.

@@ -197,29 +197,39 @@ export async function POST(req: Request) {
       // #84: per-DeCA commercial-share opt-in. A SEPARATE top-level key, never
       // part of `validated`/`data_json`. `recordAvailabilityShare` re-checks the
       // company's live preference and writes ONLY the authorised fields.
-      // #112: `DecaFacts` is shipment 1's resolved view — the same
-      // "first shipment is the summary" choice used everywhere else a
-      // multi-shipment DeCA needs a single representative value.
+      // #119: `DecaFacts` now carries EVERY shipment's resolved unload side, so
+      // a multi-envío DeCA (#112) can name which one is the "descarga final"
+      // for availability purposes via `finalShipmentIndex` — never altering
+      // the DeCA's own shipment numbering or legal order.
       const cs = (body as { commercialShare?: unknown } | null)?.commercialShare;
       if (cs && typeof cs === "object") {
         const c = cs as Record<string, unknown>;
         const s = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+        const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
         const ch = s(c.channel);
+        const vt = s(c.vehicleType);
         const { recordAvailabilityShare } = await import("@/lib/commercial/availability");
-        const firstShipment = resolveShipments(validated.data)[0];
         recordAvailabilityShare(
           created.decaId,
           owner.companyId,
           {
             carrier: validated.data.carrier,
-            unloadLocation: firstShipment.unloadLocation,
-            unloadDate: firstShipment.unloadDate,
+            shipments: resolveShipments(validated.data).map((sh) => ({
+              unloadLocation: sh.unloadLocation,
+              unloadDate: sh.unloadDate,
+            })),
           },
           {
             enabled: c.enabled === true,
             destination: s(c.destination),
             availabilityDate: s(c.availabilityDate),
             channel: ch === "email" || ch === "phone" || ch === "both" ? ch : undefined,
+            preferredDestination: s(c.preferredDestination),
+            capacityMode: c.capacityMode === "partial" ? "partial" : undefined,
+            linearMeters: n(c.linearMeters),
+            maxWeightKg: n(c.maxWeightKg),
+            vehicleType: vt === "lona" || vt === "frigorifico" ? vt : undefined,
+            finalShipmentIndex: n(c.finalShipmentIndex),
           },
         ).catch(() => {
           // best-effort — never blocks generation

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { expiryStatus } from "@/lib/commercial/availability";
 
 /**
  * Read-only admin visibility of the commercial-treatment feature (#84). No
@@ -33,8 +34,14 @@ export type AvailabilityRow = {
   destination: string;
   availabilityDate: Date;
   channel: string;
-  status: string;
+  /** #119 — "expired" is computed, never stored (see `expiryStatus()`). */
+  status: "pending" | "withdrawn" | "expired";
   preparedAt: Date;
+  preferredDestination: string | null;
+  capacityMode: string;
+  linearMeters: number | null;
+  maxWeightKg: number | null;
+  vehicleType: string | null;
 };
 
 export async function recentAvailabilityShares(limit = 50): Promise<AvailabilityRow[]> {
@@ -49,8 +56,13 @@ export async function recentAvailabilityShares(limit = 50): Promise<Availability
     destination: r.destination,
     availabilityDate: r.availabilityDate,
     channel: r.channel,
-    status: r.status,
+    status: expiryStatus(r),
     preparedAt: r.preparedAt,
+    preferredDestination: r.preferredDestination,
+    capacityMode: r.capacityMode,
+    linearMeters: r.linearMeters,
+    maxWeightKg: r.maxWeightKg,
+    vehicleType: r.vehicleType,
   }));
 }
 
