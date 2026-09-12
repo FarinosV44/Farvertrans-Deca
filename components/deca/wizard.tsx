@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Field } from "./field";
 import { SaveShipment } from "./save-shipment";
+import { CapacityModePicker, VehicleTypePicker } from "@/components/deca/capacity-vehicle-picker";
 import {
   step1Schema,
   step2Schema,
@@ -53,9 +54,17 @@ type FormState = {
   // #84 — per-DeCA commercial-share opt-in. NOT part of the legal payload:
   // sent as a separate body key, never written to `data_json`.
   commercialShareEnabled: string; // "1" | ""
+  /** "Zona de disponibilidad" (renamed from "destino" #119). */
   commercialShareDestination: string;
   commercialShareDate: string;
   commercialShareChannel: string; // "" | "email" | "phone" | "both"
+  // #119 — voluntary next-load preference fields, independent of the DeCA.
+  commercialShareFinalShipmentIndex: string; // "0", "1", ... — which shipment's unload seeded the zona/fecha
+  commercialSharePreferredDestination: string;
+  commercialShareCapacityMode: string; // "full" | "partial"
+  commercialShareLinearMeters: string;
+  commercialShareMaxWeightKg: string;
+  commercialShareVehicleType: string; // "" | "lona" | "frigorifico"
 };
 
 const EMPTY: FormState = {
@@ -92,6 +101,12 @@ const EMPTY: FormState = {
   commercialShareDestination: "",
   commercialShareDate: "",
   commercialShareChannel: "",
+  commercialShareFinalShipmentIndex: "0",
+  commercialSharePreferredDestination: "",
+  commercialShareCapacityMode: "full",
+  commercialShareLinearMeters: "",
+  commercialShareMaxWeightKg: "",
+  commercialShareVehicleType: "",
 };
 
 /**
@@ -1230,6 +1245,8 @@ export function CrearWizard({
         // #84: per-DeCA commercial-share opt-in. A SEPARATE key — never merged
         // into the legal payload, never written to `data_json`. Only sent when
         // the operator ticked the box; the server re-checks the live preference.
+        // #119: the new voluntary next-load preference fields ride along the
+        // same key — capacity/vehicle type only sent when actually set.
         ...(commercialShareOn
           ? {
               commercialShare: {
@@ -1237,6 +1254,18 @@ export function CrearWizard({
                 destination: form.commercialShareDestination.trim() || undefined,
                 availabilityDate: form.commercialShareDate.trim() || undefined,
                 channel: form.commercialShareChannel || commercialTreatment?.channel || "email",
+                finalShipmentIndex: Number(form.commercialShareFinalShipmentIndex || 0) || 0,
+                preferredDestination: form.commercialSharePreferredDestination.trim() || undefined,
+                capacityMode: form.commercialShareCapacityMode === "partial" ? "partial" : "full",
+                linearMeters:
+                  form.commercialShareCapacityMode === "partial" && form.commercialShareLinearMeters
+                    ? Number(form.commercialShareLinearMeters)
+                    : undefined,
+                maxWeightKg:
+                  form.commercialShareCapacityMode === "partial" && form.commercialShareMaxWeightKg
+                    ? Number(form.commercialShareMaxWeightKg)
+                    : undefined,
+                vehicleType: form.commercialShareVehicleType || undefined,
               },
             }
           : {}),
@@ -1357,6 +1386,9 @@ export function CrearWizard({
       // #76: the draft became a real DeCA — drop the server copy.
       if (authed && !isCorrection) void fetch("/api/deca/draft", { method: "DELETE" });
       if (data.firstForCompany) track("first_authenticated_deca");
+      // #119 — best-effort UI signal only; the real record is only ever
+      // created server-side by `recordAvailabilityShare` re-checking consent.
+      if (commercialShareOn) track("availability_published");
       const q = data.claimToken ? `?claim=${encodeURIComponent(data.claimToken)}` : "";
       router.push(`/crear/${data.decaId}${q}`);
     } catch {
@@ -2437,60 +2469,248 @@ export function CrearWizard({
                 type="checkbox"
                 data-testid="commercial-share-enable"
                 checked={form.commercialShareEnabled === "1"}
-                onChange={(e) => set("commercialShareEnabled")(e.target.checked ? "1" : "")}
+                onChange={(e) => {
+                  set("commercialShareEnabled")(e.target.checked ? "1" : "");
+                  if (e.target.checked) track("availability_started");
+                }}
                 className="mt-0.5 h-4 w-4 shrink-0"
               />
               <span>{t.crear.commercialShare.enable}</span>
             </label>
-            {form.commercialShareEnabled === "1" && (
-              <div className="mt-3 space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block text-sm">
-                    <span className="font-medium">{t.crear.commercialShare.destination}</span>
-                    <input
-                      data-testid="commercial-share-destination"
-                      value={form.commercialShareDestination}
-                      placeholder={form.unloadLocationCity}
-                      onChange={(e) => set("commercialShareDestination")(e.target.value)}
-                      className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    <span className="font-medium">{t.crear.commercialShare.date}</span>
-                    <input
-                      type="date"
-                      data-testid="commercial-share-date"
-                      value={form.commercialShareDate}
-                      placeholder={form.unloadDate}
-                      onChange={(e) => set("commercialShareDate")(e.target.value)}
-                      className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
-                    />
-                  </label>
-                </div>
-                <label className="block text-sm">
-                  <span className="font-medium">{t.crear.commercialShare.channel}</span>
-                  <select
-                    data-testid="commercial-share-channel"
-                    value={form.commercialShareChannel || commercialTreatment?.channel || "email"}
-                    onChange={(e) => set("commercialShareChannel")(e.target.value)}
-                    className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm sm:max-w-xs"
-                  >
-                    <option value="email">{t.crear.commercialShare.channels.email}</option>
-                    <option value="phone">{t.crear.commercialShare.channels.phone}</option>
-                    <option value="both">{t.crear.commercialShare.channels.both}</option>
-                  </select>
-                </label>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  {t.crear.commercialShare.previewTitle} {t.crear.fields.name},{" "}
-                  {t.crear.commercialShare.destination}, {t.crear.commercialShare.date}
-                  {(form.commercialShareChannel || commercialTreatment?.channel || "email") !==
-                    "phone" && `, ${t.panel.privacy.previewFields.contactEmail}`}
-                  {(form.commercialShareChannel || commercialTreatment?.channel || "email") !==
-                    "email" && `, ${t.panel.privacy.previewFields.contactPhone}`}
-                  .
-                </p>
-              </div>
-            )}
+            {form.commercialShareEnabled === "1" &&
+              (() => {
+                // #119 — every shipment's unload city, so a multi-envío DeCA
+                // can name which one is the "descarga final" for
+                // availability purposes only — never touching the DeCA's own
+                // shipment numbering or legal order.
+                const shipmentUnloads = [
+                  form.unloadLocationCity,
+                  ...extraShipments.map((s) => s.unloadLocationCity),
+                ];
+                const finalIdx = Number(form.commercialShareFinalShipmentIndex || 0) || 0;
+                const finalCity = shipmentUnloads[finalIdx] || form.unloadLocationCity;
+                const channel =
+                  form.commercialShareChannel || commercialTreatment?.channel || "email";
+                return (
+                  <div className="mt-3 space-y-3">
+                    <div className="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-xs">
+                      <p className="font-bold">{t.crear.commercialShare.privacyTitle}</p>
+                      <p className="mt-1 text-[var(--color-text-muted)]">
+                        {t.crear.commercialShare.privacyBody}
+                      </p>
+                      <p className="mt-1 text-[var(--color-text-muted)]">
+                        {t.crear.commercialShare.privacyVoluntary}
+                      </p>
+                    </div>
+
+                    {shipmentUnloads.length > 1 && (
+                      <label className="block text-sm">
+                        <span className="font-medium">
+                          {t.crear.commercialShare.finalShipmentLabel}
+                        </span>
+                        <select
+                          data-testid="commercial-share-final-shipment"
+                          value={form.commercialShareFinalShipmentIndex}
+                          onChange={(e) => set("commercialShareFinalShipmentIndex")(e.target.value)}
+                          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                        >
+                          {shipmentUnloads.map((city, i) => (
+                            <option key={i} value={i}>
+                              {t.crear.shipments.heading(i + 1)}
+                              {city ? ` — ${city}` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                          {t.crear.commercialShare.finalShipmentHint}
+                        </span>
+                      </label>
+                    )}
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block text-sm">
+                        <span className="font-medium">{t.crear.commercialShare.destination}</span>
+                        <input
+                          data-testid="commercial-share-destination"
+                          value={form.commercialShareDestination}
+                          placeholder={finalCity}
+                          onChange={(e) => set("commercialShareDestination")(e.target.value)}
+                          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                        />
+                        <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                          {t.crear.commercialShare.destinationHint}
+                        </span>
+                      </label>
+                      <label className="block text-sm">
+                        <span className="font-medium">{t.crear.commercialShare.date}</span>
+                        <input
+                          type="date"
+                          data-testid="commercial-share-date"
+                          value={form.commercialShareDate}
+                          placeholder={form.unloadDate}
+                          onChange={(e) => set("commercialShareDate")(e.target.value)}
+                          className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="block text-sm">
+                      <span className="font-medium">
+                        {t.crear.commercialShare.preferredDestination}
+                      </span>
+                      <input
+                        data-testid="commercial-share-preferred-destination"
+                        value={form.commercialSharePreferredDestination}
+                        onChange={(e) => set("commercialSharePreferredDestination")(e.target.value)}
+                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                      />
+                      <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                        {t.crear.commercialShare.preferredDestinationHint}
+                      </span>
+                    </label>
+
+                    <div>
+                      <p className="text-sm font-medium">
+                        {t.crear.commercialShare.capacityLegend}
+                      </p>
+                      <div className="mt-1.5">
+                        <CapacityModePicker
+                          idPrefix="commercial-share"
+                          value={
+                            form.commercialShareCapacityMode === "partial" ? "partial" : "full"
+                          }
+                          onChange={(m) => {
+                            setForm((f) => ({
+                              ...f,
+                              commercialShareCapacityMode: m,
+                              ...(m === "full"
+                                ? {
+                                    commercialShareLinearMeters: "",
+                                    commercialShareMaxWeightKg: "",
+                                  }
+                                : {}),
+                            }));
+                            track(
+                              m === "full"
+                                ? "availability_full_truck"
+                                : "availability_partial_load",
+                            );
+                          }}
+                          fullLabel={t.crear.commercialShare.capacityFull}
+                          fullHint={t.crear.commercialShare.capacityFullHint}
+                          partialLabel={t.crear.commercialShare.capacityPartial}
+                          partialHint={t.crear.commercialShare.capacityPartialHint}
+                        />
+                      </div>
+                    </div>
+                    {form.commercialShareCapacityMode === "partial" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="block text-sm">
+                          <span className="font-medium">
+                            {t.crear.commercialShare.linearMeters}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            data-testid="commercial-share-linear-meters"
+                            value={form.commercialShareLinearMeters}
+                            onChange={(e) => set("commercialShareLinearMeters")(e.target.value)}
+                            className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                          />
+                        </label>
+                        <label className="block text-sm">
+                          <span className="font-medium">{t.crear.commercialShare.maxWeightKg}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            data-testid="commercial-share-max-weight"
+                            value={form.commercialShareMaxWeightKg}
+                            onChange={(e) => set("commercialShareMaxWeightKg")(e.target.value)}
+                            className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                          />
+                        </label>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-sm font-medium">
+                        {t.crear.commercialShare.vehicleTypeLegend}
+                      </p>
+                      <div className="mt-1.5">
+                        <VehicleTypePicker
+                          idPrefix="commercial-share"
+                          value={
+                            form.commercialShareVehicleType === "lona" ||
+                            form.commercialShareVehicleType === "frigorifico"
+                              ? form.commercialShareVehicleType
+                              : ""
+                          }
+                          onChange={(v) => {
+                            set("commercialShareVehicleType")(v);
+                            if (v) track("availability_vehicle_type_set");
+                          }}
+                          lonaLabel={t.crear.commercialShare.vehicleTypeLona}
+                          frigorificoLabel={t.crear.commercialShare.vehicleTypeFrigorifico}
+                        />
+                      </div>
+                    </div>
+
+                    <label className="block text-sm">
+                      <span className="font-medium">{t.crear.commercialShare.channel}</span>
+                      <select
+                        data-testid="commercial-share-channel"
+                        value={channel}
+                        onChange={(e) => set("commercialShareChannel")(e.target.value)}
+                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm sm:max-w-xs"
+                      >
+                        <option value="email">{t.crear.commercialShare.channels.email}</option>
+                        <option value="phone">{t.crear.commercialShare.channels.phone}</option>
+                        <option value="both">{t.crear.commercialShare.channels.both}</option>
+                      </select>
+                    </label>
+
+                    <p
+                      data-testid="commercial-share-summary"
+                      className="text-xs text-[var(--color-text-muted)]"
+                    >
+                      {[
+                        form.commercialShareDestination || finalCity,
+                        form.commercialShareDate,
+                        form.commercialShareCapacityMode === "partial"
+                          ? t.crear.commercialShare.capacityPartial
+                          : t.crear.commercialShare.capacityFull,
+                        form.commercialShareCapacityMode === "partial" &&
+                        form.commercialShareLinearMeters
+                          ? `${form.commercialShareLinearMeters} m`
+                          : "",
+                        form.commercialShareCapacityMode === "partial" &&
+                        form.commercialShareMaxWeightKg
+                          ? `${form.commercialShareMaxWeightKg} kg`
+                          : "",
+                        form.commercialShareVehicleType === "lona"
+                          ? t.crear.commercialShare.vehicleTypeLona
+                          : form.commercialShareVehicleType === "frigorifico"
+                            ? t.crear.commercialShare.vehicleTypeFrigorifico
+                            : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") +
+                        (form.commercialSharePreferredDestination
+                          ? ` → ${form.commercialSharePreferredDestination}`
+                          : "")}
+                    </p>
+
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {t.crear.commercialShare.previewTitle} {t.crear.fields.name},{" "}
+                      {t.crear.commercialShare.destination}, {t.crear.commercialShare.date}
+                      {channel !== "phone" && `, ${t.panel.privacy.previewFields.contactEmail}`}
+                      {channel !== "email" && `, ${t.panel.privacy.previewFields.contactPhone}`}.
+                    </p>
+                  </div>
+                );
+              })()}
             <Link
               href="/panel/privacidad"
               className="mt-3 inline-block text-xs font-medium text-[var(--color-primary)]"

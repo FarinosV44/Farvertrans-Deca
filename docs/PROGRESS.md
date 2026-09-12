@@ -45,8 +45,8 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
-- **D-215 — I-122: Superadmin can correct a company's razón social/CIF-NIF safely, this session
-  (2026-09-12). Full detail in `docs/decisions.md` D-215.** Extended the existing #62 ficha editor
+- **D-216 — I-122: Superadmin can correct a company's razón social/CIF-NIF safely, this session
+  (2026-09-12). Full detail in `docs/decisions.md` D-216.** Extended the existing #62 ficha editor
   rather than building a new tool: added a pre-save duplicate-CIF/NIF warning (never a hard block,
   matching D-162's existing philosophy), a real old→new audit trail (the DB column existed but was
   never read/written for this action), and client-side confirm-on-NIF-change + Cancel. Found and
@@ -60,18 +60,52 @@
   this session (2026-09-12). Full detail in `docs/decisions.md` D-214.** Worked on its own branch
   `feat/112-plus-button-shipments`, PR #120 into `develop`, per the user's explicit "separate
   branch/PR per issue, do not merge" instruction — held open, CI green, until the user's later
-  explicit instruction this same session to merge and push to `main` (see D-216). No data-model or
-  migration change (the existing `DeCA 1─N shipments` JSON model already matched). Wizard rewrite:
-  no toggle, `+` icon buttons beside "Lugar de carga"/"Lugar de descarga" (shipment 1 and every
-  extra envío), inheriting the opposite side with zero cartesian-product risk (one press = exactly
-  one new envío). Vehicle now strictly DeCA-level (client no longer sends a per-shipment override;
-  PDF shows it once when multi). Weight's bare-number default changed from tonnes to **kg**
-  (trailing request, same PR) — de-risked by confirming zero e2e fixtures relied on the old
-  default. Real mid-build fix: the extra-shipment render was gated to the wrong step (`step===2`,
-  should be `step===1` where the `+` buttons actually are) — moved so pressing `+` shows the new
-  block immediately. **Gate: tsc/eslint/prettier clean throughout, 444/444 unit, 9/9 new e2e + 4/4
-  + 29/29 regression green** (one contention flake under 5-file parallel load, confirmed clean in
-  isolation and on repeat). Pre-implementation comment posted on #112 per its own requirement.
+  explicit instruction this same session to merge both #112 and #119 into `develop`/`main` (see
+  D-218). No data-model or migration change (the existing `DeCA 1─N shipments` JSON model already
+  matched). Wizard rewrite: no toggle, `+` icon buttons beside "Lugar de carga"/"Lugar de descarga"
+  (shipment 1 and every extra envío), inheriting the opposite side with zero cartesian-product risk
+  (one press = exactly one new envío). Vehicle now strictly DeCA-level (client no longer sends a
+  per-shipment override; PDF shows it once when multi). Weight's bare-number default changed from
+  tonnes to **kg** (trailing request, same PR) — de-risked by confirming zero e2e fixtures relied on
+  the old default. Real mid-build fix: the extra-shipment render was gated to the wrong step
+  (`step===2`, should be `step===1` where the `+` buttons actually are) — moved so pressing `+`
+  shows the new block immediately. **Gate: tsc/eslint/prettier clean throughout, 444/444 unit, 9/9
+  new e2e + 4/4 + 29/29 regression green** (one contention flake under 5-file parallel load,
+  confirmed clean in isolation and on repeat). Pre-implementation comment posted on #112 per its own
+  requirement.
+- **D-217 — I-119: DECA Conecta expanded (zona/destino preferente, capacidad, tipo, edit, v1
+  matching), this session (2026-09-12). Full detail in `docs/decisions.md` D-217.** Worked on its own
+  branch `feat/119-conecta-availability` (off `develop`), per the same "separate branch/PR per
+  issue, don't merge" instruction as #112 — held open, CI green, until the user's later explicit
+  instruction this same session to merge both #112 and #119 into `develop`/`main` (see D-218).
+  Additive-only Prisma migration (6 nullable/defaulted columns on `DecaAvailabilityShare`, RLS
+  already enabled on the table from its original migration — adding columns needs no re-enrolling).
+  `lib/commercial/availability.ts` rewritten: `DecaFacts` now carries every shipment so a multi-envío
+  DeCA (#112) can name its "descarga final" for Conecta purposes only; "Grupaje" requires positive
+  metros+kg or the whole record is rejected; new `expiryStatus()` (computed at read time, never
+  stored) and `updateAvailabilityShare()` (first real edit capability); new
+  `findCompatibleAvailabilities()` — a v1 matching proposal since no demand-side inventory exists
+  yet, cross-matching against other companies' own pending availability records, anonymised. Wizard
+  section redesigned (zona rename, destino preferente, camión completo/grupaje + LONA/FRIGORÍFICO
+  accessible card pickers — shared between the wizard and the new edit UI — 3 new icons, live
+  summary line, privacy copy). **Gate: tsc/eslint/prettier clean, 458/458 unit, 15/15 new e2e +
+  23/23 `commercial-consent` regression + 13/13 broader sweep green.** Pre-implementation comment
+  posted on #119 per its own requirement.
+- **D-218 — user explicitly instructed merging #112 and #119 into `develop`/`main` this session
+  (2026-09-12), overriding the earlier "leave both PRs open, don't merge" instruction.** Merged
+  `feat/112-plus-button-shipments` first (clean, no overlap with #122's direct-to-develop work),
+  then `feat/119-conecta-availability` on top — the real conflict, since #119 was branched before
+  #112 landed and both independently rewrote `components/deca/wizard.tsx`'s multi-shipment section;
+  resolved by hand, keeping #112's `+`-button/no-toggle architecture and layering #119's
+  commercial-share (zona/destino preferente/capacidad/tipo) fields on top unchanged. `docs/
+  decisions.md`/`docs/PROGRESS.md` D-number collisions across the three branches (#112, #119, #122
+  each independently used D-214/D-215 relative to their own branch point) resolved by renumbering to
+  D-214/D-216/D-217 in final chronological-ish order, D-218 for this merge decision itself. Applied
+  the pending #119 migration (`20260912120000_availability_capacity_type`) to the dev DB —
+  purely additive, RLS unaffected (verified: the table's original migration already enables RLS with
+  no per-column policies, so new nullable columns need nothing extra). Full gate re-run after both
+  merges: tsc/eslint/prettier clean, 444/444 unit (post-#112), full sweep re-verified after #119
+  (see the next test-point entries), then fast-forward merged `develop` into `main` and pushed both.
 - **D-213 — I-118: branded incident page for 5xx / server-render errors, this session
   (2026-09-12), immediately after D-212. Full detail in `docs/decisions.md` D-213.** New
   `components/errors/incident-page.tsx` (shared branded screen, reuses the existing `Wordmark`/

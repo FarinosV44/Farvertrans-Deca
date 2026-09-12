@@ -790,10 +790,14 @@ anonymize-in-place (no hard delete, D-067).
   PDF (vehículo mostrado una sola vez con varios envíos). Además, petición final del propio usuario
   en el mismo mensaje: el peso por defecto pasa de toneladas a **kg**. Comentario previo publicado
   en el issue explicando modelo/migración/anti-cartesiano/PDF/archivos, según lo pedido. Trabajado
-  en rama propia `feat/112-plus-button-shipments`, PR independiente contra `develop`, sin fusionar
-  — instrucción explícita del usuario para esta tarea (no seguir el flujo habitual de esta sesión de
-  empujar directamente a `develop`/`main`). Gate completo en verde (ver D-214). **Pendiente:** abrir
-  el PR con capturas desktop/móvil; después, issue #119 en su propia rama.
+  en rama propia `feat/112-plus-button-shipments`, PR #120 independiente contra `develop` (sin
+  fusionar en su momento, por instrucción explícita del usuario) — CI verde. Gate completo en verde
+  (ver D-214).
+- **2026-09-12 — el usuario instruyó explícitamente fusionar #112 (junto con #119) en `develop` y
+  `main` (ver D-218), sustituyendo la instrucción anterior de dejarlo solo en PR.** Fusionado en
+  `develop`, sin conflictos relevantes fuera de los documentos; después fusionado (fast-forward) y
+  empujado a `main`. **I-112 completo, en producción (`main`), comentado en el issue, dejado
+  ABIERTO para confirmación del usuario.**
 
 ## I-113 — Rediseñar Datos habituales y adaptarlo a DeCA con múltiples envíos
 - 2026-09-11. Issue del usuario, ya existía en el forge (18 secciones: rediseño visual completo +
@@ -1002,6 +1006,41 @@ anonymize-in-place (no hard delete, D-067).
 - Gate: tsc/eslint/prettier limpios, 444/444 unitarios, 3/3 e2e nuevos
   (`error-pages.spec.ts`) + 30/30 de regresión (`workspace.spec.ts` + `seo-regression.spec.ts`) en
   verde. **I-118 completo, comentado en el issue, dejado ABIERTO para confirmación del usuario.**
+
+## I-119 — [P1 Producto] Mejorar DECA Conecta: disponibilidad, destino preferente, capacidad, tipo y privacidad
+- 2026-09-12. Issue ya existente en el backlog del usuario. Trabajado esta sesión (D-217) en rama
+  propia `feat/119-conecta-availability` (fuera de `develop`, sin fusionar), según la instrucción
+  explícita del usuario de un PR independiente por issue. Comentario previo publicado en el issue
+  con modelo actual, datos que salen del DeCA, garantías de privacidad, propuesta de matching,
+  migración y componentes reutilizables, según lo pedido.
+- **HECHA, PR independiente contra `develop`, sin fusionar.** Migración aditiva (6 columnas nuevas,
+  todas opcionales o con valor por defecto, en `deca_availability_share`). `lib/commercial/
+  availability.ts` reescrito: ahora recibe TODOS los envíos del DeCA (no solo el primero), para que
+  un DeCA con varios envíos (#112) pueda indicar cuál es la "descarga final" solo a efectos de
+  Conecta — verificado que el orden real de los envíos en el documento no se altera. "Grupaje"
+  exige metros y kg positivos o el registro entero se rechaza (nunca un dato a medias). Nueva
+  `expiryStatus()` — "caducada" se calcula al leer, nunca se guarda — y `updateAvailabilityShare()`
+  (antes solo existía "retirar", ahora también "editar"). Nueva `findCompatibleAvailabilities()` —
+  propuesta v1 de matching, ya que no existe ningún inventario de ofertas: cruza zona/destino
+  preferente/fecha/tipo/capacidad contra las disponibilidades `pending` de OTRAS empresas, siempre
+  de forma anónima (nunca nombre de empresa ni contacto).
+- Wizard: "Zona de disponibilidad" (renombrado), selector de "descarga final" solo con varios
+  envíos, "Destino preferente", selección visual Camión completo/Grupaje y LONA/FRIGORÍFICO
+  (componente compartido con la edición, 3 iconos nuevos), resumen en vivo, aviso de privacidad.
+  `AvailabilityNotice` gana "Editar" (antes solo "Retirar") y un estado "caducado" propio. Panel de
+  superadmin ampliado con las columnas nuevas, solo lectura.
+- Gate: tsc/eslint/prettier limpios, 458/458 unitarios, 15/15 e2e nuevos
+  (`commercial-availability.spec.ts`) + 23/23 de regresión (`commercial-consent.spec.ts`) + 13/13
+  de barrido más amplio en verde.
+- **2026-09-12 — el usuario instruyó explícitamente aplicar la migración pendiente y fusionar #119
+  (junto con #112) en `develop` y `main` (ver D-218).** El conflicto real fue en
+  `components/deca/wizard.tsx` — esta rama se creó antes de que #112 se fusionara, y ambas
+  reescribieron la sección de envíos múltiples de forma independiente; resuelto a mano conservando
+  la arquitectura de botones `+`/sin selector de #112 y añadiendo encima los campos de Conecta de
+  #119 sin pérdida de ninguno de los dos. Migración `20260912120000_availability_capacity_type`
+  aplicada — puramente aditiva, RLS ya estaba activado en la tabla desde su migración original (no
+  necesita nuevas políticas). Gate completo re-ejecutado tras la fusión. **I-119 completo, en
+  producción (`main`), comentado en el issue, dejado ABIERTO para confirmación del usuario.**
 
 - 2026-09-10. Abierto por Keel antes de empezar (política "Issue capture: on"). Un issue paraguas,
   4 partes, un sprint cada una. Plan: `~/.claude/plans/stateful-puzzling-sunrise.md`.

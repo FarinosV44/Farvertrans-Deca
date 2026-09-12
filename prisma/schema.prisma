@@ -144,7 +144,8 @@ model CommercialConsentEvent {
   companyId    String                    @map("company_id")
   actorUserId  String?                   @map("actor_user_id")
   /// mode_set | channel_set | per_deca_enabled | per_deca_disabled |
-  /// global_revoked | availability_prepared | availability_withdrawn
+  /// global_revoked | availability_prepared | availability_withdrawn |
+  /// availability_updated
   kind         String
   decaId       String?                   @map("deca_id")
   mode         CommercialConsentMode?
@@ -162,27 +163,55 @@ model CommercialConsentEvent {
 }
 
 /// The "ficha de disponibilidad comercial" prepared for a single DeCA when the
-/// operator has authorised sharing for that porte (#84). Holds ONLY the fields
-/// the operator explicitly authorised — the table has no column for origin,
-/// cargador identity, load address, goods, weight, price, plates, driver, token
-/// or public URL, so those data can never be shared through this path. Nothing
-/// is transmitted to any third party yet (no recipient side exists); a row sits
-/// at `pending` until withdrawn.
+/// operator has authorised sharing for that porte (#84, expanded #119). Holds
+/// ONLY the fields the operator explicitly authorised — the table has no
+/// column for origin, cargador identity, load address, goods, weight, price,
+/// plates, driver, token or public URL, so those data can never be shared
+/// through this path. Nothing is transmitted to any third party yet (no
+/// recipient side exists); a row sits at `pending` until withdrawn.
+///
+/// #119 — `destination` stays the "zona de disponibilidad" (renamed only in
+/// the UI, not the column, to avoid a risky rename); `preferredDestination`,
+/// `capacityMode`/`linearMeters`/`maxWeightKg`, and `vehicleType` are all NEW,
+/// additive, nullable columns — every field the operator explicitly
+/// volunteers to receive compatible offers, never derived from DeCA content.
+/// `finalShipmentIndex` records which shipment's unload seeded the zona/fecha
+/// defaults for a multi-envío DeCA — purely a UI convenience at creation
+/// time, never altering the DeCA's own shipment numbering or legal order.
+/// "Expired" is deliberately NOT a stored status — it is computed at read
+/// time from `availabilityDate` (see `expiryStatus()` in
+/// `lib/commercial/availability.ts`), so no scheduled job was invented for a
+/// requirement this issue doesn't ask for.
 model DecaAvailabilityShare {
-  id               String                   @id @default(cuid())
-  decaId           String                   @unique @map("deca_id")
-  companyId        String                   @map("company_id")
-  carrierName      String                   @map("carrier_name")
-  destination      String
-  availabilityDate DateTime                 @map("availability_date")
-  channel          CommercialContactChannel
-  contactEmail     String?                  @map("contact_email")
-  contactPhone     String?                  @map("contact_phone")
-  legalVersion     String                   @map("legal_version")
+  id                   String                   @id @default(cuid())
+  decaId               String                   @unique @map("deca_id")
+  companyId            String                   @map("company_id")
+  carrierName          String                   @map("carrier_name")
+  destination          String
+  availabilityDate     DateTime                 @map("availability_date")
+  channel              CommercialContactChannel
+  contactEmail         String?                  @map("contact_email")
+  contactPhone         String?                  @map("contact_phone")
+  legalVersion         String                   @map("legal_version")
   /// pending | withdrawn
-  status           String                   @default("pending")
-  preparedAt       DateTime                 @default(now()) @map("prepared_at")
-  withdrawnAt      DateTime?                @map("withdrawn_at")
+  status               String                   @default("pending")
+  preparedAt           DateTime                 @default(now()) @map("prepared_at")
+  withdrawnAt          DateTime?                @map("withdrawn_at")
+  /// #119 — voluntary next-load preference, independent of the DeCA's cargo.
+  preferredDestination String?                  @map("preferred_destination")
+  /// #119 — "full" | "partial". Bare string (not an enum), matching `status`'s
+  /// own convention, so a future value never needs a migration.
+  capacityMode         String                   @default("full") @map("capacity_mode")
+  /// #119 — required together with maxWeightKg when capacityMode = "partial";
+  /// both null when "full" (never a stale value left over from a mode switch).
+  linearMeters         Float?                   @map("linear_meters")
+  maxWeightKg          Int?                     @map("max_weight_kg")
+  /// #119 — "lona" | "frigorifico" | null (unspecified). Bare string, same
+  /// extensibility reasoning as capacityMode.
+  vehicleType          String?                  @map("vehicle_type")
+  /// #119 — which shipment (0-based) of a multi-envío DeCA supplied the zona/
+  /// fecha defaults; null for a single-shipment DeCA (shipment 0, implicitly).
+  finalShipmentIndex   Int?                     @map("final_shipment_index")
 
   deca    Deca    @relation(fields: [decaId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)

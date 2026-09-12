@@ -102,7 +102,13 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
               decaId={doc.id}
               status={availability.status}
               destination={availability.destination}
-              canWithdraw={user.companyRole === "owner"}
+              availabilityDate={availability.availabilityDate.toISOString().slice(0, 10)}
+              preferredDestination={availability.preferredDestination}
+              capacityMode={availability.capacityMode}
+              linearMeters={availability.linearMeters}
+              maxWeightKg={availability.maxWeightKg}
+              vehicleType={availability.vehicleType}
+              canManage={user.companyRole === "owner"}
             />
           )}
           <QrCard qrDataUri={qr} publicUrl={c.publicUrl} versionNo={c.versionNo} />

@@ -7613,7 +7613,7 @@ change per trigger: `branches: [main]` → `branches: [main, develop]` for both 
 integration branch. Committed directly to `develop` (a repo-config change, not feature work bound
 for either PR) so both open/future PRs into `develop` get real CI.
 
-## D-215 — I-122: Superadmin can correct a company's razón social / CIF-NIF safely (2026-09-12)
+## D-216 — I-122: Superadmin can correct a company's razón social / CIF-NIF safely (2026-09-12)
 
 Direct user request (mid-turn, "when you finish [#112/#119]"), opened as issue #122 per this
 project's "Issue capture: on" policy — one process deviation worth recording: the issue was opened
@@ -7669,3 +7669,163 @@ test) + 19/19 broader admin/2FA sweep green.
 
 **Next:** no issue currently queued beyond #122, which is fixed and about to be commented on
 GitHub — left OPEN for the user's own confirmation/close, per this project's established practice.
+
+## D-217 — I-119: DECA Conecta expanded — zona/destino preferente, capacidad, tipo, edit, v1 matching (2026-09-12)
+
+**Investigation before touching code (posted as the issue's own required pre-implementation
+comment):** DECA Conecta (#84) today is a deliberately minimal `DecaAvailabilityShare` — one row
+per DeCA, carrying only carrier name, a free-text destination (defaulting to shipment 1's unload
+city), an availability date, and the authorised contact channel. `lib/admin/commercial.ts`'s own
+comment already says "No matching, no export" — confirming no matching engine or demand-side
+inventory exists anywhere in the codebase yet. This issue turns it into a richer, still
+privacy-first signal without inventing infrastructure the issue didn't ask for.
+
+**Prisma (additive only):** `DecaAvailabilityShare` gains 6 nullable/defaulted columns —
+`preferred_destination`, `capacity_mode` (default `"full"`), `linear_meters`, `max_weight_kg`,
+`vehicle_type`, `final_shipment_index` — one hand-written migration
+(`20260912120000_availability_capacity_type`), applied directly to the dev DB. `capacity_mode`/
+`vehicle_type` are bare strings, not Prisma enums (matching the existing `status` column's own
+convention), so a future value never needs a migration — issue §4's own "dejar el modelo
+ampliable" requirement, satisfied for free.
+
+**`lib/commercial/availability.ts` — the core rewrite:**
+- `DecaFacts.unloadLocation`/`unloadDate` (a single shipment) became `shipments: {...}[]` — the
+  caller (`app/api/deca/route.ts`) now passes EVERY resolved shipment, and a new
+  `finalShipmentIndex` override picks which one seeds the zona/fecha defaults (out-of-range or
+  absent safely falls back to shipment 0 — never throws). This is what lets a multi-envío DeCA
+  (#112) name its "descarga final" for Conecta purposes ONLY, never touching the DeCA's own
+  shipment order or numbering — verified end to end (a 2-shipment DeCA, picking shipment 2, then
+  reading `dataJson.shipments` straight from the DB to confirm the original order survived).
+- `buildAvailabilityPayload()` extended with the 5 new voluntary fields, all optional except
+  `capacityMode` (defaults `"full"`). `"partial"` (Grupaje) REQUIRES both `linearMeters` and
+  `maxWeightKg` to be positive numbers, else the whole payload is rejected (`null`) — same
+  never-fabricate discipline as `sumWeights()` elsewhere in this codebase. `"full"` never carries
+  either field even if stray values are passed in.
+- New `expiryStatus()` (now exported, reused by `lib/admin/commercial.ts` too): `"expired"` is
+  computed at READ time from `availabilityDate < today`, NEVER stored — no scheduled job invented
+  for a requirement the issue explicitly didn't ask for. A `withdrawn` record stays `withdrawn`
+  regardless of date (a stronger, explicit signal).
+- New `updateAvailabilityShare()` — the first real "editar" capability (before this issue, only
+  "retirar" existed). Same validation discipline as creation; re-checks live consent; audits via
+  a new `CommercialConsentEvent.kind = "availability_updated"`.
+- New `findCompatibleAvailabilities()` — the issue's requested "propuesta de matching": since no
+  demand-side/loads inventory exists, this cross-matches one carrier's zona/destino-preferente/
+  fecha/tipo/capacidad against OTHER companies' own pending, non-expired availability records, in
+  both directions (my zona ↔ their destino preferente). Pure, dependency-free string matching (no
+  geocoding — explicitly out of scope), a ±3-day date window, and a documented, real limitation for
+  "partial ↔ partial" pairing (neither side states an explicit REQUIRED capacity in this v1, so a
+  pairing only succeeds when both sides have actually declared usable capacity). Returns an
+  anonymised candidate shape ONLY — zone/preferredDestination/date/type/capacity, never identity —
+  asserted directly by a unit test enumerating the exact key set.
+
+**Wizard (`components/deca/wizard.tsx`) — `commercial-share` section redesign:** renamed
+"Destino o zona de disponibilidad" → "Zona de disponibilidad" with its helper text; a new
+"¿Cuál es la descarga final?" `<select>` appears ONLY when the DeCA has more than one shipment;
+new "Destino preferente" free-text field; new `CapacityModePicker`/`VehicleTypePicker` — extracted
+into a shared `components/deca/capacity-vehicle-picker.tsx` component (used by both the wizard and
+`AvailabilityNotice`'s edit form, so the visual language never drifts between creation and edit) —
+accessible card-based radiogroups per the issue's own "no un select genérico" instruction, backed
+by 3 new icons in `components/panel/icons.tsx` (`BoxIcon` for Grupaje, `TarpIcon` for LONA,
+`SnowflakeIcon` for FRIGORÍFICO — nothing suitable existed). A live summary line renders the
+issue's own suggested format ("Madrid · 12 sep · Grupaje · 4 m · 8.000 kg · Lona → preferencia
+Valencia"). The two required privacy paragraphs (issue's own suggested wording) show right under
+the enable checkbox.
+
+**`AvailabilityNotice` (`components/deca/availability-notice.tsx`):** gained inline "Editar" (the
+same field set, never the DeCA's own legal fields) alongside the existing "Retirar"; a distinct
+neutral "caducado" state (via `expiryStatus()`) that shows no actions, since an expired record
+still exists but nothing more should happen to it automatically.
+
+**Admin (`app/admin/(protected)/tratamiento-comercial/page.tsx` +
+`lib/admin/commercial.ts`):** the read-only listing gained the new columns (destino preferente,
+capacidad, tipo) and now shows the COMPUTED `"expired"` status via the same `expiryStatus()` — no
+new write path, no export, matching the issue's own access-control caution.
+
+**Analytics (`lib/analytics/events.ts`):** 7 new events wired into the actual UI paths
+(`availability_started`/`_full_truck`/`_partial_load`/`_vehicle_type_set`/`_published`/
+`_cancelled`/`_expired_viewed`). Deliberately did NOT add "offer sent/accepted" events from the
+issue's own §9 list — no real offer-sending flow exists yet to instrument honestly.
+
+**i18n:** all new `commercialShare.*` keys (zona/destino preferente/capacity/vehicle-type labels
+and hints, the two privacy paragraphs) added across all 9 dictionaries, same mechanical
+`Messages = typeof es`/`satisfies Messages` pattern as D-213/D-214.
+
+**Real bug found and fixed while writing the e2e coverage:** every multi-envío test initially
+failed generation with "Indica la matrícula de la tractora" on the extra envío — `emptyExtraShipment(form)`
+captures the DeCA-level tractor-plate default at the MOMENT the toggle is checked, and the test
+originally checked the toggle before filling the vehicle/goods step. Fixed by reordering the test
+to fill vehicle/goods first (matching the one other spec in this codebase that already exercises
+the multi-shipment toggle, `historico-redesign.spec.ts`) — not a product bug, a test-authoring one,
+but worth recording since it is exactly the kind of ordering trap the next multi-envío test in this
+codebase will hit again otherwise.
+
+**Tests:** `tests/unit/commercial-availability.test.ts` extended (25 tests: the existing #84
+key-set/mode coverage plus #119's finalShipmentIndex resolution, capacity validation, and a full
+`findCompatibleAvailabilities` suite). New `tests/e2e/commercial-availability.spec.ts` (15 tests:
+zona rename/autofill + privacy copy, destino preferente, capacity toggle + validation + field
+clearing, vehicle type, no-excluded-data, multi-envío final-shipment selection with a DB-level
+order-preservation check, edit, PDF/version untouched by an edit, expiry display, cross-company
+isolation, responsive 320–1440). The pre-existing `commercial-consent.spec.ts` (23 tests, the #84
+foundation) re-run in full and confirmed unaffected.
+
+**Gate:** `npx tsc --noEmit` clean throughout, eslint/prettier clean, 458/458 unit, 15/15 new +
+23/23 `commercial-consent` regression + 13/13 broader sweep (`workspace.spec.ts` incl. the a11y
+scan, `admin.spec.ts`) e2e green.
+
+**Next:** commit to `feat/119-conecta-availability`, push, open a PR into `develop` (screenshots +
+PR body), per the same "separate branch/PR per issue, don't merge" instruction as #112. Both #112
+and #119 are now complete on their own branches — nothing else queued.
+
+## D-218 — Merge #112 (PR #120) and #119 (PR #121) into `develop`/`main`, migration applied (2026-09-12)
+
+The user explicitly instructed merging both open PRs into `develop` and pushing to `main` this same
+session — overriding the earlier "leave both PRs open, don't merge" instruction for #112/#119. Asked
+first because `git merge` itself was blocked by the auto-mode permission classifier ("Modify Shared
+Resources"); the user confirmed and the merge proceeded with approval.
+
+**Merge order and the real conflict:** merged `feat/112-plus-button-shipments` first — clean, no
+overlap with #122's direct-to-`develop` work (only `docs/05-test-points.md`/`docs/PROGRESS.md`
+conflicted, both pure appends, resolved by keeping both sides). Then merged
+`feat/119-conecta-availability` on top — the one real code conflict, since #119 was branched before
+#112 landed and both independently rewrote `components/deca/wizard.tsx`'s multi-shipment section.
+The actual conflict markers were narrow (a 2-line import-statement collision); everywhere else git's
+merge succeeded cleanly because the two features touch genuinely different parts of the file (#112:
+the shipment-array/`+`-button mechanics; #119: the `commercial-share` fieldset) and share the same
+field-naming convention (`extraShipments[i].unloadLocationCity`, etc.) — verified by reading the
+merged file directly, not just trusting a clean `git merge` exit code.
+
+**D-number collisions across three independently-branched sessions of work:** #112, #119 and #122
+each used D-214/D-215 relative to their own branch point (recorded in D-214/D-216/D-217 above).
+Renumbered on merge to a single consistent sequence: D-214 (I-112) → D-215 (CI workflow) → D-216
+(I-122) → D-217 (I-119) → D-218 (this merge decision), propagated across `docs/decisions.md`,
+`docs/PROGRESS.md`, `docs/05-test-points.md` and `docs/issues.md`.
+
+**Migration:** `20260912120000_availability_capacity_type` (additive-only `ALTER TABLE` on
+`deca_availability_share`) was already applied to the dev DB during #119's own development;
+`npx prisma migrate status` confirmed "up to date" post-merge, `npx prisma generate` re-run for the
+merged schema. RLS unaffected — the table's original migration already enables row-level security
+with no per-column policies, so new nullable columns need no re-enrolling (verified by reading both
+migrations directly, not assumed from the branch's own comment).
+
+**Two real test bugs found and fixed while re-running the full suite post-merge** (neither a product
+regression — both pre-existing test-authoring gaps exposed by the merge):
+1. `commercial-availability.spec.ts`'s "descarga final" test still drove the OLD toggle-based
+   multi-shipment UI (`multi-shipment-toggle`), removed by #112. Fixed by creating the extra envío
+   through #112's `add-unload-1` button instead — the extra-shipment block lives on the route step,
+   so the button click has to happen before `fillRoute`'s own trailing "wizard-next", not after.
+2. `admin-company-edit.spec.ts`'s auditoría test asserted on the literal (non-unique) company name
+   "Visible En Auditoría SL"; re-running the same suite against the same persistent dev DB
+   accumulates multiple rows sharing that name, making a plain `getByText` match ambiguous. Fixed by
+   scoping the assertion to the row matching the test's own unique `newNif` instead.
+
+**Gate:** `npx tsc --noEmit` clean, eslint/prettier clean on every changed file, 458/458 unit,
+97/97 e2e across the full regression sweep (`commercial-availability.spec.ts`,
+`deca-multi-shipment.spec.ts`, `admin-company-edit.spec.ts`, `admin-account-lifecycle.spec.ts`,
+`commercial-consent.spec.ts`, `historico-redesign.spec.ts`, `workspace.spec.ts` incl. a11y,
+`admin.spec.ts`, `admin-2fa.spec.ts`).
+
+**Git flow:** merged and pushed `develop`, then fast-forward merged `develop` into `main` and pushed
+`main` — all three issues (#112, #119, #122) are now live on `main`.
+
+**Next:** comment on issues #112 and #119 noting they are merged and live, leaving both OPEN for the
+user's own confirmation, matching the established practice for #118/#122.

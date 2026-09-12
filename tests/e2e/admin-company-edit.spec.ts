@@ -254,8 +254,12 @@ test("the auditoría page shows the old→new detail for a company edit", async 
   const { page, close } = await internalPage(browser);
   try {
     await page.goto("/admin/auditoria?action=admin_edited_company");
-    await expect(page.getByText("Visible En Auditoría SL")).toBeVisible();
-    await expect(page.getByText(newNif)).toBeVisible();
+    // `newNif` is unique per run (unlike the hardcoded company name, which
+    // this same suite re-inserts on every rerun against a persistent dev
+    // DB) — anchor on it so the assertion doesn't collide with an older row.
+    const row = page.getByRole("row", { name: new RegExp(newNif) });
+    await expect(row).toBeVisible();
+    await expect(row).toContainText("Visible En Auditoría SL");
   } finally {
     await close();
   }

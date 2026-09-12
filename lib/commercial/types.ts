@@ -7,6 +7,13 @@
 export type CommercialConsentMode = "none" | "per_deca" | "all";
 export type CommercialContactChannel = "email" | "phone" | "both";
 
+/** #119 — "full" (Camión completo) or "partial" (Grupaje). A bare string type
+ *  (not a Prisma enum) so a future value never needs a migration. */
+export type CapacityMode = "full" | "partial";
+/** #119 — "lona" or "frigorífico". Deliberately extensible: the issue asks to
+ *  leave room for more types without showing options nobody requested yet. */
+export type VehicleType = "lona" | "frigorifico";
+
 export type CommercialTreatmentState = {
   mode: CommercialConsentMode;
   channel: CommercialContactChannel | null;
@@ -18,16 +25,33 @@ export type CommercialTreatmentState = {
   updatedAt: Date | null;
 };
 
-/** The DeCA fields that a given channel selection would communicate (#84). */
+/** The DeCA fields that a given channel selection would communicate (#84),
+ *  plus the voluntary next-load preference fields added by #119 — these are
+ *  never derived from the DeCA and are shared whenever the record exists
+ *  (they aren't gated by the contact channel like email/phone are). */
 export type SharedFieldKey =
   | "carrierName"
   | "destination"
   | "availabilityDate"
   | "contactEmail"
-  | "contactPhone";
+  | "contactPhone"
+  | "preferredDestination"
+  | "capacityMode"
+  | "linearMeters"
+  | "maxWeightKg"
+  | "vehicleType";
 
 export function sharedFieldKeys(channel: CommercialContactChannel | null): SharedFieldKey[] {
-  const keys: SharedFieldKey[] = ["carrierName", "destination", "availabilityDate"];
+  const keys: SharedFieldKey[] = [
+    "carrierName",
+    "destination",
+    "availabilityDate",
+    "preferredDestination",
+    "capacityMode",
+    "linearMeters",
+    "maxWeightKg",
+    "vehicleType",
+  ];
   if (channel === "email" || channel === "both") keys.push("contactEmail");
   if (channel === "phone" || channel === "both") keys.push("contactPhone");
   return keys;
