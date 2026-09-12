@@ -54,26 +54,21 @@ async function createMultiShipmentDeca(page: Page) {
   await page.fill("#unloadLocationPostalCode", "28028");
   await page.fill("#unloadLocationCity", "Madrid");
   await page.fill("#unloadDate", "2026-10-06");
-  await page.getByTestId("wizard-next").click();
 
-  await page.fill("#goods", "Palés de cerámica");
-  await page.fill("#weight", "12000 kg");
-  await page.fill("#tractorPlate", "1234 BCD");
-
-  await page.getByTestId("multi-shipment-toggle").check();
+  // #112: no toggle — pressing "+" beside "Lugar de carga" adds a second
+  // envío that keeps shipment 1's unload side (Madrid) automatically.
+  await page.getByTestId("add-load-1").click();
   await page.fill("#extraLoadName0", "Almacén Castellón");
   await page.fill("#extraLoadAddress0", "Av. del Mar 5");
   await page.fill("#extraLoadPostalCode0", "12003");
   await page.fill("#extraLoadCity0", "Castellón de la Plana");
-  await page.fill("#extraUnloadName0", "Plataforma Norte");
-  await page.fill("#extraUnloadAddress0", "Calle Alcalá 200");
-  await page.fill("#extraUnloadPostalCode0", "28028");
-  await page.fill("#extraUnloadCity0", "Madrid");
   await page.fill("#extraGoods0", "Azulejos");
   await page.fill("#extraWeight0", "8000 kg");
-  await page.fill("#extraLoadDate0", "2026-10-06");
-  await page.fill("#extraUnloadDate0", "2026-10-06");
-  await page.fill("#extraTractorPlate0", "1234 BCD");
+
+  await page.getByTestId("wizard-next").click();
+  await page.fill("#goods", "Palés de cerámica");
+  await page.fill("#weight", "12000 kg");
+  await page.fill("#tractorPlate", "1234 BCD");
 
   await page.getByTestId("wizard-generate").click();
   await expect(page).toHaveURL(/\/crear\/[a-z0-9]+/i, { timeout: 15_000 });

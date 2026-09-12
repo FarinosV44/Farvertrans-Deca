@@ -177,16 +177,17 @@ describe("validateDeca (R-2 / AC-09)", () => {
     }
   });
 
-  // 2026-09-09 correction: a bare number, with no unit at all, is assumed to
-  // be in tonnes so people don't have to type the unit themselves — but only
-  // when NO unit is given; anything that already carries one (or is a real
-  // alternative measure) is untouched, per the VERBATIM test just above.
-  it("defaults a bare number (no unit at all) to tonnes", () => {
+  // 2026-09-12 correction (#112): a bare number, with no unit at all, is
+  // assumed to be in KILOGRAMS so people don't have to type the unit
+  // themselves — but only when NO unit is given; anything that already
+  // carries one (or is a real alternative measure) is untouched, per the
+  // VERBATIM test just above.
+  it("defaults a bare number (no unit at all) to kilograms", () => {
     for (const [input, expected] of [
-      ["12", "12 t"],
-      ["12.5", "12.5 t"],
-      ["12,5", "12,5 t"],
-      ["1234", "1234 t"],
+      ["12", "12 kg"],
+      ["12.5", "12.5 kg"],
+      ["12,5", "12,5 kg"],
+      ["1234", "1234 kg"],
     ] as const) {
       const r = validateDeca({ ...valid, weight: input });
       expect(r.data.shipments[0].weight).toBe(expected);

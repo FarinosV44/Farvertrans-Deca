@@ -119,15 +119,18 @@ const MEANINGLESS_WEIGHT =
 
 /**
  * A bare number (only digits and a decimal/thousands separator, no unit at
- * all) is assumed to be in tonnes — the unit this field asks for by default
- * (2026-09-09, user request: people shouldn't have to type the unit
- * themselves) — and gets " t" appended. Anything that already carries a
- * unit (kg, another "12,5 t") or is a genuinely alternative measure ("una
- * plataforma completa") is left exactly as typed — this only fills in the
- * unit when none was given, never reformats or overrides one already there.
+ * all) is assumed to be in KILOGRAMS — the unit this field asks for by
+ * default (2026-09-12, user request: the form and the generated DeCA both
+ * use kg, not tonnes) — and gets " kg" appended. Anything that already
+ * carries a unit (t, another "12500 kg") or is a genuinely alternative
+ * measure ("una plataforma completa") is left exactly as typed — this only
+ * fills in the unit when none was given, never reformats or overrides one
+ * already there. This only changes how a FUTURE bare number is interpreted;
+ * an already-generated DeCA's weight string is stored verbatim and never
+ * rewritten.
  */
 const BARE_NUMBER = /^\d+([.,]\d+)?$/;
-const withDefaultWeightUnit = (w: string) => (BARE_NUMBER.test(w) ? `${w} t` : w);
+const withDefaultWeightUnit = (w: string) => (BARE_NUMBER.test(w) ? `${w} kg` : w);
 
 const weightField = z
   .string()
@@ -332,9 +335,12 @@ function parseWeightKg(w: string): number | null {
  * is numeric-parseable. `allParsed: false` means at least one shipment used
  * a genuinely alternative, non-numeric measure ("una plataforma completa");
  * the total is never fabricated or partially computed in that case — never
- * silently drop a shipment's weight from the sum.
+ * silently drop a shipment's weight from the sum. Takes just `{ weight }` (a
+ * `ResolvedShipment[]` satisfies this) so the wizard's own review summary can
+ * call it on raw, not-yet-resolved form/extra-shipment fields too — weight is
+ * never DeCA-level-overridable, so there is nothing to resolve for it.
  */
-export function sumWeights(shipments: ResolvedShipment[]): { total: string; allParsed: boolean } {
+export function sumWeights(shipments: { weight: string }[]): { total: string; allParsed: boolean } {
   const kgs = shipments.map((s) => parseWeightKg(s.weight));
   if (kgs.some((kg) => kg === null)) return { total: "", allParsed: false };
   const totalKg = (kgs as number[]).reduce((a, b) => a + b, 0);

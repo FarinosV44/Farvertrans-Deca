@@ -7490,7 +7490,118 @@ to its exact committed state (`git diff` empty) before committing anything.
 **Next:** no issue is currently queued beyond #118, which is fixed and about to be commented on
 GitHub — left OPEN for the user's own confirmation/close, per this project's established practice.
 
-## D-214 — CI workflow extended to `develop` (2026-09-12)
+## D-214 — I-112 rewritten: `+` buttons replace the toggle, vehicle single-source, kg default (2026-09-12)
+
+**Issue #112 was rewritten by the user, explicitly superseding this session's earlier D-205/D-206
+implementation** (a checkbox toggle + a big "+ Añadir otro envío" CTA). The new spec: no toggle,
+no separate mode — a `+` icon button beside "Lugar de carga" and another beside "Lugar de
+descarga" (on shipment 1 and on every extra envío's own sub-heading). Pressing `+` on carga
+inherits the OTHER shipment's destino; pressing `+` on descarga inherits its origen — never a
+blank shipment, never a cartesian product (a press only ever creates ONE new envío, copying one
+side from the specific block it was pressed on).
+
+**Data model needed ZERO changes** — confirmed by re-reading `lib/deca/schema.ts`: `DeCA 1─N
+shipments` (built earlier this session) already matches the target shape exactly, shipments live
+in `DecaVersion.dataJson` (no separate SQL table), and `decaPayloadSchema`/`legacyMirrorFields()`
+already keep every existing reader (history, templates, corrections, API) compatible. This is a
+pure wizard UX rewrite + one enforced simplification, worked on a dedicated branch
+(`feat/112-plus-button-shipments`) per the user's explicit "separate PR per issue" instruction.
+
+**Vehicle becomes strictly DeCA-level** (issue: "todos los envíos agrupados deben usar la misma
+tractora... no repetir matrícula... dentro de cada envío"). `shipmentSchema.tractorPlate`/
+`.trailerPlate` were left UNCHANGED in `lib/deca/schema.ts` (still optional overrides) — the fix
+is entirely client-side: `ExtraShipment` no longer carries these fields at all, so the wizard
+never sends an override; `resolveShipment()`'s existing fallback (`shipment.tractorPlate ??
+deca.tractorPlate`) already makes every shipment resolve to the shared plate. `app/panel/deca/
+[id]/corregir/page.tsx` stopped reconstructing a per-shipment override when pre-loading a
+correction (that capability never reached production — zero real-data risk).
+
+**PDF (`lib/pdf/deca-document.tsx`):** when `shipments.length > 1`, a single "Vehículo" block now
+renders once, before the per-shipment loop; each shipment's own table drops its two plate cells
+(shows only naturaleza/peso/destinatario, matching issue §7's exact per-envío list). The
+single-shipment case is untouched byte-for-byte (same guarantee as before).
+
+**Wizard (`components/deca/wizard.tsx`) — the actual rewrite:**
+- Removed `multiShipment` state entirely; `extraShipments.length > 0` IS "multi" now — no separate
+  flag to fall out of sync. Removed the toggle `<fieldset>` and the standalone "+ Añadir otro
+  envío" button.
+- New `AddPlaceButton` (reuses the existing `PlusIcon`, `components/panel/icons.tsx` — no new
+  icon) inside the `<legend>` of both "Lugar de carga"/"Lugar de descarga" fieldsets (a `<button>`
+  is valid phrasing content inside `<legend>`) and beside each extra envío's own sub-heading.
+- New pure helpers `shipmentKeepingUnload`/`shipmentKeepingLoad` build the new envío: blank side,
+  copied side (incl. its saved-location "picked" credit), `goods` seeded from the source (editable
+  — issue: copy to save typing), `weight` **always left empty** (issue: never copy a "final" value
+  silently). New block auto-focuses its first blank field (a11y/keyboard).
+- New "Duplicar este envío" (`CopyIcon`, same icon set) clones every field of a block into a new
+  one appended at the end — issue explicitly allows this to reduce typing.
+- "Eliminar este envío" now confirms via `window.confirm()` (same established pattern as
+  `components/app/team-manager.tsx`'s "Eliminar acceso") ONLY when the block has data the operator
+  actually typed (`shipmentHasData()` — goods/weight/recipient/notes, or BOTH route sides already
+  filled; the one side auto-inherited on creation alone never counts, since pressing `+` again
+  reproduces it instantly) — matches issue §9's "confirmación... antes de eliminar un envío CON
+  DATOS" precisely.
+- **Architecture correction found while implementing, not in the plan:** the `+` buttons live on
+  step 1 (route) where "Lugar de carga"/"Lugar de descarga" already are, but the OLD toggle section
+  (and its full per-envío load+unload+goods+weight block) was gated `step === 2`. Pressing `+` on
+  step 1 would have silently queued an invisible shipment, only appearing after advancing — the
+  opposite of the issue's "immediate visible feedback" intent. Fixed by moving the extra-shipments
+  render gate from `step === 2` to `step === 1` (a one-line change — the two step blocks are
+  mutually exclusive, so source order between them doesn't matter for the resulting DOM).
+- `ReviewSummary`: extras' "Editar" now correctly points to step 1 (was step 2, stale after the
+  above move); added a "Peso total" row (`sumWeights()`, widened to accept `{weight}[]` instead of
+  requiring a full `ResolvedShipment[]`, since weight is never DeCA-level-overridable) shown only
+  when >1 shipment and every weight parses.
+- **Scope trim, noted deliberately:** shipment 1's own load/unload fieldsets were NOT wrapped in an
+  "ENVÍO 1" bordered box (unlike issue §3's descriptive suggestion) — nesting another border around
+  two already-bordered fieldsets read as visual clutter, not clarity. The discreet order note
+  ("La numeración... no determina su orden de ejecución") is shown once above the extras instead,
+  which already satisfies the hard acceptance criterion; "Envío 2", "Envío 3"... are unambiguous
+  without it.
+
+**Weight unit default → kg (trailing request, same PR):** `withDefaultWeightUnit()` in
+`lib/deca/schema.ts` now appends `" kg"` to a bare number instead of `" t"`. This is a genuine
+legal-content behavior change (a bare "12" now means 12 kg, not 12 t) for FUTURE input only — an
+already-generated DeCA's weight string is stored verbatim and never rewritten. De-risked before
+touching it: grepped every `tests/e2e/*.spec.ts` weight fixture — 100% already type an explicit
+unit ("12000 kg"), zero rely on the bare-number-implies-tonnes behavior. Also found 7 of the 9
+locale dictionaries' `weightHint` examples ALREADY said "kg" (a pre-existing inconsistency with
+`es.ts`'s own "t" default, now resolved by aligning `es.ts`+`pt.ts` — the only two that still said
+tonnes — to match).
+
+**i18n:** removed unused `shipments.toggle`/`toggleHint`/`addAnother`/`minOneError`; added
+`addLoadAria`/`addUnloadAria`/`duplicate`/`removeConfirm`/`orderNote` + `review.totalWeightTitle`,
+across all 9 dictionaries (same `Messages = typeof es` / `satisfies Messages` mechanical pattern as
+D-213).
+
+**Real bug found and fixed while building the e2e coverage:** the rewritten
+`tests/e2e/deca-multi-shipment.spec.ts` initially used shared, non-inherited "empty" blocks to test
+delete-without-confirm — but `shipmentHasData()`'s first draft counted the auto-inherited side as
+"data," so a freshly `+`-created block (which always has one side pre-filled by design) always
+demanded confirmation, contradicting the issue's own "solo si tiene datos" intent. Fixed by
+excluding the single auto-inherited side from the check (confirmation now requires goods/weight/
+recipient/notes, or BOTH sides filled).
+
+**Tests:** `tests/e2e/deca-multi-shipment.spec.ts` rewritten entirely (9 tests: single-shipment
+unaffected, inherit-on-add both directions + no cartesian product, vehicle-once + full PDF
+round-trip, naturaleza-editable/peso-never-copied, duplicar, delete-confirm-only-with-data,
+correction pre-load, responsive 320–1440, keyboard). `tests/e2e/historico-redesign.spec.ts`'s
+multi-shipment fixture helper updated to the new `+` flow (`datos-habituales-rutas.spec.ts` needed
+NO change — its own `add-shipment` testid is an unrelated "Rutas habituales" feature that happened
+to share the same string). `tests/unit/deca-pdf-snapshot.test.ts` extended to assert the vehicle
+plate appears exactly once; `tests/unit/deca-validate.test.ts`'s bare-number test updated to kg.
+
+**Gate:** `npx tsc --noEmit` clean throughout every step of the rewrite, eslint/prettier clean,
+444/444 unit, 9/9 new + 4/4 `historico-redesign` + 29/29 broader regression
+(`workspace.spec.ts`/`creator-v2.spec.ts`/`datos-habituales-rutas.spec.ts`) e2e green (one
+`workspace.spec.ts` flake under 5-file parallel contention — the exact documented PDF-rendering
+CPU contention this project already knows about — passed clean both in isolation and on a repeat
+full run).
+
+**Next:** commit to `feat/112-plus-button-shipments`, push, open a PR into `develop` (screenshots +
+PR body), per the user's explicit "separate branch/PR per issue, don't merge" instruction. Then
+investigate and plan #119 on its own branch.
+
+## D-215 — CI workflow extended to `develop` (2026-09-12)
 
 The user asked for #112 and #119 to each land as an independent PR against `develop` (not `main`),
 never merged/pushed directly — a deliberate one-off deviation from this session's usual "push

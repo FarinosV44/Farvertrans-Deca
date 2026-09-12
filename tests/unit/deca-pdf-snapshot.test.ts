@@ -302,6 +302,13 @@ describe("#66 — generated DeCA structural snapshot", () => {
     // Both parties still appear exactly once each — DeCA-level, never
     // duplicated per shipment.
     expect(upper.match(/LOGÍSTICA DEL TURIA SA/g)?.length).toBe(1);
+    // #112 — vehicle is a single DeCA-level datum: shown ONCE (a dedicated
+    // "Vehículo" block before the per-shipment loop), never repeated inside
+    // each shipment's own "Mercancía" table. The heading uses letter-spaced
+    // styling, which pdfjs extracts with a gap between every glyph (same
+    // quirk as "PARTES DEL TRANSPORTE" above) — compare whitespace-free.
+    expect(upper.replace(/\s+/g, "")).toContain("VEHÍCULO");
+    expect(upper.match(new RegExp(payload.tractorPlate, "g"))?.length).toBe(1);
     // 12000 kg + 8000 kg = 20.000 kg (es-ES thousands separator)
     expect(upper).toContain("PESO TOTAL");
     expect(upper).toContain("20.000 KG");

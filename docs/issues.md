@@ -782,6 +782,18 @@ anonymize-in-place (no hard delete, D-067).
   19/19 en verde juntos en aislamiento).
 - **Cola después de #112:** #113 (rediseño de Datos habituales), #114 (rediseño de Historial), #115
   (subir versión 0.2.0→0.3.0 + cierre de documentación) — ninguno investigado todavía.
+- **2026-09-12 — El propio issue fue REESCRITO por el usuario, sustituyendo el planteamiento
+  anterior (D-205/D-206): desaparece el selector/interruptor y el botón genérico "+ Añadir otro
+  envío"; se sustituyen por un botón `+` junto a "Lugar de carga" y otro junto a "Lugar de
+  descarga" (D-214). El modelo de datos `DeCA 1─N envíos` ya construido no necesitó ningún cambio —
+  solo el wizard, la matrícula (ahora estrictamente única a nivel de DeCA, nunca por envío) y el
+  PDF (vehículo mostrado una sola vez con varios envíos). Además, petición final del propio usuario
+  en el mismo mensaje: el peso por defecto pasa de toneladas a **kg**. Comentario previo publicado
+  en el issue explicando modelo/migración/anti-cartesiano/PDF/archivos, según lo pedido. Trabajado
+  en rama propia `feat/112-plus-button-shipments`, PR independiente contra `develop`, sin fusionar
+  — instrucción explícita del usuario para esta tarea (no seguir el flujo habitual de esta sesión de
+  empujar directamente a `develop`/`main`). Gate completo en verde (ver D-214). **Pendiente:** abrir
+  el PR con capturas desktop/móvil; después, issue #119 en su propia rama.
 
 ## I-113 — Rediseñar Datos habituales y adaptarlo a DeCA con múltiples envíos
 - 2026-09-11. Issue del usuario, ya existía en el forge (18 secciones: rediseño visual completo +

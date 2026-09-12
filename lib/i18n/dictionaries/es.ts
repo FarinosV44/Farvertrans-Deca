@@ -821,9 +821,9 @@ export const es = {
       loadDate: "Fecha de carga",
       unloadDate: "Fecha de descarga",
       goods: "Naturaleza de la mercancía",
-      weight: "Peso en toneladas (o medida alternativa)",
+      weight: "Peso en kg (o medida alternativa)",
       weightHint:
-        "Ej.: 12 (se añade «t» automáticamente), o «una plataforma completa» si el peso exacto no es determinable.",
+        "Ej.: 12000 (se añade «kg» automáticamente), o «una plataforma completa» si el peso exacto no es determinable.",
       tractorPlate: "Matrícula de la tractora",
       trailerPlate: "Matrícula del remolque / semirremolque",
       trailerHint: "Si no hay remolque, déjalo vacío.",
@@ -835,20 +835,22 @@ export const es = {
       plateForeign:
         "No parece una matrícula española (formato 1234 BCD). Es válida si el vehículo es extranjero.",
     },
-    // #112 — varios envíos (lugares de carga/descarga) en un mismo DeCA.
+    // #112 — varios envíos (lugares de carga/descarga) en un mismo DeCA,
+    // mediante botones "+" junto a Lugar de carga/descarga (sin selector previo).
     shipments: {
-      toggle: "¿Este transporte tiene varios lugares de carga o descarga?",
-      toggleHint:
-        "Actívalo para documentar en un mismo DeCA varios envíos reales — deben compartir el mismo cargador contractual y transportista efectivo.",
-      addAnother: "+ Añadir otro envío",
+      addLoadAria: "Añadir otro lugar de carga",
+      addUnloadAria: "Añadir otro lugar de descarga",
+      duplicate: "Duplicar este envío",
       remove: "Eliminar este envío",
       heading: (n: number) => `Envío ${n}`,
       ownFieldsHint: "El origen, destino, mercancía y peso son propios de este envío.",
-      overridesHint:
-        "La fecha, la matrícula y las notas usan los valores generales salvo que los cambies aquí.",
+      overridesHint: "La fecha y las notas usan los valores generales salvo que los cambies aquí.",
       recipient: "Destinatario (opcional)",
       notes: "Información especial (opcional)",
-      minOneError: "Añade al menos un envío o desactiva la opción.",
+      removeConfirm: (n: number) =>
+        `El Envío ${n} ya tiene datos introducidos. ¿Seguro que quieres eliminarlo?`,
+      orderNote:
+        "La numeración de los envíos es identificativa y no determina su orden de ejecución.",
     },
     errorSummaryTitle: "Revisa estos campos:",
     lead: {
@@ -898,6 +900,7 @@ export const es = {
       loadTitle: "Lugar y fecha de carga",
       unloadTitle: "Lugar y fecha de descarga",
       vehicleTitle: "Vehículo y mercancía",
+      totalWeightTitle: "Peso total",
       name: "Nombre o razón social",
       nif: "NIF / VAT",
       address: "Domicilio",

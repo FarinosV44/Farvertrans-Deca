@@ -54,10 +54,11 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
     trailerPlate: d.trailerPlate ?? "",
     reference: "",
     // #112: shipments beyond the first must be pre-loaded — never silently
-    // dropped just because the correction form was opened. Each shipment's
-    // own override (if any) wins; otherwise it shows the DeCA-level default
-    // actually in effect (same resolution `resolveShipment()` does), so the
-    // form never shows a blank field the document itself doesn't have blank.
+    // dropped just because the correction form was opened. Vehicle is never
+    // per-shipment (single DeCA-level tractor/trailer, set above) even if an
+    // old dev-only record happens to carry a per-shipment override — that
+    // override is simply not re-offered as editable; the document already
+    // generated is untouched either way.
     extraShipments: (Array.isArray(d.shipments) ? d.shipments.slice(1) : []).map((raw) => {
       const s = raw as {
         loadLocation?: Record<string, string>;
@@ -67,8 +68,6 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
         recipient?: string;
         loadDate?: string;
         unloadDate?: string;
-        tractorPlate?: string;
-        trailerPlate?: string;
         notes?: string;
       };
       return {
@@ -89,8 +88,6 @@ export default async function CorregirPage({ params }: { params: Promise<{ id: s
         recipient: s.recipient ?? "",
         loadDate: s.loadDate ?? d.loadDate ?? "",
         unloadDate: s.unloadDate ?? d.unloadDate ?? "",
-        tractorPlate: s.tractorPlate ?? d.tractorPlate ?? "",
-        trailerPlate: s.trailerPlate ?? d.trailerPlate ?? "",
         notes: s.notes ?? "",
       };
     }),

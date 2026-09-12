@@ -841,19 +841,21 @@ export const fr = {
         "Cela ne ressemble pas à une immatriculation espagnole (format 1234 BCD). Elle est valide si le véhicule est étranger.",
     },
     shipments: {
-      toggle: "Ce transport a-t-il plusieurs lieux de chargement ou de déchargement ?",
-      toggleHint:
-        "Activez cette option pour documenter plusieurs envois réels dans un même DeCA — ils doivent partager le même chargeur contractuel et le même transporteur effectif.",
-      addAnother: "+ Ajouter un autre envoi",
+      addLoadAria: "Ajouter un autre lieu de chargement",
+      addUnloadAria: "Ajouter un autre lieu de déchargement",
+      duplicate: "Dupliquer cet envoi",
       remove: "Supprimer cet envoi",
       heading: (n: number) => `Envoi ${n}`,
       ownFieldsHint:
         "L'origine, la destination, la marchandise et le poids sont propres à cet envoi.",
       overridesHint:
-        "La date, l'immatriculation et les notes utilisent les valeurs générales sauf si vous les modifiez ici.",
+        "La date et les notes utilisent les valeurs générales sauf si vous les modifiez ici.",
       recipient: "Destinataire (facultatif)",
       notes: "Information spéciale (facultatif)",
-      minOneError: "Ajoutez au moins un envoi ou désactivez l'option.",
+      removeConfirm: (n: number) =>
+        `L'envoi ${n} contient déjà des données. Voulez-vous vraiment le supprimer ?`,
+      orderNote:
+        "La numérotation des envois est purement indicative et ne détermine pas leur ordre d'exécution.",
     },
     errorSummaryTitle: "Vérifiez ces champs :",
     lead: {
@@ -904,6 +906,7 @@ export const fr = {
       loadTitle: "Lieu et date de chargement",
       unloadTitle: "Lieu et date de déchargement",
       vehicleTitle: "Véhicule et marchandise",
+      totalWeightTitle: "Poids total",
       name: "Nom ou raison sociale",
       nif: "Numéro fiscal / TVA",
       address: "Adresse",

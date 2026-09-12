@@ -824,17 +824,19 @@ export const it = {
         "Non sembra una targa spagnola (formato 1234 BCD). È valida se il veicolo è straniero.",
     },
     shipments: {
-      toggle: "Questo trasporto ha più luoghi di carico o scarico?",
-      toggleHint:
-        "Attivalo per documentare in un unico DeCA più spedizioni reali — devono condividere lo stesso mittente contrattuale e vettore effettivo.",
-      addAnother: "+ Aggiungi un'altra spedizione",
+      addLoadAria: "Aggiungi un altro luogo di carico",
+      addUnloadAria: "Aggiungi un altro luogo di scarico",
+      duplicate: "Duplica questa spedizione",
       remove: "Rimuovi questa spedizione",
       heading: (n: number) => `Spedizione ${n}`,
       ownFieldsHint: "Origine, destinazione, merce e peso sono propri di questa spedizione.",
-      overridesHint: "Data, targa e note usano i valori generali salvo che li modifichi qui.",
+      overridesHint: "Data e note usano i valori generali salvo che li modifichi qui.",
       recipient: "Destinatario (facoltativo)",
       notes: "Informazioni speciali (facoltativo)",
-      minOneError: "Aggiungi almeno una spedizione o disattiva l'opzione.",
+      removeConfirm: (n: number) =>
+        `La Spedizione ${n} contiene già dei dati. Vuoi eliminarla comunque?`,
+      orderNote:
+        "La numerazione delle spedizioni è solo identificativa e non determina l'ordine di esecuzione.",
     },
     errorSummaryTitle: "Controlla questi campi:",
     lead: {
@@ -884,6 +886,7 @@ export const it = {
       loadTitle: "Luogo e data di carico",
       unloadTitle: "Luogo e data di scarico",
       vehicleTitle: "Veicolo e merce",
+      totalWeightTitle: "Peso totale",
       name: "Nome o ragione sociale",
       nif: "Partita IVA / Codice fiscale",
       address: "Indirizzo",

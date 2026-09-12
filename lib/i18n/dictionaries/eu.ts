@@ -846,18 +846,20 @@ export const eu = {
         "Ez dirudi Espainiako matrikula bat (1234 BCD formatua). Baliozkoa da ibilgailua atzerrikoa bada.",
     },
     shipments: {
-      toggle: "Garraio honek zama-gune edo deskarga-gune bat baino gehiago ditu?",
-      toggleHint:
-        "Aktibatu DeCA berean benetako bidalketa bat baino gehiago dokumentatzeko — kargatzaile kontraktual eta garraiolari eragile berbera izan behar dute.",
-      addAnother: "+ Gehitu beste bidalketa bat",
+      addLoadAria: "Gehitu beste zama-gune bat",
+      addUnloadAria: "Gehitu beste deskarga-gune bat",
+      duplicate: "Bikoiztu bidalketa hau",
       remove: "Kendu bidalketa hau",
       heading: (n: number) => `Bidalketa ${n}`,
       ownFieldsHint: "Jatorria, helmuga, salgaia eta pisua bidalketa honi berari dagozkio.",
       overridesHint:
-        "Data, matrikula eta oharrek balio orokorrak erabiltzen dituzte, hemen aldatzen ez badituzu.",
+        "Data eta oharrek balio orokorrak erabiltzen dituzte, hemen aldatzen ez badituzu.",
       recipient: "Hartzailea (aukerakoa)",
       notes: "Informazio berezia (aukerakoa)",
-      minOneError: "Gehitu gutxienez bidalketa bat edo desaktibatu aukera.",
+      removeConfirm: (n: number) =>
+        `${n}. bidalketak dagoeneko datuak ditu. Ziur ezabatu nahi duzula?`,
+      orderNote:
+        "Bidalketen zenbaketa identifikaziorako baino ez da, eta ez du exekuzio-ordena zehazten.",
     },
     errorSummaryTitle: "Berrikusi eremu hauek:",
     lead: {
@@ -907,6 +909,7 @@ export const eu = {
       loadTitle: "Karga-lekua eta -data",
       unloadTitle: "Deskarga-lekua eta -data",
       vehicleTitle: "Ibilgailua eta salgaia",
+      totalWeightTitle: "Pisu totala",
       name: "Izena edo sozietate-izena",
       nif: "IFZ / VAT",
       address: "Helbidea",
