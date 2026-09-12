@@ -8362,3 +8362,46 @@ D-014. `doc-cockpit.spec.ts`'s existing "what changed" diff e2e test confirmed u
 
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit (+2 new),
 2/2 `doc-cockpit.spec.ts`.
+
+## D-235 — production migrations applied (3 pending), `develop` merged to `main` through #134, on the user's explicit instruction (2026-09-12)
+
+**User's explicit instruction, this session:** "yes push to main and apply" (in response to being
+asked whether to merge `develop` into `main` and apply the pending production migrations), along with
+a temporary production `DATABASE_URL`/`DIRECT_URL` pasted in chat — the same pattern as D-158/D-203's
+prior exposures. The user explicitly acknowledged this and said they will rotate the password
+themselves; **the DB password/anon-key rotation this project has flagged as overdue since D-158 is
+now MORE overdue, not resolved** — recorded here again as outstanding, not treated as closed by "I'll
+rotate it," since no rotation has actually happened yet as of this entry.
+
+**Migration reality check — the project card's prior claim was wrong.** `docs/PROGRESS.md` claimed
+"Production DB schema is current through D-218." Running `prisma migrate status` against production
+directly (before applying anything) showed 3 migrations pending, not the 2 this session had assumed
+from the docs alone:
+- `20260912120000_availability_capacity_type` (D-217/#119's OWN migration — despite D-218's decision
+  entry explicitly claiming this one was "applied and verified" on production) — that record was
+  incorrect, or DID reflect the truth at the time and something reset it; either way, don't trust a
+  written "applied to production" claim over `prisma migrate status` run against production directly.
+- `20260912140000_deca_query_indexes` (D-228, #130 fix)
+- `20260912150000_availability_postal_and_vehicle_types` (D-230, #119 correction)
+
+**Applied via `prisma migrate deploy` against production**, all 3 in one run, "All migrations have
+been successfully applied." Re-ran `prisma migrate status` immediately after: "Database schema is up
+to date." No new table was involved in any of the 3 (indexes + nullable columns only), so no RLS
+re-enrollment was needed — confirmed by having already read all 3 migration files directly before
+applying.
+
+**`develop` → `main`, clean fast-forward** (`b0093e7` → `99791b3`, the 10 commits D-226 through D-234:
+#128/#129/#130 fixes, the #112/#119 corrections, #131 mobile UX, #132/#133/#134 P2 audit fixes) — `git
+diff main develop` empty after, confirming an exact match, not just a successful merge exit code. Full
+gate (`tsc`/`eslint`/`prettier`/`keel-verify`) re-run on `main` directly before pushing, all clean.
+
+**Still NOT done, flagged explicitly:** production APP CODE remains undeployed since before `cc82787`
+— today's migrations only changed the DATABASE schema; the Hostinger VPS is still running old code
+that doesn't even know these columns/indexes exist yet (harmless — additive/nullable, no runtime
+depends on them being absent). The next Hostinger redeploy is a separate action only the user can
+trigger. The P3 finding "DB password/anon-key rotation overdue" stays open and is now the single most
+urgent outstanding item, precisely because a THIRD live production credential now exists in a chat
+transcript.
+
+**Gate:** no code changed by this entry — verification only. `prisma migrate status` confirms
+production. `git diff main develop` confirms the merge. Full static gate green on `main`.

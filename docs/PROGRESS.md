@@ -26,7 +26,7 @@
 - Test-first policy: pure-logic (D-014)
 - Durability: git remote origin https://github.com/FarinosV44/Farvertrans-Deca.git (D-006)
 - Autonomy: automatic / issues: after-sprint / Issue sweep interval: 24h / Issue capture: on (D-005)
-- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **`main` is at `b0093e7` (2026-09-12, D-225 — user's explicit instruction to fast-forward `develop` into `main` after #123–#127 landed); `develop` has since moved ahead** with D-226 (#128 fix), D-227 (#129 fix), D-228 (#130 fix), D-229 (#112 correction), D-230 (#119 correction), D-231 (#131 mobile UX fix) — all committed to `develop`, not yet merged/pushed to `main` (no such instruction given yet for this batch). #128/#129/#130 (P1) and #112/#119's corrections and the mobile Historial fix are now DONE; the P2/P3 audit findings are NOT started — that's the next work. `git merge`/`checkout` commands were initially blocked by the Claude Code auto-mode permission classifier ("Modify Shared Resources") this session; the user approved and the merges (both #112 and #119, plus the pending #119 migration) proceeded normally. Product version is **0.3.0**; UI supports 9 locales incl. `pt`. No tag requested. **Production DB schema is current through D-218** (includes the additive `availability_capacity_type` migration, applied and verified) — **production APP CODE is NOT yet redeployed** for any of D-202→D-231; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210).
+- Branches: integration branch `develop`; committing BUILD slices directly to `develop`. **`develop` and `main` are BOTH at `99791b3` (2026-09-12, D-235 — user's explicit instruction "yes push to main and apply") — fully in sync.** Carries D-226 (#128 fix) through D-234 (#134 fix): #128/#129/#130 (P1), #112/#119 corrections, #131 mobile UX fix, and #132/#133/#134 (P2 audit fixes). P2 findings #132/#133/#134 done this session; remaining P2 + all P3 audit findings NOT started — that's the next work. `git merge`/`checkout` commands were initially blocked by the Claude Code auto-mode permission classifier ("Modify Shared Resources") this session; the user approved and the merges (both #112 and #119, plus the pending #119 migration, plus this `develop`→`main` merge) proceeded normally. Product version is **0.3.0**; UI supports 9 locales incl. `pt`. No tag requested. **Production DB schema is current through D-235** (verified directly via `prisma migrate status` against production, not just trusted from docs — the prior "current through D-218" claim turned out to be wrong for one migration; see D-235) — **production APP CODE is still NOT redeployed** for any of D-202→D-234; still runs a pre-`cc82787` build reporting `0.2.0`. The user's next Hostinger redeploy picks up everything at once — **and needs the same targeted `contentItem.update` this session ran on dev** to refresh the live guide's already-seeded body (a plain redeploy does not do this — see D-210). **A third production DB credential was pasted in chat this session (D-235)** — the user said they will rotate it; the long-overdue DB password/anon-key rotation (flagged since D-158) is now the single most urgent outstanding item, not yet done.
 - Notify: PushNotification (terminal + phone via Remote Control) — the user (D-005)
 - Chaining: off (D-009) — continuation-prompt.md written every session; user opens the next chat
 - Chaining model: n/a
@@ -44,6 +44,17 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-235 — production migrations applied + `develop` merged to `main` through #134, this session
+  (2026-09-12), on the user's explicit instruction. Full detail in `docs/decisions.md` D-235.**
+  `prisma migrate status` run directly against production (temporary credential the user pasted in
+  chat) found 3 pending migrations, not the 2 assumed from docs alone — the project card's "current
+  through D-218" claim was wrong for `20260912120000_availability_capacity_type`. All 3 applied via
+  `prisma migrate deploy`, confirmed "up to date" after. No new tables involved, so no RLS
+  re-enrollment needed. `develop` (`99791b3`) fast-forwarded into `main` cleanly — `git diff main
+  develop` empty after. Full gate re-run on `main`, clean, pushed. **Outstanding:** production APP
+  CODE still not redeployed (separate Hostinger action); DB password/anon-key rotation is now the
+  most urgent open item (a third live credential now sits in a chat transcript — user says they will
+  rotate it, not yet done).
 - **D-234 — #134 [P2 audit finding] fixed: `diffVersions()` now covers the `notes` field, this
   session (2026-09-12). Full detail in `docs/decisions.md` D-234.** `notes` had the same
   per-shipment override pattern as `tractorPlate`/`trailerPlate` and was written into `dataJson`,
