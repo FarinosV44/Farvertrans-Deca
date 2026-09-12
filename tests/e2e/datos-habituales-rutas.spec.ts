@@ -247,4 +247,34 @@ test.describe("#113 Phase 2 — Datos habituales redesign", () => {
     await page.getByTestId("quick-actions-customise").click();
     await expect(page.getByText("Rutas habituales")).toBeVisible();
   });
+
+  // #140 — the shared Modal must trap Tab/Shift+Tab inside the dialog and
+  // restore focus to whatever opened it once it closes (WCAG 2.2 §2.4.3).
+  test("#140: the 'Añadir vehículo' modal traps Tab focus and restores it to the trigger on close", async ({
+    page,
+  }) => {
+    await register(page);
+    await page.goto("/panel/datos");
+    await page.getByTestId("tab-vehicle").click();
+    await page.getByTestId("add-vehicle").click();
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await expect(page.locator("#v-alias")).toBeFocused(); // first field focused on open
+
+    // Shift+Tab from the FIRST field must wrap to the LAST focusable element
+    // (Cancelar), never escape backward into the page behind the backdrop.
+    await page.keyboard.press("Shift+Tab");
+    await expect(dialog.getByRole("button", { name: "Cancelar" })).toBeFocused();
+
+    // Tab from the LAST element must wrap back to the FIRST field, never
+    // forward into the page behind the backdrop.
+    await page.keyboard.press("Tab");
+    await expect(page.locator("#v-alias")).toBeFocused();
+
+    // Closing (Escape) must return focus to whatever opened the dialog.
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(page.getByTestId("add-vehicle")).toBeFocused();
+  });
 });

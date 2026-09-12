@@ -8783,3 +8783,30 @@ first (received `[201, 500]`, the raw Prisma error logged verbatim), GREEN after
 
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 501/501 unit unaffected
 (DB-transaction behavior, not pure logic), 5/5 `build13.spec.ts` (4 pre-existing + 1 new).
+
+## D-245 — #140 [P2 audit finding, accessibility]: the shared Modal now traps Tab focus and restores it on close (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `components/app/modal.tsx` — the shared dialog used
+by `saved-data-manager.tsx`'s "Añadir empresa/vehículo/lugar/ruta" dialogs — focused the first field
+on open and closed on Escape, but never trapped Tab/Shift+Tab inside the dialog: a keyboard user
+tabbing through the form eventually tabs straight past the last field into the page content BEHIND
+the still-open, `aria-modal="true"` backdrop. It also never restored focus to whatever opened it once
+closed. Both are WCAG 2.2 §2.4.3 (Focus Order) expectations for a dialog, and this project's own
+accessibility bar is "WCAG 2.2 AA floor + AAA where feasible" (project card).
+
+**Fix:** the modal now captures `document.activeElement` before moving focus in, and on every `Tab`
+keydown while open, checks whether focus is on the first or last focusable element in the panel
+(`input, select, textarea, button, a[href], [tabindex]` minus disabled/`-1`) and wraps it to the other
+end instead of letting it escape — Tab from the last element goes to the first, Shift+Tab from the
+first goes to the last. On close (any path — Escape, backdrop click, Cancelar, successful save), the
+captured pre-open focus target is restored.
+
+**Test-first / verification:** new e2e test opens the "Añadir vehículo" modal, confirms the first
+field is focused on open, Shift+Tab from it wraps to "Cancelar" (the last element) rather than
+escaping backward, Tab from "Cancelar" wraps back to the first field rather than escaping forward,
+and Escape both closes the dialog and returns focus to the "Añadir vehículo" trigger button.
+Confirmed RED first (Shift+Tab from the first field escaped the dialog entirely, no element gained
+focus), GREEN after.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 501/501 unit unaffected,
+6/6 `datos-habituales-rutas.spec.ts` (5 pre-existing + 1 new).
