@@ -8754,3 +8754,32 @@ D-184 tests and the D-194 test still green), 13/14 `admin-2fa.spec.ts` (13 pre-e
 1 failure is the ALREADY-documented pre-existing recovery-code-replay flake —
 `docs/lessons-learned.md` — confirmed unrelated, not a regression), 22/22 `admin-company-edit.spec.ts`
 — all green.
+
+## D-244 — #139 [P2 audit finding, UX]: a concurrent correction race now gives a clear conflict, never a raw 500 (2026-09-12)
+
+**Finding (from the full-repo audit, P2 list):** `lib/deca/persist.ts`'s `correctDeca()` reads the
+DeCA's latest `versionNo` with a plain `findFirst` well before the slow work (PDF render + storage
+upload) — the write transaction that actually creates the new `DecaVersion` row happens much later.
+`DecaVersion` correctly has a DB-level `@@unique([decaId, versionNo])` constraint, so two
+near-simultaneous corrections of the SAME document (two team members, or a double-submit) can both
+read the same "next version number," both do the slow work, and then race on the transaction — the
+loser hits the unique constraint and throws a raw `PrismaClientKnownRequestError`, which isn't a
+recognised `DecaCorrectionError` and falls through to the generic `generation_failed` 500 path: an
+unhelpful "something went wrong" instead of an honest "someone else already saved a correction here."
+
+**Fix:** new `isVersionNumberConflict()` recognises the specific `P2002` violation targeting
+`version_no` (checked on both the raw error AND its `.cause`, since `withOrphanCleanup()` — which
+still correctly deletes the loser's now-orphaned PDF from storage first — re-wraps every failure in a
+`GenerationError` before it propagates out). Translates it into a new `DecaCorrectionError` code,
+`version_conflict`, with a clear, actionable message ("Este documento se actualizó mientras lo
+corregías. Recarga la página..."), mapped to HTTP `409` by the route handler. No client-side change
+needed — the correction form already renders `data.error.message` verbatim for any non-ok response.
+
+**Test-first / verification:** new e2e test fires two concurrent `POST /api/deca/[id]/version`
+requests for the same document from the same authenticated session (the deterministic Node
+event-loop-interleaving pattern already used for #132's team-ownership race) and asserts exactly one
+`201` + one `409` with `code: "version_conflict"` — never a `generation_failed` 500. Confirmed RED
+first (received `[201, 500]`, the raw Prisma error logged verbatim), GREEN after.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 501/501 unit unaffected
+(DB-transaction behavior, not pure logic), 5/5 `build13.spec.ts` (4 pre-existing + 1 new).

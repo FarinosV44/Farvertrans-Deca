@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@/prisma/generated/client";
 import { prisma } from "@/lib/prisma";
 import { publicEnv } from "@/lib/env";
 import { newClaimToken, newPublicToken } from "./token";
@@ -281,12 +282,26 @@ async function maybeRecordRouteIntel(
 
 export class DecaCorrectionError extends Error {
   constructor(
-    public code: "not_found" | "forbidden" | "reason_required",
+    public code: "not_found" | "forbidden" | "reason_required" | "version_conflict",
     message: string,
   ) {
     super(message);
     this.name = "DecaCorrectionError";
   }
+}
+
+/** #139: `versionNo` is read well before the write transaction (PDF render +
+ *  storage upload happen in between), so two near-simultaneous corrections
+ *  of the SAME document can both compute the same "next" number. The DB's
+ *  own `@@unique([decaId, versionNo])` correctly stops the loser from ever
+ *  writing a duplicate — this recognises THAT specific violation and turns
+ *  it into an honest, actionable conflict instead of a raw 500. */
+function isVersionNumberConflict(e: unknown): boolean {
+  return (
+    e instanceof Prisma.PrismaClientKnownRequestError &&
+    e.code === "P2002" &&
+    (e.meta?.target as string[] | undefined)?.includes("version_no") === true
+  );
 }
 
 /**
@@ -346,32 +361,44 @@ export async function correctDeca(
   await stage("pdf_storage", correlationId, () => getPdfStore().put(key, pdf));
 
   const window = serviceWindow(validated.data);
-  const version = await withOrphanCleanup(key, correlationId, () =>
-    prisma.$transaction(async (tx) => {
-      const v = await tx.decaVersion.create({
-        data: {
-          decaId,
-          versionNo,
-          token,
-          pdfPath: key,
-          pdfSha256: sha256,
-          dataJson: toDataJson(validated.data),
-          changeReason: reason,
-          createdByUserId: userId,
-          createdAt: modifiedAt,
-        },
-      });
-      await tx.deca.update({
-        where: { id: decaId },
-        data: {
-          currentVersionId: v.id,
-          serviceStart: window.start,
-          serviceEnd: window.end,
-        },
-      });
-      return v;
-    }),
-  );
+  let version;
+  try {
+    version = await withOrphanCleanup(key, correlationId, () =>
+      prisma.$transaction(async (tx) => {
+        const v = await tx.decaVersion.create({
+          data: {
+            decaId,
+            versionNo,
+            token,
+            pdfPath: key,
+            pdfSha256: sha256,
+            dataJson: toDataJson(validated.data),
+            changeReason: reason,
+            createdByUserId: userId,
+            createdAt: modifiedAt,
+          },
+        });
+        await tx.deca.update({
+          where: { id: decaId },
+          data: {
+            currentVersionId: v.id,
+            serviceStart: window.start,
+            serviceEnd: window.end,
+          },
+        });
+        return v;
+      }),
+    );
+  } catch (e) {
+    const cause = e instanceof Error ? e.cause : undefined;
+    if (isVersionNumberConflict(e) || isVersionNumberConflict(cause)) {
+      throw new DecaCorrectionError(
+        "version_conflict",
+        "Este documento se actualizó mientras lo corregías. Recarga la página para ver la versión más reciente e inténtalo de nuevo.",
+      );
+    }
+    throw e;
+  }
 
   await maybeRecordRouteIntel(decaId, version.id, companyId, validated.data);
 

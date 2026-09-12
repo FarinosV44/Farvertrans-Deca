@@ -47,7 +47,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ ...r, warnings: validated.warnings }, { status: 201 });
   } catch (e) {
     if (e instanceof DecaCorrectionError) {
-      const status = e.code === "not_found" ? 404 : e.code === "forbidden" ? 403 : 422;
+      const status =
+        e.code === "not_found"
+          ? 404
+          : e.code === "forbidden"
+            ? 403
+            : e.code === "version_conflict"
+              ? 409
+              : 422;
       return NextResponse.json({ error: { code: e.code, message: e.message } }, { status });
     }
     const { recordGenerationFailure } = await import("@/lib/deca/failures");

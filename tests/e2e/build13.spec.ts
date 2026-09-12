@@ -142,6 +142,33 @@ test.describe("BUILD 13 — corrections / versioning (R-13)", () => {
     expect(v2Text).toContain("BARCELONA");
   });
 
+  // #139 — two near-simultaneous corrections of the SAME document (a double
+  // submit, or two team members) must never surface as a raw 500: the DB's
+  // own unique(decaId, versionNo) constraint already prevents two versions
+  // ever sharing a number, but the loser's error needs to be a clear,
+  // actionable conflict, not "generation_failed" with a correlation id.
+  test("#139: a concurrent correction race gives one clean success and one clear conflict, never a raw 500", async ({
+    page,
+  }) => {
+    const decaId = await registerAndCreate(page);
+    const [a, b] = await Promise.all([
+      page.request.post(`/api/deca/${decaId}/version`, {
+        data: { changeReason: "Corrección A", payload: buildPayload() },
+      }),
+      page.request.post(`/api/deca/${decaId}/version`, {
+        data: { changeReason: "Corrección B", payload: buildPayload() },
+      }),
+    ]);
+    const statuses = [a.status(), b.status()].sort();
+    expect(statuses).toEqual([201, 409]);
+
+    const loser = a.status() === 409 ? a : b;
+    const body = await loser.json();
+    expect(body.error.code).toBe("version_conflict");
+    // never the generic 500 fallback's shape
+    expect(body.error.code).not.toBe("generation_failed");
+  });
+
   test("a non-owner cannot correct another company's DeCA", async ({ page, request }) => {
     const decaId = await registerAndCreate(page);
     // fresh, unrelated request context (no session)

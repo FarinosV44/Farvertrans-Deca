@@ -44,6 +44,17 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-244 — #139 [P2 audit finding] fixed: a concurrent DeCA correction race now gives a clear 409
+  conflict, never a raw 500, this session (2026-09-12). Full detail in `docs/decisions.md` D-244.**
+  `correctDeca()` reads `versionNo` well before the write transaction; two near-simultaneous
+  corrections of the same document could both compute the same number and race on the DB's own
+  `@@unique([decaId, versionNo])` — the loser got an unrecognised raw Prisma error and a generic
+  `generation_failed` 500. New `isVersionNumberConflict()` (checks both the raw error and its
+  `.cause`, since `withOrphanCleanup()` re-wraps it) translates this into a new
+  `DecaCorrectionError("version_conflict", ...)`, mapped to 409. New e2e test fires 2 concurrent
+  corrections and confirms exactly one 201 + one 409; verified red-then-green. Gate: tsc/eslint/
+  prettier clean, 501/501 unit unaffected, 5/5 `build13.spec.ts`. Committed to `develop`, not yet
+  pushed.
 - **D-243 — #138 [P1, live production report] fixed: superadmin step-up "Verificar" link bounces to
   /admin instead of re-challenging — same D-184/D-194 defect class, this session (2026-09-12), on a
   mid-turn user bug report, THEN swept for the same pattern and found a 3rd instance. Full detail in
