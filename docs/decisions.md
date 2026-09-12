@@ -8433,3 +8433,56 @@ caller depends on the old shape" finding above.
 
 **Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit unaffected,
 5/5 across `favorites.spec.ts` + `deca-draft.spec.ts`.
+
+## D-237 — #131 correction: the mobile Historial filter form still collided at 375/390/430px (2026-09-12)
+
+**User's report (verbatim, mid-turn):** Transportista's `<select>` didn't visually match Matrícula's
+`<input>` height, and Desde/Hasta still visually collided/invaded each other on mobile — after D-231
+was supposed to have already fixed exactly this.
+
+**Root cause — D-231's own fix was wrong for 3 of its 4 target widths.** `app/globals.css` redefines
+`--breakpoint-sm: 360px` (this project's own theme, not Tailwind's stock 640px) — a fact D-231's own
+verification missed, assuming the default. D-231 changed the form's BASE grid to `grid-cols-1` but
+left a pre-existing `sm:grid-cols-3` tier in place, reasoning (wrongly, per its own now-incorrect
+code comment) that `sm:`/`md:` were "≥640px, well above every width this issue asks to be tested at."
+In THIS project's theme, `sm:` is 360px — so at 375/390/430px (3 of the 4 required test widths), the
+3-column grid was silently back in force the whole time, squeezing every field into ~97-116px
+columns. Confirmed directly: a throwaway diagnostic script (`page.evaluate` reading
+`getComputedStyle(form).gridTemplateColumns` at each width) showed `"262px"` (1 column) at 320px but
+`"97.66px 97.67px 97.66px"` (3 columns) at 375px.
+
+**Why D-231's own automated overlap test didn't catch this:** it measured bounding boxes of the
+wrapper `<div>`s, which — being separate, non-overlapping grid cells — never geometrically overlap
+each other even at 97px width. What actually "collides" is a native `<input type="date">`'s OWN
+internal chrome (day/month/year segments, calendar icon), which browsers refuse to compress below a
+practical minimum and which then visually overflows past its 97px cell — invisible to a
+`getBoundingClientRect()` check on the outer wrapper, visible to a human eye.
+
+**Fix:** removed the `sm:grid-cols-3 sm:items-end` tier entirely — there is no safe denser layout
+between "single column" and `md:` (768px) real desktop for a 5-field form at phone widths, so there
+isn't one. The base `grid-cols-1` now genuinely applies through every width up to `md:`, where the
+form switches to `flex flex-wrap` (moved `items-end` there too, since it's now the only tier that
+needs it). Cleaned up the now-meaningless `sm:col-span-1` classes left on 2 field wrappers.
+
+**Also fixed while here — the reported height mismatch, verified real cross-browser risk even though
+Chromium showed identical 44px boxes for both in the diagnostic:** a native `<select>`'s own OS-drawn
+control chrome can render at a different height than a plain text input under an identical `min-h-11`
+(most visible on Safari/iOS, which Chromium's engine doesn't reproduce). Made Transportista's
+rendering byte-for-byte match Matrícula's rather than relying on min-height alone: `appearance-none`
+strips the native chrome, a custom inline SVG chevron restores the dropdown affordance, and both
+controls now share the identical `py-2`/`leading-[1.375rem]` box model instead of relying on
+browser-default vertical alignment.
+
+**Test-first / verification:** extended the existing `#131 filter fields at {width}px` e2e test
+(`tests/e2e/historico-redesign.spec.ts`) with 3 new assertions per width: Desde and Hasta must be on
+DIFFERENT rows (not just non-overlapping boxes — this is what actually encodes "never side by side"),
+every field must span >80% of the form's width (proving genuine single-column, not just "doesn't
+overlap by luck"), and Transportista/Matrícula heights must be exactly equal. Verified red-then-green
+per the UNBREAKABLE bug-fix rule: stashed `page.tsx` only, re-ran the 375px case, observed
+`from.y === to.y` fail with the exact reported defect, then restored the fix and confirmed all 12
+`historico-redesign.spec.ts` tests pass.
+
+**Gate:** tsc/eslint/prettier clean (2 pre-existing unrelated warnings only), 500/500 unit unaffected
+(no unit-tested logic touched), 12/12 `historico-redesign.spec.ts` (9 pre-existing + 3 extended with
+new assertions), plus a 16-test regression sweep (`export-csv.spec.ts`, `workspace.spec.ts` incl. its
+`/panel/historico` a11y scan, `panel-nav.spec.ts`) all passing unchanged.

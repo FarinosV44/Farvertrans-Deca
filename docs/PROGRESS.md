@@ -44,6 +44,19 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-237 — #131 correction: the mobile Historial filter form still collided at 375/390/430px, this
+  session (2026-09-12). Full detail in `docs/decisions.md` D-237.** D-231's own fix was wrong for 3
+  of its 4 target widths: `app/globals.css` redefines `--breakpoint-sm: 360px` (not Tailwind's stock
+  640px), so D-231's leftover `sm:grid-cols-3` tier was silently active at 375/390/430px the whole
+  time, squeezing every field into ~97-116px columns — invisible to D-231's own bounding-box overlap
+  test since a native date input's internal chrome overflows its cell without the OUTER box
+  overlapping its neighbor. Removed the `sm:` tier entirely (single-column all the way to `md:`
+  768px). Also normalized Transportista's `<select>` (`appearance-none` + custom chevron + matching
+  `py-2`/`leading-[1.375rem]`) to byte-for-byte match Matrícula's `<input>` height, closing a
+  cross-browser (Safari/iOS) risk the Chromium-only diagnostic couldn't itself observe. 3 new
+  assertions added to the existing per-width e2e test, verified red-then-green via `git stash`. Gate:
+  tsc/eslint/prettier clean, 500/500 unit unaffected, 12/12 `historico-redesign.spec.ts` + 16/16
+  regression sweep. Committed to `develop`, not yet pushed.
 - **D-236 — #135 [P2 audit finding] fixed: 3 routes standardized on the `{ error: { code, message
   } }` shape, this session (2026-09-12). Full detail in `docs/decisions.md` D-236.**
   `app/api/deca/draft`, `app/api/favorites`, `app/api/integraciones` returned plain-text error

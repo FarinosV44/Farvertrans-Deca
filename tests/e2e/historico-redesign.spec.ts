@@ -248,6 +248,35 @@ test.describe("#114 — Historial redesign", () => {
           expect(overlapsX && overlapsY, `${a.id} and ${b.id} overlap at ${width}px`).toBe(false);
         }
       }
+
+      // #131 follow-up: a bounding-box non-overlap check alone can pass while
+      // a native <input type="date">'s own internal chrome still visually
+      // overflows a too-narrow column (the exact defect reported at these
+      // widths) — so also require every field to be genuinely single-column:
+      // full form width, and Desde/Hasta on two DIFFERENT rows, never side
+      // by side.
+      const from = boxes.find((b) => b.id === "#from")!;
+      const to = boxes.find((b) => b.id === "#to")!;
+      expect(from.y, `Desde and Hasta must stack, not sit side by side, at ${width}px`).not.toBe(
+        to.y,
+      );
+      const formWidth = (await page.locator("form[role='search']").boundingBox())!.width;
+      for (const b of boxes.filter((b) => b.id !== "#filter-btn")) {
+        expect(
+          b.w,
+          `${b.id} should span the full single-column width at ${width}px`,
+        ).toBeGreaterThan(formWidth * 0.8);
+      }
+
+      // #131 follow-up: Transportista (a <select>) and Matrícula (an <input>)
+      // must render at the same height — a native select's own OS chrome can
+      // otherwise differ from a plain text input's even under an identical
+      // `min-h-11`.
+      const carrier = boxes.find((b) => b.id === "#carrier");
+      const plate = boxes.find((b) => b.id === "#plate")!;
+      if (carrier) {
+        expect(carrier.h, `Transportista/Matrícula height mismatch at ${width}px`).toBe(plate.h);
+      }
     });
   }
 });

@@ -98,17 +98,20 @@ export default async function HistoricoPage({
           }}
         />
 
-        {/* 2026 mobile UX follow-up (#131): the base (mobile-first) layout is a
-            single stacked column — a 2-column grid at 320-430px is exactly
-            what let native date-picker inputs and the carrier <select>
-            overflow their cell and crowd/overlap neighbouring fields. `sm:`
-            and `md:` (≥640px, well above every width this issue asks to be
-            tested at) restore the denser desktop layout unchanged. */}
+        {/* 2026 mobile UX follow-up (#131, then a correction): the base
+            (mobile-first) layout is a single stacked column all the way up
+            to `md:` (768px in THIS project's theme — app/globals.css
+            redefines `--breakpoint-sm` to 360px, unlike Tailwind's stock
+            640px). A `sm:` tier here would activate at exactly 375/390/430px
+            and re-introduce the 3-column squeeze (~100px per field) that let
+            the native date pickers visually overflow/collide — there is no
+            safe denser tier between phone and `md:` desktop, so there isn't
+            one. */}
         <form
-          className="mt-6 grid grid-cols-1 gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:grid-cols-3 sm:items-end md:flex md:flex-wrap"
+          className="mt-6 grid grid-cols-1 gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 md:flex md:flex-wrap md:items-end"
           role="search"
         >
-          <div className="min-w-0 sm:col-span-1 md:min-w-[200px] md:flex-1">
+          <div className="min-w-0 md:min-w-[200px] md:flex-1">
             <label htmlFor="q" className="block text-sm font-medium">
               {t.historico.search}
             </label>
@@ -149,19 +152,40 @@ export default async function HistoricoPage({
               <label htmlFor="carrier" className="block text-sm font-medium">
                 {t.historico.carrier}
               </label>
-              <select
-                id="carrier"
-                name="carrier"
-                defaultValue={sp.carrier ?? ""}
-                className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2"
-              >
-                <option value="">{t.historico.carrierAll}</option>
-                {carriers.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              {/* `appearance-none` + a custom chevron: a native <select>'s own
+                  OS-drawn control chrome can render at a slightly different
+                  height than a plain text input even under the same
+                  `min-h-11` (most visible on Safari/iOS) — stripping it makes
+                  this box render exactly like #plate's, pixel for pixel. */}
+              <div className="relative mt-1">
+                <select
+                  id="carrier"
+                  name="carrier"
+                  defaultValue={sp.carrier ?? ""}
+                  className="min-h-11 w-full min-w-0 appearance-none rounded-[var(--radius-sm)] border border-[var(--color-border)] py-2 pr-8 pl-3 leading-[1.375rem]"
+                >
+                  <option value="">{t.historico.carrierAll}</option>
+                  {carriers.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  className="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]"
+                >
+                  <path
+                    d="M5 7.5 10 12.5 15 7.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
             </div>
           )}
           <div className="min-w-0">
@@ -173,10 +197,10 @@ export default async function HistoricoPage({
               name="plate"
               defaultValue={sp.plate ?? ""}
               placeholder="1234 BCD"
-              className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 md:w-[120px]"
+              className="mt-1 min-h-11 w-full min-w-0 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 py-2 leading-[1.375rem] md:w-[120px]"
             />
           </div>
-          <div className="flex items-end gap-3 sm:col-span-1 md:col-auto">
+          <div className="flex items-end gap-3 md:col-auto">
             <button
               type="submit"
               className="min-h-11 rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 font-medium text-[var(--color-primary-contrast)]"
