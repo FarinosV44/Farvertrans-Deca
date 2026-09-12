@@ -63,6 +63,22 @@ export function CompanyEditForm({ id, initial }: { id: string; initial: Partial<
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // The CIF/NIF is a sensitive, far-reaching identifier (billing, other
+    // records) — confirm the change explicitly before it ever reaches the
+    // server, on top of the server's own duplicate check below.
+    if (v.nif !== (initial.nif ?? "")) {
+      if (
+        !window.confirm(
+          "El CIF/NIF es un identificador sensible (facturación y otros registros). ¿Confirmas el cambio?",
+        )
+      ) {
+        return;
+      }
+    }
+    await save(false);
+  }
+
+  async function save(confirmDuplicateNif: boolean) {
     setBusy(true);
     setError(null);
     setStepUp(false);
@@ -71,7 +87,7 @@ export function CompanyEditForm({ id, initial }: { id: string; initial: Partial<
       const res = await fetch(`/api/admin/empresas/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "edit", data: v }),
+        body: JSON.stringify({ action: "edit", data: v, confirmDuplicateNif }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -81,6 +97,16 @@ export function CompanyEditForm({ id, initial }: { id: string; initial: Partial<
       }
       if (data?.error?.code === "step_up_required") {
         setStepUp(true);
+        return;
+      }
+      // D-162's existing "warn, never hard-block" philosophy for a duplicate
+      // NIF — offer to proceed anyway rather than dead-ending the operator.
+      if (data?.error?.code === "duplicate_nif") {
+        if (window.confirm(`${data.error.message} ¿Continuar de todas formas?`)) {
+          await save(true);
+          return;
+        }
+        setError(data.error.message);
         return;
       }
       setError(data?.error?.message ?? "No se pudo guardar la ficha.");
@@ -132,10 +158,33 @@ export function CompanyEditForm({ id, initial }: { id: string; initial: Partial<
             />
           </label>
         ))}
-        <div className="sm:col-span-2">
+        <div className="flex items-center gap-2 sm:col-span-2">
           <Button type="submit" tier="primary" disabled={busy} data-testid="company-edit-save">
-            Guardar ficha
+            Guardar cambios
           </Button>
+          <button
+            type="button"
+            data-testid="company-edit-cancel"
+            disabled={busy}
+            onClick={() => {
+              setV({
+                name: initial.name ?? "",
+                nif: initial.nif ?? "",
+                contactName: initial.contactName ?? "",
+                phone: initial.phone ?? "",
+                email: initial.email ?? "",
+                address: initial.address ?? "",
+                postalCode: initial.postalCode ?? "",
+                city: initial.city ?? "",
+              });
+              setError(null);
+              setStepUp(false);
+              setDone(false);
+            }}
+            className="min-h-9 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 text-sm font-medium"
+          >
+            Cancelar
+          </button>
         </div>
       </form>
     </details>

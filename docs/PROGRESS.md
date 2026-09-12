@@ -45,6 +45,18 @@
 
 ## Current position
 - Phase: 5 — Development (execution mode, D-019). Sprint 2 **CLOSED**. **v1 released to `main`.**
+- **D-215 — I-122: Superadmin can correct a company's razón social/CIF-NIF safely, this session
+  (2026-09-12). Full detail in `docs/decisions.md` D-215.** Extended the existing #62 ficha editor
+  rather than building a new tool: added a pre-save duplicate-CIF/NIF warning (never a hard block,
+  matching D-162's existing philosophy), a real old→new audit trail (the DB column existed but was
+  never read/written for this action), and client-side confirm-on-NIF-change + Cancel. Found and
+  fixed a real regression risk: 45 e2e spec files share one hardcoded fixture NIF, which would have
+  false-positive-triggered the new duplicate check against an existing lifecycle test — fixed by
+  updating that one test to use the new `confirmDuplicateNif` override rather than weakening the
+  check. Opened as issue #122 (after most of the work — a process deviation, noted). **Gate:
+  tsc/eslint/prettier clean, 444/444 unit, 9/9 new e2e + 11/11 + 19/19 regression green.** Committed
+  directly to `develop` (no separate-branch instruction applied to this request). **Next: comment
+  on #122, leave it open. #112, #119 and #122 are all now complete.**
 - **D-213 — I-118: branded incident page for 5xx / server-render errors, this session
   (2026-09-12), immediately after D-212. Full detail in `docs/decisions.md` D-213.** New
   `components/errors/incident-page.tsx` (shared branded screen, reuses the existing `Wordmark`/

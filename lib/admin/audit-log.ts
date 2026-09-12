@@ -16,6 +16,9 @@ export type AuditLogRow = {
   targetType: string | null;
   targetId: string | null;
   result: string;
+  /** Free-text context (WHY, not just what/who/when) — e.g. an old→new value
+   *  summary for a superadmin edit. Never secrets/PII beyond the action itself. */
+  detail: string | null;
   createdAt: Date;
 };
 
@@ -51,6 +54,7 @@ export async function listAuditLog(
     targetType: r.targetType,
     targetId: r.targetId,
     result: r.result,
+    detail: r.detail,
     createdAt: r.createdAt,
   }));
 }

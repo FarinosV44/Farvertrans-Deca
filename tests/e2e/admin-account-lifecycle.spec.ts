@@ -163,9 +163,13 @@ test("edit the ficha: the superadmin fixes an invalid NIF the owner cannot touch
   });
   expect(bad.status()).toBe(422);
 
-  // A valid CIF goes through.
+  // A valid CIF goes through. "B12345674" is the shared fixture NIF dozens of
+  // OTHER e2e specs also register with, so the new duplicate-NIF warning
+  // (superadmin ficha-edit feature) fires here every time — `confirmDuplicateNif`
+  // is exactly the override path a real superadmin would take after seeing it,
+  // not a workaround for a real production collision.
   const ok = await request.patch(`/api/admin/empresas/${companyId}`, {
-    data: { action: "edit", data: { ...base, nif: "B12345674" } },
+    data: { action: "edit", data: { ...base, nif: "B12345674" }, confirmDuplicateNif: true },
   });
   expect(ok.status()).toBe(200);
 

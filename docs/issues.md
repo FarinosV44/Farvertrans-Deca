@@ -1029,3 +1029,30 @@ anonymize-in-place (no hard delete, D-067).
 - **Sin cerrar** (política de 3 tiempos): al fusionar se comenta el avance; el usuario confirma
   tras el despliegue (incluye ejecutar `npm run seed:content` para publicar la guía, y comprobar
   en el panel de Resend que los correos a `deca@praetoriaabogados.es` se entregan).
+
+## I-122 — [P2 Admin] Superadmin: corregir razón social y CIF/NIF de una empresa
+- 2026-09-12. Petición directa del usuario en conversación ("cuando termines [#112/#119]"),
+  abierto por el propio asistente (política "Issue capture: on") — con una desviación de proceso
+  reconocida: el issue se abrió DESPUÉS de la mayor parte de la implementación, no antes, porque la
+  petición llegó insertada dentro de un turno ya en marcha con otros dos issues.
+- **HECHA en `develop`, sin instrucción de rama/PR separada para esta petición** (esa instrucción
+  era explícitamente solo para #112/#119) — seguido el flujo por defecto de esta sesión.
+- **Hallazgo clave:** ya existía un editor de ficha de empresa para superadministración (#62,
+  `CompanyEditForm` / `PATCH /api/admin/empresas/[id]` acción `"edit"`) que cubre casi todo lo
+  pedido — superadmin-only, valores actuales precargados, validación con el esquema compartido
+  (que ya tolera identificadores extranjeros por un fix anterior), preserva el ID de la empresa, y
+  ya auditaba la acción. Los huecos reales: sin aviso de CIF/NIF duplicado, sin valores
+  antiguo/nuevo en la auditoría (la columna existía en BD pero nunca se leía en
+  `/admin/auditoria`), y sin confirmación explícita al cambiar el CIF/NIF ni botón "Cancelar".
+  Ampliado el editor existente, no construido uno nuevo — el propio issue permitía explícitamente
+  reutilizar un patrón de edición ya existente.
+- **Bug real evitado:** 45 ficheros e2e de este proyecto registran empresas con el mismo CIF de
+  prueba ("B12345674"), lo que habría roto un test ya existente al activar el nuevo aviso de
+  duplicado. Corregido actualizando ese test para usar la nueva confirmación explícita
+  (`confirmDuplicateNif: true`) en vez de debilitar la comprobación — es la interacción correcta
+  para ese escenario, no un parche.
+- El aviso de CIF/NIF duplicado nunca bloquea, solo advierte y permite continuar (coherente con la
+  decisión D-162 ya existente de no bloquear un NIF duplicado, solo señalarlo).
+- Gate: tsc/eslint/prettier limpios, 444/444 unitarios, 9/9 e2e nuevos
+  (`admin-company-edit.spec.ts`) + 11/11 + 19/19 de regresión en verde. **I-122 completo, comentado
+  en el issue, dejado ABIERTO para confirmación del usuario.**

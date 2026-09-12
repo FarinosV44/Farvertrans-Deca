@@ -98,7 +98,7 @@ export default async function AdminAuditoria({ searchParams }: { searchParams: P
       {rows.length === 0 ? (
         <Empty>Ningún evento con estos filtros.</Empty>
       ) : (
-        <Table head={["Fecha (UTC)", "Actor", "Acción", "Objetivo", "Resultado"]}>
+        <Table head={["Fecha (UTC)", "Actor", "Acción", "Objetivo", "Resultado", "Detalle"]}>
           {rows.map((r) => (
             <Row key={r.id}>
               <Cell mono>{fmt(r.createdAt)}</Cell>
@@ -115,6 +115,7 @@ export default async function AdminAuditoria({ searchParams }: { searchParams: P
                   {r.result === "success" ? "éxito" : "fallo"}
                 </Badge>
               </Cell>
+              <Cell>{r.detail ?? <span className="text-[var(--color-text-muted)]">—</span>}</Cell>
             </Row>
           ))}
         </Table>

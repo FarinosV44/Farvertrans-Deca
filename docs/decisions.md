@@ -7501,3 +7501,60 @@ change per trigger: `branches: [main]` → `branches: [main, develop]` for both 
 `pull_request`. No other CI behavior changes — same jobs, same gates, just also armed for the
 integration branch. Committed directly to `develop` (a repo-config change, not feature work bound
 for either PR) so both open/future PRs into `develop` get real CI.
+
+## D-215 — I-122: Superadmin can correct a company's razón social / CIF-NIF safely (2026-09-12)
+
+Direct user request (mid-turn, "when you finish [#112/#119]"), opened as issue #122 per this
+project's "Issue capture: on" policy — one process deviation worth recording: the issue was opened
+AFTER most of the implementation, not before, since the request arrived embedded in an ongoing
+multi-issue turn; the permanent record still exists, just later than the policy asks for.
+
+**Investigation before writing anything:** a superadmin company-ficha editor already exists
+(`components/admin/company-edit-form.tsx` / `PATCH /api/admin/empresas/[id]` action `"edit"`,
+feature #62) — superadmin-only, current-values pre-filled, validated against the shared
+`companyDataSchema` (which already reuses `isValidOwnNif()`, itself already tolerant of foreign
+tax-id shapes per an earlier live-incident fix — exactly the "don't over-validate" requirement,
+satisfied for free by not touching it), workspace-ID-preserving (`prisma.company.update`, same
+row), and already audited via `recordAudit()`. The REAL gaps were: no duplicate-CIF/NIF warning,
+no old/new values in the audit trail (`SecurityAuditLog.detail` existed in the DB but was never
+populated for this action, NOR even read by `lib/admin/audit-log.ts` — the `/admin/auditoria` page
+literally could not have shown it even if written), and no explicit "this is sensitive, confirm"
+step or Cancel action. Extended the existing tool rather than building a parallel one — the
+issue's own UX wording ("in a small modal/drawer or existing edit pattern") explicitly allowed this.
+
+**Duplicate-CIF/NIF handling — a real regression risk found and worked around, not just a design
+choice:** dozens of e2e spec files across this codebase (45, grepped directly) register a company
+with the exact same hardcoded fixture CIF `"B12345674"`, so the dev DB already holds many companies
+sharing that value. A naive pre-save duplicate check would have broken the pre-existing
+`admin-account-lifecycle.spec.ts` test that edits a company BACK to that exact fixture value.
+Rather than weaken the new check, the one affected test was updated to pass the new
+`confirmDuplicateNif: true` override — which is the CORRECT interaction for that scenario (a
+superadmin knowingly reusing a value), not a workaround. The check itself follows the SAME "warn,
+never hard-block" philosophy `lib/admin/segments.ts`'s pre-existing `duplicate_nif` passive tag
+already established (D-162) — this just surfaces the same warning BEFORE saving too, with the
+conflicting company's name, and lets the superadmin confirm and proceed (a real case exists: two
+workspaces legitimately sharing one legal entity's CIF).
+
+**Audit trail:** `lib/admin/audit-log.ts`'s `AuditLogRow` gained the pre-existing `detail` DB
+column (dropped by the read side until now); `/admin/auditoria` gained a "Detalle" column — a
+generically useful fix benefiting every OTHER audited action too, not just this one. The edit
+route now builds an old→new summary string (`Nombre: "A" → "B"; CIF/NIF: "X" → "Y"`) only for the
+fields that actually changed — no detail is written when name/nif are unchanged (verified by test).
+
+**Client (`company-edit-form.tsx`):** changing the NIF now prompts a `window.confirm()` (the CIF/NIF
+is "a sensitive identifier... facturación y otros registros") BEFORE the request is even sent — the
+same established `window.confirm` pattern already used by `team-manager.tsx`'s "Eliminar acceso".
+A server-side `duplicate_nif` response prompts a second confirm ("¿Continuar de todas formas?");
+declining shows the message as a persistent on-page error rather than just a dismissed dialog. New
+"Cancelar" button resets the form to the live values without a page reload. Button relabelled
+"Guardar cambios" per the issue's own suggested copy.
+
+**Gate:** `npx tsc --noEmit` clean, eslint/prettier clean, 444/444 unit unaffected, 9/9 new e2e
+(`admin-company-edit.spec.ts`) + 11/11 `admin-account-lifecycle.spec.ts` (incl. the one updated
+test) + 19/19 broader admin/2FA sweep green.
+
+**Git flow:** no separate-branch/PR instruction applied to this one (that was scoped explicitly to
+#112/#119) — committed directly to `develop`, following this session's established default flow.
+
+**Next:** no issue currently queued beyond #122, which is fixed and about to be commented on
+GitHub — left OPEN for the user's own confirmation/close, per this project's established practice.

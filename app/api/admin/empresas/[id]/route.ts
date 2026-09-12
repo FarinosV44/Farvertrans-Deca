@@ -24,7 +24,16 @@ const schema = z.discriminatedUnion("action", [
     action: z.enum(["block", "deactivate", "reactivate"]),
     reason: z.string().trim().max(300).optional(),
   }),
-  z.object({ action: z.literal("edit"), data: companyDataSchema }),
+  z.object({
+    action: z.literal("edit"),
+    data: companyDataSchema,
+    // Set only on a resubmit after the client has already shown the
+    // duplicate-CIF/NIF warning and the superadmin chose to proceed anyway
+    // (D-162's existing "warn, never hard-block" philosophy for a duplicate
+    // NIF — the same one `lib/admin/segments.ts`'s `duplicate_nif` tag
+    // already applies passively; this just surfaces it BEFORE saving too).
+    confirmDuplicateNif: z.boolean().optional(),
+  }),
   // #103 — "Marcar como prueba": visibility/metrics only, never access or data.
   z.object({ action: z.literal("set_test"), isTest: z.boolean() }),
 ]);
@@ -75,6 +84,37 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (body.action === "edit") {
       const d = body.data;
+      const before = await prisma.company.findUnique({
+        where: { id },
+        select: { name: true, nif: true },
+      });
+      if (!before) return NextResponse.json({ error: { code: "not_found" } }, { status: 404 });
+
+      // Name/NIF are the two fields this ticket cares about most — a
+      // sensitive company identifier, so a collision is surfaced BEFORE
+      // saving rather than only passively afterward (D-162 already tags a
+      // duplicate NIF for review; this just moves the same warning earlier).
+      // Never a hard block — the superadmin can always confirm and proceed,
+      // matching D-162's own "warn, don't block" choice for this exact case.
+      if (d.nif !== before.nif && !body.confirmDuplicateNif) {
+        const conflict = await prisma.company.findFirst({
+          where: { nif: d.nif, id: { not: id } },
+          select: { id: true, name: true },
+        });
+        if (conflict) {
+          return NextResponse.json(
+            {
+              error: {
+                code: "duplicate_nif",
+                message: `Ya existe la empresa «${conflict.name}» con este CIF/NIF.`,
+                conflictingCompanyName: conflict.name,
+              },
+            },
+            { status: 409 },
+          );
+        }
+      }
+
       const company = await prisma.company.update({
         where: { id },
         data: {
@@ -83,11 +123,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         },
         select: { id: true },
       });
+      // Old→new for the two fields a customer-support correction is most
+      // likely to touch — the audit row's actor/timestamp already come from
+      // `recordAudit()` itself.
+      const changes: string[] = [];
+      if (d.name !== before.name) changes.push(`Nombre: "${before.name}" → "${d.name}"`);
+      if (d.nif !== before.nif) changes.push(`CIF/NIF: "${before.nif}" → "${d.nif}"`);
       await recordAudit({
         actorId: actor.id,
         action: "admin_edited_company",
         targetType: "company",
         targetId: company.id,
+        detail: changes.length > 0 ? changes.join("; ") : undefined,
         result: "success",
         headers: req.headers,
       });
