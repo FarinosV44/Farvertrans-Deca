@@ -108,6 +108,9 @@ export default async function DecaDetailPage({ params }: { params: Promise<{ id:
               linearMeters={availability.linearMeters}
               maxWeightKg={availability.maxWeightKg}
               vehicleType={availability.vehicleType}
+              vehicleTypeOther={availability.vehicleTypeOther}
+              availabilityPostalCode={availability.availabilityPostalCode}
+              preferredDestinationPostalCode={availability.preferredDestinationPostalCode}
               canManage={user.companyRole === "owner"}
             />
           )}

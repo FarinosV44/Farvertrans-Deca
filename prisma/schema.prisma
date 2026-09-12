@@ -183,35 +183,46 @@ model CommercialConsentEvent {
 /// `lib/commercial/availability.ts`), so no scheduled job was invented for a
 /// requirement this issue doesn't ask for.
 model DecaAvailabilityShare {
-  id                   String                   @id @default(cuid())
-  decaId               String                   @unique @map("deca_id")
-  companyId            String                   @map("company_id")
-  carrierName          String                   @map("carrier_name")
-  destination          String
-  availabilityDate     DateTime                 @map("availability_date")
-  channel              CommercialContactChannel
-  contactEmail         String?                  @map("contact_email")
-  contactPhone         String?                  @map("contact_phone")
-  legalVersion         String                   @map("legal_version")
+  id                             String                   @id @default(cuid())
+  decaId                         String                   @unique @map("deca_id")
+  companyId                      String                   @map("company_id")
+  carrierName                    String                   @map("carrier_name")
+  destination                    String
+  availabilityDate               DateTime                 @map("availability_date")
+  channel                        CommercialContactChannel
+  contactEmail                   String?                  @map("contact_email")
+  contactPhone                   String?                  @map("contact_phone")
+  legalVersion                   String                   @map("legal_version")
   /// pending | withdrawn
-  status               String                   @default("pending")
-  preparedAt           DateTime                 @default(now()) @map("prepared_at")
-  withdrawnAt          DateTime?                @map("withdrawn_at")
+  status                         String                   @default("pending")
+  preparedAt                     DateTime                 @default(now()) @map("prepared_at")
+  withdrawnAt                    DateTime?                @map("withdrawn_at")
   /// #119 — voluntary next-load preference, independent of the DeCA's cargo.
-  preferredDestination String?                  @map("preferred_destination")
+  preferredDestination           String?                  @map("preferred_destination")
   /// #119 — "full" | "partial". Bare string (not an enum), matching `status`'s
   /// own convention, so a future value never needs a migration.
-  capacityMode         String                   @default("full") @map("capacity_mode")
+  capacityMode                   String                   @default("full") @map("capacity_mode")
   /// #119 — required together with maxWeightKg when capacityMode = "partial";
   /// both null when "full" (never a stale value left over from a mode switch).
-  linearMeters         Float?                   @map("linear_meters")
-  maxWeightKg          Int?                     @map("max_weight_kg")
-  /// #119 — "lona" | "frigorifico" | null (unspecified). Bare string, same
-  /// extensibility reasoning as capacityMode.
-  vehicleType          String?                  @map("vehicle_type")
+  linearMeters                   Float?                   @map("linear_meters")
+  maxWeightKg                    Int?                     @map("max_weight_kg")
+  /// #119 — "lona" | "frigorifico" | "megatrailer" | "jumbo" | "frigolona" |
+  /// "otro" | null (unspecified). Bare string, same extensibility reasoning
+  /// as capacityMode.
+  vehicleType                    String?                  @map("vehicle_type")
+  /// 2026 correction to #119 — free-text specify, present only when
+  /// vehicleType = "otro".
+  vehicleTypeOther               String?                  @map("vehicle_type_other")
+  /// 2026 correction to #119 — the canonical matching value; pre-filled from
+  /// the final shipment's own unload postal code when available. Nullable so
+  /// a record prepared before this correction, or a genuinely foreign/
+  /// unknown postal code, safely falls back to free-text `destination`
+  /// matching (never blocks the record, never a destructive migration).
+  availabilityPostalCode         String?                  @map("availability_postal_code")
+  preferredDestinationPostalCode String?                  @map("preferred_destination_postal_code")
   /// #119 — which shipment (0-based) of a multi-envío DeCA supplied the zona/
   /// fecha defaults; null for a single-shipment DeCA (shipment 0, implicitly).
-  finalShipmentIndex   Int?                     @map("final_shipment_index")
+  finalShipmentIndex             Int?                     @map("final_shipment_index")
 
   deca    Deca    @relation(fields: [decaId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)

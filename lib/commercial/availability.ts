@@ -5,11 +5,12 @@ import {
   getCommercialTreatment,
   recordCommercialEvent,
 } from "@/lib/consent";
-import type {
-  CapacityMode,
-  CommercialContactChannel,
-  CommercialTreatmentState,
-  VehicleType,
+import {
+  isVehicleType,
+  type CapacityMode,
+  type CommercialContactChannel,
+  type CommercialTreatmentState,
+  type VehicleType,
 } from "@/lib/commercial/types";
 
 /**
@@ -41,6 +42,14 @@ export type AvailabilityPayload = {
   linearMeters?: number;
   maxWeightKg?: number;
   vehicleType?: VehicleType;
+  /** Free-text specify, present only when vehicleType === "otro" (2026
+   *  correction to #119). */
+  vehicleTypeOther?: string;
+  /** 2026 correction to #119 — the canonical value for matching; the
+   *  free-text destination stays for display, pre-filled from the final
+   *  shipment's own unload postal code when available. */
+  availabilityPostalCode?: string;
+  preferredDestinationPostalCode?: string;
 };
 
 export type PerDecaOverride = {
@@ -54,6 +63,9 @@ export type PerDecaOverride = {
   linearMeters?: number;
   maxWeightKg?: number;
   vehicleType?: VehicleType;
+  vehicleTypeOther?: string;
+  availabilityPostalCode?: string;
+  preferredDestinationPostalCode?: string;
   /** #119 — which shipment (0-based) of a multi-envío DeCA (#112) supplies the
    *  zona/fecha defaults; out-of-range or absent falls back to shipment 0. */
   finalShipmentIndex?: number;
@@ -64,7 +76,10 @@ type DecaFacts = {
   /** #119 — every shipment's resolved unload side, so a multi-envío DeCA can
    *  pick which one is the "descarga final" for availability purposes ONLY —
    *  this never alters the DeCA's own shipment numbering or legal order. */
-  shipments: { unloadLocation?: { city?: string | null } | null; unloadDate?: string | null }[];
+  shipments: {
+    unloadLocation?: { city?: string | null; postalCode?: string | null } | null;
+    unloadDate?: string | null;
+  }[];
 };
 
 function finalShipment(deca: DecaFacts, index: number | undefined) {
@@ -109,6 +124,14 @@ export function buildAvailabilityPayload(
     maxWeightKg = Math.round(kg);
   }
 
+  // 2026 correction to #119 — the postal code is the canonical matching
+  // value; pre-filled from the final shipment's own unload postal code when
+  // the operator didn't type one explicitly. Optional throughout: a missing
+  // postal code (foreign destination, or an old-shaped caller) never blocks
+  // the payload — matching just falls back to the free-text zone.
+  const availabilityPostalCode =
+    override?.availabilityPostalCode?.trim() || shipment.unloadLocation?.postalCode?.trim() || "";
+
   const payload: AvailabilityPayload = {
     carrierName,
     destination,
@@ -121,8 +144,15 @@ export function buildAvailabilityPayload(
   if (override?.preferredDestination?.trim()) {
     payload.preferredDestination = override.preferredDestination.trim();
   }
-  if (override?.vehicleType === "lona" || override?.vehicleType === "frigorifico") {
+  if (availabilityPostalCode) payload.availabilityPostalCode = availabilityPostalCode;
+  if (override?.preferredDestinationPostalCode?.trim()) {
+    payload.preferredDestinationPostalCode = override.preferredDestinationPostalCode.trim();
+  }
+  if (isVehicleType(override?.vehicleType)) {
     payload.vehicleType = override.vehicleType;
+    if (override.vehicleType === "otro" && override.vehicleTypeOther?.trim()) {
+      payload.vehicleTypeOther = override.vehicleTypeOther.trim();
+    }
   }
   if ((channel === "email" || channel === "both") && treatment.contactEmail) {
     payload.contactEmail = treatment.contactEmail;
@@ -167,6 +197,9 @@ export async function recordAvailabilityShare(
         linearMeters: payload.linearMeters ?? null,
         maxWeightKg: payload.maxWeightKg ?? null,
         vehicleType: payload.vehicleType ?? null,
+        vehicleTypeOther: payload.vehicleTypeOther ?? null,
+        availabilityPostalCode: payload.availabilityPostalCode ?? null,
+        preferredDestinationPostalCode: payload.preferredDestinationPostalCode ?? null,
         finalShipmentIndex: override?.finalShipmentIndex ?? null,
       },
     });
@@ -195,6 +228,9 @@ export type AvailabilityShareState = {
   linearMeters: number | null;
   maxWeightKg: number | null;
   vehicleType: VehicleType | null;
+  vehicleTypeOther: string | null;
+  availabilityPostalCode: string | null;
+  preferredDestinationPostalCode: string | null;
 };
 
 /** #119 — "expired" is NEVER stored: computed at read time from the
@@ -229,8 +265,10 @@ export async function getAvailabilityShare(
       capacityMode: row.capacityMode === "partial" ? "partial" : "full",
       linearMeters: row.linearMeters,
       maxWeightKg: row.maxWeightKg,
-      vehicleType:
-        row.vehicleType === "lona" || row.vehicleType === "frigorifico" ? row.vehicleType : null,
+      vehicleType: isVehicleType(row.vehicleType) ? row.vehicleType : null,
+      vehicleTypeOther: row.vehicleTypeOther,
+      availabilityPostalCode: row.availabilityPostalCode,
+      preferredDestinationPostalCode: row.preferredDestinationPostalCode,
     };
   } catch {
     return null;
@@ -269,6 +307,9 @@ export type AvailabilityEditInput = {
   linearMeters?: number;
   maxWeightKg?: number;
   vehicleType?: VehicleType;
+  vehicleTypeOther?: string;
+  availabilityPostalCode?: string;
+  preferredDestinationPostalCode?: string;
 };
 
 /**
@@ -305,6 +346,9 @@ export async function updateAvailabilityShare(
     maxWeightKg = Math.round(input.maxWeightKg);
   }
 
+  const vehicleType = isVehicleType(input.vehicleType) ? input.vehicleType : null;
+  const vehicleTypeOther = vehicleType === "otro" ? input.vehicleTypeOther?.trim() || null : null;
+
   await prisma.decaAvailabilityShare.update({
     where: { decaId },
     data: {
@@ -314,7 +358,10 @@ export async function updateAvailabilityShare(
       capacityMode,
       linearMeters,
       maxWeightKg,
-      vehicleType: input.vehicleType ?? null,
+      vehicleType,
+      vehicleTypeOther,
+      availabilityPostalCode: input.availabilityPostalCode?.trim() || null,
+      preferredDestinationPostalCode: input.preferredDestinationPostalCode?.trim() || null,
     },
   });
   await recordCommercialEvent({
@@ -322,7 +369,7 @@ export async function updateAvailabilityShare(
     actorUserId,
     kind: "availability_updated",
     decaId,
-    detail: { destination, availabilityDate, capacityMode, vehicleType: input.vehicleType ?? null },
+    detail: { destination, availabilityDate, capacityMode, vehicleType },
   });
   return true;
 }
@@ -331,7 +378,13 @@ export async function updateAvailabilityShare(
  *  contact details, only the fields relevant to compatibility. */
 export type AvailabilityCandidate = {
   zone: string;
+  /** 2026 correction to #119 — the canonical matching value; null for a
+   *  record prepared before this correction, or a genuinely foreign/unknown
+   *  postal code. Matching falls back to `zone`'s free text when absent on
+   *  either side being compared. */
+  zonePostalCode: string | null;
   preferredDestination: string | null;
+  preferredDestinationPostalCode: string | null;
   availabilityDate: Date;
   vehicleType: VehicleType | null;
   capacityMode: CapacityMode;
@@ -343,13 +396,42 @@ const DATE_WINDOW_DAYS = 3;
 
 /** Loose, dependency-free place matching: same normalised string, or one
  *  contains the other (handles "Madrid" vs "Madrid capital"-style variants).
- *  No geocoding/radius — explicitly out of scope for this v1 (see #119's
- *  own pre-implementation comment). */
+ *  The fallback for whichever side of a comparison has no postal code. */
 function placesMatch(a: string, b: string): boolean {
   const na = a.trim().toLowerCase();
   const nb = b.trim().toLowerCase();
   if (!na || !nb) return false;
   return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+/**
+ * 2026 correction to #119 — postal code is now the CANONICAL zone identifier
+ * whenever both sides have one: an exact match, or (a coarse, real proximity
+ * signal, not a substitute for actual geocoding/radius, which this project
+ * doesn't have) the same first-2-digit Spanish province prefix. The model is
+ * deliberately shaped so a future real radius calculation only has to
+ * replace this one function — every caller already passes postal codes
+ * through, unresolved, to here.
+ */
+function postalCodesMatch(a: string | null, b: string | null): boolean {
+  if (!a || !b) return false;
+  const pa = a.trim();
+  const pb = b.trim();
+  if (!pa || !pb) return false;
+  if (pa === pb) return true;
+  return pa.length >= 2 && pb.length >= 2 && pa.slice(0, 2) === pb.slice(0, 2);
+}
+
+/** Postal code when BOTH sides of this specific comparison have one, else
+ *  the free-text place — never a partial/one-sided postal comparison. */
+function zonesMatch(
+  aText: string,
+  aPostal: string | null,
+  bText: string,
+  bPostal: string | null,
+): boolean {
+  if (aPostal && bPostal) return postalCodesMatch(aPostal, bPostal);
+  return placesMatch(aText, bText);
 }
 
 function daysBetween(a: Date, b: Date): number {
@@ -395,10 +477,22 @@ export function findCompatibleAvailabilities(
     if (!vehicleTypeCompatible(mine.vehicleType, other.vehicleType)) return false;
     if (!capacityCompatible(mine, other)) return false;
     const zoneToPreferred =
-      !!mine.preferredDestination && placesMatch(mine.preferredDestination, other.zone);
+      !!mine.preferredDestination &&
+      zonesMatch(
+        mine.preferredDestination,
+        mine.preferredDestinationPostalCode,
+        other.zone,
+        other.zonePostalCode,
+      );
     const preferredToZone =
-      !!other.preferredDestination && placesMatch(mine.zone, other.preferredDestination);
-    const zoneToZone = placesMatch(mine.zone, other.zone);
+      !!other.preferredDestination &&
+      zonesMatch(
+        mine.zone,
+        mine.zonePostalCode,
+        other.preferredDestination,
+        other.preferredDestinationPostalCode,
+      );
+    const zoneToZone = zonesMatch(mine.zone, mine.zonePostalCode, other.zone, other.zonePostalCode);
     return zoneToPreferred || preferredToZone || zoneToZone;
   });
 }

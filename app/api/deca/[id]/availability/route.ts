@@ -19,7 +19,12 @@ const updateSchema = z.object({
   capacityMode: z.enum(["full", "partial"]),
   linearMeters: z.number().positive().optional(),
   maxWeightKg: z.number().positive().optional(),
-  vehicleType: z.enum(["lona", "frigorifico"]).optional(),
+  vehicleType: z
+    .enum(["lona", "frigorifico", "megatrailer", "jumbo", "frigolona", "otro"])
+    .optional(),
+  vehicleTypeOther: z.string().trim().max(60).optional().or(z.literal("")),
+  availabilityPostalCode: z.string().trim().max(12).optional().or(z.literal("")),
+  preferredDestinationPostalCode: z.string().trim().max(12).optional().or(z.literal("")),
 });
 
 const schema = z.discriminatedUnion("action", [withdrawSchema, updateSchema]);
@@ -59,6 +64,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     linearMeters: data.linearMeters,
     maxWeightKg: data.maxWeightKg,
     vehicleType: data.vehicleType,
+    vehicleTypeOther: data.vehicleTypeOther || undefined,
+    availabilityPostalCode: data.availabilityPostalCode || undefined,
+    preferredDestinationPostalCode: data.preferredDestinationPostalCode || undefined,
   });
   if (!ok)
     return NextResponse.json(

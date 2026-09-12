@@ -199,6 +199,79 @@ test.describe("#119 — DECA Conecta expansion", () => {
     expect(row?.vehicleType).toBeNull();
   });
 
+  test("2026 correction — availability postal code is pre-filled from the unload stop, editable, and persisted as the canonical matching value", async ({
+    page,
+  }) => {
+    await register(page, { commercialOptIn: true });
+    await fillStep1(page);
+    await fillRoute(page, "Madrid"); // unloadLocationPostalCode = "28028"
+    await fillVehicleAndGoods(page);
+
+    // Pre-filled as a placeholder (server-side fallback), never forced into the value.
+    await expect(page.getByTestId("commercial-share-destination-postal-code")).toHaveAttribute(
+      "placeholder",
+      "28028",
+    );
+    // The operator can still type an explicit, different value.
+    await page.fill('[data-testid="commercial-share-destination-postal-code"]', "28001");
+    await page.fill('[data-testid="commercial-share-preferred-destination-postal-code"]', "46023");
+
+    const decaId = await generate(page);
+    const row = await availabilityFor(decaId);
+    expect(row?.availabilityPostalCode).toBe("28001");
+    expect(row?.preferredDestinationPostalCode).toBe("46023");
+  });
+
+  test("2026 correction — leaving the postal code blank falls back to the unload stop's own postal code, never blocking the record", async ({
+    page,
+  }) => {
+    await register(page, { commercialOptIn: true });
+    await fillStep1(page);
+    await fillRoute(page, "Madrid"); // unloadLocationPostalCode = "28028"
+    await fillVehicleAndGoods(page);
+
+    const decaId = await generate(page);
+    const row = await availabilityFor(decaId);
+    expect(row?.availabilityPostalCode).toBe("28028");
+  });
+
+  test("2026 correction — the expanded vehicle types (megatrailer/jumbo/frigolona/otro) are selectable and persisted", async ({
+    page,
+  }) => {
+    await register(page, { commercialOptIn: true });
+    await fillStep1(page);
+    await fillRoute(page);
+    await fillVehicleAndGoods(page);
+
+    await page.getByTestId("commercial-share-type-megatrailer").click();
+    await expect(page.getByTestId("commercial-share-type-megatrailer")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    const decaId = await generate(page);
+    const row = await availabilityFor(decaId);
+    expect(row?.vehicleType).toBe("megatrailer");
+  });
+
+  test("2026 correction — 'Otro' shows a free-text specify field and persists it only for 'otro'", async ({
+    page,
+  }) => {
+    await register(page, { commercialOptIn: true });
+    await fillStep1(page);
+    await fillRoute(page);
+    await fillVehicleAndGoods(page);
+
+    await expect(page.getByTestId("commercial-share-type-other-input")).toHaveCount(0);
+    await page.getByTestId("commercial-share-type-otro").click();
+    await expect(page.getByTestId("commercial-share-type-other-input")).toBeVisible();
+    await page.fill('[data-testid="commercial-share-type-other-input"]', "Portacontenedores");
+
+    const decaId = await generate(page);
+    const row = await availabilityFor(decaId);
+    expect(row?.vehicleType).toBe("otro");
+    expect(row?.vehicleTypeOther).toBe("Portacontenedores");
+  });
+
   test("the prepared record never contains excluded DeCA content, even with all #119 fields set", async ({
     page,
   }) => {

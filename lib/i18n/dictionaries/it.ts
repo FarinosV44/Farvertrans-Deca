@@ -920,6 +920,9 @@ export const it = {
       enable: "Voglio ricevere proposte personalizzate al termine di questo trasporto",
       destination: "Zona di disponibilità",
       destinationHint: "Luogo in cui il veicolo sarà libero dopo lo scarico.",
+      destinationPostalCode: "CAP di disponibilità",
+      destinationPostalCodeHint:
+        "Il valore principale per l'abbinamento. L'indirizzo esatto non viene mai condiviso.",
       finalShipmentLabel: "Qual è lo scarico finale?",
       finalShipmentHint:
         "Solo per calcolare la disponibilità commerciale — non modifica l'ordine né la numerazione giuridica delle spedizioni.",
@@ -928,6 +931,7 @@ export const it = {
       channels: { email: "E-mail", phone: "WhatsApp", both: "E-mail e WhatsApp" },
       preferredDestination: "Destinazione preferita",
       preferredDestinationHint: "Verso quale città o zona ti interessa ricevere offerte?",
+      preferredDestinationPostalCode: "CAP di destinazione preferita",
       capacityLegend: "Disponibilità di carico",
       capacityFull: "Camion completo",
       capacityFullHint: "Il veicolo sarà completamente disponibile.",
@@ -938,6 +942,11 @@ export const it = {
       vehicleTypeLegend: "Tipo di veicolo",
       vehicleTypeLona: "Telonato",
       vehicleTypeFrigorifico: "Frigorifero",
+      vehicleTypeMegatrailer: "Megatrailer",
+      vehicleTypeJumbo: "Jumbo",
+      vehicleTypeFrigolona: "Telonato refrigerato",
+      vehicleTypeOtro: "Altro",
+      vehicleTypeOtherPlaceholder: "Specifica il tipo",
       privacyTitle: "Le tue informazioni commerciali restano private.",
       privacyBody:
         "DECA Conecta riutilizza dal DeCA solo la zona e la data in cui il veicolo sarà disponibile. Non condivide aziende, clienti, mittenti, destinatari, merce, peso del DeCA, targhe, prezzo, PDF, QR o posizione GPS.",

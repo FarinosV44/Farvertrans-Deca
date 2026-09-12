@@ -10,9 +10,25 @@ export type CommercialContactChannel = "email" | "phone" | "both";
 /** #119 — "full" (Camión completo) or "partial" (Grupaje). A bare string type
  *  (not a Prisma enum) so a future value never needs a migration. */
 export type CapacityMode = "full" | "partial";
-/** #119 — "lona" or "frigorífico". Deliberately extensible: the issue asks to
- *  leave room for more types without showing options nobody requested yet. */
-export type VehicleType = "lona" | "frigorifico";
+/** #119 — expanded per the user's 2026 correction: "lona"/"frigorifico" plus
+ *  "megatrailer"/"jumbo"/"frigolona"/"otro". Deliberately still a bare string
+ *  union (not a Prisma enum) — the correction's own "mantener el modelo
+ *  extensible para añadir nuevos tipos sin una refactorización grande." A
+ *  free-text specify field (`vehicleTypeOther`) accompanies "otro" only. */
+export type VehicleType = "lona" | "frigorifico" | "megatrailer" | "jumbo" | "frigolona" | "otro";
+
+export const VEHICLE_TYPES: readonly VehicleType[] = [
+  "lona",
+  "frigorifico",
+  "megatrailer",
+  "jumbo",
+  "frigolona",
+  "otro",
+];
+
+export function isVehicleType(v: unknown): v is VehicleType {
+  return typeof v === "string" && (VEHICLE_TYPES as readonly string[]).includes(v);
+}
 
 export type CommercialTreatmentState = {
   mode: CommercialConsentMode;
@@ -39,7 +55,12 @@ export type SharedFieldKey =
   | "capacityMode"
   | "linearMeters"
   | "maxWeightKg"
-  | "vehicleType";
+  | "vehicleType"
+  /** 2026 correction to #119 — postal code is now the canonical matching
+   *  value; the free-text destination/preferredDestination stay for display. */
+  | "availabilityPostalCode"
+  | "preferredDestinationPostalCode"
+  | "vehicleTypeOther";
 
 export function sharedFieldKeys(channel: CommercialContactChannel | null): SharedFieldKey[] {
   const keys: SharedFieldKey[] = [
@@ -51,6 +72,9 @@ export function sharedFieldKeys(channel: CommercialContactChannel | null): Share
     "linearMeters",
     "maxWeightKg",
     "vehicleType",
+    "availabilityPostalCode",
+    "preferredDestinationPostalCode",
+    "vehicleTypeOther",
   ];
   if (channel === "email" || channel === "both") keys.push("contactEmail");
   if (channel === "phone" || channel === "both") keys.push("contactPhone");

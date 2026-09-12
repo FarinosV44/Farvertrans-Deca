@@ -935,6 +935,11 @@ export const es = {
       // #119 — renamed from "Destino o zona de disponibilidad".
       destination: "Zona de disponibilidad",
       destinationHint: "Lugar donde el vehículo quedará libre tras la descarga.",
+      // 2026 correction to #119 — postal code is now the canonical matching
+      // value; destination/preferredDestination stay for display.
+      destinationPostalCode: "Código postal de disponibilidad",
+      destinationPostalCodeHint:
+        "El dato principal para el emparejamiento. No se comparte la dirección exacta.",
       finalShipmentLabel: "¿Cuál es la descarga final?",
       finalShipmentHint:
         "Solo para calcular la disponibilidad comercial — no cambia el orden ni la numeración jurídica de los envíos.",
@@ -944,6 +949,7 @@ export const es = {
       // #119 — new voluntary fields.
       preferredDestination: "Destino preferente",
       preferredDestinationHint: "¿Hacia qué ciudad o zona te interesa recibir ofertas?",
+      preferredDestinationPostalCode: "Código postal de destino preferente",
       capacityLegend: "Disponibilidad de carga",
       capacityFull: "Camión completo",
       capacityFullHint: "El vehículo quedará completamente disponible.",
@@ -954,6 +960,11 @@ export const es = {
       vehicleTypeLegend: "Tipo de vehículo",
       vehicleTypeLona: "Lona",
       vehicleTypeFrigorifico: "Frigorífico",
+      vehicleTypeMegatrailer: "Megatrailer",
+      vehicleTypeJumbo: "Jumbo",
+      vehicleTypeFrigolona: "Frigolona",
+      vehicleTypeOtro: "Otro",
+      vehicleTypeOtherPlaceholder: "Especifica el tipo",
       privacyTitle: "Tu información comercial permanece privada.",
       privacyBody:
         "DECA Conecta solo reutiliza del DeCA la zona y la fecha en que el vehículo quedará disponible. No comparte empresas, clientes, cargadores, destinatarios, mercancía, peso del DeCA, matrículas, precio, PDF, QR ni ubicación GPS.",

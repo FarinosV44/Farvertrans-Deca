@@ -251,3 +251,14 @@ export function SnowflakeIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** OTRO — three dots, the generic "something else" glyph (2026 correction to #119). */
+export function MoreIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

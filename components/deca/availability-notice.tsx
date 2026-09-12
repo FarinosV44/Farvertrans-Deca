@@ -12,6 +12,10 @@ import {
 const VEHICLE_TYPE_LABEL: Record<VehicleType, string> = {
   lona: "Lona",
   frigorifico: "Frigorífico",
+  megatrailer: "Megatrailer",
+  jumbo: "Jumbo",
+  frigolona: "Frigolona",
+  otro: "Otro",
 };
 
 /** "Madrid · 12 sep · Grupaje · 4 m · 8.000 kg · Lona → preferencia Valencia" (#119 §8). */
@@ -22,6 +26,7 @@ function summaryLine(v: {
   linearMeters: number | null;
   maxWeightKg: number | null;
   vehicleType: VehicleType | null;
+  vehicleTypeOther: string | null;
   preferredDestination: string | null;
 }): string {
   const parts = [v.destination];
@@ -34,7 +39,11 @@ function summaryLine(v: {
   if (v.capacityMode === "partial" && v.maxWeightKg) {
     parts.push(`${v.maxWeightKg.toLocaleString("es-ES")} kg`);
   }
-  if (v.vehicleType) parts.push(VEHICLE_TYPE_LABEL[v.vehicleType]);
+  if (v.vehicleType === "otro" && v.vehicleTypeOther) {
+    parts.push(v.vehicleTypeOther);
+  } else if (v.vehicleType) {
+    parts.push(VEHICLE_TYPE_LABEL[v.vehicleType]);
+  }
   let line = parts.join(" · ");
   if (v.preferredDestination) line += ` → preferencia ${v.preferredDestination}`;
   return line;
@@ -55,6 +64,9 @@ export function AvailabilityNotice({
   linearMeters,
   maxWeightKg,
   vehicleType,
+  vehicleTypeOther,
+  availabilityPostalCode,
+  preferredDestinationPostalCode,
   canManage,
 }: {
   decaId: string;
@@ -67,6 +79,9 @@ export function AvailabilityNotice({
   linearMeters: number | null;
   maxWeightKg: number | null;
   vehicleType: VehicleType | null;
+  vehicleTypeOther: string | null;
+  availabilityPostalCode: string | null;
+  preferredDestinationPostalCode: string | null;
   canManage: boolean;
 }) {
   const router = useRouter();
@@ -81,6 +96,9 @@ export function AvailabilityNotice({
     linearMeters: linearMeters ? String(linearMeters) : "",
     maxWeightKg: maxWeightKg ? String(maxWeightKg) : "",
     vehicleType: vehicleType ?? "",
+    vehicleTypeOther: vehicleTypeOther ?? "",
+    availabilityPostalCode: availabilityPostalCode ?? "",
+    preferredDestinationPostalCode: preferredDestinationPostalCode ?? "",
   });
 
   useEffect(() => {
@@ -127,6 +145,10 @@ export function AvailabilityNotice({
           linearMeters: form.capacityMode === "partial" ? Number(form.linearMeters) : undefined,
           maxWeightKg: form.capacityMode === "partial" ? Number(form.maxWeightKg) : undefined,
           vehicleType: form.vehicleType || undefined,
+          vehicleTypeOther:
+            form.vehicleType === "otro" ? form.vehicleTypeOther || undefined : undefined,
+          availabilityPostalCode: form.availabilityPostalCode || undefined,
+          preferredDestinationPostalCode: form.preferredDestinationPostalCode || undefined,
         }),
       });
       if (!res.ok) {
@@ -173,6 +195,7 @@ export function AvailabilityNotice({
               linearMeters,
               maxWeightKg,
               vehicleType,
+              vehicleTypeOther,
               preferredDestination,
             })}
             .
@@ -211,6 +234,19 @@ export function AvailabilityNotice({
             />
           </label>
           <label className="block">
+            <span className="text-xs font-medium">Código postal de disponibilidad</span>
+            <input
+              data-testid="availability-edit-postal-code"
+              value={form.availabilityPostalCode}
+              maxLength={12}
+              onChange={(e) => setForm((f) => ({ ...f, availabilityPostalCode: e.target.value }))}
+              className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+            />
+            <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+              El valor principal para el emparejamiento. No se comparte la dirección exacta.
+            </span>
+          </label>
+          <label className="block">
             <span className="text-xs font-medium">Fecha de disponibilidad</span>
             <input
               type="date"
@@ -226,6 +262,18 @@ export function AvailabilityNotice({
               data-testid="availability-edit-preferred"
               value={form.preferredDestination}
               onChange={(e) => setForm((f) => ({ ...f, preferredDestination: e.target.value }))}
+              className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium">Código postal de destino preferente</span>
+            <input
+              data-testid="availability-edit-preferred-postal-code"
+              value={form.preferredDestinationPostalCode}
+              maxLength={12}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, preferredDestinationPostalCode: e.target.value }))
+              }
               className="mt-1 block min-h-9 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
             />
           </label>
@@ -270,8 +318,10 @@ export function AvailabilityNotice({
             idPrefix="availability-edit"
             value={form.vehicleType as VehicleType | ""}
             onChange={(v) => setForm((f) => ({ ...f, vehicleType: v }))}
-            lonaLabel="Lona"
-            frigorificoLabel="Frigorífico"
+            labels={VEHICLE_TYPE_LABEL}
+            otherValue={form.vehicleTypeOther}
+            onOtherChange={(v) => setForm((f) => ({ ...f, vehicleTypeOther: v }))}
+            otherPlaceholder="Especifica el tipo"
           />
           <div className="flex gap-2">
             <button

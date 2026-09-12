@@ -44,6 +44,21 @@
 | 8 Website | n/a (site is in the main codebase) | — |
 
 ## Current position
+- **D-230 — #119 correction implemented: postal-code-based matching + 4 new vehicle types for
+  DECA Conecta, this session (2026-09-12). Full detail in `docs/decisions.md` D-230.** New additive
+  migration (3 nullable columns on `DecaAvailabilityShare`); `VehicleType` expanded to 6 values +
+  new `isVehicleType()` guard (replacing 3 scattered inline checks); `postalCodesMatch()`/
+  `zonesMatch()` prefer postal code when both sides of a comparison have one, falling back to the
+  existing free-text matching otherwise — safe for pre-correction rows with no postal code.
+  `VehicleTypePicker` now takes a `labels` map instead of hardcoded props (adding a 7th type later
+  is one map entry) + an "otro" free-text field; also fixed a pre-existing type duplication
+  (`capacity-vehicle-picker.tsx` now imports `VehicleType`/`CapacityMode` from
+  `lib/commercial/types.ts` instead of re-declaring them). New i18n keys in all 9 locales. Never
+  touches the DeCA or its PDF. Gate: tsc/eslint/prettier/keel-verify/prisma-validate clean,
+  production build clean, 498/498 unit (+10 new), 19/19 e2e in `commercial-availability.spec.ts`
+  (15 pre-existing confirmed unaffected + 4 new) + 38/38 in `commercial-consent.spec.ts`. Committed
+  to `develop`, not yet pushed. **Both #112 and #119's corrections are now implemented — moving to
+  the user's mobile Historial UX request, then P2/P3 audit findings.**
 - **D-229 — #112 correction implemented: "Vincular carga y descarga" linking panel, this session
   (2026-09-12). Full detail in `docs/decisions.md` D-229.** Traced the existing per-row `+` handlers
   first and confirmed no cartesian-product risk and 1×N/N×1 auto-pairing already worked correctly

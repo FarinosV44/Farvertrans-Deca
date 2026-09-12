@@ -8180,3 +8180,57 @@ and an explicit "+carga never creates a descarga, and vice versa" regression tes
 **Gate:** `tsc`/`eslint`/`prettier`/`keel-verify` clean, 488/488 unit (+5 new), 27/27 e2e in
 `deca-multi-shipment.spec.ts` + `crear.spec.ts` + `creator-v2.spec.ts` (13 pre-existing multi-shipment
 tests unaffected, confirming zero regression, + 5 new + the pre-existing creator suite).
+
+## D-230 — #119 correction: postal-code-based matching + 4 new vehicle types for DECA Conecta (2026-09-12)
+
+**The correction (posted as an issue comment on #119 after D-217/D-218 shipped):** replace/strengthen
+the free-text locality-based zona/destino-preferente matching with postal code as the canonical
+value (`Código postal de disponibilidad` — pre-filled from the DeCA's chosen final unload stop when
+available — and `Código postal de destino preferente`, both optional, resolved locality shown only as
+a visual confirmation, never the exact address); expand vehicle types from LONA/FRIGORÍFICO to also
+add MEGATRAILER/JUMBO/FRIGOLONA/OTRO (OTRO optionally showing a short free-text specify field), kept
+extensible without a big refactor; never touch the DeCA or its PDF; safely interpret existing
+availability rows that only have free-text locality; add tests for the new postal codes and vehicle
+types.
+
+**Model:** `DecaAvailabilityShare` gains 3 additive, nullable columns
+(`availability_postal_code`, `preferred_destination_postal_code`, `vehicle_type_other`) via a new
+hand-written migration (same shadow-DB precedent as D-228). `VehicleType` (`lib/commercial/types.ts`)
+expands to a 6-value union + a new `isVehicleType()` type guard, replacing the old inline
+`=== "lona" || === "frigorifico"` checks scattered across 3 call sites (`buildAvailabilityPayload`,
+`getAvailabilityShare`, `updateAvailabilityShare`) — one guard, not three copies to keep in sync.
+
+**Matching:** `postalCodesMatch()` — exact match, or same first-2-digit Spanish province prefix as a
+coarse, honestly-labelled proximity signal (not real geocoding/radius, which this project doesn't
+have; the correction's own "dejar preparado el modelo para... una evolución posterior" is satisfied by
+shaping `findCompatibleAvailabilities()` so a future real radius calculation only replaces this one
+function). `zonesMatch()` prefers postal code whenever BOTH sides of a specific comparison have one,
+falling back to the pre-existing free-text `placesMatch()` otherwise — this is what "safely interprets
+existing rows that only have locality/zona" means in practice: a record from before this correction
+(no postal code) still matches correctly via the untouched string path.
+
+**UI:** `capacity-vehicle-picker.tsx`'s `VehicleTypePicker` now takes a `labels: Record<VehicleType,
+string>` map (was 2 hardcoded label props) — adding a 7th type later is one map entry, not a
+signature change — plus an optional `otherValue`/`onOtherChange` pair that renders a free-text input
+only when `value === "otro"`. Also fixed, while touching this file: it declared its own local
+`VehicleType`/`CapacityMode` types duplicating `lib/commercial/types.ts`'s — now imports and
+re-exports the canonical ones instead of drifting from them. One new icon (`MoreIcon`, 3 dots) for
+"Otro"; MEGATRAILER/JUMBO reuse `TruckIcon` and FRIGOLONA reuses `SnowflakeIcon` rather than drawing 3
+bespoke glyphs for edge-case types — "no complicar innecesariamente la UX," the correction's own
+words. Both call sites (the wizard's per-DeCA share block, `AvailabilityNotice`'s edit form) updated
+with the new postal-code fields (pre-filled the same placeholder-only way `destination` already was)
+and the expanded picker. New i18n keys in all 9 locale dictionaries.
+
+**Test-first / verification:** 10 new unit cases in `tests/unit/commercial-availability.test.ts`
+(postal pre-fill/override/fallback, `vehicleTypeOther` carried only for "otro", exact postal match,
+same-province match, cross-province non-match even where the old string match would have matched
+loosely, fallback to string matching when either side lacks a postal code, cross-match in both
+directions) — the `ALLOWED`-key-set test and the ("never returns anything beyond the anonymised
+shape") test both updated to include the 3 new keys, since they exist specifically to catch exactly
+this kind of change. 4 new e2e cases in `tests/e2e/commercial-availability.spec.ts` (postal pre-fill
++ override + persistence, blank-falls-back, MEGATRAILER selection + persistence, OTRO specify-field
+visibility + persistence) — all 15 pre-existing #119 e2e tests confirmed unaffected first.
+
+**Gate:** `tsc`/`eslint`/`prettier`/`keel-verify`/`prisma-validate` clean, production build clean,
+498/498 unit (+10 new), 19/19 e2e in `commercial-availability.spec.ts` (15 pre-existing confirmed
+unaffected + 4 new) + 38/38 in `commercial-consent.spec.ts` (fully unaffected).

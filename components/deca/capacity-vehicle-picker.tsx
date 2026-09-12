@@ -1,7 +1,7 @@
-import { TruckIcon, BoxIcon, TarpIcon, SnowflakeIcon } from "@/components/panel/icons";
+import { TruckIcon, BoxIcon, TarpIcon, SnowflakeIcon, MoreIcon } from "@/components/panel/icons";
+import type { CapacityMode, VehicleType } from "@/lib/commercial/types";
 
-export type CapacityMode = "full" | "partial";
-export type VehicleType = "lona" | "frigorifico";
+export type { CapacityMode, VehicleType };
 
 /**
  * #119 — "Camión completo" / "Grupaje" as an accessible card-based radio
@@ -61,46 +61,85 @@ export function CapacityModePicker({
   );
 }
 
-/** #119 — "LONA" / "FRIGORÍFICO", optional (no default forced), same
- *  accessible card pattern. Deliberately just these two: "dejar el modelo
- *  técnicamente ampliable a más tipos sin mostrar opciones no solicitadas." */
+const VEHICLE_TYPE_ICON: Record<VehicleType, typeof TarpIcon> = {
+  lona: TarpIcon,
+  frigorifico: SnowflakeIcon,
+  // 2026 correction to #119: reusing the closest existing glyph rather than
+  // drawing 3 new bespoke icons for edge-case types — "no complicar
+  // innecesariamente la UX" (the issue's own words); the label carries the
+  // distinction, the icon just signals "a vehicle/cold variant."
+  megatrailer: TruckIcon,
+  jumbo: TruckIcon,
+  frigolona: SnowflakeIcon,
+  otro: MoreIcon,
+};
+
+/**
+ * #119, expanded by a 2026 correction — "LONA"/"FRIGORÍFICO"/"MEGATRAILER"/
+ * "JUMBO"/"FRIGOLONA"/"OTRO", optional (no default forced), same accessible
+ * card pattern. `labels` keeps the type list "técnicamente ampliable a más
+ * tipos sin una refactorización grande" (the correction's own words) — a
+ * future type is one more map entry, not a new prop. `otro` optionally shows
+ * a short free-text field via `otherValue`/`onOtherChange`.
+ */
 export function VehicleTypePicker({
   value,
   onChange,
-  lonaLabel,
-  frigorificoLabel,
+  labels,
   idPrefix,
+  otherValue,
+  onOtherChange,
+  otherPlaceholder,
 }: {
   value: VehicleType | "";
   onChange: (v: VehicleType | "") => void;
-  lonaLabel: string;
-  frigorificoLabel: string;
+  labels: Record<VehicleType, string>;
   idPrefix: string;
+  /** Required together with `onOtherChange` to show the "otro" specify field. */
+  otherValue?: string;
+  onOtherChange?: (v: string) => void;
+  otherPlaceholder?: string;
 }) {
-  const options: { type: VehicleType; label: string; Icon: typeof TarpIcon }[] = [
-    { type: "lona", label: lonaLabel, Icon: TarpIcon },
-    { type: "frigorifico", label: frigorificoLabel, Icon: SnowflakeIcon },
-  ];
+  const types: VehicleType[] = ["lona", "frigorifico", "megatrailer", "jumbo", "frigolona", "otro"];
   return (
-    <div role="radiogroup" aria-label={lonaLabel} className="flex gap-2">
-      {options.map(({ type, label, Icon }) => (
-        <button
-          key={type}
-          type="button"
-          role="radio"
-          aria-checked={value === type}
-          data-testid={`${idPrefix}-type-${type}`}
-          onClick={() => onChange(value === type ? "" : type)}
-          className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border px-3 text-sm font-medium ${
-            value === type
-              ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]"
-              : "border-[var(--color-border)]"
-          }`}
-        >
-          <Icon />
-          {label}
-        </button>
-      ))}
+    <div>
+      <div
+        role="radiogroup"
+        aria-label={labels.lona}
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3"
+      >
+        {types.map((type) => {
+          const Icon = VEHICLE_TYPE_ICON[type];
+          return (
+            <button
+              key={type}
+              type="button"
+              role="radio"
+              aria-checked={value === type}
+              data-testid={`${idPrefix}-type-${type}`}
+              onClick={() => onChange(value === type ? "" : type)}
+              className={`flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] border px-3 text-sm font-medium ${
+                value === type
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]"
+                  : "border-[var(--color-border)]"
+              }`}
+            >
+              <Icon />
+              {labels[type]}
+            </button>
+          );
+        })}
+      </div>
+      {value === "otro" && onOtherChange && (
+        <input
+          data-testid={`${idPrefix}-type-other-input`}
+          value={otherValue ?? ""}
+          placeholder={otherPlaceholder}
+          maxLength={60}
+          onChange={(e) => onOtherChange(e.target.value)}
+          className="mt-2 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+        />
+      )}
     </div>
   );
 }

@@ -209,6 +209,7 @@ export async function POST(req: Request) {
         const ch = s(c.channel);
         const vt = s(c.vehicleType);
         const { recordAvailabilityShare } = await import("@/lib/commercial/availability");
+        const { isVehicleType } = await import("@/lib/commercial/types");
         recordAvailabilityShare(
           created.decaId,
           owner.companyId,
@@ -228,7 +229,10 @@ export async function POST(req: Request) {
             capacityMode: c.capacityMode === "partial" ? "partial" : undefined,
             linearMeters: n(c.linearMeters),
             maxWeightKg: n(c.maxWeightKg),
-            vehicleType: vt === "lona" || vt === "frigorifico" ? vt : undefined,
+            vehicleType: isVehicleType(vt) ? vt : undefined,
+            vehicleTypeOther: s(c.vehicleTypeOther),
+            availabilityPostalCode: s(c.availabilityPostalCode),
+            preferredDestinationPostalCode: s(c.preferredDestinationPostalCode),
             finalShipmentIndex: n(c.finalShipmentIndex),
           },
         ).catch(() => {

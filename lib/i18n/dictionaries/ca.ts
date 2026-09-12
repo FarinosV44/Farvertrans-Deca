@@ -922,6 +922,9 @@ export const ca = {
       enable: "Vull rebre ofertes personalitzades en finalitzar aquest port",
       destination: "Zona de disponibilitat",
       destinationHint: "Lloc on el vehicle quedarà lliure després de la descàrrega.",
+      destinationPostalCode: "Codi postal de disponibilitat",
+      destinationPostalCodeHint:
+        "El valor principal per a l'aparellament. L'adreça exacta mai es comparteix.",
       finalShipmentLabel: "Quina és la descàrrega final?",
       finalShipmentHint:
         "Només per calcular la disponibilitat comercial — no canvia l'ordre ni la numeració jurídica dels enviaments.",
@@ -930,6 +933,7 @@ export const ca = {
       channels: { email: "Correu electrònic", phone: "WhatsApp", both: "Correu i WhatsApp" },
       preferredDestination: "Destinació preferent",
       preferredDestinationHint: "Cap a quina ciutat o zona t'interessa rebre ofertes?",
+      preferredDestinationPostalCode: "Codi postal de destinació preferent",
       capacityLegend: "Disponibilitat de càrrega",
       capacityFull: "Camió complet",
       capacityFullHint: "El vehicle quedarà completament disponible.",
@@ -940,6 +944,11 @@ export const ca = {
       vehicleTypeLegend: "Tipus de vehicle",
       vehicleTypeLona: "Lona",
       vehicleTypeFrigorifico: "Frigorífic",
+      vehicleTypeMegatrailer: "Megatràiler",
+      vehicleTypeJumbo: "Jumbo",
+      vehicleTypeFrigolona: "Lona frigorífica",
+      vehicleTypeOtro: "Altre",
+      vehicleTypeOtherPlaceholder: "Especifica el tipus",
       privacyTitle: "La teva informació comercial es manté privada.",
       privacyBody:
         "DECA Conecta només reutilitza del DeCA la zona i la data en què el vehicle quedarà disponible. No comparteix empreses, clients, carregadors, destinataris, mercaderia, pes del DeCA, matrícules, preu, PDF, QR ni ubicació GPS.",

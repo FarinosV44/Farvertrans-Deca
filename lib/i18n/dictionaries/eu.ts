@@ -943,6 +943,9 @@ export const eu = {
       enable: "Garraio hau amaitzean proposamen pertsonalizatuak jaso nahi ditut",
       destination: "Eskuragarritasun-eremua",
       destinationHint: "Deskargatu ondoren ibilgailua libre geratuko den lekua.",
+      destinationPostalCode: "Eskuragarritasunaren posta-kodea",
+      destinationPostalCodeHint:
+        "Parekatzeko balio nagusia. Helbide zehatza inoiz ez da partekatzen.",
       finalShipmentLabel: "Zein da azken deskarga?",
       finalShipmentHint:
         "Disponibilitate komertziala kalkulatzeko soilik — ez du aldatzen bidalketen ordena edo zenbaketa juridikoa.",
@@ -951,6 +954,7 @@ export const eu = {
       channels: { email: "Posta elektronikoa", phone: "WhatsApp", both: "Posta eta WhatsApp" },
       preferredDestination: "Helmuga hobetsia",
       preferredDestinationHint: "Zein hiri edo eremutarako jaso nahi dituzu eskaintzak?",
+      preferredDestinationPostalCode: "Helmuga hobetsiaren posta-kodea",
       capacityLegend: "Karga-disponibilitatea",
       capacityFull: "Kamioi osoa",
       capacityFullHint: "Ibilgailua guztiz erabilgarri egongo da.",
@@ -961,6 +965,11 @@ export const eu = {
       vehicleTypeLegend: "Ibilgailu mota",
       vehicleTypeLona: "Lona",
       vehicleTypeFrigorifico: "Hozkailua",
+      vehicleTypeMegatrailer: "Megatrailer",
+      vehicleTypeJumbo: "Jumbo",
+      vehicleTypeFrigolona: "Lona hoztua",
+      vehicleTypeOtro: "Beste bat",
+      vehicleTypeOtherPlaceholder: "Zehaztu mota",
       privacyTitle: "Zure informazio komertziala pribatua izaten jarraitzen du.",
       privacyBody:
         "DECA Conecta-k DeCAtik eremua eta ibilgailua erabilgarri egongo den data soilik berrerabiltzen ditu. Ez ditu partekatzen enpresak, bezeroak, kargatzaileak, hartzaileak, salgaia, DeCAren pisua, matrikulak, prezioa, PDFa, QRa edo GPS kokapena.",

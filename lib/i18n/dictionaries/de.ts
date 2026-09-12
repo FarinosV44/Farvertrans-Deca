@@ -939,6 +939,9 @@ export const de = {
       enable: "Ich möchte am Ende dieses Transports personalisierte Angebote erhalten",
       destination: "Verfügbarkeitsgebiet",
       destinationHint: "Ort, an dem das Fahrzeug nach der Entladung frei wird.",
+      destinationPostalCode: "Postleitzahl der Verfügbarkeit",
+      destinationPostalCodeHint:
+        "Der wichtigste Wert für den Abgleich. Die genaue Adresse wird nie weitergegeben.",
       finalShipmentLabel: "Welches ist die letzte Entladung?",
       finalShipmentHint:
         "Nur zur Berechnung der geschäftlichen Verfügbarkeit — ändert nicht die Reihenfolge oder rechtliche Nummerierung der Sendungen.",
@@ -947,6 +950,7 @@ export const de = {
       channels: { email: "E-Mail", phone: "WhatsApp", both: "E-Mail und WhatsApp" },
       preferredDestination: "Bevorzugtes Ziel",
       preferredDestinationHint: "In welche Stadt oder Region möchten Sie Angebote erhalten?",
+      preferredDestinationPostalCode: "Postleitzahl des bevorzugten Ziels",
       capacityLegend: "Ladeverfügbarkeit",
       capacityFull: "Kompletter LKW",
       capacityFullHint: "Das Fahrzeug wird vollständig verfügbar sein.",
@@ -957,6 +961,11 @@ export const de = {
       vehicleTypeLegend: "Fahrzeugtyp",
       vehicleTypeLona: "Plane",
       vehicleTypeFrigorifico: "Kühlfahrzeug",
+      vehicleTypeMegatrailer: "Megatrailer",
+      vehicleTypeJumbo: "Jumbo",
+      vehicleTypeFrigolona: "Kühlplane",
+      vehicleTypeOtro: "Sonstiges",
+      vehicleTypeOtherPlaceholder: "Typ angeben",
       privacyTitle: "Ihre geschäftlichen Informationen bleiben privat.",
       privacyBody:
         "DECA Conecta verwendet vom DeCA nur das Gebiet und das Datum, an dem das Fahrzeug verfügbar wird. Es werden keine Unternehmen, Kunden, Absender, Empfänger, Ware, Gewicht des DeCA, Kennzeichen, Preis, PDF, QR oder GPS-Standort weitergegeben.",

@@ -904,6 +904,9 @@ export const en = {
       enable: "I want to receive personalised offers when this job ends",
       destination: "Availability area",
       destinationHint: "Where the vehicle will be free after unloading.",
+      destinationPostalCode: "Availability postal code",
+      destinationPostalCodeHint:
+        "The primary value used for matching. The exact address is never shared.",
       finalShipmentLabel: "Which is the final unload?",
       finalShipmentHint:
         "Only used to compute commercial availability — it does not change the shipments' order or legal numbering.",
@@ -912,6 +915,7 @@ export const en = {
       channels: { email: "Email", phone: "WhatsApp", both: "Email and WhatsApp" },
       preferredDestination: "Preferred destination",
       preferredDestinationHint: "Which city or area would you like to receive offers for?",
+      preferredDestinationPostalCode: "Preferred destination postal code",
       capacityLegend: "Load availability",
       capacityFull: "Full truck",
       capacityFullHint: "The vehicle will be fully available.",
@@ -922,6 +926,11 @@ export const en = {
       vehicleTypeLegend: "Vehicle type",
       vehicleTypeLona: "Curtain-side",
       vehicleTypeFrigorifico: "Refrigerated",
+      vehicleTypeMegatrailer: "Mega trailer",
+      vehicleTypeJumbo: "Jumbo",
+      vehicleTypeFrigolona: "Refrigerated curtain-side",
+      vehicleTypeOtro: "Other",
+      vehicleTypeOtherPlaceholder: "Specify the type",
       privacyTitle: "Your business information stays private.",
       privacyBody:
         "DECA Conecta only reuses the area and date the vehicle will become available from the DeCA. It never shares companies, customers, shippers, consignees, goods, the DeCA's weight, plates, price, PDF, QR or GPS location.",

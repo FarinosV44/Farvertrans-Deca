@@ -46,6 +46,10 @@ const ALLOWED = new Set([
   "linearMeters",
   "maxWeightKg",
   "vehicleType",
+  // 2026 correction to #119
+  "vehicleTypeOther",
+  "availabilityPostalCode",
+  "preferredDestinationPostalCode",
 ]);
 
 describe("buildAvailabilityPayload — payload contains ONLY authorised fields (#84/#119)", () => {
@@ -212,15 +216,81 @@ describe("buildAvailabilityPayload — payload contains ONLY authorised fields (
     expect(p!.maxWeightKg).toBeUndefined();
   });
 
-  it("vehicleType only accepts the two known values, silently drops anything else", () => {
-    const p1 = buildAvailabilityPayload(deca, treatment(), { enabled: true, vehicleType: "lona" });
-    expect(p1!.vehicleType).toBe("lona");
+  it("vehicleType only accepts the 6 known values, silently drops anything else", () => {
+    for (const vt of [
+      "lona",
+      "frigorifico",
+      "megatrailer",
+      "jumbo",
+      "frigolona",
+      "otro",
+    ] as const) {
+      const p = buildAvailabilityPayload(deca, treatment(), { enabled: true, vehicleType: vt });
+      expect(p!.vehicleType).toBe(vt);
+    }
     const p2 = buildAvailabilityPayload(deca, treatment(), {
       enabled: true,
       // @ts-expect-error — deliberately invalid, must be dropped not thrown
       vehicleType: "granel",
     });
     expect(p2!.vehicleType).toBeUndefined();
+  });
+
+  it("vehicleTypeOther is carried only when vehicleType is 'otro', never otherwise", () => {
+    const p1 = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      vehicleType: "otro",
+      vehicleTypeOther: "Portacontenedores",
+    });
+    expect(p1!.vehicleType).toBe("otro");
+    expect(p1!.vehicleTypeOther).toBe("Portacontenedores");
+
+    const p2 = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      vehicleType: "lona",
+      vehicleTypeOther: "Portacontenedores", // irrelevant when vehicleType isn't "otro"
+    });
+    expect(p2!.vehicleTypeOther).toBeUndefined();
+  });
+
+  // 2026 correction to #119
+  it("availabilityPostalCode is pre-filled from the final shipment's own unload postal code when not overridden", () => {
+    const withPostal = {
+      ...deca,
+      shipments: [
+        { unloadLocation: { city: "Madrid", postalCode: "28001" }, unloadDate: "2026-10-06" },
+      ],
+    };
+    const p = buildAvailabilityPayload(withPostal, treatment(), { enabled: true });
+    expect(p!.availabilityPostalCode).toBe("28001");
+  });
+
+  it("an explicit availabilityPostalCode override wins over the shipment's own", () => {
+    const withPostal = {
+      ...deca,
+      shipments: [
+        { unloadLocation: { city: "Madrid", postalCode: "28001" }, unloadDate: "2026-10-06" },
+      ],
+    };
+    const p = buildAvailabilityPayload(withPostal, treatment(), {
+      enabled: true,
+      availabilityPostalCode: "46023",
+    });
+    expect(p!.availabilityPostalCode).toBe("46023");
+  });
+
+  it("a missing postal code on both the shipment and the override never blocks the payload", () => {
+    const p = buildAvailabilityPayload(deca, treatment(), { enabled: true });
+    expect(p).not.toBeNull();
+    expect(p!.availabilityPostalCode).toBeUndefined();
+  });
+
+  it("preferredDestinationPostalCode is carried only when explicitly set — never invented", () => {
+    const p = buildAvailabilityPayload(deca, treatment(), {
+      enabled: true,
+      preferredDestinationPostalCode: "46023",
+    });
+    expect(p!.preferredDestinationPostalCode).toBe("46023");
   });
 });
 
@@ -235,6 +305,9 @@ describe("sharedFieldKeys", () => {
       "linearMeters",
       "maxWeightKg",
       "vehicleType",
+      "availabilityPostalCode",
+      "preferredDestinationPostalCode",
+      "vehicleTypeOther",
     ];
     expect(sharedFieldKeys("email")).toEqual([...base, "contactEmail"]);
     expect(sharedFieldKeys("phone")).toEqual([...base, "contactPhone"]);
@@ -260,7 +333,9 @@ describe("commercialChannelLabelEs (#85 — WhatsApp replaces the 'Teléfono' la
 describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
   const candidate = (over: Partial<AvailabilityCandidate> = {}): AvailabilityCandidate => ({
     zone: "Madrid",
+    zonePostalCode: null,
     preferredDestination: null,
+    preferredDestinationPostalCode: null,
     availabilityDate: new Date("2026-10-06"),
     vehicleType: null,
     capacityMode: "full",
@@ -324,7 +399,9 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
     expect(Object.keys(match).sort()).toEqual(
       [
         "zone",
+        "zonePostalCode",
         "preferredDestination",
+        "preferredDestinationPostalCode",
         "availabilityDate",
         "vehicleType",
         "capacityMode",
@@ -332,5 +409,52 @@ describe("findCompatibleAvailabilities — v1 matching (#119)", () => {
         "maxWeightKg",
       ].sort(),
     );
+  });
+
+  // 2026 correction to #119 — postal code is now the canonical matching value
+  describe("postal-code matching (2026 correction)", () => {
+    it("matches on an exact postal code even when the free-text zone strings differ completely", () => {
+      const mine = candidate({ zone: "Madrid centro", zonePostalCode: "28001" });
+      const other = candidate({ zone: "Zona Norte", zonePostalCode: "28001" });
+      expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+    });
+
+    it("matches on the same 2-digit province prefix as a coarse proximity signal", () => {
+      const mine = candidate({ zone: "Madrid", zonePostalCode: "28001" });
+      const other = candidate({ zone: "Alcalá de Henares", zonePostalCode: "28802" });
+      expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+    });
+
+    it("does NOT match different provinces even if the free-text zone strings would have matched loosely", () => {
+      const mine = candidate({ zone: "Valencia", zonePostalCode: "46001" });
+      const other = candidate({ zone: "Valencia de Alcántara", zonePostalCode: "10500" });
+      expect(findCompatibleAvailabilities(mine, [other])).toEqual([]);
+    });
+
+    it("falls back to free-text zone matching when either side lacks a postal code", () => {
+      const mine = candidate({ zone: "Madrid", zonePostalCode: null });
+      const other = candidate({ zone: "Madrid", zonePostalCode: "28001" });
+      expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+    });
+
+    it("postal code also governs the zone↔preferredDestination cross-match, in both directions", () => {
+      const mine = candidate({
+        zone: "Valencia",
+        zonePostalCode: "46001",
+        preferredDestination: "Zona Centro",
+        preferredDestinationPostalCode: "28001",
+      });
+      const other = candidate({ zone: "Madrid", zonePostalCode: "28002" });
+      expect(findCompatibleAvailabilities(mine, [other])).toEqual([other]);
+
+      const mine2 = candidate({ zone: "Sevilla", zonePostalCode: "41001" });
+      const other2 = candidate({
+        zone: "Bilbao",
+        zonePostalCode: "48001",
+        preferredDestination: "Sevilla capital",
+        preferredDestinationPostalCode: "41010",
+      });
+      expect(findCompatibleAvailabilities(mine2, [other2])).toEqual([other2]);
+    });
   });
 });

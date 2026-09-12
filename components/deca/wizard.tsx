@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Field } from "./field";
 import { SaveShipment } from "./save-shipment";
 import { CapacityModePicker, VehicleTypePicker } from "@/components/deca/capacity-vehicle-picker";
+import { isVehicleType } from "@/lib/commercial/types";
 import {
   step1Schema,
   step2Schema,
@@ -64,7 +65,13 @@ type FormState = {
   commercialShareCapacityMode: string; // "full" | "partial"
   commercialShareLinearMeters: string;
   commercialShareMaxWeightKg: string;
-  commercialShareVehicleType: string; // "" | "lona" | "frigorifico"
+  commercialShareVehicleType: string; // "" | VehicleType
+  /** Free-text specify, shown only when commercialShareVehicleType === "otro". */
+  commercialShareVehicleTypeOther: string;
+  /** 2026 correction to #119 — the canonical matching value; pre-filled from
+   *  the chosen final envío's own unload postal code when available. */
+  commercialShareDestinationPostalCode: string;
+  commercialSharePreferredDestinationPostalCode: string;
 };
 
 const EMPTY: FormState = {
@@ -107,6 +114,9 @@ const EMPTY: FormState = {
   commercialShareLinearMeters: "",
   commercialShareMaxWeightKg: "",
   commercialShareVehicleType: "",
+  commercialShareVehicleTypeOther: "",
+  commercialShareDestinationPostalCode: "",
+  commercialSharePreferredDestinationPostalCode: "",
 };
 
 /**
@@ -1375,6 +1385,14 @@ export function CrearWizard({
                     ? Number(form.commercialShareMaxWeightKg)
                     : undefined,
                 vehicleType: form.commercialShareVehicleType || undefined,
+                vehicleTypeOther:
+                  form.commercialShareVehicleType === "otro"
+                    ? form.commercialShareVehicleTypeOther.trim() || undefined
+                    : undefined,
+                availabilityPostalCode:
+                  form.commercialShareDestinationPostalCode.trim() || undefined,
+                preferredDestinationPostalCode:
+                  form.commercialSharePreferredDestinationPostalCode.trim() || undefined,
               },
             }
           : {}),
@@ -2672,8 +2690,17 @@ export function CrearWizard({
                   form.unloadLocationCity,
                   ...extraShipments.map((s) => s.unloadLocationCity),
                 ];
+                const shipmentUnloadPostalCodes = [
+                  form.unloadLocationPostalCode,
+                  ...extraShipments.map((s) => s.unloadLocationPostalCode),
+                ];
                 const finalIdx = Number(form.commercialShareFinalShipmentIndex || 0) || 0;
                 const finalCity = shipmentUnloads[finalIdx] || form.unloadLocationCity;
+                // 2026 correction to #119 — same pre-fill pattern as `finalCity`:
+                // shown as a placeholder only; the actual submit-time fallback
+                // happens server-side in buildAvailabilityPayload().
+                const finalPostalCode =
+                  shipmentUnloadPostalCodes[finalIdx] || form.unloadLocationPostalCode;
                 const channel =
                   form.commercialShareChannel || commercialTreatment?.channel || "email";
                 return (
@@ -2739,6 +2766,30 @@ export function CrearWizard({
                       </label>
                     </div>
 
+                    {/* 2026 correction to #119 — postal code is now the
+                        canonical matching value; destination/preferred stay
+                        for display. Pre-filled (placeholder only, same
+                        pattern as destination above) from the chosen final
+                        envío's own unload postal code. */}
+                    <label className="block text-sm">
+                      <span className="font-medium">
+                        {t.crear.commercialShare.destinationPostalCode}
+                      </span>
+                      <input
+                        data-testid="commercial-share-destination-postal-code"
+                        value={form.commercialShareDestinationPostalCode}
+                        placeholder={finalPostalCode}
+                        maxLength={12}
+                        onChange={(e) =>
+                          set("commercialShareDestinationPostalCode")(e.target.value)
+                        }
+                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                      />
+                      <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                        {t.crear.commercialShare.destinationPostalCodeHint}
+                      </span>
+                    </label>
+
                     <label className="block text-sm">
                       <span className="font-medium">
                         {t.crear.commercialShare.preferredDestination}
@@ -2752,6 +2803,21 @@ export function CrearWizard({
                       <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
                         {t.crear.commercialShare.preferredDestinationHint}
                       </span>
+                    </label>
+
+                    <label className="block text-sm">
+                      <span className="font-medium">
+                        {t.crear.commercialShare.preferredDestinationPostalCode}
+                      </span>
+                      <input
+                        data-testid="commercial-share-preferred-destination-postal-code"
+                        value={form.commercialSharePreferredDestinationPostalCode}
+                        maxLength={12}
+                        onChange={(e) =>
+                          set("commercialSharePreferredDestinationPostalCode")(e.target.value)
+                        }
+                        className="mt-1 block min-h-11 w-full rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-sm"
+                      />
                     </label>
 
                     <div>
@@ -2827,8 +2893,7 @@ export function CrearWizard({
                         <VehicleTypePicker
                           idPrefix="commercial-share"
                           value={
-                            form.commercialShareVehicleType === "lona" ||
-                            form.commercialShareVehicleType === "frigorifico"
+                            isVehicleType(form.commercialShareVehicleType)
                               ? form.commercialShareVehicleType
                               : ""
                           }
@@ -2836,8 +2901,17 @@ export function CrearWizard({
                             set("commercialShareVehicleType")(v);
                             if (v) track("availability_vehicle_type_set");
                           }}
-                          lonaLabel={t.crear.commercialShare.vehicleTypeLona}
-                          frigorificoLabel={t.crear.commercialShare.vehicleTypeFrigorifico}
+                          labels={{
+                            lona: t.crear.commercialShare.vehicleTypeLona,
+                            frigorifico: t.crear.commercialShare.vehicleTypeFrigorifico,
+                            megatrailer: t.crear.commercialShare.vehicleTypeMegatrailer,
+                            jumbo: t.crear.commercialShare.vehicleTypeJumbo,
+                            frigolona: t.crear.commercialShare.vehicleTypeFrigolona,
+                            otro: t.crear.commercialShare.vehicleTypeOtro,
+                          }}
+                          otherValue={form.commercialShareVehicleTypeOther}
+                          onOtherChange={set("commercialShareVehicleTypeOther")}
+                          otherPlaceholder={t.crear.commercialShare.vehicleTypeOtherPlaceholder}
                         />
                       </div>
                     </div>
